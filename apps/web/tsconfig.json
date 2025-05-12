@@ -1,0 +1,28 @@
+{
+  "extends": "@liquidai/leap-typescript-config/nextjs.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"],
+      "@liquidai/leap-lib/*": ["packages/lib/src/*"]
+    }
+  },
+  "ts-node": {
+    "compilerOptions": {
+      "module": "CommonJS"
+    },
+    "require": ["tsconfig-paths/register"]
+  },
+  "include": [
+    "next-env.d.ts",
+    "next.config.js",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts",
+    "jest.config.cjs",
+    "jest.setup.ts",
+    "postcss.config.mjs",
+    "tailwind.config.cjs"
+  ],
+  "exclude": ["node_modules"]
+}
