@@ -1,0 +1,13 @@
+# Ignore artifacts:
+build
+dist
+coverage
+package-lock.json
+storybook-static
+node_modules
+
+# Ignore all HTML files:
+**/*.html
+
+# Python
+.mypy_cache
