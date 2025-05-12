@@ -1,9 +1,15 @@
 {
   "extends": "@liquidai/leap-typescript-config/nextjs.json",
   "compilerOptions": {
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],
+      "@tests/*": ["./tests/*"],
       "@liquidai/leap-lib/*": ["packages/lib/src/*"]
     }
   },
