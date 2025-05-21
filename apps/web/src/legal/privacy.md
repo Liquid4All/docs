@@ -2,7 +2,7 @@
 
 Last Updated: May 12th, 2025
 
-Welcome to Liquid Leap ("Liquid Leap", "Liquid AI", "we", "us", or "our"). This Privacy Policy explains how we collect, use, disclose, and protect information about you through our website located at https://${WebsiteDomain} (the "Site") and any related services, applications, or features offered by Liquid AI (collectively, the "Services").
+Welcome to Liquid Leap ("Liquid Leap", "Liquid AI", "we", "us", or "our"). This Privacy Policy explains how we collect, use, disclose, and protect information about you through our website located at https://leap.liquid.ai (the "Site") and any related services, applications, or features offered by Liquid AI (collectively, the "Services").
 
 By accessing or using our Services, you agree to this Privacy Policy. If you do not agree with our policies and practices, please do not use our Services.
 
