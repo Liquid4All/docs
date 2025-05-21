@@ -69,7 +69,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
               },
             }}
           >
-            {children}
+            <div className="flex min-h-[80vh] flex-col justify-start px-6 pb-16 pt-[10vh] sm:px-8">
+              {children}
+            </div>
           </ClerkProvider>
         </main>
 
