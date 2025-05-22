@@ -5,8 +5,6 @@ import PlausibleProvider from 'next-plausible';
 import { Inter, Lexend } from 'next/font/google';
 import { ReactNode } from 'react';
 
-import Footer from '@/components/Footer';
-import Header from '@/components/Header';
 import { DESCRIPTION, DOMAIN, DOMAIN_URL, TITLE } from '@/constants';
 import '@/styles/globals.css';
 import '@/styles/tailwind.css';
@@ -57,25 +55,19 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       )}
     >
       <body className="flex h-full flex-col">
-        <main>
-          <Header />
-
-          <PlausibleProvider domain={DOMAIN} enabled={enableAnalytics} />
-          <ClerkProvider
-            appearance={{
-              layout: {
-                privacyPageUrl: '/privacy',
-                termsPageUrl: '/terms',
-              },
-            }}
-          >
-            <div className="flex min-h-[80vh] flex-col justify-start px-6 pb-16 pt-[10vh] sm:px-8">
-              {children}
-            </div>
-          </ClerkProvider>
-        </main>
-
-        <Footer />
+        <PlausibleProvider domain={DOMAIN} enabled={enableAnalytics} />
+        <ClerkProvider
+          afterSignInUrl="/"
+          afterSignOutUrl="/"
+          appearance={{
+            layout: {
+              privacyPageUrl: '/privacy',
+              termsPageUrl: '/terms',
+            },
+          }}
+        >
+          {children}
+        </ClerkProvider>
       </body>
     </html>
   );
