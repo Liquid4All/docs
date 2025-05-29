@@ -4,6 +4,7 @@ import { type Metadata } from 'next';
 import PlausibleProvider from 'next-plausible';
 import { Inter, Lexend } from 'next/font/google';
 import { ReactNode } from 'react';
+import { Toaster } from 'sonner';
 
 import { DESCRIPTION, DOMAIN, DOMAIN_URL, TITLE } from '@/constants';
 import '@/styles/globals.css';
@@ -67,6 +68,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           }}
         >
           {children}
+          <Toaster position="top-right" />
         </ClerkProvider>
       </body>
     </html>
