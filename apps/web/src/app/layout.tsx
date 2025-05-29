@@ -10,6 +10,11 @@ import { DESCRIPTION, DOMAIN, DOMAIN_URL, TITLE } from '@/constants';
 import '@/styles/globals.css';
 import '@/styles/tailwind.css';
 
+/**
+ * Ensure the data is always the latest.
+ */
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
   title: {
     template: `%s | ${TITLE}`,
