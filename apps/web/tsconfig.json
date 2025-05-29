@@ -22,7 +22,7 @@
     "jest.config.cjs",
     "jest.setup.ts",
     "postcss.config.mjs",
-    "tailwind.config.cjs",
+    "tailwind.config.js",
     ".storybook/preview.tsx",
     ".storybook/main.ts"
   ],
