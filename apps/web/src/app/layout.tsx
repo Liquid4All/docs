@@ -1,4 +1,5 @@
 import { ClerkProvider } from '@clerk/nextjs';
+import '@fontsource/jetbrains-mono';
 import { clsx } from 'clsx';
 import { type Metadata } from 'next';
 import PlausibleProvider from 'next-plausible';
@@ -7,6 +8,7 @@ import { ReactNode } from 'react';
 import { Toaster } from 'sonner';
 
 import { DESCRIPTION, DOMAIN, DOMAIN_URL, TITLE } from '@/constants';
+import '@/styles/fonts.css';
 import '@/styles/globals.css';
 import '@/styles/tailwind.css';
 
