@@ -11,3 +11,5 @@ node_modules
 
 # Python
 .mypy_cache
+
+_pagefind
