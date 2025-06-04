@@ -81,7 +81,7 @@ const AppStoreButton = ({ store }: AppStoreButtonProps) => (
     href={store.href}
     target="_blank"
     rel="noopener noreferrer"
-    className="flex items-center gap-3 bg-black text-white px-6 py-3 rounded-lg hover:bg-gray-800 transition-colors"
+    className="flex items-center gap-3 bg-black text-white px-6 py-3 rounded-lg hover:bg-slate-800 transition-colors"
   >
     <div className="text-left">
       <div className="text-sm font-semibold flex items-center gap-1">
@@ -94,7 +94,7 @@ const AppStoreButton = ({ store }: AppStoreButtonProps) => (
 
 export default function Footer() {
   return (
-    <footer className="bg-white mt-38">
+    <footer className="bg-white mt-4">
       <Container>
         <div className="py-8">
           {/* Main footer content */}
