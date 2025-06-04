@@ -12,7 +12,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
     <main className="bg-nextra-bg">
       <Layout
         sidebar={{ autoCollapse: true }}
-        navbar={<Header />}
+        navbar={<Header showSearch />}
         pageMap={pageMap}
         editLink={null}
         feedback={{
