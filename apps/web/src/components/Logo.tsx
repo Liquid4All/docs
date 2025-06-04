@@ -1,7 +1,7 @@
 import { clsx } from 'clsx';
 import { ComponentPropsWithoutRef } from 'react';
 
-import { MAIN_COLOR, TITLE } from '@/constants';
+import { TITLE } from '@/constants';
 
 interface LogoProps extends ComponentPropsWithoutRef<'div'> {
   size?: string;

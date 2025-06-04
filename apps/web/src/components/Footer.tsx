@@ -19,12 +19,12 @@ interface FooterType {
 const footerData: FooterType = {
   explore: [
     { label: 'Models', href: '/models' },
-    { label: 'Documentation', href: '/documentation' },
+    { label: 'Documentation', href: '/docs' },
   ],
 
   company: [
-    { label: 'About', href: '/about' },
-    { label: 'Careers', href: '/careers', external: true },
+    { label: 'About', href: 'https://www.liquid.ai/company/about', external: true },
+    { label: 'Careers', href: 'https://jobs.lever.co/liquid.ai', external: true },
   ],
 
   appStores: [
