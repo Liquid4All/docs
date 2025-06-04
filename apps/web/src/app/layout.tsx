@@ -2,20 +2,16 @@ import { ClerkProvider } from '@clerk/nextjs';
 import '@fontsource/jetbrains-mono';
 import { clsx } from 'clsx';
 import { type Metadata } from 'next';
-import PlausibleProvider from 'next-plausible';
 import { Inter, Lexend } from 'next/font/google';
+import 'nextra-theme-docs/style.css';
+import { Head } from 'nextra/components';
 import { ReactNode } from 'react';
 import { Toaster } from 'sonner';
 
-import { DESCRIPTION, DOMAIN, DOMAIN_URL, TITLE } from '@/constants';
+import { DESCRIPTION, DOMAIN_URL, TITLE } from '@/constants';
 import '@/styles/fonts.css';
 import '@/styles/globals.css';
 import '@/styles/tailwind.css';
-
-/**
- * Ensure the data is always the latest.
- */
-export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
   title: {
@@ -50,23 +46,30 @@ const lexend = Lexend({
   variable: '--font-lexend',
 });
 
-export default function RootLayout({ children }: { children: ReactNode }) {
-  const enableAnalytics = process.env.NEXT_PUBLIC_VERCEL_ENV === 'production';
-
+export default async function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html
       lang="en"
-      className={clsx(
-        'h-full scroll-smooth bg-transparent antialiased',
-        inter.variable,
-        lexend.variable
-      )}
+      dir="ltr"
+      // Suggested by `next-themes` package https://github.com/pacocoursey/next-themes#with-app
+      suppressHydrationWarning
+      className={clsx('h-full scroll-smooth antialiased', inter.variable, lexend.variable)}
     >
-      <body className="flex h-full flex-col">
-        <PlausibleProvider domain={DOMAIN} enabled={enableAnalytics} />
+      <Head
+        color={{
+          hue: 269,
+          saturation: 97,
+          lightness: {
+            light: 50,
+            dark: 80,
+          },
+        }}
+      >
+        {/* Your additional tags should be passed as `children` of `<Head>` element */}
+      </Head>
+      <body className="h-full flex flex-col">
         <ClerkProvider
           signInFallbackRedirectUrl="/"
-          afterSignOutUrl="/"
           appearance={{
             layout: {
               privacyPageUrl: '/privacy',
