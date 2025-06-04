@@ -1,5 +1,5 @@
 export default {
-  index: {
+  '*': {
     type: 'page',
     display: 'hidden',
   },
@@ -10,23 +10,5 @@ export default {
   },
   models: {
     type: 'page',
-  },
-  dashboard: {
-    type: 'page',
-    display: 'hidden',
-  },
-  profile: {
-    type: 'page',
-    display: 'hidden',
-  },
-  privacy: {
-    type: 'page',
-    title: 'Privacy Policy',
-    display: 'hidden',
-  },
-  terms: {
-    type: 'page',
-    title: 'Terms & Conditions',
-    display: 'hidden',
   },
 };
