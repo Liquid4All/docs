@@ -2,12 +2,12 @@
 
 import { UserResource } from '@clerk/types';
 import { Dialog, DialogPanel } from '@headlessui/react';
-import { XMarkIcon } from '@heroicons/react/24/outline';
+import { IconX } from '@tabler/icons-react';
 import Link from 'next/link';
 import { FC } from 'react';
 
-import { Button } from '@/components/Button';
 import { Logo } from '@/components/Logo';
+import { Button } from '@/components/ui/button';
 import { TITLE } from '@/constants';
 
 import { NavigationItem, NavigationItemType } from './NavigationItem';
@@ -41,12 +41,12 @@ export const MobileNavigation: FC<MobileNavigationProps> = ({
             <Logo size="text-2xl" />
           </Link>
           <Button
-            variant="tertiary"
+            variant="ghost"
             onClick={onClose}
-            className="-m-2.5 rounded-md p-2.5 text-gray-700"
+            icon={IconX}
+            className="-m-2.5 rounded-md text-gray-700 hover:bg-transparent hover:text-purple-800"
           >
             <span className="sr-only">Close menu</span>
-            <XMarkIcon aria-hidden="true" className="h-6 w-6" />
           </Button>
         </div>
         <div className="mt-10 flow-root">
@@ -59,6 +59,7 @@ export const MobileNavigation: FC<MobileNavigationProps> = ({
                     isMobile={true}
                     userEmails={getUserEmails(user)}
                     signOut={signOut}
+                    className="pl-0"
                   />
                 </div>
               ))}

@@ -1,8 +1,7 @@
-import { LucideIcon } from 'lucide-react';
 import { Search } from 'nextra/components';
 import { FC } from 'react';
 
-import { Button } from '@/components/Button';
+import { Button } from '@/components/ui/button';
 
 export interface NavigationItemType {
   label: string;
@@ -10,7 +9,11 @@ export interface NavigationItemType {
   liquidOnly?: boolean;
   action?: 'search' | 'sign-out';
   variant?: 'primary' | 'secondary' | 'tertiary';
-  icon?: React.ComponentType<React.SVGProps<SVGSVGElement>> | LucideIcon;
+  icon?: React.ComponentType<{
+    size?: string | number;
+    stroke?: string | number;
+    className?: string;
+  }>;
 }
 
 interface NavigationItemProps {
