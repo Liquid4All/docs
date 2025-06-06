@@ -1,5 +1,6 @@
 import { ClerkProvider } from '@clerk/nextjs';
 import '@fontsource/jetbrains-mono';
+import { Analytics } from '@vercel/analytics/next';
 import { clsx } from 'clsx';
 import { type Metadata } from 'next';
 import { Inter, Lexend } from 'next/font/google';
@@ -78,6 +79,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
           }}
         >
           {children}
+          <Analytics />
           <Toaster position="top-right" />
         </ClerkProvider>
       </body>
