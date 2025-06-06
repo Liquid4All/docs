@@ -1,0 +1,296 @@
+import { Callout } from 'nextra/components';
+
+# iOS API Spec
+
+## LeapSDK
+
+The entrypoint of LEAP SDK for iOS. It provides static methods for model loading and doesn't hold any data.
+
+```swift
+public struct LeapSDK {
+    static func load(url: URL) async throws -> ModelRunner
+}
+```
+
+### `load`
+
+This function loads a model from a local file URL. The `url` should point to a model bundle file. The app needs to hold the model runner object returned by this function until there is no need to interact with the model anymore. See [ModelRunner](#modelrunner) for more details.
+
+<Callout type="info">
+  The function will throw `LeapError.loadModelFailure` if LEAP fails to load the model.
+</Callout>
+
+## Conversation
+
+The instance of a conversation, which hosts the message history and states that are needed by the model runner for generation.
+
+While this conversation instance holds the data necessary for the model runner to perform generation, the app still needs to maintain the UI state of the message history representation by itself.
+
+```swift
+public class Conversation {
+    public let modelRunner: ModelRunner
+    public private(set) var history: [ChatMessage]
+
+    public init(modelRunner: ModelRunner, history: [ChatMessage])
+
+    // Generating response from a chat message
+    public func generateConversation(message: ChatMessage) -> AsyncStream<MessageResponse>
+}
+```
+
+### `generateConversation`
+
+This method adds the message to the conversation history, generates a response, and returns an `AsyncStream<MessageResponse>`. It can be called from the main thread.
+
+The return value is a Swift [AsyncStream](https://developer.apple.com/documentation/swift/asyncstream). The generation will start immediately when the stream is created. Use `for await` loops or other async iteration patterns to consume the stream.
+
+`MessageResponse` instances will be emitted from this stream, which contain chunks of data generated from the model.
+
+<Callout type="info">
+  Errors will be thrown in the async stream. Use `do-catch` blocks around the async iteration to
+  capture errors from the generation.
+</Callout>
+
+<Callout type="warning">
+  If there is already a running generation, further generation requests are blocked until the
+  current generation is done. However, there is no guarantee that requests that come first will be
+  processed first.
+</Callout>
+
+### Cancellation of the generation
+
+Generation will be stopped when the task that iterates the AsyncStream is canceled. We highly recommend that generation be started within a Task associated with a lifecycle-aware component so that the generation can be stopped if the component is destroyed. Here is an example:
+
+```swift
+task = Task {
+    let userMessage = ChatMessage(role: .user, content: [.text("Hello")])
+    for await response in conversation.generateConversation(message: userMessage) {
+        switch response {
+        case .chunk(let text):
+            print("Chunk: \(text)")
+        case .complete(let fullText, let reason):
+            print("Generation complete: \(fullText)")
+            print("Reason: \(reason)")
+        }
+    }
+}
+
+// Stop the generation by canceling the task
+task.cancel()
+```
+
+### `history`
+
+The `history` property returns the current chat message history. This is a read-only property that provides access to all messages in the conversation. If there is an ongoing generation, the partial message may not be available in the history until the generation completes. However, it is guaranteed that when `MessageResponse.complete` is received, the history will be updated to include the latest message.
+
+### Creation
+
+Instances of this class should not be directly initiated. They should be created by the `ModelRunner` instance.
+
+### Lifetime
+
+While it keeps the history and state needed by the model runner to generate content, its generation function relies on the model runner that created it. As a result, if the model runner that created the conversation instance has been destroyed, this instance also cannot perform generation anymore.
+
+## ModelRunner
+
+An instance of a model loaded in memory. Conversation instances should be created from it. Each inference stack will provide a model runner implementation for the LEAP SDK. The application needs to own the model runner object. If the model runner object is destroyed, ongoing generations may fail.
+
+If you need your model runner to survive after view controllers are destroyed, you may need to manage it at the app level or in a service-like object.
+
+```swift
+public protocol ModelRunner {
+    // Unload the model: the runner cannot be used after unload is called
+    func unload()
+
+    // Start generation from the conversation instance
+    func generateResponse(
+        conversation: Conversation,
+        onResponseCallback: @escaping (MessageResponse) -> Void
+    )
+}
+```
+
+### Creating Conversations
+
+Conversations are created directly using the `Conversation` initializer:
+
+```swift
+// Create a new conversation
+let conversation = Conversation(modelRunner: modelRunner, history: [])
+
+// Create conversation with system prompt
+let systemMessage = ChatMessage(role: .system, content: [.text("You are a helpful assistant.")])
+let conversation = Conversation(modelRunner: modelRunner, history: [systemMessage])
+```
+
+### `unload`
+
+Unload the model from memory. The model runner will not be able to perform generation once this method is invoked. Exceptions may be thrown in ongoing generations. It is the app developer's responsibility to ensure that unload is called after all generation is done.
+
+### `generateResponse`
+
+This function is **not** recommended to be called by the app directly. It is the interface for the model runner implementation to expose generation ability to the LEAP SDK. `Conversation.generateConversation` is the better wrapper of this method, which relies on Swift's async/await and AsyncStream to integrate with SwiftUI and UIKit lifecycle components.
+
+<Callout type="warning">
+  This function may block the thread. The callback-based design is intended for internal SDK use.
+</Callout>
+
+## ChatMessage
+
+Data structure that is compatible with the message object in OpenAI chat completion API.
+
+```swift
+public enum ChatMessageRole: String, Codable {
+    case user = "user"
+    case system = "system"
+    case assistant = "assistant"
+}
+
+public struct ChatMessage: Codable {
+    public var role: ChatMessageRole
+    public var content: [ChatMessageContent]
+
+    public init(role: ChatMessageRole, content: [ChatMessageContent])
+}
+```
+
+### Codable Support
+
+`ChatMessage` conforms to `Codable`, allowing easy serialization to and from JSON. The structure is compatible with `ChatCompletionRequestMessage` from the OpenAI API, containing `role` and `content` fields.
+
+```swift
+// Encoding to JSON
+let encoder = JSONEncoder()
+let jsonData = try encoder.encode(message)
+
+// Decoding from JSON
+let decoder = JSONDecoder()
+let message = try decoder.decode(ChatMessage.self, from: jsonData)
+```
+
+<Callout type="info">
+  `DecodingError` will be thrown if the provided JSON cannot be recognized as a valid message.
+</Callout>
+
+## ChatMessageContent
+
+Data structure that is compatible with the content object in OpenAI chat completion API. It is implemented as an enum.
+
+```swift
+public enum ChatMessageContent: Codable {
+    case text(String)
+
+    // Future content types can be added here
+    // case image(Data)
+    // case audio(Data)
+}
+```
+
+### Codable Support
+
+`ChatMessageContent` conforms to `Codable` and can be serialized to/from JSON in an OpenAI API compatible format.
+
+<Callout type="info">
+  `DecodingError` will be thrown if the provided JSON cannot be recognized as valid message content.
+</Callout>
+
+Currently, only the following content type is supported:
+
+- `text(String)`: Pure text content.
+
+## MessageResponse
+
+The response generated from models. Generation may take a long time to finish, so generated text is sent out as "chunks". When generation completes, a complete response object is sent out. This is an enum with the following cases:
+
+```swift
+public enum GenerationFinishReason {
+    case stop
+    case exceed_context
+}
+
+public enum MessageResponse {
+    case chunk(String)
+    case complete(String, GenerationFinishReason)
+}
+```
+
+- `chunk(String)` contains a piece of generated text.
+- `complete(String, GenerationFinishReason)` indicates the completion of generation. The associated `String` contains all the content generated from this round of generation, and the `GenerationFinishReason` indicates why the generation finished.
+
+## Error Handling
+
+All errors are thrown as `LeapError`. Currently defined cases include:
+
+```swift
+public enum LeapError: Error {
+    case loadModelFailure
+    // Additional error cases may be added in future versions
+}
+```
+
+- `loadModelFailure`: Error in loading the model from the specified URL.
+
+Additional error types may be added for generation errors and serialization errors in future versions of the SDK.
+
+## Complete Example
+
+Here's a complete example showing how to use the iOS SDK:
+
+```swift
+import LeapSDK
+import SwiftUI
+
+@Observable
+class ChatStore {
+    var conversation: Conversation?
+    var modelRunner: ModelRunner?
+    var isModelLoading = true
+
+    @MainActor
+    func setupModel() async {
+        guard modelRunner == nil else { return }
+        isModelLoading = true
+
+        do {
+            guard let modelURL = Bundle.main.url(
+                forResource: "qwen3-1_7b_8da4w",
+                withExtension: "bundle"
+            ) else {
+                print("❗️ Could not find model bundle")
+                isModelLoading = false
+                return
+            }
+
+            let modelRunner = try await LeapSDK.load(url: modelURL)
+            self.modelRunner = modelRunner
+            conversation = Conversation(modelRunner: modelRunner, history: [])
+            print("✅ Model loaded successfully!")
+        } catch {
+            print("🚨 Failed to load model: \(error)")
+        }
+
+        isModelLoading = false
+    }
+
+    @MainActor
+    func sendMessage(_ text: String) async {
+        guard let conversation = conversation else { return }
+
+        let userMessage = ChatMessage(role: .user, content: [.text(text)])
+        var assistantResponse = ""
+
+        for await response in conversation.generateConversation(message: userMessage) {
+            switch response {
+            case .chunk(let chunk):
+                assistantResponse += chunk
+                // Update UI with streaming text
+                print("Streaming: \(chunk)")
+            case .complete(let fullText, let reason):
+                print("Complete response: \(fullText)")
+                print("Finish reason: \(reason)")
+                // Response is now complete and added to conversation history
+            }
+        }
+    }
+}
+```
