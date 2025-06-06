@@ -12,24 +12,27 @@ const buttonVariants = cva(
     variants: {
       variant: {
         // shadcn/ui variants
-        default: 'bg-primary text-primary-foreground hover:bg-primary/90',
-        destructive: 'bg-destructive text-destructive-foreground hover:bg-destructive/90',
+        default:
+          'bg-primary text-primary-foreground hover:bg-primary/90 hover:scale-[1.02] hover:shadow-md',
+        destructive:
+          'bg-destructive text-destructive-foreground hover:bg-destructive/90 hover:scale-[1.02] hover:shadow-md',
         outline:
-          'border border-input font-bold bg-transparent hover:bg-accent hover:text-accent-foreground',
-        secondary: 'bg-secondary text-secondary-foreground hover:bg-secondary/80',
-        ghost: 'hover:bg-accent font-bold hover:text-accent-foreground',
-        link: 'text-primary underline-offset-4 hover:underline',
+          'border border-primary/50 font-bold bg-transparent hover:bg-accent hover:text-accent-foreground hover:scale-[1.02] hover:shadow-sm hover:border-white',
+        secondary:
+          'bg-secondary text-secondary-foreground hover:bg-secondary/80 hover:scale-[1.02] hover:shadow-sm',
+        ghost: 'hover:bg-accent font-bold hover:text-accent-foreground hover:scale-[1.02]',
+        link: 'text-primary underline-offset-4 hover:underline hover:text-primary/80',
         primary:
-          'bg-black text-white font-bold hover:bg-[var(--bg-primary)] focus-visible:outline-[var(--bg-primary)]',
+          'bg-black text-white font-bold hover:bg-[var(--bg-primary)] hover:scale-[1.02] hover:shadow-lg focus-visible:outline-[var(--bg-primary)] transform',
         tertiary:
-          'text-slate-900 hover:text-[var(--bg-primary)] focus-visible:outline-[var(--bg-primary)]',
+          'text-slate-900 hover:text-[var(--bg-primary)] hover:scale-[1.02] focus-visible:outline-[var(--bg-primary)] transform',
+        square: 'bg-transparent text-gray-400 font-bold hover:text-black',
       },
       size: {
         sm: 'rounded-sm px-3 text-sm',
         default: 'px-4 py-2 text-sm',
         lg: 'rounded-sm px-8 text-base',
-        icon: 'h-10 w-10',
-        // Custom sizes from second implementation
+        icon: 'h-8 w-8',
         small: 'text-sm px-3 py-1.5',
         big: 'text-sm sm:text-base px-4 sm:px-8 py-3 sm:py-4',
       },
@@ -91,6 +94,9 @@ const Button = React.forwardRef<HTMLButtonElement | HTMLAnchorElement, ButtonPro
     const iconSpacing = hasIcon ? 'gap-2 transition-all duration-200' : '';
     const tertiaryHover = hasIcon && variant === 'tertiary' ? 'hover:gap-3' : '';
 
+    // Disable animations for simple variant
+    const simpleNoAnimation = variant === 'square' && hasIcon ? 'gap-2' : '';
+
     // Get icon size based on button size
     const getIconSize = () => {
       switch (size) {
@@ -114,7 +120,11 @@ const Button = React.forwardRef<HTMLButtonElement | HTMLAnchorElement, ButtonPro
       }
 
       const iconElement = (
-        <TablerIcon size={getIconSize()} stroke={1.5} className="transition-all duration-200" />
+        <TablerIcon
+          size={getIconSize()}
+          stroke={1.5}
+          className={variant === 'square' ? '' : 'transition-all duration-200'}
+        />
       );
 
       return iconPosition === 'left' ? (
@@ -132,8 +142,8 @@ const Button = React.forwardRef<HTMLButtonElement | HTMLAnchorElement, ButtonPro
 
     const finalClassName = cn(
       buttonVariants({ variant, size, justify, className }),
-      iconSpacing,
-      tertiaryHover
+      variant === 'square' ? simpleNoAnimation : iconSpacing,
+      variant === 'square' ? '' : tertiaryHover
     );
 
     // If href is provided, render as Link
