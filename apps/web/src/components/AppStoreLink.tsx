@@ -47,11 +47,11 @@ const AppStoreLink: React.FC<AppStoreLinkProps> = ({
       href={config.href}
       target="_blank"
       rel="noopener noreferrer"
-      className={`flex items-center gap-3 px-4 py-3 rounded-md transition-colors ${themeClasses[theme]} ${className}`}
+      className={`flex items-center gap-2 md:gap-3 px-3 py-2 md:px-4 md:py-3 rounded-sm transition-colors ${themeClasses[theme]} ${className}`}
     >
-      <div className="scale-150">{config.icon}</div>
+      <div className="scale-90 md:scale-150">{config.icon}</div>
       <div className="text-left">
-        <div className="text-md flex items-center gap-1">
+        <div className="text-xs md:text-md flex items-center gap-1">
           {config.label}
           <IconExternalLink className="w-4 h-4" />
         </div>
