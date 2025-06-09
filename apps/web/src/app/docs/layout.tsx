@@ -1,6 +1,7 @@
-import { Footer, Layout } from 'nextra-theme-docs';
+import { Layout } from 'nextra-theme-docs';
 import { getPageMap } from 'nextra/page-map';
 
+import Footer from '@/components/Footer';
 import Header from '@/components/Header';
 
 const footer = <Footer />;
@@ -19,6 +20,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
           content: null,
         }}
         footer={footer}
+        darkMode={false}
       >
         <div className="mx-auto max-w-7xl items-center">{children}</div>
       </Layout>
