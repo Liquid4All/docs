@@ -4,6 +4,7 @@ import Link from 'next/link';
 import * as React from 'react';
 import { ComponentPropsWithoutRef } from 'react';
 
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 
 const buttonVariants = cva(
@@ -50,6 +51,39 @@ const buttonVariants = cva(
   }
 );
 
+type TooltipWrapperProps = {
+  tooltipText?: string;
+  children: React.ReactNode;
+};
+
+// Server-safe tooltip wrapper that only shows on desktop
+const TooltipWrapper: React.FC<TooltipWrapperProps> = ({ tooltipText, children }) => {
+  if (!tooltipText) {
+    return <>{children}</>;
+  }
+
+  return (
+    <div className="hidden md:block">
+      <Tooltip>
+        <TooltipTrigger asChild>{children}</TooltipTrigger>
+        <TooltipContent>{tooltipText}</TooltipContent>
+      </Tooltip>
+    </div>
+  );
+};
+
+// Fallback without tooltip for mobile
+const MobileWrapper: React.FC<{ children: React.ReactNode; hasTooltip: boolean }> = ({
+  children,
+  hasTooltip,
+}) => {
+  if (!hasTooltip) {
+    return <>{children}</>;
+  }
+
+  return <div className="block md:hidden">{children}</div>;
+};
+
 type ButtonBaseProps = {
   asChild?: boolean;
   icon?: React.ComponentType<{
@@ -59,6 +93,9 @@ type ButtonBaseProps = {
   }>;
   iconPosition?: 'left' | 'right';
   targetBlank?: boolean;
+  tooltipText?: string;
+  tooltipClickText?: string;
+  tooltipClickDuration?: number;
 } & VariantProps<typeof buttonVariants>;
 
 type ButtonAsButton = ButtonBaseProps &
@@ -84,6 +121,9 @@ const Button = React.forwardRef<HTMLButtonElement | HTMLAnchorElement, ButtonPro
       icon: TablerIcon,
       iconPosition = 'right',
       targetBlank = false,
+      tooltipText,
+      tooltipClickText,
+      tooltipClickDuration = 2000,
       children,
       ...props
     },
@@ -146,42 +186,61 @@ const Button = React.forwardRef<HTMLButtonElement | HTMLAnchorElement, ButtonPro
       variant === 'square' ? '' : tertiaryHover
     );
 
-    // If href is provided, render as Link
-    if ('href' in props && props.href) {
-      return (
-        <Link
-          className={finalClassName}
-          {...(targetBlank && { target: '_blank', rel: 'noopener noreferrer' })}
-          ref={ref as React.Ref<HTMLAnchorElement>}
-          {...(props as ButtonAsLink)}
-        >
-          {renderContent()}
-        </Link>
-      );
-    }
+    // Create the button element based on type
+    const createButtonElement = () => {
+      // If href is provided, render as Link
+      if ('href' in props && props.href) {
+        return (
+          <Link
+            className={finalClassName}
+            {...(targetBlank && { target: '_blank', rel: 'noopener noreferrer' })}
+            ref={ref as React.Ref<HTMLAnchorElement>}
+            {...(props as ButtonAsLink)}
+          >
+            {renderContent()}
+          </Link>
+        );
+      }
 
-    // If asChild is true, use Slot for composition
-    if (asChild) {
+      // If asChild is true, use Slot for composition
+      if (asChild) {
+        return (
+          <Slot
+            className={finalClassName}
+            ref={ref as React.Ref<HTMLElement>}
+            {...(props as ButtonAsButton)}
+          >
+            {renderContent()}
+          </Slot>
+        );
+      }
+
+      // Default button element
       return (
-        <Slot
+        <button
           className={finalClassName}
-          ref={ref as React.Ref<HTMLElement>}
+          ref={ref as React.Ref<HTMLButtonElement>}
           {...(props as ButtonAsButton)}
         >
           {renderContent()}
-        </Slot>
+        </button>
       );
+    };
+
+    const buttonElement = createButtonElement();
+    const hasTooltip = Boolean(tooltipText);
+
+    // If no tooltip, return the button directly
+    if (!hasTooltip) {
+      return buttonElement;
     }
 
-    // Default button element
+    // Return both desktop (with tooltip) and mobile (without tooltip) versions
     return (
-      <button
-        className={finalClassName}
-        ref={ref as React.Ref<HTMLButtonElement>}
-        {...(props as ButtonAsButton)}
-      >
-        {renderContent()}
-      </button>
+      <>
+        <TooltipWrapper tooltipText={tooltipText}>{buttonElement}</TooltipWrapper>
+        <MobileWrapper hasTooltip={hasTooltip}>{buttonElement}</MobileWrapper>
+      </>
     );
   }
 );
