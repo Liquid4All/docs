@@ -2,6 +2,12 @@ import { Callout } from 'nextra/components';
 
 # Android API Spec
 
+<Callout type="info">
+  All functions listed in this document are safe to be called from the main thread (or UI thread)
+  and all callbacks will be run on the main thread if there is no explicit instructions or
+  explanations.
+</Callout>
+
 ## LeapClient
 
 The entrypoint of LEAP SDK. It doesn’t hold any data.
@@ -171,6 +177,8 @@ ChatMessage.fromJSONObject(obj: JSONObject): ChatMessage
 
 Return a JSONObject that represents the chat message. The return object is compatible with `ChatCompletionRequestMessage` from OpenAI API. It contains 2 fields: `role` and `content` .
 
+See also: [Gson Support](#gson-supports).
+
 ### `fromJSONObject`
 
 Construct a `ChatMessage` instance from a `JSONObject`. Not all JSON object variants in `ChatCompletionRequestMessage` of OpenAI API are acceptable. As for now, `role` supports user, system and assistant. `content` can be a string or an array.
@@ -180,6 +188,8 @@ Construct a `ChatMessage` instance from a `JSONObject`. Not all JSON object vari
   `LeapSerializationException` will be thrown if the provided JSONObject cannot be recognized as a
   message.{' '}
 </Callout>
+
+See also: [Gson Support](#gson-supports).
 
 ## ChatMessage.Role
 
@@ -245,3 +255,39 @@ All errors are thrown as `LeapException` . It has following subclasses:
 - `LeapModelLoadingException` : error in loading the model
 - `LeapGenerationException` : error in generating contents
 - `LeapSerializationException` : error in serializing / deserializing data.
+
+## Gson Supports
+
+Leap Android SDK also has [Gson](https://github.com/google/gson) support. `leap_gson` package should be imported to enable Gson to serialize and deserialize Leap objects. The Gson support has the same behaviors as the existing `org.json` implementation.
+
+Following types are supported:
+
+- [`ChatMessage`](#chatmessage)
+- [`ChatMessageContent`](#chatmessagecontent)
+
+### Create Gson Object
+
+To create a Gson object that supports Leap objects, call `registerLeapAdapters` on the `GsonBuilder` before creating the Gson object.
+
+```kotlin
+import ai.liquid.leap.gson.registerLeapAdapters
+import com.google.gson.GsonBuilder
+
+val gson = GsonBuilder().registerLeapAdapters().create()
+```
+
+### Serializing and Deserializing Conversation History
+
+With a [conversation](#conversation) object, simply calling `Gson.toJson` to convert the chat message history into a JSON string. The return JSON will be an array.
+
+```kotlin
+val json = gson.toJson(conversation.history)
+```
+
+To deserializing the conversation history from a JSON array, use `LeapGson.messageListTypeToken` as the type hint for Gson.
+
+```kotlin
+import ai.liquid.leap.gson.LeapGson
+
+val chatHistory: List<ChatMessage> = gson.fromJson(json, LeapGson.messageListTypeToken)
+```
