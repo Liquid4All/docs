@@ -10,7 +10,6 @@ export const generalNavigations: NavigationItemType[] = [
 
 // Navigation items for signed-in users
 export const signedInUserNavigations: NavigationItemType[] = [
-  { label: 'Dashboard', liquidOnly: true, href: '/dashboard', variant: 'tertiary' },
   { label: 'Profile', href: '/profile', variant: 'tertiary' },
   { label: 'Sign Out', href: '#', action: 'sign-out', variant: 'tertiary', icon: IconLogout },
 ];

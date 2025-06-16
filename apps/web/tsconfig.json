@@ -27,5 +27,5 @@
     ".storybook/preview.tsx",
     ".storybook/main.ts"
   ],
-  "exclude": ["node_modules"]
+  "exclude": ["node_modules", ".next"]
 }

@@ -6,7 +6,7 @@ import Header from '@/components/Header';
 
 const footer = <Footer />;
 
-export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
+export default async function DocumentationLayout({ children }: { children: React.ReactNode }) {
   const pageMap = await getPageMap();
 
   return (
