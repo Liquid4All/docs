@@ -1,13 +1,13 @@
 'use client';
 
 import { UserResource } from '@clerk/types';
-import { Dialog, DialogPanel } from '@headlessui/react';
 import { IconX } from '@tabler/icons-react';
 import Link from 'next/link';
 import { FC } from 'react';
 
 import { Logo } from '@/components/Logo';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { TITLE } from '@/constants';
 
 import { NavigationItem, NavigationItemType } from './NavigationItem';
@@ -32,9 +32,8 @@ export const MobileNavigation: FC<MobileNavigationProps> = ({
   signOut,
 }) => {
   return (
-    <Dialog open={isOpen} onClose={onClose} className="lg:hidden">
-      <div className="fixed inset-0 z-[60]" />
-      <DialogPanel className="fixed inset-y-0 right-0 z-[60] w-full overflow-y-auto bg-white px-6 py-6 sm:max-w-sm sm:ring-1 sm:ring-gray-900/10">
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="fixed inset-y-0 right-0 z-[60] w-full overflow-y-auto bg-white px-6 py-6 sm:max-w-sm sm:ring-1 sm:ring-gray-900/10 data-[state=open]:slide-in-from-right data-[state=closed]:slide-out-to-right lg:hidden translate-x-0 translate-y-0">
         <div className="flex items-center justify-between">
           <Link href="#" className="-m-1.5 p-1.5">
             <span className="sr-only">{TITLE}</span>
@@ -66,7 +65,7 @@ export const MobileNavigation: FC<MobileNavigationProps> = ({
             </div>
           </div>
         </div>
-      </DialogPanel>
+      </DialogContent>
     </Dialog>
   );
 };
