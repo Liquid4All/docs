@@ -19,7 +19,6 @@
     "@clerk/nextjs": "^6.20.2",
     "@clerk/types": "^4.59.2",
     "@fontsource/jetbrains-mono": "^5.2.5",
-    "@headlessui/react": "^2.1.3",
     "@heroicons/react": "^2.2.0",
     "@liquidai/leap-database": "*",
     "@liquidai/leap-lib": "*",
