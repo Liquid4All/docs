@@ -2,6 +2,7 @@
 
 import { UserResource } from '@clerk/types';
 import { UserCircleIcon } from '@heroicons/react/24/outline';
+import { useRouter } from 'next/navigation';
 import { FC, useEffect, useRef, useState } from 'react';
 
 import { NavigationItem } from './NavigationItem';
@@ -10,18 +11,18 @@ import { signedInUserNavigations, signedOutUserNavigations } from './navigationC
 interface ProfileDropdownProps {
   isSignedIn: boolean;
   user: UserResource | null | undefined;
-  signOut: () => void;
 }
 
 const getUserEmails = (user: UserResource | undefined | null): string[] => {
   return user?.emailAddresses?.map((email) => email.emailAddress) ?? [];
 };
 
-export const ProfileDropdown: FC<ProfileDropdownProps> = ({ isSignedIn, user, signOut }) => {
+export const ProfileDropdown: FC<ProfileDropdownProps> = ({ isSignedIn, user }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [focusedIndex, setFocusedIndex] = useState(-1);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
+  const router = useRouter();
 
   const userNavigations = isSignedIn ? signedInUserNavigations : signedOutUserNavigations;
   const userEmails = getUserEmails(user);
@@ -64,11 +65,8 @@ export const ProfileDropdown: FC<ProfileDropdownProps> = ({ isSignedIn, user, si
         case ' ':
           if (focusedIndex >= 0) {
             event.preventDefault();
-            // Handle navigation item click
-            const item = userNavigations[focusedIndex];
-            if (item.action === 'sign-out') {
-              signOut();
-            }
+            const selectedItem = userNavigations[focusedIndex];
+            router.push(selectedItem.href);
             setIsOpen(false);
             setFocusedIndex(-1);
           }
@@ -78,7 +76,7 @@ export const ProfileDropdown: FC<ProfileDropdownProps> = ({ isSignedIn, user, si
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, focusedIndex, userNavigations, signOut]);
+  }, [isOpen, focusedIndex, userNavigations, router]);
 
   const toggleDropdown = () => {
     setIsOpen(!isOpen);
@@ -114,7 +112,6 @@ export const ProfileDropdown: FC<ProfileDropdownProps> = ({ isSignedIn, user, si
                     item={item}
                     isMobile={false}
                     userEmails={userEmails}
-                    signOut={signOut}
                     className="px-4 py-1 "
                   />
                 </div>

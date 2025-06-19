@@ -17,7 +17,6 @@ interface MobileNavigationProps {
   onClose: () => void;
   navigationItems: NavigationItemType[];
   user: UserResource | null | undefined;
-  signOut: () => void;
 }
 
 const getUserEmails = (user: UserResource | undefined | null): string[] => {
@@ -29,7 +28,6 @@ export const MobileNavigation: FC<MobileNavigationProps> = ({
   onClose,
   navigationItems,
   user,
-  signOut,
 }) => {
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -57,7 +55,6 @@ export const MobileNavigation: FC<MobileNavigationProps> = ({
                     item={item}
                     isMobile={true}
                     userEmails={getUserEmails(user)}
-                    signOut={signOut}
                     className="pl-0"
                   />
                 </div>

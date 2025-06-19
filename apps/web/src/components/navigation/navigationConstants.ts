@@ -11,7 +11,7 @@ export const generalNavigations: NavigationItemType[] = [
 // Navigation items for signed-in users
 export const signedInUserNavigations: NavigationItemType[] = [
   { label: 'Profile', href: '/profile', variant: 'tertiary' },
-  { label: 'Sign Out', href: '#', action: 'sign-out', variant: 'tertiary', icon: IconLogout },
+  { label: 'Sign Out', href: '/sign-out', variant: 'tertiary', icon: IconLogout },
 ];
 
 // Navigation items for signed-out users

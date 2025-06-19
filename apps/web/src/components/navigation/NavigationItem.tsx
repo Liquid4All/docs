@@ -1,4 +1,3 @@
-import { Search } from 'nextra/components';
 import { FC } from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -7,7 +6,6 @@ export interface NavigationItemType {
   label: string;
   href: string;
   liquidOnly?: boolean;
-  action?: 'search' | 'sign-out';
   variant?: 'primary' | 'secondary' | 'tertiary';
   icon?: React.ComponentType<{
     size?: string | number;
@@ -20,7 +18,6 @@ interface NavigationItemProps {
   item: NavigationItemType;
   isMobile: boolean;
   userEmails: string[];
-  signOut: () => void;
   className?: string;
 }
 
@@ -28,15 +25,10 @@ export const NavigationItem: FC<NavigationItemProps> = ({
   item,
   isMobile,
   userEmails,
-  signOut,
   className,
 }) => {
   if (item.liquidOnly && !userEmails.some((e) => e.endsWith('liquid.ai'))) {
     return null;
-  }
-
-  if (item.action === 'search') {
-    return <Search />;
   }
 
   const baseClassName = isMobile ? '' : 'text-md p-1';
@@ -50,11 +42,6 @@ export const NavigationItem: FC<NavigationItemProps> = ({
       href={item.href}
       variant={isMobile ? 'tertiary' : variant}
       icon={item.icon}
-      onClick={() => {
-        if (item.action === 'sign-out') {
-          signOut();
-        }
-      }}
       className={className || baseClassName}
       size="small"
     >
