@@ -9,7 +9,7 @@ import { Head } from 'nextra/components';
 import { ReactNode } from 'react';
 import { Toaster } from 'sonner';
 
-import { DESCRIPTION, DOMAIN_URL, TITLE } from '@/constants';
+import { DESCRIPTION, DOMAIN_URL, FULL_TITLE, TITLE } from '@/constants';
 import '@/styles/fonts.css';
 import '@/styles/globals.css';
 import '@/styles/tailwind.css';
@@ -17,7 +17,7 @@ import '@/styles/tailwind.css';
 export const metadata: Metadata = {
   title: {
     template: `%s | ${TITLE}`,
-    default: TITLE,
+    default: FULL_TITLE,
   },
   description: DESCRIPTION,
   icons: [
@@ -28,10 +28,17 @@ export const metadata: Metadata = {
   ],
   robots: 'index, follow',
   openGraph: {
-    title: `Home | ${TITLE}`,
+    title: FULL_TITLE,
+    siteName: FULL_TITLE,
     description: DESCRIPTION,
     url: DOMAIN_URL,
     type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: FULL_TITLE,
+    description: DESCRIPTION,
+    site: '@LiquidAI_',
   },
 };
 
