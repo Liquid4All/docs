@@ -1,6 +1,7 @@
 export const MAIN_COLOR = '#731DE0';
 export const MINOR_COLOR = '#326fff';
 
+export const FULL_TITLE = 'Liquid Edge AI Platform';
 export const TITLE = 'Leap';
 export const DESCRIPTION =
   'Liquid Leap empowers AI developers to deploy the most capable edge models with one command.';
