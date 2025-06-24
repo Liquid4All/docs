@@ -5,6 +5,8 @@ import { UserCircleIcon } from '@heroicons/react/24/outline';
 import { useRouter } from 'next/navigation';
 import { FC, useEffect, useRef, useState } from 'react';
 
+import { getUserEmails } from '@/lib/user';
+
 import { NavigationItem } from './NavigationItem';
 import { signedInUserNavigations, signedOutUserNavigations } from './navigationConstants';
 
@@ -12,10 +14,6 @@ interface ProfileDropdownProps {
   isSignedIn: boolean;
   user: UserResource | null | undefined;
 }
-
-const getUserEmails = (user: UserResource | undefined | null): string[] => {
-  return user?.emailAddresses?.map((email) => email.emailAddress) ?? [];
-};
 
 export const ProfileDropdown: FC<ProfileDropdownProps> = ({ isSignedIn, user }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -66,7 +64,9 @@ export const ProfileDropdown: FC<ProfileDropdownProps> = ({ isSignedIn, user }) 
           if (focusedIndex >= 0) {
             event.preventDefault();
             const selectedItem = userNavigations[focusedIndex];
-            router.push(selectedItem.href);
+            if (selectedItem.href != null) {
+              router.push(selectedItem.href);
+            }
             setIsOpen(false);
             setFocusedIndex(-1);
           }
@@ -99,23 +99,16 @@ export const ProfileDropdown: FC<ProfileDropdownProps> = ({ isSignedIn, user }) 
       {isOpen && (
         <div className="absolute right-0 z-100 w-fit p-1 text-left origin-top-right divide-y divide-gray-100 bg-white rounded-sm shadow-lg focus:outline-none">
           <div className="space-y-2">
-            {userNavigations
-              .filter((item) => !item.liquidOnly || userEmails.some((e) => e.endsWith('liquid.ai')))
-              .map((item, index) => (
-                <div
-                  key={item.label}
-                  className={`rounded-sm whitespace-nowrap ${focusedIndex === index ? 'bg-gray-100' : ''}`}
-                  onMouseEnter={() => setFocusedIndex(index)}
-                  onMouseLeave={() => setFocusedIndex(-1)}
-                >
-                  <NavigationItem
-                    item={item}
-                    isMobile={false}
-                    userEmails={userEmails}
-                    className="px-4 py-1 "
-                  />
-                </div>
-              ))}
+            {userNavigations.map((item, index) => (
+              <div
+                key={item.label}
+                className={`rounded-sm whitespace-nowrap ${focusedIndex === index ? 'bg-gray-100' : ''}`}
+                onMouseEnter={() => setFocusedIndex(index)}
+                onMouseLeave={() => setFocusedIndex(-1)}
+              >
+                <NavigationItem item={item} isMobile={false} className="px-4 py-1 " />
+              </div>
+            ))}
           </div>
         </div>
       )}
