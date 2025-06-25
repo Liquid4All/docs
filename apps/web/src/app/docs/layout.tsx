@@ -21,6 +21,10 @@ export default async function DocumentationLayout({ children }: { children: Reac
         }}
         footer={footer}
         darkMode={false}
+        nextThemes={{
+          defaultTheme: 'light',
+          forcedTheme: 'light',
+        }}
       >
         <div className="mx-auto max-w-7xl items-center">{children}</div>
       </Layout>
