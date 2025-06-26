@@ -1,5 +1,6 @@
 'use client';
 
+import { isEmptyString } from '@liquidai/leap-lib/utils';
 import * as Sentry from '@sentry/nextjs';
 import React, { ChangeEvent, useState } from 'react';
 
@@ -27,7 +28,7 @@ export const FeedbackModal = ({ isOpen, onClose }: FeedbackModalProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async () => {
-    if (!feedback.trim()) {
+    if (isEmptyString(feedback.trim())) {
       return;
     }
 
