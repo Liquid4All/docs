@@ -22,6 +22,10 @@ export default withSentryConfig(
     reactStrictMode: true,
     pageExtensions: ['js', 'jsx', 'md', 'mdx', 'ts', 'tsx'],
     devIndicators: false,
+    outputFileTracingIncludes: {
+      '/api/docs/**': ['./src/content/**/*'],
+      '/llms.txt': ['./src/content/**/*'],
+    },
   }),
   {
     // For all available options, see:
