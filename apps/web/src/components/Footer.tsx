@@ -3,6 +3,7 @@ import Link from 'next/link';
 
 import AppStoreLink from '@/components/AppStoreLink';
 import { Container } from '@/components/Container';
+import FeedbackButton from '@/components/FeedbackButton';
 import { Logo } from '@/components/Logo';
 import { Text } from '@/components/Text';
 import { TITLE } from '@/constants';
@@ -11,11 +12,13 @@ interface LinkType {
   label: string;
   href: string;
   external?: boolean;
+  special?: 'feedback';
 }
 
 interface FooterType {
   explore: LinkType[];
   company: LinkType[];
+  leap: LinkType[];
   legal: LinkType[];
 }
 
@@ -30,6 +33,8 @@ const footerData: FooterType = {
     { label: 'Careers', href: 'https://jobs.lever.co/liquid.ai', external: true },
   ],
 
+  leap: [{ label: 'Feedback', href: '#', special: 'feedback' }],
+
   legal: [
     { label: 'Privacy Policy', href: '/privacy' },
     { label: 'Terms & Conditions', href: '/terms' },
@@ -41,24 +46,37 @@ interface FooterSectionProps {
   links: LinkType[];
 }
 
+const LINK_CLASSNAME =
+  'text-sm text-black hover:text-purple-800 transition-colors inline-flex items-center gap-1';
+
 const FooterSection = ({ title, links }: FooterSectionProps) => (
   <div className="flex-row lg:flex-col space-y-4">
     <Text variant="jetbrains" className="block">
       {title}
     </Text>
     <ul className="space-y-1">
-      {links.map((link) => (
-        <li key={link.label}>
-          <Link
-            href={link.href}
-            className="text-sm text-black hover:text-purple-800 transition-colors inline-flex items-center gap-1"
-            {...(link.external && { target: '_blank', rel: 'noopener noreferrer' })}
-          >
-            {link.label}
-            {link.external && <ArrowUpRightIcon className="w-3 h-3" />}
-          </Link>
-        </li>
-      ))}
+      {links.map((link) => {
+        if (link.special === 'feedback') {
+          return (
+            <li key={link.label}>
+              <FeedbackButton label={link.label} className={LINK_CLASSNAME} />
+            </li>
+          );
+        }
+
+        return (
+          <li key={link.label}>
+            <Link
+              href={link.href}
+              className={LINK_CLASSNAME}
+              {...(link.external && { target: '_blank', rel: 'noopener noreferrer' })}
+            >
+              {link.label}
+              {link.external && <ArrowUpRightIcon className="w-3 h-3" />}
+            </Link>
+          </li>
+        );
+      })}
     </ul>
   </div>
 );
@@ -87,6 +105,7 @@ export default function Footer() {
               <div className="flex md:flex-row gap-8 sm:gap-16 lg:justify-center md:flex-1 md:flex-col">
                 <FooterSection title="EXPLORE" links={footerData.explore} />
                 <FooterSection title="COMPANY" links={footerData.company} />
+                <FooterSection title="LEAP" links={footerData.leap} />
               </div>
 
               {/* Column 3: App download - Desktop right */}

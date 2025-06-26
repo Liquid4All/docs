@@ -1,7 +1,7 @@
 'use client';
 
 import { UserResource } from '@clerk/types';
-import { UserCircleIcon } from '@heroicons/react/24/outline';
+import { IconUserCircle } from '@tabler/icons-react';
 import { useRouter } from 'next/navigation';
 import { FC, useEffect, useRef, useState } from 'react';
 
@@ -88,11 +88,11 @@ export const ProfileDropdown: FC<ProfileDropdownProps> = ({ isSignedIn, user }) 
       <button
         ref={buttonRef}
         onClick={toggleDropdown}
-        className="inline-flex items-center gap-x-1.5 px-3 py-2 text-sm text-gray-900 hover:text-purple-800"
+        className="inline-flex items-center gap-x-1.5 py-2 text-sm text-gray-900 hover:text-purple-800"
         aria-expanded={isOpen}
         aria-haspopup="true"
       >
-        <UserCircleIcon className="h-5 w-5 text-black" />
+        <IconUserCircle stroke={1.5} className="h-5 w-5 text-black" />
         {isSignedIn && <span>{user?.firstName || userEmails[0] || 'User'}</span>}
       </button>
 

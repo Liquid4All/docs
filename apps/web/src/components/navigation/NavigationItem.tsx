@@ -21,14 +21,12 @@ interface NavigationItemProps {
 export const NavigationItem = ({ item, isMobile, onClick, className }: NavigationItemProps) => {
   const baseClassName = isMobile ? '' : 'text-md p-1';
 
-  // Use tertiary as default variant, tertiary for mobile
-  const variant = item.variant || 'tertiary';
-
   return (
     <Button
       key={item.label}
       href={item.href ?? undefined}
-      variant={isMobile ? 'tertiary' : variant}
+      // Use tertiary as default variant, tertiary for mobile
+      variant={isMobile ? 'tertiary' : (item.variant ?? 'tertiary')}
       icon={item.icon}
       onClick={onClick}
       className={className || baseClassName}
