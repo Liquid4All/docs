@@ -14,7 +14,8 @@ The entrypoint of LEAP SDK. It doesn’t hold any data.
 
 ```kotlin
 object LeapClient {
-	suspend fun loadModel(path: String): ModelRunner
+  suspend fun loadModel(path: String): ModelRunner
+  suspend fun loadModelAsResult(path: String): Result<ModelRunner>
 }
 ```
 
@@ -27,6 +28,10 @@ This function can be called from UI thread. The `path` should be a local path po
   The function will throw `LeapModelLoadingException` if LEAP fails to load the model.
 </Callout>
 
+### `loadModelAsResult`
+
+This function can be called from UI thread. The `path` should be a local path pointing to model bundle file. This function is merely a wrapper around `loadModel` function to return a [`Result`](https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-result/).
+
 ## Conversation
 
 The instance of a conversation, which hosts the message history and states that needed to be used by model runner for generation.
@@ -35,14 +40,35 @@ While this conversation instance holds the data necessary for model runner to pe
 
 ```kotlin
 interface Conversation {
-	// Chat history
-	val history: List<ChatMessage>
-	// Generating response from a text input as user message
-	fun generateResponse(userTextMessage: String): Flow<MessageResponse>
-	// Generating response from an arbitrary new message
-	fun generateResponse(message: ChatMessage): Flow<MessageResponse>
+  // Chat history
+  val history: List<ChatMessage>
+  // Whether a generation is in progress
+  val isGenerating: Boolean
+
+  // Generating response from a text input as user message
+  fun generateResponse(userTextMessage: String): Flow<MessageResponse>
+  // Generating response from an arbitrary new message
+  fun generateResponse(message: ChatMessage): Flow<MessageResponse>
+  // Export the chat history in this convesation to a `JSONArray`.
+  fun exportToJSONArray(): JSONArray
 }
 ```
+
+### Creation
+
+Instance of this class should not be directly initiated. It should be created by the `ModelRunner` instance.
+
+### Lifetime
+
+While it keeps the history and state that needed by the model runner to generate content, its generation function relies on the model runner that creates it. As a result, if model runner that created the conversation instance has been destroyed, this instance also cannot do generation anymore.
+
+### `history`
+
+`history` value field will return a **copy** of the chat message history. Any mutations to its return value will **not** change the internal state of the generation. If there is an ongoing generation, the partial message may not be available in the return value of this field. However, it is guaranteed that when `MessageResponse.Complete` is received and when the flow is completed, the history value field will be updated to have the latest message.
+
+### `isGenerating`
+
+`isGenerating` value field is true if the generation is still in progress. It is same to check from any threads.
 
 ### `generateResponse`
 
@@ -63,6 +89,12 @@ The return value is a Kotlin [asynchronous flow](https://kotlinlang.org/docs/flo
   current generation is done. However, there is no guarantee that the requests come first will be
   processed first.{' '}
 </Callout>
+
+### `exportToJSONArray`
+
+Export the whole history into a `JSONArray`. Each element can be interpreted as an `ChatCompletionRequestMessage` instance in OpenAI API schema.
+
+See also: [Gson Support](#gson-supports).
 
 ### Cancellation of the generation
 
@@ -89,18 +121,6 @@ job = lifecycleScope.launch {
 // Stop the generation by canceling the job
 job.cancel()
 ```
-
-### `history`
-
-`history` value field will return a **copy** of the chat message history. Any mutations to its return value will **not** change the internal state of the generation. If there is an ongoing generation, the partial message may not be available in the return value of this field. However, it is guaranteed that when `MessageResponse.Complete` is received and when the flow is completed, the history value field will be updated to have the latest message.
-
-### Creation
-
-Instance of this class should not be directly initiated. It should be created by the `ModelRunner` instance.
-
-### Lifetime
-
-While it keeps the history and state that needed by the model runner to generate content, its generation function relies on the model runner that creates it. As a result, if model runner that created the conversation instance has been destroyed, this instance also cannot do generation anymore.
 
 ## ModelRunner
 
@@ -213,8 +233,8 @@ Data class that is compatible with the content object in OpenAI chat completion 
 
 ```kotlin
 abstract class ChatMessageContent {
-	 fun clone(): ChatMessageContent
-	 fun toJSONObject(): JSONObject
+  fun clone(): ChatMessageContent
+  fun toJSONObject(): JSONObject
 }
 fun ChatMessageContent.fromJSONObject(obj: JSONObject): ChatMessageContent
 ```
@@ -238,9 +258,9 @@ The response generated from models. The generation may takes a long time to fini
 
 ```kotlin
 sealed class MessageResponse {
-    class Chunk(val text: String) : MessageResponse()
-    class ReasoningChunk(val reasoning: String) : MessageResponse()
-    class Complete(val fullMessage: ChatMessage, val finishReason: GenerationFinishReason) : MessageResponse()
+  class Chunk(val text: String) : MessageResponse()
+  class ReasoningChunk(val reasoning: String) : MessageResponse()
+  class Complete(val fullMessage: ChatMessage, val finishReason: GenerationFinishReason) : MessageResponse()
 }
 ```
 
