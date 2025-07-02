@@ -4,7 +4,6 @@ import { isEmptyString } from '@liquidai/leap-lib/utils';
 import * as Sentry from '@sentry/nextjs';
 import React, { ChangeEvent, useState } from 'react';
 
-import { Text } from '@/components/Text';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -92,9 +91,7 @@ export const FeedbackModal = ({ isOpen, onClose }: FeedbackModalProps) => {
               checked={canContact}
               onCheckedChange={handleContactChange}
             />
-            <Text variant="body" className="text-xs">
-              Liquid can contact me about this feedback
-            </Text>
+            <p>Liquid can contact me about this feedback</p>
           </div>
         </div>
 
