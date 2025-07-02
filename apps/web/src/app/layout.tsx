@@ -1,7 +1,6 @@
 import { ClerkProvider } from '@clerk/nextjs';
 import '@fontsource/jetbrains-mono';
 import { Analytics } from '@vercel/analytics/next';
-import { clsx } from 'clsx';
 import { type Metadata } from 'next';
 import { Inter, Lexend } from 'next/font/google';
 import 'nextra-theme-docs/style.css';
@@ -10,9 +9,11 @@ import { ReactNode } from 'react';
 import { Toaster } from 'sonner';
 
 import { DESCRIPTION, DOMAIN_URL, FULL_TITLE, TITLE } from '@/constants';
-import '@/styles/fonts.css';
+import { cn } from '@/lib/utils';
+import '@/styles/custom-nextra.css';
 import '@/styles/globals.css';
 import '@/styles/tailwind.css';
+import '@/styles/text.css';
 
 export const metadata: Metadata = {
   title: {
@@ -61,7 +62,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
       dir="ltr"
       // Suggested by `next-themes` package https://github.com/pacocoursey/next-themes#with-app
       suppressHydrationWarning
-      className={clsx('h-full scroll-smooth antialiased', inter.variable, lexend.variable)}
+      className={cn('h-full scroll-smooth antialiased', inter.variable, lexend.variable)}
     >
       <Head
         color={{
