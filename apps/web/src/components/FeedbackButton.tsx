@@ -1,8 +1,10 @@
 'use client';
 
-import { ReactNode, useState } from 'react';
+import { ReactNode, useCallback, useState } from 'react';
 
 import { FeedbackModal } from '@/components/FeedbackModal';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
 interface FeedbackButtonProps {
   label: ReactNode;
@@ -10,15 +12,19 @@ interface FeedbackButtonProps {
 }
 
 const FeedbackButton = ({ label, className }: FeedbackButtonProps) => {
-  const [feedbackModalOpen, setFeedbackModalOpen] = useState(false);
+  const [feedbackModalOpen, setFeedbackModalOpen] = useState<boolean>(false);
+
+  const toggleFeedbackModal = useCallback(() => {
+    setFeedbackModalOpen((prev) => !prev);
+  }, []);
 
   return (
     <>
-      <button onClick={() => setFeedbackModalOpen(true)} className={className}>
+      <Button variant="ghost" onClick={toggleFeedbackModal} className={cn('px-0', className)}>
         {label}
-      </button>
+      </Button>
 
-      <FeedbackModal isOpen={feedbackModalOpen} onClose={() => setFeedbackModalOpen(false)} />
+      <FeedbackModal isOpen={feedbackModalOpen} onClose={toggleFeedbackModal} />
     </>
   );
 };
