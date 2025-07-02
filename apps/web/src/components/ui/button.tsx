@@ -8,26 +8,22 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { cn } from '@/lib/utils';
 
 const buttonVariants = cva(
-  'inline-flex items-center justify-center whitespace-nowrap rounded-sm font-medium ring-offset-background transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 cursor-pointer',
+  'inline-flex items-center justify-center whitespace-nowrap rounded-sm font-medium ring-offset-background transition-all duration-200 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 cursor-pointer',
   {
     variants: {
       variant: {
         // shadcn/ui variants
-        default:
-          'bg-primary text-primary-foreground hover:bg-primary/90 hover:scale-[1.02] hover:shadow-md',
-        destructive:
-          'bg-destructive text-destructive-foreground hover:bg-destructive/90 hover:scale-[1.02] hover:shadow-md',
+        default: 'bg-[var(--primary)] text-primary-foreground hover:bg-[var(--primary)]/90',
+        destructive: 'bg-destructive text-destructive-foreground hover:bg-destructive/90',
         outline:
-          'border border-primary/50 font-bold bg-transparent hover:bg-accent hover:text-accent-foreground hover:scale-[1.02] hover:shadow-sm hover:border-white',
-        secondary:
-          'bg-secondary text-secondary-foreground hover:bg-secondary/80 hover:scale-[1.02] hover:shadow-sm',
-        ghost: 'hover:bg-accent font-bold hover:text-accent-foreground hover:scale-[1.02]',
-        link: 'text-primary underline-offset-4 hover:underline hover:text-primary/80',
+          'border border-neutral-400/50 font-bold bg-transparent hover:border-[var(--primary)] hover:text-accent-foreground hover:bg-[var(--primary)] hover:text-white',
+        secondary: 'bg-secondary text-secondary-foreground hover:bg-secondary/80',
+        ghost: 'text-black hover:text-[var(--primary)]',
+        link: 'text-[var(--primary)] underline-offset-4 hover:underline hover:text-[var(--primary)]/80',
         primary:
-          'bg-black text-white font-bold hover:bg-[var(--bg-primary)] hover:scale-[1.02] hover:shadow-lg focus-visible:outline-[var(--bg-primary)] transform',
-        tertiary:
-          'text-slate-900 hover:text-[var(--bg-primary)] hover:scale-[1.02] focus-visible:outline-[var(--bg-primary)] transform',
-        square: 'bg-transparent text-gray-400 font-bold hover:text-black',
+          'bg-black text-white font-bold hover:bg-[var(--primary)] focus-visible:outline-[var(--primary)] transform',
+        tertiary: 'text-gray-900 hover:text-[var(--primary)] hover:font-bold transform',
+        square: 'bg-transparent text-neutral-400 font-bold hover:text-black',
       },
       size: {
         sm: 'rounded-sm px-3 text-sm',
@@ -50,6 +46,37 @@ const buttonVariants = cva(
     },
   }
 );
+
+// Utility function to convert text to Title Case
+const toTitleCase = (str: string): string => {
+  return str
+    .toLowerCase()
+    .split(' ')
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+};
+
+// Recursively transform text content to Title Case
+const transformTextToTitleCase = (children: React.ReactNode): React.ReactNode => {
+  if (typeof children === 'string') {
+    return toTitleCase(children);
+  }
+
+  if (React.isValidElement(children)) {
+    return React.cloneElement(children, {
+      ...children.props,
+      children: transformTextToTitleCase(children.props.children),
+    });
+  }
+
+  if (Array.isArray(children)) {
+    return children.map((child, index) => (
+      <React.Fragment key={index}>{transformTextToTitleCase(child)}</React.Fragment>
+    ));
+  }
+
+  return children;
+};
 
 type TooltipWrapperProps = {
   tooltipText?: string;
@@ -96,6 +123,8 @@ type ButtonBaseProps = {
   tooltipText?: string;
   tooltipClickText?: string;
   tooltipClickDuration?: number;
+  // Add this prop to force rendering as a button even when href is provided
+  forceButton?: boolean;
 } & VariantProps<typeof buttonVariants>;
 
 type ButtonAsButton = ButtonBaseProps &
@@ -124,11 +153,15 @@ const Button = React.forwardRef<HTMLButtonElement | HTMLAnchorElement, ButtonPro
       tooltipText,
       tooltipClickText,
       tooltipClickDuration = 2000,
+      forceButton = false,
       children,
       ...props
     },
     ref
   ) => {
+    // Transform children to Title Case
+    const titleCaseChildren = transformTextToTitleCase(children);
+
     // Handle icon spacing and animations
     const hasIcon = TablerIcon;
     const iconSpacing = hasIcon ? 'gap-2 transition-all duration-200' : '';
@@ -156,7 +189,7 @@ const Button = React.forwardRef<HTMLButtonElement | HTMLAnchorElement, ButtonPro
     // Render content with icon positioning
     const renderContent = () => {
       if (!hasIcon) {
-        return children;
+        return titleCaseChildren;
       }
 
       const iconElement = (
@@ -170,11 +203,11 @@ const Button = React.forwardRef<HTMLButtonElement | HTMLAnchorElement, ButtonPro
       return iconPosition === 'left' ? (
         <>
           {iconElement}
-          {children}
+          {titleCaseChildren}
         </>
       ) : (
         <>
-          {children}
+          {titleCaseChildren}
           {iconElement}
         </>
       );
@@ -188,6 +221,19 @@ const Button = React.forwardRef<HTMLButtonElement | HTMLAnchorElement, ButtonPro
 
     // Create the button element based on type
     const createButtonElement = () => {
+      // If forceButton is true, always render as button regardless of href
+      if (forceButton) {
+        return (
+          <button
+            className={finalClassName}
+            ref={ref as React.Ref<HTMLButtonElement>}
+            {...(props as ButtonAsButton)}
+          >
+            {renderContent()}
+          </button>
+        );
+      }
+
       // If href is provided, render as Link
       if ('href' in props && props.href) {
         return (

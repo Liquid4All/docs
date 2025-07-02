@@ -1,6 +1,7 @@
 import { Layout } from 'nextra-theme-docs';
 import { getPageMap } from 'nextra/page-map';
 
+import { Container } from '@/components/Container';
 import Footer from '@/components/Footer';
 import Header from '@/components/Header';
 
@@ -26,7 +27,9 @@ export default async function DocumentationLayout({ children }: { children: Reac
           forcedTheme: 'light',
         }}
       >
-        <div className="mx-auto max-w-7xl items-center">{children}</div>
+        <Container>
+          <div className="mx-auto items-center pt-4">{children}</div>
+        </Container>
       </Layout>
     </main>
   );

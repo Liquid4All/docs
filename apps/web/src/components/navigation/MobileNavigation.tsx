@@ -36,7 +36,7 @@ export const MobileNavigation: FC<MobileNavigationProps> = ({
           </Link>
         </div>
         <div className="mt-10 flow-root">
-          <div className="-my-6 divide-y divide-gray-500/10">
+          <div className="-my-6 divide-y divide-neutral-500/10">
             <div className="space-y-4 py-2">
               {navigationItems.map((item) => (
                 <div key={item.label} className="block">
