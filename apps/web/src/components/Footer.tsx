@@ -31,7 +31,10 @@ const footerData: FooterType = {
     { label: 'Careers', href: 'https://jobs.lever.co/liquid.ai', external: true },
   ],
 
-  leap: [{ label: 'Feedback', href: '#', special: 'feedback' }],
+  leap: [
+    { label: 'Feedback', href: '#', special: 'feedback' },
+    { label: 'Discord', href: '/' },
+  ],
 
   legal: [
     { label: 'Privacy Policy', href: '/privacy' },
@@ -45,7 +48,7 @@ interface FooterSectionProps {
 }
 
 const LINK_CLASSNAME =
-  'text-sm text-black hover:text-purple-800 transition-colors inline-flex items-center gap-1';
+  'text-sm text-black hover:text-purple-800 transition-colors inline-flex items-center gap-1 py-0';
 
 const FooterSection = ({ title, links }: FooterSectionProps) => (
   <div className="flex-row lg:flex-col space-y-4">
