@@ -14,7 +14,7 @@ public struct Leap {
 
 ### `load`
 
-This function loads a model from a local file URL. The `url` should point to a model bundle file. The app needs to hold the model runner object returned by this function until there is no need to interact with the model anymore. See [ModelRunner](#modelrunner) for more details.
+This function loads a model from a local file URL. The `url` should point to a model bundle file. The app needs to hold the model runner object returned by this function until there is no need to interact with the model anymore. See [`ModelRunner`](#modelrunner) for more details.
 
 <Callout type="info">
   The function will throw `LeapError.modelLoadingFailure` if LEAP fails to load the model.
@@ -22,9 +22,9 @@ This function loads a model from a local file URL. The `url` should point to a m
 
 ## Conversation
 
-The instance of a conversation, which hosts the message history and states that are needed by the model runner for generation.
+The instance of a conversation, which stores the message history and states that are needed by the model runner for generation.
 
-While this conversation instance holds the data necessary for the model runner to perform generation, the app still needs to maintain the UI state of the message history representation by itself.
+While this `Conversation` instance holds the data necessary for the model runner to perform generation, the app still needs to maintain the UI state of the message history representation.
 
 ```swift
 public class Conversation {
@@ -45,23 +45,23 @@ public class Conversation {
 
 This method adds the message to the conversation history, generates a response, and returns an `AsyncStream<MessageResponse>`. It can be called from the main thread.
 
-The return value is a Swift [AsyncStream](https://developer.apple.com/documentation/swift/asyncstream). The generation will start immediately when the stream is created. Use `for await` loops or other async iteration patterns to consume the stream.
+The return value is a Swift [`AsyncStream`](https://developer.apple.com/documentation/swift/asyncstream). The generation will start immediately when the stream is created. Use `for await` loops or other async iteration patterns to consume the stream.
 
 `MessageResponse` instances will be emitted from this stream, which contain chunks of data generated from the model.
 
 <Callout type="info">
-  Errors will be thrown in the async stream. Use `do-catch` blocks around the async iteration to
+  Errors can be thrown within the async stream. Use `do-catch` blocks around the async iteration to
   capture errors from the generation.
 </Callout>
 
 <Callout type="warning">
-  If there is already a running generation, the new request will return an empty stream that
-  finishes immediately.
+  If there is already a running generation, a new request will return an empty stream that finishes
+  immediately.
 </Callout>
 
 ### Cancellation of the generation
 
-Generation will be stopped when the task that iterates the AsyncStream is canceled. We highly recommend that generation be started within a Task associated with a lifecycle-aware component so that the generation can be stopped if the component is destroyed. Here is an example:
+Generation will be stopped when the task that iterates the `AsyncStream` is canceled. We highly recommend that generation be started within a Task associated with a lifecycle-aware component so that the generation can be stopped if the component is destroyed. Here is an example:
 
 ```swift
 task = Task {
@@ -94,11 +94,11 @@ Instances of this class are created directly using the initializer with a `Model
 
 ### Lifetime
 
-While it keeps the history and state needed by the model runner to generate content, its generation function relies on the model runner that created it. As a result, if the model runner that created the conversation instance has been destroyed, this instance also cannot perform generation anymore.
+While a `Conversation` stores the history and state that is needed by the model runner to generate content, its generation function relies on the model runner that creates it. As a result, if that model runner instance has been destroyed, the `Conversation` instance will fail to run subsequent generations.
 
 ## ModelRunner
 
-An instance of a model loaded in memory. This is returned by `Leap.load(url:)` and is used to create Conversation instances. The application needs to own the model runner object. If the model runner object is destroyed, ongoing generations may fail.
+An instance of a model loaded in memory. This is returned by `Leap.load(url:)` and is used to create `Conversation` instances. The application needs to own the model runner object. If the model runner object is destroyed, ongoing generations may fail.
 
 If you need your model runner to survive after view controllers are destroyed, you may need to manage it at the app level or in a service-like object.
 
@@ -143,7 +143,7 @@ public struct ChatMessage: Codable {
 ### Properties
 
 - `role`: The role of the message sender (user, system, or assistant)
-- `content`: An array of content items (currently only text is supported)
+- `content`: An array of `ChatMessageContent` items (currently only text content is supported)
 - `reasoningContent`: Optional field for models that support chain-of-thought reasoning
 
 The structure is compatible with OpenAI API message format.

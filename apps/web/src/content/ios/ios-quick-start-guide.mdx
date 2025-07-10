@@ -4,7 +4,7 @@ import { Callout } from 'nextra/components';
 
 ## Prerequisites
 
-You should already have
+You should already have:
 
 - An iOS project created in Xcode. You may create an empty project with the wizard. Leap iOS SDK is Swift-first and requires iOS 17.0+ or macOS 14.0+.
 - A working iOS device or simulator. For real-time performance, a physical device is recommended.
@@ -56,7 +56,7 @@ Alternatively, you can download the pre-built XCFramework:
 
 ## Download Model Bundles
 
-Go to [Leap Model Library](https://leap.liquid.ai/models) to find a model that matches your needs.
+Browse the [Leap Model Library](https://leap.liquid.ai/models) to find and download a model bundle that matches your needs.
 
 For iOS development, you can include the model bundle directly in your app bundle:
 
@@ -222,14 +222,14 @@ class ChatStore {
 
 ## Key API Concepts
 
-- **`Leap.load(url:)`**: Loads a model bundle and returns a ModelRunner
+- **`Leap.load(url:)`**: Loads a model bundle and returns a `ModelRunner`
 - **`Conversation`**: Manages chat history and generates responses
-- **`ChatMessage`**: Represents messages with role (.user, .assistant, .system) and content
-- **`MessageResponse`**: Streaming response types (.chunk, .reasoningChunk, .complete)
+- **`ChatMessage`**: Represents messages with role (`.user`, `.assistant`, `.system`) and content
+- **`MessageResponse`**: Streaming response types (`.chunk`, `.reasoningChunk`, `.complete`)
 
 ## Performance Tips
 
-- Load models once and reuse the ModelRunner instance
+- Load models once and reuse the `ModelRunner` instance
 - Use physical devices for better inference performance
 - Consider showing loading indicators as model loading can take several seconds
 - Handle errors gracefully as model loading may fail on low-memory devices
