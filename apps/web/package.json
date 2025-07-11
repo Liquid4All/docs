@@ -16,7 +16,7 @@
     "typecheck": "tsc --noEmit --p tsconfig.json"
   },
   "dependencies": {
-    "@clerk/nextjs": "^6.20.2",
+    "@clerk/nextjs": "^6.23.3",
     "@clerk/types": "^4.59.2",
     "@fontsource/jetbrains-mono": "^5.2.5",
     "@heroicons/react": "^2.2.0",
