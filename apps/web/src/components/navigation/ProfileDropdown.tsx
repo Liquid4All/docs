@@ -2,10 +2,12 @@
 
 import { UserResource } from '@clerk/types';
 import { IconUserCircle } from '@tabler/icons-react';
+import { track } from '@vercel/analytics';
 import { useRouter } from 'next/navigation';
 import { FC, useCallback, useEffect, useRef, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
+import { AnalyticEvent } from '@/lib/analytics';
 import { getUserEmails } from '@/lib/user';
 
 import { NavigationItem } from './NavigationItem';
@@ -97,8 +99,12 @@ export const ProfileDropdown: FC<ProfileDropdownProps> = ({ isSignedIn, user }) 
   }, [handleKeyDown]);
 
   const toggleDropdown = useCallback((): void => {
-    setIsOpen(!isOpen);
+    const newIsOpen = !isOpen;
+    setIsOpen(newIsOpen);
     setFocusedIndex(-1);
+    if (newIsOpen) {
+      track(AnalyticEvent.OpenedProfileDropdown);
+    }
   }, [isOpen]);
 
   const handleMouseEnter = useCallback((index: number): void => {
