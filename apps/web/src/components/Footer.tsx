@@ -37,8 +37,9 @@ const footerData: FooterType = {
   ],
 
   legal: [
-    { label: 'Privacy Policy', href: '/privacy' },
+    { label: 'Acceptable Use Policy', href: '/acceptable-use' },
     { label: 'Terms & Conditions', href: '/terms' },
+    { label: 'Privacy Policy', href: 'https://liquid.ai/privacy-policy', external: true },
   ],
 };
 
@@ -52,7 +53,7 @@ const LINK_CLASSNAME =
 
 const FooterSection = ({ title, links }: FooterSectionProps) => (
   <div className="flex-row lg:flex-col space-y-4">
-    <p className="monospace block">{title}</p>
+    <p className="monospace block uppercase">{title}</p>
     <ul className="space-y-1">
       {links.map((link) => {
         if (link.special === 'feedback') {
@@ -97,28 +98,18 @@ export default function Footer() {
 
             <div className="flex flex-col md:flex-row gap-8 lg:contents">
               {/* Column 2: Desktop center, Tablet/Mobile stacked */}
-              <div className="flex md:flex-row gap-8 sm:gap-16 md:flex-1 md:flex-col lg:justify-end">
-                <FooterSection title="EXPLORE" links={footerData.explore} />
-                <FooterSection title="COMPANY" links={footerData.company} />
+              <div className="flex md:flex-row gap-8 sm:gap-16 md:flex-1 lg:justify-end">
+                <FooterSection title="Explore" links={footerData.explore} />
+                <FooterSection title="Company" links={footerData.company} />
                 <FooterSection title="LEAP" links={footerData.leap} />
+                <FooterSection title="Legal" links={footerData.legal} />
               </div>
             </div>
           </div>
 
           {/* Bottom section */}
           <div className="mt-6 pt-6 border-t border-gray-200 flex flex-col justify-between text-gray-500 sm:flex-row sm:items-center">
-            <div className="flex gap-x-6 space-y-4 sm:space-y-0">
-              {footerData.legal.map((link) => (
-                <Link
-                  key={link.label}
-                  href={link.href}
-                  className="hover:text-purple-800 transition-colors"
-                  aria-label={link.label.toLowerCase()}
-                >
-                  <small className="small block">{link.label}</small>
-                </Link>
-              ))}
-            </div>
+            <small className="small block">314 Main St, Cambridge, MA 02142</small>
             <small className="small block">
               © {new Date().getFullYear()}, Liquid AI, Inc. All rights reserved.
             </small>

@@ -18,6 +18,13 @@ module.exports = {
       screens: {
         '3xl': '1600px',
       },
+      typography: {
+        DEFAULT: {
+          css: {
+            '--tw-prose-bullets': 'var(--tw-prose-body)',
+          },
+        },
+      },
     },
   },
 };
