@@ -1,14 +1,14 @@
-@layer theme, base, components, utilities;
-
 @import "tailwindcss";
 @import 'nextra-theme-docs/style.css';
+
+@layer theme, base, components, utilities;
 
 @plugin "tailwindcss-animate";
 @plugin "@tailwindcss/typography";
 
 @custom-variant dark (&:is(.dark *));
 
-@config "../../tailwind.config.js";
+@config "../../tailwind.config.ts";
 
 :root {
   --background: oklch(1 0 0);
@@ -22,7 +22,7 @@
   --secondary: #000000;
   --secondary-foreground: oklch(0.21 0.006 285.885);
   --muted: oklch(0.967 0.001 286.375);
-  --muted-foreground: oklch(43.9% 0 0);
+  --muted-foreground: oklch(55.55% 0 0);
   --accent: oklch(0.967 0.001 286.375);
   --accent-foreground: oklch(0.21 0.006 285.885);
   --destructive: oklch(0.577 0.245 27.325);
@@ -126,5 +126,23 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background-color: #ccc;
+    border-radius: 8px;
+    background-clip: content-box;
+    min-width: 20px;
+    min-height: 20px;
+  }
+  ::-webkit-scrollbar-track {
+    background-color: transparent;
   }
 }
