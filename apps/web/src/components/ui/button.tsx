@@ -15,13 +15,12 @@ const buttonVariants = cva(
         // shadcn/ui variants
         default: 'bg-[var(--primary)] text-primary-foreground hover:bg-[var(--primary)]/90',
         destructive: 'bg-destructive text-destructive-foreground hover:bg-destructive/90',
-        outline:
-          'border border-neutral-400/50 font-bold bg-transparent hover:border-[var(--primary)] hover:text-accent-foreground hover:bg-[var(--primary)] hover:text-white',
+        outline: 'border border-neutral-400/50 font-bold bg-transparent hover:bg-black/5',
         secondary: 'bg-secondary text-secondary-foreground hover:bg-secondary/80',
         ghost: 'text-black hover:text-[var(--primary)]',
         link: 'text-[var(--primary)] underline-offset-4 hover:underline hover:text-[var(--primary)]/80',
         primary:
-          'bg-black text-white font-bold hover:bg-[var(--primary)] focus-visible:outline-[var(--primary)] transform',
+          'bg-black text-white font-bold hover:bg-black/70 focus-visible:outline-[var(--primary)] transform',
         tertiary: 'text-gray-900 hover:text-[var(--primary)] hover:font-bold transform',
         square: 'bg-transparent text-neutral-400 font-bold hover:text-black',
       },
