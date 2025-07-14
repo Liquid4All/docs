@@ -117,7 +117,7 @@ export const Card: React.FC<CardProps> = ({
   );
 
   const GlassGradientContent: React.FC = () => (
-    <div className="p-3 md:p-4 flex flex-col h-full">
+    <div className="p-3 md:p-5 flex flex-col h-full">
       {icon ? (
         <>
           <Icon icon={icon} className="flex justify-center my-3" />
