@@ -4,16 +4,23 @@ import { track } from '@vercel/analytics';
 import { ReactNode, useCallback, useState } from 'react';
 
 import { FeedbackModal } from '@/components/FeedbackModal';
-import { Button } from '@/components/ui/button';
+import { Button, ButtonProps } from '@/components/ui/button';
 import { AnalyticEvent } from '@/lib/analytics';
 import { cn } from '@/lib/utils';
 
 interface FeedbackButtonProps {
   label: ReactNode;
   className?: string;
+  variant?: 'ghost' | 'outline';
+  size?: ButtonProps['size'];
 }
 
-const FeedbackButton = ({ label, className }: FeedbackButtonProps) => {
+const FeedbackButton = ({
+  variant = 'ghost',
+  label,
+  className,
+  size = 'small',
+}: FeedbackButtonProps) => {
   const [feedbackModalOpen, setFeedbackModalOpen] = useState<boolean>(false);
 
   const toggleFeedbackModal = useCallback(() => {
@@ -23,7 +30,7 @@ const FeedbackButton = ({ label, className }: FeedbackButtonProps) => {
 
   return (
     <>
-      <Button variant="ghost" onClick={toggleFeedbackModal} className={cn('px-0', className)}>
+      <Button variant={variant} size={size} onClick={toggleFeedbackModal} className={className}>
         {label}
       </Button>
 
