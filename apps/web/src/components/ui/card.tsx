@@ -5,7 +5,9 @@ import Link from 'next/link';
 import React from 'react';
 
 import { Icon } from '@/components/Icon';
+import { Tag } from '@/components/Tag';
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
 export interface CardProps {
   title: string;
@@ -17,9 +19,9 @@ export interface CardProps {
   icon?: React.ComponentType<{ className?: string }>;
   width?: 1 | 2;
   mobileWidth?: 1 | 2;
-  variant?: 'white' | 'glass-gradient' | 'backdrop';
+  variant?: 'white' | 'glass-gradient' | 'backdrop' | 'gradient-border';
   customClasses?: string;
-  titleVariant?: 'h4' | 'h5' | 'body';
+  badge?: string;
   button?: string;
   buttonLink?: string;
   href?: string;
@@ -34,11 +36,8 @@ const CARD_VARIANTS: Record<string, string> = {
   'glass-gradient': 'bg-gradient-to-br from-purple-300 to-orange-200 border',
   white: 'border border-neutral-200 bg-white',
   backdrop: 'backdrop-blur-sm border border-neutral-300',
+  'gradient-border': 'p-px bg-gradient-to-br from-orange-400 to-purple-600',
 };
-
-function cn(...args: (string | undefined | false)[]) {
-  return args.filter(Boolean).join(' ');
-}
 
 export const Card: React.FC<CardProps> = ({
   title,
@@ -52,6 +51,7 @@ export const Card: React.FC<CardProps> = ({
   mobileWidth,
   variant = 'white',
   customClasses = '',
+  badge,
   button,
   buttonLink,
   href,
@@ -61,16 +61,16 @@ export const Card: React.FC<CardProps> = ({
   contentAlignment = 'left',
   buttonVariant = 'ghost',
 }) => {
-  const effectiveMobileWidth = mobileWidth || width;
-  const cardVariant = CARD_VARIANTS[variant] || CARD_VARIANTS.white;
+  const effectiveMobileWidth: number = mobileWidth || width;
+  const cardVariant: string = CARD_VARIANTS[variant] || CARD_VARIANTS.white;
 
-  const isLink = href && !onClick;
-  const isClickable = onClick || isLink;
+  const isLink: boolean = Boolean(href && !onClick);
+  const isClickable: boolean = Boolean(onClick || isLink);
 
-  const baseClasses = cn(
+  const baseClasses: string = cn(
     effectiveMobileWidth === 2 ? 'col-span-2' : 'col-span-1',
     width === 2 ? 'lg:flex-[2]' : 'lg:flex-1',
-    'rounded-sm p-3 md:p-4 flex flex-col transition-all duration-700 ease-out',
+    'rounded-sm transition-all duration-700 ease-out relative',
     cardVariant,
     isClickable && 'hover:shadow-lg cursor-pointer group',
     contentAlignment === 'center' && 'text-center items-center',
@@ -78,13 +78,46 @@ export const Card: React.FC<CardProps> = ({
     customClasses
   );
 
-  const animationStyle = {
+  const animationStyle: React.CSSProperties = {
     transitionDelay: `${animationDelay}ms`,
   };
 
-  // Render gradient variant
-  const GradientContent = () => (
-    <>
+  // Content variants
+  const GradientBorderContent: React.FC = () => (
+    <div
+      className={cn(
+        'rounded-[calc(0.4rem-1px)] backdrop-blur-sm bg-white/90 p-3 md:p-4 h-full flex flex-col',
+        contentAlignment === 'center' && 'text-center items-center'
+      )}
+    >
+      {badge && <Tag label={badge} variant="gradient" className="w-fit" />}
+      <div className={cn('flex flex-col h-full', badge && 'mt-4')}>
+        {icon && <Icon icon={icon} className="flex justify-start mb-4" />}
+        <h4 className="font-medium text-gray-900 dark:text-white">{title}</h4>
+        {subtitle && <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">{subtitle}</p>}
+        {description && (
+          <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">{description}</p>
+        )}
+        {button && (
+          <div className="mt-auto pt-4">
+            <Button
+              variant={buttonVariant}
+              href={!onClick ? buttonLink || href : undefined}
+              onClick={onClick}
+              icon={IconArrowRight}
+              className="p-0 hover:bg-transparent font-normal text-neutral-800 dark:text-neutral-200"
+              target="_blank"
+            >
+              {button}
+            </Button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
+  const GlassGradientContent: React.FC = () => (
+    <div className="p-3 md:p-4 flex flex-col h-full">
       {icon ? (
         <>
           <Icon icon={icon} className="flex justify-center my-3" />
@@ -110,12 +143,11 @@ export const Card: React.FC<CardProps> = ({
           </div>
         </>
       )}
-    </>
+    </div>
   );
 
-  // Render backdrop variant
-  const BackdropContent = () => (
-    <>
+  const BackdropContent: React.FC = () => (
+    <div className="p-3 md:p-4 flex flex-col h-full">
       {value ? (
         <>
           {icon && <Icon icon={icon} className="flex justify-start mb-6 md:mb-8" />}
@@ -123,12 +155,12 @@ export const Card: React.FC<CardProps> = ({
             {value}
             {unit && <span className="text-lg"> {unit}</span>}
           </h3>
-          <p className="font-medium">{title}</p>
+          <p className="font-medium text-sm">{title}</p>
         </>
       ) : items ? (
         <div className="m-auto w-full">
           <ul className="space-y-2 mt-4">
-            {items.map((item, i) => (
+            {items.map((item: string, i: number) => (
               <li key={i} className="flex items-center justify-center gap-2">
                 <span className="w-5 h-5 bg-primary/80 rounded-full flex items-center justify-center flex-shrink-0">
                   <IconCheck className="w-4 h-4 text-white" />
@@ -156,12 +188,11 @@ export const Card: React.FC<CardProps> = ({
           )}
         </>
       )}
-    </>
+    </div>
   );
 
-  // Render white variant
-  const WhiteContent = () => (
-    <>
+  const WhiteContent: React.FC = () => (
+    <div className="p-3 md:p-4 flex flex-col h-full">
       {icon && <Icon icon={icon} className="flex justify-start mb-6 md:mb-8" />}
       <h4 className="mb-1">{title}</h4>
       {description && <p className="mb-6">{description}</p>}
@@ -179,14 +210,16 @@ export const Card: React.FC<CardProps> = ({
           </Button>
         </div>
       )}
-    </>
+    </div>
   );
 
   // Select content based on variant
-  const CardContent = () => {
+  const CardContent: React.FC = () => {
     switch (variant) {
+      case 'gradient-border':
+        return <GradientBorderContent />;
       case 'glass-gradient':
-        return <GradientContent />;
+        return <GlassGradientContent />;
       case 'backdrop':
         return <BackdropContent />;
       case 'white':
@@ -195,8 +228,8 @@ export const Card: React.FC<CardProps> = ({
     }
   };
 
-  // White variant should always be a link if href is provided
-  if (variant === 'white' && isLink) {
+  // Render with link wrapper if needed
+  if (isLink) {
     return (
       <Link href={href!} className={baseClasses} style={animationStyle}>
         <CardContent />
@@ -213,7 +246,7 @@ export const Card: React.FC<CardProps> = ({
       tabIndex={onClick ? 0 : undefined}
       onKeyDown={
         onClick
-          ? (e) => {
+          ? (e: React.KeyboardEvent<HTMLDivElement>) => {
               if (e.key === 'Enter' || e.key === ' ') {
                 e.preventDefault();
                 onClick();
@@ -234,7 +267,7 @@ export interface CardGridProps {
 }
 
 export const CardGrid: React.FC<CardGridProps> = ({ children, className = '', gap = 'md' }) => {
-  const gapClasses = {
+  const gapClasses: Record<string, string> = {
     sm: 'gap-2 lg:gap-4',
     md: 'gap-4 lg:gap-6',
     lg: 'gap-6 lg:gap-8',
@@ -254,7 +287,7 @@ export interface CardRowProps {
 }
 
 export const CardRow: React.FC<CardRowProps> = ({ children, className = '', gap = 'md' }) => {
-  const gapClasses = {
+  const gapClasses: Record<string, string> = {
     sm: 'gap-2 lg:gap-4',
     md: 'gap-4 lg:gap-6',
     lg: 'gap-6 lg:gap-8',
