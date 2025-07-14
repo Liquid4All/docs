@@ -124,6 +124,8 @@ type ButtonBaseProps = {
   tooltipClickDuration?: number;
   // Add this prop to force rendering as a button even when href is provided
   forceButton?: boolean;
+  // Capitalize the button label, enabled by default
+  titleize?: boolean;
 } & VariantProps<typeof buttonVariants>;
 
 type ButtonAsButton = ButtonBaseProps &
@@ -153,13 +155,14 @@ const Button = React.forwardRef<HTMLButtonElement | HTMLAnchorElement, ButtonPro
       tooltipClickText,
       tooltipClickDuration = 2000,
       forceButton = false,
+      titleize = true,
       children,
       ...props
     },
     ref
   ) => {
-    // Transform children to Title Case
-    const titleCaseChildren = transformTextToTitleCase(children);
+    // Transform children to Title Case when needed
+    const buttonLabelChildren = titleize ? transformTextToTitleCase(children) : children;
 
     // Handle icon spacing and animations
     const hasIcon = TablerIcon;
@@ -188,7 +191,7 @@ const Button = React.forwardRef<HTMLButtonElement | HTMLAnchorElement, ButtonPro
     // Render content with icon positioning
     const renderContent = () => {
       if (!hasIcon) {
-        return titleCaseChildren;
+        return buttonLabelChildren;
       }
 
       const iconElement = (
@@ -202,11 +205,11 @@ const Button = React.forwardRef<HTMLButtonElement | HTMLAnchorElement, ButtonPro
       return iconPosition === 'left' ? (
         <>
           {iconElement}
-          {titleCaseChildren}
+          {buttonLabelChildren}
         </>
       ) : (
         <>
-          {titleCaseChildren}
+          {buttonLabelChildren}
           {iconElement}
         </>
       );
