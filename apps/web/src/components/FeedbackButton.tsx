@@ -30,7 +30,12 @@ const FeedbackButton = ({
 
   return (
     <>
-      <Button variant={variant} size={size} onClick={toggleFeedbackModal} className={className}>
+      <Button
+        variant={variant}
+        size={size}
+        onClick={toggleFeedbackModal}
+        className={cn('px-0', className)}
+      >
         {label}
       </Button>
 
