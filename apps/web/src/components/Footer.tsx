@@ -58,7 +58,7 @@ const LINK_CLASSNAME =
   'text-sm text-black hover:text-purple-800 transition-colors inline-flex items-center gap-1 py-0';
 
 const FooterSection = ({ title, links }: FooterSectionProps) => (
-  <div className="flex-row lg:flex-col space-y-4">
+  <div className="flex-row lg:flex-col md:space-y-4">
     <p className="monospace block uppercase">{title}</p>
     <ul className="space-y-1">
       {links.map((link) => {
@@ -104,7 +104,7 @@ export default function Footer() {
 
             <div className="flex flex-col md:flex-row gap-8 lg:contents">
               {/* Column 2: Desktop center, Tablet/Mobile stacked */}
-              <div className="flex md:flex-row gap-8 sm:gap-16 md:flex-1 lg:justify-end">
+              <div className="flex flex-wrap md:flex-nowrap md:flex-row gap-8 sm:gap-16 md:flex-1 lg:justify-end">
                 <FooterSection title="Explore" links={footerData.explore} />
                 <FooterSection title="Company" links={footerData.company} />
                 <FooterSection title="Connect" links={footerData.connect} />
