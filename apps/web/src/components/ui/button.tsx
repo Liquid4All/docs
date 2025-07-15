@@ -149,6 +149,21 @@ type ButtonAsLink = ButtonBaseProps &
     href: string;
   };
 
+export const getButtonIconSize = (size: ButtonProps['size']): number => {
+  switch (size) {
+    case 'sm':
+    case 'small':
+      return 12;
+    case 'lg':
+    case 'big':
+      return 20;
+    case 'icon':
+      return 16;
+    default:
+      return 16;
+  }
+};
+
 export type ButtonProps = ButtonAsButton | ButtonAsLink;
 
 const Button = React.forwardRef<HTMLButtonElement | HTMLAnchorElement, ButtonProps>(
@@ -185,22 +200,6 @@ const Button = React.forwardRef<HTMLButtonElement | HTMLAnchorElement, ButtonPro
     // Disable animations for simple variant
     const simpleNoAnimation = variant === 'square' && hasIcon ? 'gap-2' : '';
 
-    // Get icon size based on button size
-    const getIconSize = () => {
-      switch (size) {
-        case 'sm':
-        case 'small':
-          return 12;
-        case 'lg':
-        case 'big':
-          return 20;
-        case 'icon':
-          return 16;
-        default:
-          return 16;
-      }
-    };
-
     // Render content with icon positioning
     const renderContent = () => {
       if (!hasIcon) {
@@ -209,7 +208,7 @@ const Button = React.forwardRef<HTMLButtonElement | HTMLAnchorElement, ButtonPro
 
       const iconElement = (
         <TablerIcon
-          size={getIconSize()}
+          size={getButtonIconSize(size)}
           stroke={1.5}
           className={variant === 'square' ? '' : 'transition-all duration-200'}
         />
