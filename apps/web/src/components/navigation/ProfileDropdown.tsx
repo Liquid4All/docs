@@ -8,7 +8,7 @@ import { FC, useCallback, useEffect, useRef, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { AnalyticEvent } from '@/lib/analytics';
-import { getUserEmails, getUserPrimaryEmail } from '@/lib/user';
+import { getUserPrimaryEmail } from '@/lib/user';
 
 import { NavigationItem } from './NavigationItem';
 import { signedInUserNavigations, signedOutUserNavigations } from './navigationConstants';
