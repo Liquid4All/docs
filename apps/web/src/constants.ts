@@ -9,7 +9,7 @@ export const DOMAIN = 'leap.liquid.ai';
 export const DOMAIN_URL = `https://${DOMAIN}`;
 export const CONTACT_EMAIL = `contact@${DOMAIN}`;
 
-export const DISCORD_INVITE_URL = 'https://discord.gg/wgNsNz8Pr9';
+export const DISCORD_INVITE_URL = 'https://discord.gg/liquid-ai';
 export const PRIVACY_POLICY_URL = 'https://liquid.ai/privacy-policy';
 export const TERMS_OF_SERVICE_URL = '/terms';
 export const ACCEPTABLE_USE_URL = '/acceptable-use';
