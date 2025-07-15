@@ -8,7 +8,14 @@ import { Head } from 'nextra/components';
 import { ReactNode } from 'react';
 import { Toaster } from 'sonner';
 
-import { DESCRIPTION, DOMAIN_URL, FULL_TITLE, TITLE } from '@/constants';
+import {
+  DESCRIPTION,
+  DOMAIN_URL,
+  FULL_TITLE,
+  PRIVACY_POLICY_URL,
+  TERMS_OF_SERVICE_URL,
+  TITLE,
+} from '@/constants';
 import { cn } from '@/lib/utils';
 import '@/styles/custom-nextra.css';
 import '@/styles/globals.css';
@@ -81,8 +88,8 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
           signInFallbackRedirectUrl="/"
           appearance={{
             layout: {
-              privacyPageUrl: '/privacy',
-              termsPageUrl: '/terms',
+              privacyPageUrl: PRIVACY_POLICY_URL,
+              termsPageUrl: TERMS_OF_SERVICE_URL,
             },
           }}
         >
