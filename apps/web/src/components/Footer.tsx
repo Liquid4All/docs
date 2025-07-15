@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { Container } from '@/components/Container';
 import FeedbackButton from '@/components/FeedbackButton';
 import { Logo } from '@/components/Logo';
-import { TITLE } from '@/constants';
+import { PRIVACY_POLICY_URL, TERMS_OF_SERVICE_URL, TITLE } from '@/constants';
 
 interface LinkType {
   label: string;
@@ -38,8 +38,8 @@ const footerData: FooterType = {
 
   legal: [
     { label: 'Acceptable Use Policy', href: '/acceptable-use' },
-    { label: 'Terms & Conditions', href: '/terms' },
-    { label: 'Privacy Policy', href: 'https://liquid.ai/privacy-policy', external: true },
+    { label: 'Terms & Conditions', href: TERMS_OF_SERVICE_URL },
+    { label: 'Privacy Policy', href: PRIVACY_POLICY_URL, external: true },
   ],
 };
 

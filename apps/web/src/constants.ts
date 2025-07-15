@@ -8,3 +8,6 @@ export const DESCRIPTION =
 export const DOMAIN = 'leap.liquid.ai';
 export const DOMAIN_URL = `https://${DOMAIN}`;
 export const CONTACT_EMAIL = `contact@${DOMAIN}`;
+
+export const PRIVACY_POLICY_URL = 'https://liquid.ai/privacy-policy';
+export const TERMS_OF_SERVICE_URL = '/terms';
