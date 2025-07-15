@@ -79,11 +79,18 @@ const transformTextToTitleCase = (children: React.ReactNode): React.ReactNode =>
 
 type TooltipWrapperProps = {
   tooltipText?: string;
+  tooltipAlign?: 'start' | 'center' | 'end';
+  tooltipSide?: 'top' | 'right' | 'bottom' | 'left';
   children: React.ReactNode;
 };
 
 // Server-safe tooltip wrapper that only shows on desktop
-const TooltipWrapper: React.FC<TooltipWrapperProps> = ({ tooltipText, children }) => {
+const TooltipWrapper: React.FC<TooltipWrapperProps> = ({
+  tooltipText,
+  tooltipSide,
+  tooltipAlign,
+  children,
+}) => {
   if (!tooltipText) {
     return <>{children}</>;
   }
@@ -92,7 +99,9 @@ const TooltipWrapper: React.FC<TooltipWrapperProps> = ({ tooltipText, children }
     <div className="hidden md:block">
       <Tooltip>
         <TooltipTrigger asChild>{children}</TooltipTrigger>
-        <TooltipContent>{tooltipText}</TooltipContent>
+        <TooltipContent side={tooltipSide} align={tooltipAlign}>
+          {tooltipText}
+        </TooltipContent>
       </Tooltip>
     </div>
   );
@@ -122,6 +131,8 @@ type ButtonBaseProps = {
   tooltipText?: string;
   tooltipClickText?: string;
   tooltipClickDuration?: number;
+  tooltipAlign?: 'start' | 'center' | 'end';
+  tooltipSide?: 'top' | 'right' | 'bottom' | 'left';
   // Add this prop to force rendering as a button even when href is provided
   forceButton?: boolean;
   // Capitalize the button label, enabled by default
@@ -154,6 +165,8 @@ const Button = React.forwardRef<HTMLButtonElement | HTMLAnchorElement, ButtonPro
       tooltipText,
       tooltipClickText,
       tooltipClickDuration = 2000,
+      tooltipAlign,
+      tooltipSide,
       forceButton = false,
       titleize = true,
       children,
@@ -286,7 +299,13 @@ const Button = React.forwardRef<HTMLButtonElement | HTMLAnchorElement, ButtonPro
     // Return both desktop (with tooltip) and mobile (without tooltip) versions
     return (
       <>
-        <TooltipWrapper tooltipText={tooltipText}>{buttonElement}</TooltipWrapper>
+        <TooltipWrapper
+          tooltipText={tooltipText}
+          tooltipSide={tooltipSide}
+          tooltipAlign={tooltipAlign}
+        >
+          {buttonElement}
+        </TooltipWrapper>
         <MobileWrapper hasTooltip={hasTooltip}>{buttonElement}</MobileWrapper>
       </>
     );

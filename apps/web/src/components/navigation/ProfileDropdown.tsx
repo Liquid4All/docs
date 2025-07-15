@@ -8,7 +8,7 @@ import { FC, useCallback, useEffect, useRef, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { AnalyticEvent } from '@/lib/analytics';
-import { getUserEmails } from '@/lib/user';
+import { getUserEmails, getUserPrimaryEmail } from '@/lib/user';
 
 import { NavigationItem } from './NavigationItem';
 import { signedInUserNavigations, signedOutUserNavigations } from './navigationConstants';
@@ -26,9 +26,8 @@ export const ProfileDropdown: FC<ProfileDropdownProps> = ({ isSignedIn, user }) 
   const router = useRouter();
 
   const userNavigations = isSignedIn ? signedInUserNavigations : signedOutUserNavigations;
-  const userEmails = getUserEmails(user);
+  const userPrimaryEmail = getUserPrimaryEmail(user);
 
-  // Get user initials
   const getUserInitials = useCallback((): string => {
     if (user?.firstName && user?.lastName) {
       return `${user.firstName.charAt(0)}${user.lastName.charAt(0)}`.toUpperCase();
@@ -36,11 +35,11 @@ export const ProfileDropdown: FC<ProfileDropdownProps> = ({ isSignedIn, user }) 
     if (user?.firstName) {
       return user.firstName.charAt(0).toUpperCase();
     }
-    if (userEmails[0]) {
-      return userEmails[0].charAt(0).toUpperCase();
+    if (userPrimaryEmail != null) {
+      return userPrimaryEmail.charAt(0).toUpperCase();
     }
     return 'U';
-  }, [user?.firstName, user?.lastName, userEmails]);
+  }, [user?.firstName, user?.lastName, userPrimaryEmail]);
 
   // Close dropdown when clicking outside
   const handleClickOutside = useCallback((event: MouseEvent): void => {
