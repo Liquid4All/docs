@@ -4,7 +4,13 @@ import Link from 'next/link';
 import { Container } from '@/components/Container';
 import FeedbackButton from '@/components/FeedbackButton';
 import { Logo } from '@/components/Logo';
-import { PRIVACY_POLICY_URL, TERMS_OF_SERVICE_URL, TITLE } from '@/constants';
+import {
+  ACCEPTABLE_USE_URL,
+  DISCORD_INVITE_URL,
+  PRIVACY_POLICY_URL,
+  TERMS_OF_SERVICE_URL,
+  TITLE,
+} from '@/constants';
 
 interface LinkType {
   label: string;
@@ -16,7 +22,7 @@ interface LinkType {
 interface FooterType {
   explore: LinkType[];
   company: LinkType[];
-  leap: LinkType[];
+  connect: LinkType[];
   legal: LinkType[];
 }
 
@@ -31,13 +37,13 @@ const footerData: FooterType = {
     { label: 'Careers', href: 'https://jobs.lever.co/liquid.ai', external: true },
   ],
 
-  leap: [
+  connect: [
     { label: 'Feedback', href: '#', special: 'feedback' },
-    { label: 'Discord', href: '/' },
+    { label: 'Discord', href: DISCORD_INVITE_URL, external: true },
   ],
 
   legal: [
-    { label: 'Acceptable Use Policy', href: '/acceptable-use' },
+    { label: 'Acceptable Use Policy', href: ACCEPTABLE_USE_URL },
     { label: 'Terms & Conditions', href: TERMS_OF_SERVICE_URL },
     { label: 'Privacy Policy', href: PRIVACY_POLICY_URL, external: true },
   ],
@@ -101,7 +107,7 @@ export default function Footer() {
               <div className="flex md:flex-row gap-8 sm:gap-16 md:flex-1 lg:justify-end">
                 <FooterSection title="Explore" links={footerData.explore} />
                 <FooterSection title="Company" links={footerData.company} />
-                <FooterSection title="LEAP" links={footerData.leap} />
+                <FooterSection title="Connect" links={footerData.connect} />
                 <FooterSection title="Legal" links={footerData.legal} />
               </div>
             </div>
