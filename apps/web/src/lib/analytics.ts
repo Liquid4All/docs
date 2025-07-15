@@ -17,6 +17,7 @@ export enum AnalyticEvent {
   // start of bundle download events
   OpenedDownloadDropdown = 'OpenedDownloadDropdown',
   OpenedLicensePage = 'OpenedLicensePage',
+  // this is the download card showing the license agreement and download button
   OpenedBundleDownloadCard = 'OpenedBundleDownloadCard',
   CancelledBundleDownloadCard = 'CancelledBundleDownloadCard',
   DownloadedModelBundle = 'DownloadedModelBundle',
