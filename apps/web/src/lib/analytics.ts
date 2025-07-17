@@ -39,4 +39,5 @@ export enum AnalyticEvent {
   ClearedAllFilters = 'ClearedAllFilters',
   ClickedPlaygroundButton = 'ClickedPlaygroundButton',
   OpenedMobileFilterDialog = 'OpenedMobileFilterDialog',
+  UpdatedModelProviderFilter = 'UpdatedModelProviderFilter',
 }
