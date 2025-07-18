@@ -6,14 +6,14 @@ import { Callout } from 'nextra/components';
 
 You should already have:
 
-- An iOS project created in Xcode. You may create an empty project with the wizard. Leap iOS SDK is Swift-first and requires iOS 17.0+ or macOS 14.0+.
+- An iOS project created in Xcode. You may create an empty project with the wizard. Leap iOS SDK is Swift-first and requires iOS 15.0+ or macOS 12.0+.
 - A working iOS device or simulator. For real-time performance, a physical device is recommended.
 - Xcode 15.0+ with Swift 5.9+
 
 ```swift
 // In your project's deployment target settings
-iOS Deployment Target: 17.0
-macOS Deployment Target: 14.0
+iOS Deployment Target: 15.0
+macOS Deployment Target: 12.0
 ```
 
 <Callout type="warning">
@@ -37,7 +37,7 @@ Add LeapSDK to your project in Xcode:
 Add LeapSDK to your `Podfile`:
 
 ```ruby
-pod 'Leap-SDK', '~> 1.0'
+pod 'Leap-SDK', '~> 0.1.0'
 ```
 
 Then run:
