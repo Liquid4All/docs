@@ -11,6 +11,12 @@ node_modules
 
 # Python
 .mypy_cache
+.venv
+.pytest_cache
+.ruff_cache
+htmlcov
+**/*.dist-info/
+__pycache__
 
 _pagefind
 
