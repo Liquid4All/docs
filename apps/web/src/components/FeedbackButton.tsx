@@ -11,15 +11,15 @@ import { cn } from '@/lib/utils';
 interface FeedbackButtonProps {
   label: ReactNode;
   className?: string;
-  variant?: 'ghost' | 'outline';
+  variant?: 'outline' | 'link';
   size?: ButtonProps['size'];
 }
 
 const FeedbackButton = ({
-  variant = 'ghost',
   label,
   className,
-  size = 'small',
+  variant = 'link',
+  size = 'sm',
 }: FeedbackButtonProps) => {
   const [feedbackModalOpen, setFeedbackModalOpen] = useState<boolean>(false);
 
@@ -34,7 +34,7 @@ const FeedbackButton = ({
         variant={variant}
         size={size}
         onClick={toggleFeedbackModal}
-        className={cn('px-0', className)}
+        className={cn('cursor-pointer', className)}
       >
         {label}
       </Button>
