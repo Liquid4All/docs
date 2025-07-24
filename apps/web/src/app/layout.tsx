@@ -18,9 +18,7 @@ import {
 } from '@/constants';
 import { cn } from '@/lib/utils';
 import '@/styles/custom-nextra.css';
-import '@/styles/globals.css';
 import '@/styles/tailwind.css';
-import '@/styles/text.css';
 
 export const metadata: Metadata = {
   title: {
