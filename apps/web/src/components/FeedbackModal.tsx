@@ -96,10 +96,10 @@ export const FeedbackModal = ({ isOpen, onClose }: FeedbackModalProps) => {
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={onClose} size="small">
+          <Button variant="outline" onClick={onClose}>
             Cancel
           </Button>
-          <Button onClick={handleSubmit} size="small" disabled={!feedback.trim() || isSubmitting}>
+          <Button onClick={handleSubmit} disabled={!feedback.trim() || isSubmitting}>
             {isSubmitting ? 'Submitting...' : 'Submit'}
           </Button>
         </DialogFooter>
