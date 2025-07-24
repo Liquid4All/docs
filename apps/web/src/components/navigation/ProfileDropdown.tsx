@@ -115,22 +115,23 @@ export const ProfileDropdown: FC<ProfileDropdownProps> = ({ isSignedIn, user }) 
   }, []);
 
   return (
-    <div ref={dropdownRef} className="relative inline-block text-left">
+    <div ref={dropdownRef} className="relative flex">
       <Button
-        variant="ghost"
+        variant="link"
+        size={isSignedIn ? 'sm' : 'icon'}
         ref={buttonRef}
         onClick={toggleDropdown}
         aria-expanded={isOpen}
         aria-haspopup="true"
-        className="px-0"
+        className="font-normal px-0"
       >
-        <IconUserCircle stroke={1.5} className="h-5 w-5 mr-1" />
+        <IconUserCircle stroke={1.5} className="h-5 w-5" />
         {isSignedIn && <span className="uppercase">{getUserInitials()}</span>}
       </Button>
 
       {isOpen && (
-        <div className="absolute right-0 z-100 w-fit p-1 text-left origin-top-right divide-y divide-neutral-100 bg-white rounded-sm shadow-lg focus:outline-none">
-          <div className="space-y-2">
+        <div className="absolute right-0 top-6 z-100 w-fit p-1 text-left origin-top-right divide-y divide-neutral-100 bg-white rounded-sm shadow-lg focus:outline-none">
+          <div className="space-y-1">
             {userNavigations.map((item, index) => (
               <div
                 key={item.label}
@@ -138,7 +139,7 @@ export const ProfileDropdown: FC<ProfileDropdownProps> = ({ isSignedIn, user }) 
                 onMouseEnter={(): void => handleMouseEnter(index)}
                 onMouseLeave={handleMouseLeave}
               >
-                <NavigationItem item={item} isMobile={false} className="px-4 py-1 " />
+                <NavigationItem item={item} isMobile={false} className="px-2! py-1.5! text-sm" />
               </div>
             ))}
           </div>

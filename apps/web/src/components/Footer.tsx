@@ -11,6 +11,7 @@ import {
   TERMS_OF_SERVICE_URL,
   TITLE,
 } from '@/constants';
+import { cn } from '@/lib/utils';
 
 interface LinkType {
   label: string;
@@ -65,7 +66,10 @@ const FooterSection = ({ title, links }: FooterSectionProps) => (
         if (link.special === 'feedback') {
           return (
             <li key={link.label}>
-              <FeedbackButton label={link.label} className={LINK_CLASSNAME} />
+              <FeedbackButton
+                label={link.label}
+                className={cn(LINK_CLASSNAME, 'px-0 font-normal')}
+              />
             </li>
           );
         }
@@ -97,9 +101,9 @@ export default function Footer() {
             <div className="flex flex-col gap-2 lg:justify-start">
               <Link href="/" className="block">
                 <span className="sr-only">{TITLE}</span>
-                <Logo variant="image" color="dark" size={30} />
+                <Logo color="dark" size={30} />
               </Link>
-              <small className="small block">by Liquid AI</small>
+              <p className="text-foreground text-xs">by Liquid AI</p>
             </div>
 
             <div className="flex flex-col md:flex-row gap-8 lg:contents">
@@ -115,10 +119,10 @@ export default function Footer() {
 
           {/* Bottom section */}
           <div className="mt-6 pt-6 border-t border-gray-200 flex flex-col justify-between text-gray-500 sm:flex-row sm:items-center">
-            <small className="small block">314 Main St, Cambridge, MA 02142</small>
-            <small className="small block">
+            <p className="text-xs text-foreground">314 Main St, Cambridge, MA 02142</p>
+            <p className="text-xs text-foreground">
               © {new Date().getFullYear()}, Liquid AI, Inc. All rights reserved.
-            </small>
+            </p>
           </div>
         </div>
       </Container>

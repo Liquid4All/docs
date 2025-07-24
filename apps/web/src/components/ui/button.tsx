@@ -8,29 +8,27 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { cn } from '@/lib/utils';
 
 const buttonVariants = cva(
-  'inline-flex items-center justify-center whitespace-nowrap rounded-sm font-medium ring-offset-background transition-all duration-200 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 cursor-pointer',
+  'inline-flex items-center justify-center whitespace-nowrap rounded-sm font-bold ring-offset-background transition-all duration-200 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 cursor-pointer leading-none!',
   {
     variants: {
       variant: {
-        // shadcn/ui variants
-        default: 'bg-[var(--primary)] text-primary-foreground hover:bg-[var(--primary)]/90',
-        destructive: 'bg-destructive text-destructive-foreground hover:bg-destructive/90',
-        outline: 'border border-neutral-400/50 font-bold bg-transparent hover:bg-black/5',
-        secondary: 'bg-secondary text-secondary-foreground hover:bg-secondary/80',
-        ghost: 'text-black hover:text-[var(--primary)]',
-        link: 'text-[var(--primary)] underline-offset-4 hover:underline hover:text-[var(--primary)]/80',
-        primary:
-          'bg-black text-white font-bold hover:bg-black/70 focus-visible:outline-[var(--primary)] transform',
-        tertiary: 'text-gray-900 hover:text-[var(--primary)] hover:font-bold transform',
-        square: 'bg-transparent text-neutral-400 font-bold hover:text-black',
+        default:
+          'bg-primary text-primary-foreground hover:bg-accent focus:bg-purple-500 focus:text-accent-foreground',
+        destructive: 'bg-destructive text-destructive-foreground hover:bg-red-800 focus:bg-red-900',
+        outline:
+          'border border-border bg-transparent hover:bg-accent hover:text-accent-foreground focus:bg-purple-500 focus:text-accent-foreground',
+        secondary:
+          'bg-transparent text-foreground hover:bg-accent hover:text-accent-foreground focus:bg-purple-500 focus:text-accent-foreground',
+        ghost: 'hover:bg-black/5 focus:bg-black/15 text-foreground',
+        link: 'text-primary hover:text-accent',
       },
       size: {
-        sm: 'rounded-sm px-3 text-sm',
-        default: 'px-4 py-2 text-sm',
-        lg: 'rounded-sm px-8 text-base',
-        icon: 'h-8 w-8',
-        small: 'text-sm px-3 py-1.5',
-        big: 'text-sm sm:text-base px-4 sm:px-8 py-3 sm:py-4',
+        sm: 'rounded-md p-2 text-sm gap-1',
+        default: 'rounded-lg p-3 text-base gap-2',
+        lg: 'rounded-lg p-3.5 text-lg gap-2',
+        'icon-sm': 'h-4 w-4 p-1 box-content rounded-sm',
+        icon: 'h-5 w-5 p-2 box-content rounded-lg',
+        'icon-lg': 'h-6 w-6 p-3 box-content rounded-lg',
       },
       justify: {
         center: 'justify-center',
@@ -152,13 +150,15 @@ type ButtonAsLink = ButtonBaseProps &
 export const getButtonIconSize = (size: ButtonProps['size']): number => {
   switch (size) {
     case 'sm':
-    case 'small':
       return 12;
     case 'lg':
-    case 'big':
       return 20;
-    case 'icon':
+    case 'icon-sm':
       return 16;
+    case 'icon':
+      return 20;
+    case 'icon-lg':
+      return 24;
     default:
       return 16;
   }
@@ -194,11 +194,6 @@ const Button = React.forwardRef<HTMLButtonElement | HTMLAnchorElement, ButtonPro
 
     // Handle icon spacing and animations
     const hasIcon = TablerIcon;
-    const iconSpacing = hasIcon ? 'gap-2 transition-all duration-200' : '';
-    const tertiaryHover = hasIcon && variant === 'tertiary' ? 'hover:gap-3' : '';
-
-    // Disable animations for simple variant
-    const simpleNoAnimation = variant === 'square' && hasIcon ? 'gap-2' : '';
 
     // Render content with icon positioning
     const renderContent = () => {
@@ -210,7 +205,7 @@ const Button = React.forwardRef<HTMLButtonElement | HTMLAnchorElement, ButtonPro
         <TablerIcon
           size={getButtonIconSize(size)}
           stroke={1.5}
-          className={variant === 'square' ? '' : 'transition-all duration-200'}
+          className="transition-all duration-200"
         />
       );
 
@@ -229,8 +224,7 @@ const Button = React.forwardRef<HTMLButtonElement | HTMLAnchorElement, ButtonPro
 
     const finalClassName = cn(
       buttonVariants({ variant, size, justify, className }),
-      variant === 'square' ? simpleNoAnimation : iconSpacing,
-      variant === 'square' ? '' : tertiaryHover
+      variant === 'link' && 'p-0'
     );
 
     // Create the button element based on type

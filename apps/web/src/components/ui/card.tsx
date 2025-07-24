@@ -6,7 +6,8 @@ import React from 'react';
 
 import { Icon } from '@/components/Icon';
 import { Tag } from '@/components/Tag';
-import { Button } from '@/components/ui/button';
+import { CardVariant } from '@/components/landing-page/sections/data/featuresData';
+import { Button, ButtonProps } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
 export interface CardProps {
@@ -19,7 +20,7 @@ export interface CardProps {
   icon?: React.ComponentType<{ className?: string }>;
   width?: 1 | 2;
   mobileWidth?: 1 | 2;
-  variant?: 'white' | 'glass-gradient' | 'backdrop' | 'gradient-border';
+  variant?: CardVariant;
   customClasses?: string;
   badge?: string;
   button?: string;
@@ -29,14 +30,14 @@ export interface CardProps {
   isVisible?: boolean;
   animationDelay?: number;
   contentAlignment?: 'left' | 'center';
-  buttonVariant?: 'ghost' | 'default';
+  buttonVariant?: ButtonProps['variant'];
 }
 
-const CARD_VARIANTS: Record<string, string> = {
-  'glass-gradient': 'bg-gradient-to-br from-purple-300 to-orange-200 border',
-  white: 'border border-neutral-200 bg-white',
-  backdrop: 'backdrop-blur-sm border border-neutral-300',
-  'gradient-border': 'p-px bg-gradient-to-br from-orange-400 to-purple-600',
+const CARD_VARIANTS: Record<CardVariant, string> = {
+  [CardVariant.GlassGradient]: 'bg-gradient-to-br from-purple-100 to-orange-100 border',
+  [CardVariant.Backdrop]: 'backdrop-blur-sm border',
+  [CardVariant.White]: 'border bg-white',
+  [CardVariant.GradientBorder]: 'p-px bg-gradient-to-br from-orange-400 to-purple-600',
 };
 
 export const Card: React.FC<CardProps> = ({
@@ -49,7 +50,7 @@ export const Card: React.FC<CardProps> = ({
   icon,
   width = 1,
   mobileWidth,
-  variant = 'white',
+  variant = CardVariant.White,
   customClasses = '',
   badge,
   button,
@@ -59,10 +60,10 @@ export const Card: React.FC<CardProps> = ({
   isVisible = true,
   animationDelay = 0,
   contentAlignment = 'left',
-  buttonVariant = 'ghost',
+  buttonVariant = 'link',
 }) => {
   const effectiveMobileWidth: number = mobileWidth || width;
-  const cardVariant: string = CARD_VARIANTS[variant] || CARD_VARIANTS.white;
+  const cardVariant: string = CARD_VARIANTS[variant];
 
   const isLink: boolean = Boolean(href && !onClick);
   const isClickable: boolean = Boolean(onClick || isLink);
@@ -70,7 +71,7 @@ export const Card: React.FC<CardProps> = ({
   const baseClasses: string = cn(
     effectiveMobileWidth === 2 ? 'col-span-2' : 'col-span-1',
     width === 2 ? 'lg:flex-[2]' : 'lg:flex-1',
-    'rounded-sm transition-all duration-700 ease-out relative',
+    'rounded-md transition-all duration-700 ease-out relative',
     cardVariant,
     isClickable && 'hover:shadow-lg cursor-pointer group',
     contentAlignment === 'center' && 'text-center items-center',
@@ -86,7 +87,7 @@ export const Card: React.FC<CardProps> = ({
   const GradientBorderContent: React.FC = () => (
     <div
       className={cn(
-        'rounded-[calc(0.4rem-1px)] backdrop-blur-sm bg-white/90 p-3 md:p-4 h-full flex flex-col',
+        'rounded-[calc(var(--radius-md)-1px)] backdrop-blur-sm bg-white/90 p-3 md:p-4 h-full flex flex-col',
         contentAlignment === 'center' && 'text-center items-center'
       )}
     >
@@ -121,12 +122,12 @@ export const Card: React.FC<CardProps> = ({
       {icon ? (
         <>
           <Icon icon={icon} className="flex justify-center my-3" />
-          <h4 className="mb-4 leading-9">{title}</h4>
+          <h4 className="mb-4 leading-9 font-normal">{title}</h4>
         </>
       ) : (
         <>
           <div className="text-left my-auto">
-            <h4 className="mb-4 leading-9">{title}</h4>
+            <h4 className="mb-4 leading-9 font-normal">{title}</h4>
             {button && (
               <div className="">
                 <Button
@@ -134,7 +135,7 @@ export const Card: React.FC<CardProps> = ({
                   href={!onClick ? buttonLink || href : undefined}
                   onClick={onClick}
                   icon={IconArrowRight}
-                  className="p-0 hover:bg-transparent font-normal text-neutral-800"
+                  className="font-normal"
                 >
                   {button}
                 </Button>
@@ -151,7 +152,7 @@ export const Card: React.FC<CardProps> = ({
       {value ? (
         <>
           {icon && <Icon icon={icon} className="flex justify-start mb-6 md:mb-8" />}
-          <h3 className="!text-primary/80 mb-1">
+          <h3 className="text-accent mb-1">
             {value}
             {unit && <span className="text-lg"> {unit}</span>}
           </h3>
@@ -162,7 +163,7 @@ export const Card: React.FC<CardProps> = ({
           <ul className="space-y-2 mt-4">
             {items.map((item: string, i: number) => (
               <li key={i} className="flex items-center justify-center gap-2">
-                <span className="w-5 h-5 bg-primary/80 rounded-full flex items-center justify-center flex-shrink-0">
+                <span className="w-5 h-5 bg-purple-300 rounded-full flex items-center justify-center flex-shrink-0">
                   <IconCheck className="w-4 h-4 text-white" />
                 </span>
                 <p className="text-sm md:text-base">{item}</p>
@@ -172,7 +173,7 @@ export const Card: React.FC<CardProps> = ({
         </div>
       ) : (
         <>
-          <h4 className="mb-4">{title}</h4>
+          <h4 className="mb-4 font-normal">{title}</h4>
           {button && (
             <div className="mt-auto pt-6">
               <Button
@@ -180,7 +181,7 @@ export const Card: React.FC<CardProps> = ({
                 href={!onClick ? buttonLink || href : undefined}
                 onClick={onClick}
                 icon={IconArrowRight}
-                className="p-0 hover:bg-transparent font-normal text-neutral-800"
+                className="font-normal"
               >
                 {button}
               </Button>
