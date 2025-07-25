@@ -17,6 +17,8 @@
     "typecheck": "tsc --noEmit --p tsconfig.json"
   },
   "dependencies": {
+    "@aws-sdk/client-cloudwatch-logs": "^3.849.0",
+    "@aws-sdk/client-ecs": "^3.848.0",
     "@aws-sdk/client-s3": "^3.850.0",
     "@aws-sdk/s3-presigned-post": "^3.850.0",
     "@aws-sdk/s3-request-presigner": "^3.850.0",
