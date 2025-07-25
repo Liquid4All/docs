@@ -1,4 +1,4 @@
-import { ArrowUpRightIcon } from '@heroicons/react/24/outline';
+import { IconArrowUpRight } from '@tabler/icons-react';
 import Link from 'next/link';
 
 import { Container } from '@/components/Container';
@@ -82,7 +82,7 @@ const FooterSection = ({ title, links }: FooterSectionProps) => (
               {...(link.external && { target: '_blank', rel: 'noopener noreferrer' })}
             >
               {link.label}
-              {link.external && <ArrowUpRightIcon className="w-3 h-3" />}
+              {link.external && <IconArrowUpRight className="w-4 h-4" />}
             </Link>
           </li>
         );
