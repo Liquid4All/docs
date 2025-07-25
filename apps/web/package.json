@@ -17,6 +17,9 @@
     "typecheck": "tsc --noEmit --p tsconfig.json"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.850.0",
+    "@aws-sdk/s3-presigned-post": "^3.850.0",
+    "@aws-sdk/s3-request-presigner": "^3.850.0",
     "@clerk/nextjs": "^6.23.3",
     "@clerk/types": "^4.59.2",
     "@fontsource/jetbrains-mono": "^5.2.5",
@@ -41,6 +44,8 @@
     "bcrypt": "^6.0.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "cross-fetch": "^4.1.0",
+    "form-data": "^4.0.4",
     "lodash.debounce": "^4.0.8",
     "lucide-react": "^0.512.0",
     "next": "^15.3.2",
