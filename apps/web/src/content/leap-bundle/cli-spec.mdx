@@ -1,0 +1,463 @@
+import { Callout } from 'nextra/components';
+
+# CLI Spec
+
+## Overview
+
+The Model Bundle Tool provides a command-line interface for the LEAP (Liquid Edge AI Platform) bundling service. It allows you to upload model directories, create bundle requests, monitor processing status, and download completed bundles.
+
+## Global Options
+
+All commands support these global options:
+
+- `--version`, `-v`: Show version information and exit
+- `--help`: Show help information for any command
+
+## Authentication Commands
+
+### `login`
+
+Authenticate with the LEAP platform using your API token.
+
+```sh
+leap-bundle login <api-token>
+```
+
+**Arguments**
+
+- `api-token` (required): Your LEAP platform API token
+
+**Behavior**
+
+- Validates the API token with the LEAP platform
+- Stores the token in `~/.liquid-leap` configuration file
+- If already logged in with a different token, prompts for confirmation to switch
+- If already logged in with the same token, shows a warning message
+
+**Examples**
+
+```sh
+# Login with API token
+leap-bundle login leap_1234567890abcdef
+
+# Example output on success
+ℹ Validating API token...
+✓ Successfully logged in to LEAP platform!
+
+# Example output when already logged in with different token
+⚠ You are already logged in with a different API token.
+Do you want to log out and log in with the new token? [y/N]: y
+ℹ Validating API token...
+✓ Successfully logged in to LEAP platform!
+```
+
+**Error Cases**
+
+- Invalid API token: Shows validation error and exits with code 1
+- Network connectivity issues: Shows connection error
+- Token storage failure: Shows file system error
+
+<Callout type="warning">
+  API tokens are stored locally in `~/.liquid-leap` with restricted file permissions (600). Keep
+  your tokens secure and never share them.
+</Callout>
+
+### `logout`
+
+Clear stored authentication credentials.
+
+```sh
+leap-bundle logout
+```
+
+**Arguments:** None
+
+**Behavior**
+
+- Removes the stored API token from the configuration file
+- If not logged in, shows informational message
+- Always exits successfully
+
+**Examples**
+
+```sh
+# Logout from LEAP platform
+leap-bundle logout
+
+# Example output on success
+✓ Successfully logged out from LEAP platform!
+
+# Example output when not logged in
+ℹ You are not currently logged in.
+```
+
+### `whoami`
+
+Display information about the currently authenticated user.
+
+```sh
+leap-bundle whoami
+```
+
+**Arguments:** None
+
+**Behavior**
+
+- Queries the LEAP platform API to get user information
+- Displays the email address associated with the current API token
+- Requires valid authentication
+
+**Examples**
+
+```sh
+# Check current user
+leap-bundle whoami
+
+# Example output on success
+✓ Logged in as: user@example.com
+
+# Example output when not logged in
+✗ You are not logged in. Run 'leap-bundle login' first.
+```
+
+**Error Cases**
+
+- Not authenticated: Prompts to login first
+- Invalid/expired token: Shows authentication error
+- Network issues: Shows connection error
+
+## Configuration Commands
+
+### `config`
+
+View CLI configuration settings.
+
+```sh
+leap-bundle config
+```
+
+**Behavior**
+
+- Displays current configuration and config file location
+- Configuration is stored in `~/.liquid-leap`
+
+**Examples**
+
+```sh
+# View current configuration
+leap-bundle config
+
+# Example output
+ℹ Config file location: /home/user/.liquid-leap
+
+Current configuration:
+  server_url: https://leap.liquid.ai
+```
+
+## Bundle Management Commands
+
+### `create`
+
+Create a new bundle request by uploading a model directory.
+
+```sh
+leap-bundle create <input-path>
+```
+
+**Arguments**
+
+- `input-path` (required): Path to the directory to upload and bundle
+
+**Behavior**
+
+- Calculates a hash of the directory contents
+- Creates a bundle request on the LEAP platform
+- Uploads the directory contents to cloud storage
+- Updates the request status throughout the process
+- If a request with the same hash already exists, shows a warning instead of creating a duplicate
+
+**Examples**
+
+```sh
+# Create bundle from directory
+leap-bundle create ./my-model-directory
+
+# Example output on success
+ℹ Calculating directory hash...
+ℹ Submitting bundle request...
+✓ Bundle request created with ID: 18734
+ℹ Starting upload...
+Uploading directory... ✓
+✓ Upload completed successfully! Request ID: 18734
+
+# Example output when request already exists
+⚠ A bundle request with the same input hash already exists: req_xyz789abc123
+```
+
+**Error Cases**
+
+- Directory doesn't exist: Shows file not found error
+- Path is not a directory: Shows invalid path error
+- Not authenticated: Prompts to login first
+- Upload failure: Shows upload error and updates request status to failed
+- Network issues: Shows connection error
+
+**Process Flow**
+
+1. Validates input directory exists
+2. Calculates directory hash for deduplication
+3. Creates bundle request via API
+4. Uploads directory contents to S3 using signed URLs
+5. Updates request status to track progress
+
+<Callout type="warning">
+  Large directories may take significant time to upload. The upload process can be interrupted with
+  Ctrl+C.
+</Callout>
+
+**Rate Limits**
+
+| Account type    | Max requests per 24 hours |
+| --------------- | ------------------------- |
+| Free tier       | 5                         |
+| Enterprise tier | Coming soon               |
+
+**Processing Time**
+
+If the request is not rate limited, it will usually be completed within 20 minutes for small model checkpoints.
+
+### `list`
+
+List bundle requests or get details for a specific request.
+
+```sh
+leap-bundle list [<request-id>]
+```
+
+**Arguments**
+
+- `request-id` (optional): Specific request ID to get detailed information
+
+**Behavior**
+
+- Without arguments: Lists 50 most recent bundle requests
+- With request ID: Shows detailed information for the specific request
+- Displays requests in a formatted table
+
+**Examples**
+
+```sh
+# List all requests
+leap-bundle list
+
+# Example output
+Bundle Requests (50 most recent)
+┏━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━┓
+┃ ID    ┃ Input Path               ┃ Status     ┃ Creation             ┃
+┡━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━┩
+│ 18734 │ /path/to/model/directory │ completed  │ 2024-01-15T10:30:00Z │
+│ 18733 │ /path/to/other/directory │ processing │ 2024-01-15T09:15:00Z │
+└───────┴──────────────────────────┴────────────┴──────────────────────┘
+✓ Found 2 bundle requests.
+
+# Get details for specific request
+leap-bundle list 18734
+
+# Example output
+✓ Request Details:
+  ID:         18734
+  Input Path: /path/to/model/directory
+  Status:     completed
+  Creation:   2024-01-15T10:30:00Z
+  Update:     2024-01-15T10:45:00Z
+```
+
+**Request Statuses**
+
+- `New`: The request is newly created
+- `Uploading`: The model files are being uploaded
+- `Uploading Failed`: The upload encountered an error
+- `Processing`: The bundle is being processed
+- `Processing Failed`: Processing failed
+- `Completed`: The request is successfully completed and ready for download
+- `Cancelled`: The request is cancelled by the user
+- `Archived`: The request is archived and no longer available for download; this happens automatically 5 days after completion
+
+**Error Cases**
+
+- Not authenticated: Prompts to login first
+- Request ID not found: Shows not found error
+- Network issues: Shows connection error
+
+### `download`
+
+Download the bundle file for a completed request.
+
+```sh
+leap-bundle download <request-id> [--output-path <path>]
+```
+
+**Arguments**
+
+- `request-id` (required): ID of the bundle request to download
+
+**Options**
+
+- `--output-path <path>`: Directory to save the downloaded file (default: current directory)
+
+**Behavior**
+
+- Requests a signed download URL from the LEAP platform
+- Downloads the bundle file using the signed URL
+- Saves the file with a default name or to the specified output path
+
+**Examples**
+
+```sh
+# Download to current directory
+leap-bundle download 18734
+
+# Example output
+ℹ Requesting download for bundle request 18734...
+✓ Download URL obtained for request 18734
+Downloading bundle output... ✓
+✓ Download completed successfully! File saved to: input-8da4w_output_8da8w-seq_8196.bundle
+
+# Download to specific directory
+leap-bundle download 18734 --output-path ./downloads/
+
+# Example output
+ℹ Requesting download for bundle request 18734...
+✓ Download URL obtained for request 18734
+Downloading bundle output... ✓
+✓ Download completed successfully! File saved to: downloads/input-8da4w_output_8da8w-seq_8196.bundle
+```
+
+**Error Cases**
+
+- Request not found: Shows request not found error
+- Request not completed: Shows status error (request must be in "completed" status)
+- Request already archived: Shows archived error
+- Output directory doesn't exist: Shows directory not found error
+- Output path is not a directory: Shows invalid path error
+- Download failure: Shows network or file system error
+- Not authenticated: Prompts to login first
+
+<Callout type="info">
+  Only requests with "completed" status can be downloaded. Check the request status using `leap-bundle list <request-id>` before attempting to download.
+</Callout>
+
+<Callout type="warning">
+  A completed request will be automatically archived 5 days after completion. You will not be able
+  to download it afterwards.
+</Callout>
+
+### `cancel`
+
+Cancel a bundle request that is still processing.
+
+```sh
+leap-bundle cancel <request-id>
+```
+
+**Arguments**
+
+- `request-id` (required): ID of the bundle request to cancel
+
+**Behavior**
+
+- Sends a cancellation request to the LEAP platform
+- Updates the request status to "cancelled"
+- Cannot cancel requests that are already completed or archived
+
+**Examples**
+
+```sh
+# Cancel a processing request
+leap-bundle cancel 18734
+
+# Example output on success
+ℹ Cancelling bundle request 18734...
+✓ Request cancelled successfully.
+
+# Example output when request is already completed
+ℹ Cancelling bundle request 18734...
+✓ Request was already completed and cannot be cancelled.
+```
+
+**Error Cases**
+
+- Request not found: Shows request not found error
+- Request already completed: Shows informational message
+- Not authenticated: Prompts to login first
+- Network issues: Shows connection error
+
+## Error Handling
+
+### Authentication Errors
+
+```sh
+# Example authentication error
+✗ You must be logged in. Run 'leap-bundle login' first.
+
+# Example invalid token error
+✗ Invalid API token. Please check your token and try again.
+```
+
+### Network Errors
+
+```sh
+# Example connection error
+✗ Failed to connect to server: Connection timeout
+
+# Example API error
+✗ HTTP 429 error: Rate limit exceeded. Please try again later.
+```
+
+### File System Errors
+
+```sh
+# Example directory not found
+✗ Directory does not exist: /path/to/nonexistent/directory
+
+# Example permission error
+✗ Failed to save login credentials: Permission denied
+```
+
+### API Response Errors
+
+The CLI tool extracts and displays error messages from API responses:
+
+```sh
+# Example API error response
+✗ Bundle processing failed: Insufficient disk space on server
+```
+
+## Configuration File
+
+The CLI tool stores configuration in `~/.liquid-leap` as a YAML file:
+
+```yaml
+version: 1
+api_token: 'your_encrypted_token_here'
+server_url: 'https://leap.liquid.ai'
+```
+
+**Location:** The file is always stored in the user's home directory as `.liquid-leap`.
+
+## Exit Codes
+
+The CLI tool uses standard exit codes:
+
+- `0`: Success
+- `1`: General error (authentication, network, file system, etc.)
+
+## Rate Limiting
+
+The LEAP platform may impose rate limits on API requests. If you encounter rate limiting errors:
+
+```sh
+✗ HTTP 429 error: Rate limit exceeded. Please try again later.
+```
+
+Wait a few minutes before retrying your request.
