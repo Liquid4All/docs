@@ -392,6 +392,26 @@ leap-bundle cancel 18734
 - Not authenticated: Prompts to login first
 - Network issues: Shows connection error
 
+## Configuration File
+
+The CLI tool stores configuration in `~/.liquid-leap` as a YAML file:
+
+```yaml
+version: 1
+api_token: 'your_encrypted_token_here'
+server_url: 'https://leap.liquid.ai'
+```
+
+**Location:** The file is always stored in the user's home directory as `.liquid-leap`.
+
+## Current Limitations
+
+- The bundle tool only works on LFM2 and Qwen models for now.
+  - We are working on expanding support to more models.
+- If model uploading fails, there is no resume functionality.
+  - The best way to handle this now is to cancel the request, and create a new request.
+  - This will be improved very soon.
+
 ## Error Handling
 
 ### Authentication Errors
@@ -433,31 +453,9 @@ The CLI tool extracts and displays error messages from API responses:
 ✗ Bundle processing failed: Insufficient disk space on server
 ```
 
-## Configuration File
-
-The CLI tool stores configuration in `~/.liquid-leap` as a YAML file:
-
-```yaml
-version: 1
-api_token: 'your_encrypted_token_here'
-server_url: 'https://leap.liquid.ai'
-```
-
-**Location:** The file is always stored in the user's home directory as `.liquid-leap`.
-
 ## Exit Codes
 
 The CLI tool uses standard exit codes:
 
 - `0`: Success
 - `1`: General error (authentication, network, file system, etc.)
-
-## Rate Limiting
-
-The LEAP platform may impose rate limits on API requests. If you encounter rate limiting errors:
-
-```sh
-✗ HTTP 429 error: Rate limit exceeded. Please try again later.
-```
-
-Wait a few minutes before retrying your request.
