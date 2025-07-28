@@ -1,10 +1,10 @@
-# Comparision with Cloud AI API
+# Comparison with Cloud AI API
 
 If you are familiar with cloud-based AI APIs (e.g. [OpenAI API](https://openai.com/api/)), this document
 shows the similarity and differences between these clould APIs and Leap.
 
 We will inspect this piece of Python-based OpenAI API chat completion request to figure out how to migrate it to LeapSDK.
-This example code is modified from [OpenAI API document](https://platform.openai.com/docs/guides/streaming-responses?api-mode=chat).
+This example code is modified from [OpenAI API documentation](https://platform.openai.com/docs/guides/streaming-responses?api-mode=chat).
 
 ```python
 from openai import OpenAI
@@ -34,8 +34,8 @@ print("Generation done!")
 ## Loading the model
 
 While models can be directly used on the cloud-based APIs once the API client is created,
-LeapSDK requires the developers to explicitly load the model before requesting the generation.
-It is necessary because the model will run locally. This step generally takes a few seconds
+LeapSDK requires the developers to explicitly load the model before requesting the generation,
+since the model will run locally. This step generally takes a few seconds
 depending on the model size and the device performance.
 
 On cloud API, you need to create a API client:
@@ -50,14 +50,14 @@ In LeapSDK, you need to load the model to create a model runner.
 val modelRunner = LeapClient.loadModel(MODEL_BUNDLE_PATH)
 ```
 
-The parameter will be the path to the model bundle file. This path must be local. The return
-value is a "model runner" which plays the similar role of client object in the clould API
+The parameter will be the path to the model bundle file, and must be local. The return
+value is a "model runner" which plays a similar role to the client object in the cloud API –
 except that it carries the model weights. If the model runner is released, the app has to
 reload the model before requesting new generations.
 
 ## Request for generation
 
-In the cloud API calls, `client.chat.completions.create` will return a stream object for
+In the cloud API calls, `client.chat.completions.create` will return a stream object for the
 caller to fetch the generated contents.
 
 ```python
@@ -73,7 +73,7 @@ stream = client.chat.completions.create(
 )
 ```
 
-In LeapSDK Android, we use `generateResponse` on
+In LeapSDK for Android, we use `generateResponse` on
 the conversation object to obtain a Kotlin flow (equivalent to a Python stream) for generation. Since
 the model runner object contains all information about the model, we don't need to indicate the model name
 in the call again.
@@ -93,7 +93,7 @@ val stream = conversation.generateResponse("Say 'double bubble bath' ten times f
 
 ## Process generated contents
 
-In clould API Python code, a for-loop on the stream object retrieves the contents.
+In cloud API Python code, a for-loop on the stream object retrieves the contents.
 
 ```python
 for chunk in stream:
@@ -106,7 +106,7 @@ print("")
 print("Generation done!")
 ```
 
-In LeapSDK, we call `onEach` function on the Kotlin flow to process the content. When the completion is done,
+In LeapSDK, we call `onEach` function on the Kotlin flow to process the content. When the completion is done, the
 callback in `onCompletion` will be invoked. In the end, a call to `collect()` is necessary to start the generation.
 
 ```kotlin
@@ -125,10 +125,10 @@ stream.onEach { chunk ->
 
 ## Coroutine scope
 
-LeapSDK API is similar to cloud-based API. It is worth noting that most LeapSDK Android APIs are based on
-[Kotlin coroutine](https://kotlinlang.org/docs/coroutines-basics.html). You will need to use a coroutine
-scope to execute these functions. In Android, we recommend to use "lifecycle scope" defined on [lifecycle-aware
-components](https://developer.android.com/topic/libraries/architecture/coroutines).
+Hopefully by now it is clear how similar LeapSDK API is to cloud-based APIs. It is worth noting that most LeapSDK
+Android APIs are based on [Kotlin coroutine](https://kotlinlang.org/docs/coroutines-basics.html). You will need to use
+a coroutine scope to execute these functions. In Android, we recommend to use "lifecycle scope" defined on
+[lifecycle-aware components](https://developer.android.com/topic/libraries/architecture/coroutines):
 
 ```kotlin
 lifecycleScope.launch {
@@ -158,4 +158,4 @@ lifecycleScope.launch {
 
 ## Next steps
 
-For more information, please refer to the [quick start guide](./android-quick-start-guide) and [API reference](android-api-spec).
+For more information, please refer to the [quick start guide](android-quick-start-guide) and [API reference](android-api-spec).
