@@ -14,7 +14,7 @@ export default async function DocumentationLayout({ children }: { children: Reac
     <main className="bg-nextra-bg">
       <Layout
         sidebar={{ autoCollapse: true }}
-        navbar={<Header showSearch />}
+        navbar={<Header key="navbar" showSearch />}
         pageMap={pageMap}
         editLink={null}
         feedback={{

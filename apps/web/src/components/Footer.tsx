@@ -31,6 +31,7 @@ const footerData: FooterType = {
   explore: [
     { label: 'Models', href: '/models' },
     { label: 'Documentation', href: '/docs' },
+    { label: 'Changelog', href: '/docs/changelog' },
   ],
 
   company: [
