@@ -1,6 +1,12 @@
 # Model Bundle Tool Quick Start
 
-Model Bundle Tool is a command-line utility for creating and managing model bundles based on custom LEAP model checkpoints. This guide will help you quickly get started with the tool.
+Model Bundle Tool is a command-line interface (CLI) for creating and managing model bundles for Liquid Edge AI Platform (LEAP). This guide will help you quickly get started with the tool.
+
+Here is a typical user workflow:
+
+- Download an open source base model.
+- Customize the base model with your own dataset.
+- Create a model bundle using the `leap-bundle` CLI for LEAP SDK.
 
 ## Install
 
@@ -29,18 +35,6 @@ Example output:
 ```sh
 ℹ Validating API token...
 ✓ Successfully logged in to LEAP platform!
-```
-
-To verify your login status, run:
-
-```sh
-leap-bundle whoami
-```
-
-Example output:
-
-```sh
-✓ Logged in as: user@example.com
 ```
 
 ## Create model bundle
