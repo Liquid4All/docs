@@ -26,6 +26,9 @@ export default withSentryConfig(
       '/api/docs/**': ['./src/content/**/*'],
       '/llms.txt': ['./src/content/**/*'],
     },
+    images: {
+      remotePatterns: [new URL('https://unpkg.com/**')],
+    },
   }),
   {
     // For all available options, see:
