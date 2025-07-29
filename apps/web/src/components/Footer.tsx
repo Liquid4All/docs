@@ -13,6 +13,8 @@ import {
 } from '@/constants';
 import { cn } from '@/lib/utils';
 
+import AppStoreLink from './AppStoreLink';
+
 interface LinkType {
   label: string;
   href: string;
@@ -109,11 +111,25 @@ export default function Footer() {
 
             <div className="flex flex-col md:flex-row gap-8 lg:contents">
               {/* Column 2: Desktop center, Tablet/Mobile stacked */}
-              <div className="flex flex-wrap md:flex-nowrap md:flex-row gap-8 sm:gap-16 md:flex-1 lg:justify-end">
+              <div className="flex flex-wrap md:flex-nowrap md:flex-row gap-8 sm:gap-16 md:flex-1 lg:justify-center">
                 <FooterSection title="Explore" links={footerData.explore} />
                 <FooterSection title="Company" links={footerData.company} />
                 <FooterSection title="Connect" links={footerData.connect} />
                 <FooterSection title="Legal" links={footerData.legal} />
+              </div>
+            </div>
+
+            <div className="flex flex-col">
+              <div className="bg-muted rounded rounded-sm px-4 py-3 w-fit">
+                <p className="text-sm font-bold text-foreground mb-2">
+                  Try edge AI on your device with Apollo
+                </p>
+                <AppStoreLink
+                  display="badge-qr"
+                  theme="dark"
+                  height={55}
+                  link="https://apps.apple.com/us/app/apollo-powered-by-liquid/id6448019325"
+                />
               </div>
             </div>
           </div>
