@@ -70,7 +70,60 @@ Include the model bundle directly in your app bundle:
 
 ### Option 2: Download On-Demand (Dynamic)
 
-You can also use the model downloader module to download model bundles on-demand in your app, which reduces initial app size and allows for dynamic model selection. See the [Model Downloader API documentation](ios-api-spec#leapmodeldownloader) for details on how to implement on-demand model downloading.
+You can also use the model downloader module to download model bundles on-demand in your app, which reduces initial app size and allows for dynamic model selection.
+
+#### Using LeapDownloadableModel
+
+The easiest way to download models is using `LeapDownloadableModel`, which automatically resolves download URLs from the [Leap Model Library](https://leap.liquid.ai/models):
+
+```swift
+import LeapModelDownloader
+
+// Resolve a model from the Leap API
+let model = await LeapDownloadableModel.resolve(
+    modelSlug: "qwen-0.6b",
+    quantizationSlug: "qwen-0.6b-20250610-8da4w"
+)
+
+if let model = model {
+    let downloader = LeapModelDownloader()
+
+    // Request download (non-blocking)
+    downloader.requestDownloadModel(model)
+
+    // Monitor download progress
+    let status = await downloader.queryStatus(model)
+    switch status {
+    case .notOnLocal:
+        print("Download not started")
+    case .downloadInProgress(let progress):
+        print("Download progress: \(Int(progress * 100))%")
+    case .downloaded:
+        print("Model ready!")
+        let modelFile = downloader.getModelFile(model)
+        // Use modelFile.url with Leap.load()
+    }
+}
+```
+
+#### Using HuggingFaceDownloadableModel
+
+For HuggingFace models, you can use the `HuggingFaceDownloadableModel`:
+
+```swift
+import LeapModelDownloader
+
+let hfModel = HuggingFaceDownloadableModel(
+    ownerName: "LiquidAI",
+    repoName: "LeapBundles",
+    filename: "qwen3-0_6b_8da4w_4096.bundle"
+)
+
+let downloader = LeapModelDownloader()
+downloader.requestDownloadModel(hfModel)
+```
+
+See the [Model Downloader API documentation](ios-api-spec#leapmodeldownloader) for complete details on implementing on-demand model downloading.
 
 <Callout type="info">
   Note: The model downloader is intended for prototyping and development. For production apps,
