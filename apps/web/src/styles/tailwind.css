@@ -110,11 +110,11 @@
 
     /* base blob colors */
     --bg-orange-blob: 251, 200, 170;
-    --color-purple-base: 138, 43, 226;
+    --color-purple-base: 235, 205, 250;
 
     /* blob colors with opacity */
-    --blob-orange: rgba(var(--bg-orange-blob), 0.4);
-    --blob-purple: rgba(var(--color-purple-base), 0.3);
+    --blob-orange: rgba(var(--bg-orange-blob), 1);
+    --blob-purple: rgba(var(--color-purple-base), 1);
 
     /* base background */
     --bg-blob-color: rgb(243, 242, 242);
@@ -248,16 +248,28 @@
     @apply font-jetbrains text-xs font-normal -tracking-[0.3px] leading-[140%];
   }
 
-  .gradient-blob-bg {
+  .bg-gradient-card {
+    background: linear-gradient(135deg, #ffffff 0%, var(--blob-purple) 70%, var(--blob-orange) 100%);
+  }
+  
+  .bg-gradient-blob-bottom {
     position: relative;
-    background: var(--muted);
-    background-image:
-      /* Top */
+    background: var(--bg-blob-color);
+    background-image: 
+      radial-gradient(ellipse 40vw 50vh at 40% 90%, var(--blob-purple) 40%, transparent 100%),
+      radial-gradient(ellipse 30vw 40vh at 30% 95%, var(--blob-purple) 40%, transparent 100%),
+      radial-gradient(ellipse 30vw 50vh at 60% 99%, var(--blob-orange) 40%, transparent 100%);
+  }
+  
+  
+  .bg-gradient-blob {
+    position: relative;
+    background: var(--bg-blob-color);
+    background-image: 
       radial-gradient(ellipse 25vw 30vh at 30vw 50vh, var(--blob-purple) 20%, transparent 100%),
       radial-gradient(ellipse 35vw 40vh at 50vw 20vh, var(--blob-purple) 40%, transparent 100%),
       radial-gradient(ellipse 45vw 40vh at 60vw 40vh, var(--blob-orange) 40%, transparent 100%),
-      /* Bottom */
-        radial-gradient(ellipse 40vw 50vh at 40% 90%, var(--blob-purple) 40%, transparent 100%),
+      radial-gradient(ellipse 40vw 50vh at 40% 90%, var(--blob-purple) 40%, transparent 100%),
       radial-gradient(ellipse 30vw 40vh at 30% 95%, var(--blob-purple) 40%, transparent 100%),
       radial-gradient(ellipse 30vw 50vh at 60% 99%, var(--blob-orange) 40%, transparent 100%);
   }
