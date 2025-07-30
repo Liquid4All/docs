@@ -6,6 +6,7 @@ import { NavigationItemType } from '@/components/navigation/NavigationItem';
 export const generalNavigations: NavigationItemType[] = [
   { label: 'Models', href: '/models' },
   { label: 'Documentation', href: '/docs' },
+  { label: 'Pricing', href: '/pricing' },
 ];
 
 // Navigation items for signed-in users
