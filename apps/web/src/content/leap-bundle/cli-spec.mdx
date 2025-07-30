@@ -6,6 +6,19 @@ import { Callout } from 'nextra/components';
 
 The Model Bundling Service provides a command-line interface for the LEAP (Liquid Edge AI Platform) bundling service. It allows you to upload model directories, create bundle requests, monitor processing status, and download completed bundles.
 
+## Requirements
+
+Before using the Model Bundle Tool, ensure your system meets the following requirements:
+
+- **Python 3.8 or higher**: The CLI tool is built with Python and requires at least version 3.8.
+- **`pip` installed**: You need `pip` to install the CLI tool and its dependencies.
+- **AWS services access**: Model uploads use Amazon Web Services (AWS) for file storage. Ensure you can access `amazonaws.com` domains from your network. If you're behind a corporate firewall or VPN, you may need to configure network settings to allow access to AWS services.
+
+<Callout type="info">
+  If model uploads fail with connectivity errors, verify that your network allows access to AWS
+  services and that DNS resolution is working properly.
+</Callout>
+
 ## Global Options
 
 All commands support these global options:
