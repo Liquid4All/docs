@@ -248,8 +248,38 @@
     @apply font-jetbrains text-xs font-normal -tracking-[0.3px] leading-[140%];
   }
 
-  .bg-gradient-card {
-    background: linear-gradient(135deg, #ffffff 0%, var(--blob-purple) 70%, var(--blob-orange) 100%);
+  .badge-linear-gradient {
+    background: linear-gradient(45deg, var(--color-purple-400) 0%, var(--color-fuchsia-400) 50%, var(--color-orange-400) 100%);
+  }
+
+  .bg-gradient-section-1 {
+    position: relative;
+    background:rgba(255,255,255,0.5);
+    background-image: 
+      radial-gradient(ellipse 40% 80% at 30% 80%, var(--blob-purple) 30%, transparent 100%),
+      radial-gradient(ellipse 20% 50% at 50% 40%, var(--blob-purple) 10%, transparent 100%),
+      radial-gradient(ellipse 40% 80% at 50% 60%, var(--blob-orange) 20%, transparent 100%),
+      radial-gradient(ellipse 20% 50% at 70% 20%, var(--blob-orange) 10%, transparent 100%);
+  }
+
+  .bg-gradient-section-2 {
+    position: relative;
+    background:rgba(255,255,255,0.2);
+    background-image: 
+      radial-gradient(ellipse 50% 80% at 50% 20%, var(--blob-purple) 30%, transparent 100%),
+      radial-gradient(ellipse 20% 50% at 50% 70%, var(--blob-orange) 10%, transparent 100%),
+      radial-gradient(ellipse 50% 60% at 30% 60%, var(--blob-orange) 20%, transparent 100%),
+      radial-gradient(ellipse 50% 50% at 80% 50%, var(--blob-purple) 10%, transparent 100%);
+  }
+
+  .bg-gradient-tier {
+    background: linear-gradient(135deg, #ffffff 0%, var(--color-purple-400) 0%, var(--color-fuchsia-400) 70%, var(--color-orange-400) 100%);
+  }
+
+  .gradient-text {
+    background-image: linear-gradient(45deg, var(--color-purple-400) 0%, var(--color-fuchsia-400) 30%, var(--color-orange-400) 100%);
+    color: transparent;
+    background-clip: text;
   }
   
   .bg-gradient-blob-bottom {
@@ -260,7 +290,6 @@
       radial-gradient(ellipse 30vw 40vh at 30% 95%, var(--blob-purple) 40%, transparent 100%),
       radial-gradient(ellipse 30vw 50vh at 60% 99%, var(--blob-orange) 40%, transparent 100%);
   }
-  
   
   .bg-gradient-blob {
     position: relative;
