@@ -273,7 +273,7 @@
   }
 
   .bg-gradient-tier {
-    background: linear-gradient(135deg, #ffffff 0%, var(--color-purple-400) 0%, var(--color-fuchsia-400) 70%, var(--color-orange-400) 100%);
+    background: linear-gradient(150deg, #ffffff 0%, var(--blob-purple) 60%, var(--blob-orange) 90%);
   }
 
   .gradient-text {
