@@ -33,7 +33,7 @@ const footerData: FooterType = {
   explore: [
     { label: 'Models', href: '/models' },
     { label: 'Documentation', href: '/docs' },
-    { label: 'Changelog', href: '/docs/changelog' },
+    { label: 'Cloud Playground', href: 'https://playground.liquid.ai', external: true },
   ],
 
   company: [
@@ -44,6 +44,7 @@ const footerData: FooterType = {
   connect: [
     { label: 'Feedback', href: '#', special: 'feedback' },
     { label: 'Discord', href: DISCORD_INVITE_URL, external: true },
+    { label: 'Changelog', href: '/docs/changelog' },
   ],
 
   legal: [
