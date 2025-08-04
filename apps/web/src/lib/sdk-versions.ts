@@ -1,0 +1,5 @@
+export const LATEST_IOS_VERSION = 'v0.3.0';
+export const PREVIOUS_IOS_VERSION = 'v0.2.0';
+export const OLDEST_IOS_VERSION = 'v0.1.0';
+
+export const IOS_VERSIONS = [LATEST_IOS_VERSION, PREVIOUS_IOS_VERSION, OLDEST_IOS_VERSION] as const;
