@@ -1,5 +1,6 @@
 import { ClerkProvider } from '@clerk/nextjs';
 import '@fontsource/jetbrains-mono';
+import { GoogleTagManager } from '@next/third-parties/google';
 import { Analytics } from '@vercel/analytics/next';
 import { type Metadata } from 'next';
 import { Inter, Lexend } from 'next/font/google';
@@ -81,6 +82,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
       >
         {/* Your additional tags should be passed as `children` of `<Head>` element */}
       </Head>
+      <GoogleTagManager gtmId="GTM-WCK7Z5T6" />
       <body className="h-full flex flex-col">
         <ClerkProvider
           signInFallbackRedirectUrl="/"
