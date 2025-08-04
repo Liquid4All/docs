@@ -23,12 +23,10 @@ const buttonVariants = cva(
         link: 'text-primary hover:text-accent',
       },
       size: {
-        sm: 'rounded-md p-2 text-sm gap-1',
-        default: 'rounded-lg p-3 text-base gap-2',
-        lg: 'rounded-lg p-3.5 text-lg gap-2',
-        'icon-sm': 'h-4 w-4 p-1 box-content rounded-sm',
+        sm: 'rounded-md h-[30px] px-2 text-sm gap-1',
+        default: 'rounded-lg h-10 px-3 text-base gap-1',
+        lg: 'rounded-lg h-[46px] px-3.5 text-lg gap-2',
         icon: 'h-5 w-5 p-2 box-content rounded-lg',
-        'icon-lg': 'h-6 w-6 p-3 box-content rounded-lg',
       },
       justify: {
         center: 'justify-center',
@@ -150,17 +148,12 @@ type ButtonAsLink = ButtonBaseProps &
 export const getButtonIconSize = (size: ButtonProps['size']): number => {
   switch (size) {
     case 'sm':
-      return 12;
+      return 14;
     case 'lg':
       return 20;
-    case 'icon-sm':
-      return 16;
     case 'icon':
-      return 20;
-    case 'icon-lg':
-      return 24;
     default:
-      return 16;
+      return 18;
   }
 };
 
@@ -224,7 +217,7 @@ const Button = React.forwardRef<HTMLButtonElement | HTMLAnchorElement, ButtonPro
 
     const finalClassName = cn(
       buttonVariants({ variant, size, justify, className }),
-      variant === 'link' && 'p-0'
+      variant === 'link' && 'px-0 h-auto'
     );
 
     // Create the button element based on type
