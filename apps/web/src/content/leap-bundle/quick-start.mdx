@@ -1,3 +1,5 @@
+import { Callout } from 'nextra/components';
+
 # Model Bundling Service Quick Start
 
 Model Bundling Service is a command-line interface (CLI) for creating and managing model bundles for Liquid Edge AI Platform (LEAP). This guide will help you quickly get started with the tool.
@@ -5,8 +7,13 @@ Model Bundling Service is a command-line interface (CLI) for creating and managi
 Here is a typical user workflow:
 
 - Download an open source base model.
-- Customize the base model with your own dataset.
+- Customize the base model with your own dataset e.g. by finetuning.
 - Create a model bundle using the `leap-bundle` CLI for LEAP SDK.
+
+<Callout type="important">
+  **Compatability Note:** The Model Bundling Service will work with any finetuned model, as long as
+  the model architecture comes from a base model that is part of the LEAP model library.
+</Callout>
 
 ## Install
 
