@@ -4,14 +4,6 @@ const meta: MetaRecord = {
   'ios-quick-start-guide': 'Quick Start',
   'ios-api-spec': 'API Reference',
   'constrained-generation': 'Constrained Generation',
-  'cloud-ai-comparison': 'Comparison with Cloud AI API',
-  '---': {
-    type: 'separator',
-    title: 'Versions',
-  },
-  'v0.3.0': 'v0.3.0 (Latest)',
-  'v0.2.0': 'v0.2.0',
-  'v0.1.0': 'v0.1.0',
 };
 
 export default meta;

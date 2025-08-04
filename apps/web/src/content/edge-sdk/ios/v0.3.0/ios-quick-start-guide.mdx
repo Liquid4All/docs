@@ -1,11 +1,5 @@
 import { Callout } from 'nextra/components';
 
-<Callout type="warning">
-  You are viewing iOS SDK documentation for v0.1.0. This version is outdated. See the [latest
-  version](../ios-quick-start-guide) for current features including the model downloader and updated
-  APIs.
-</Callout>
-
 # iOS Quick Start Guide
 
 ## Prerequisites
@@ -64,11 +58,77 @@ Alternatively, you can download the pre-built XCFramework:
 
 Browse the [Leap Model Library](https://leap.liquid.ai/models) to find and download a model bundle that matches your needs.
 
-For iOS development, you can include the model bundle directly in your app bundle:
+For iOS development, you have two options:
+
+### Option 1: Bundle with App (Static)
+
+Include the model bundle directly in your app bundle:
 
 1. Drag the downloaded `.bundle` file into your Xcode project
 2. Ensure **"Add to target"** is checked for your app target
 3. The model will be accessible via `Bundle.main.url(forResource:withExtension:)`
+
+### Option 2: Download On-Demand (Dynamic)
+
+You can also use the model downloader module to download model bundles on-demand in your app, which reduces initial app size and allows for dynamic model selection.
+
+#### Using LeapDownloadableModel
+
+The easiest way to download models is using `LeapDownloadableModel`, which automatically resolves download URLs from the [Leap Model Library](https://leap.liquid.ai/models):
+
+```swift
+import LeapModelDownloader
+
+// Resolve a model from the Leap API
+let model = await LeapDownloadableModel.resolve(
+    modelSlug: "qwen-0.6b",
+    quantizationSlug: "qwen-0.6b-20250610-8da4w"
+)
+
+if let model = model {
+    let downloader = LeapModelDownloader()
+
+    // Request download (non-blocking)
+    downloader.requestDownloadModel(model)
+
+    // Monitor download progress
+    let status = await downloader.queryStatus(model)
+    switch status {
+    case .notOnLocal:
+        print("Download not started")
+    case .downloadInProgress(let progress):
+        print("Download progress: \(Int(progress * 100))%")
+    case .downloaded:
+        print("Model ready!")
+        let modelFile = downloader.getModelFile(model)
+        // Use modelFile.url with Leap.load()
+    }
+}
+```
+
+#### Using HuggingFaceDownloadableModel
+
+For HuggingFace models, you can use the `HuggingFaceDownloadableModel`:
+
+```swift
+import LeapModelDownloader
+
+let hfModel = HuggingFaceDownloadableModel(
+    ownerName: "LiquidAI",
+    repoName: "LeapBundles",
+    filename: "qwen3-0_6b_8da4w_4096.bundle"
+)
+
+let downloader = LeapModelDownloader()
+downloader.requestDownloadModel(hfModel)
+```
+
+See the [Model Downloader API documentation](ios-api-spec#leapmodeldownloader) for complete details on implementing on-demand model downloading.
+
+<Callout type="info">
+  Note: The model downloader is intended for prototyping and development. For production apps,
+  consider bundling models directly or implementing your own secure download system.
+</Callout>
 
 ## Load Model in Code
 
@@ -102,7 +162,7 @@ class ChatViewModel: ObservableObject {
 
 ## Generate Content with the Model
 
-Create a conversation from the model runner and use it to generate streaming responses. LeapSDK supports both free-form text generation and structured output using constrained generation.
+Create a conversation from the model runner and use it to generate streaming responses:
 
 ```swift
 import LeapSDK
@@ -111,16 +171,16 @@ import LeapSDK
 func sendMessage(_ input: String) async {
     guard let modelRunner = modelRunner else { return }
 
-    // Create a conversation with system prompt
-    let conversation = modelRunner.createConversation(
-        systemPrompt: "You are a helpful assistant."
-    )
+    // Create a conversation
+    let conversation = Conversation(modelRunner: modelRunner, history: [])
 
     // Create a user message
     let userMessage = ChatMessage(role: .user, content: [.text(input)])
 
     // Generate streaming response
-    for await response in conversation.generateResponse(message: userMessage) {
+    let stream = conversation.generateResponse(message: userMessage)
+
+    for await response in stream {
         switch response {
         case .chunk(let text):
             print("Received text chunk: \(text)")
@@ -128,103 +188,17 @@ func sendMessage(_ input: String) async {
         case .reasoningChunk(let text):
             print("Received reasoning chunk: \(text)")
             // Handle reasoning content if needed
-        case .complete(let fullText, let info):
+        case .complete(let usage, let completeInfo):
             print("Generation complete!")
-            print("Full text: \(fullText)")
-            print("Finish reason: \(info.finishReason)")
-        }
-    }
-}
-```
-
-## Structured Output with Constrained Generation
-
-LeapSDK supports generating structured JSON output using Swift macros. This ensures the AI model produces responses that conform to your predefined Swift types.
-
-### Basic Structured Output
-
-First, import the constrained generation package and define your structure:
-
-```swift
-import LeapSDK
-import LeapSDKConstrainedGeneration
-
-@Generatable("A joke with metadata")
-struct Joke: Codable {
-    @Guide("The joke text")
-    let text: String
-
-    @Guide("The category of humor (pun, dad-joke, programming, etc.)")
-    let category: String
-
-    @Guide("Humor rating from 1-10")
-    let rating: Int
-
-    @Guide("Whether the joke is suitable for children")
-    let kidFriendly: Bool
-}
-```
-
-### Using Constrained Generation
-
-```swift
-@MainActor
-func generateStructuredJoke() async {
-    guard let modelRunner = modelRunner else { return }
-
-    let conversation = modelRunner.createConversation(
-        systemPrompt: "You are a comedian. Respond with valid JSON only."
-    )
-
-    // Configure generation options for structured output
-    var options = GenerationOptions()
-    options.temperature = 0.7
-
-    do {
-        // Set the response format to your custom type
-        try options.setResponseFormat(type: Joke.self)
-
-        let message = ChatMessage(
-            role: .user,
-            content: [.text("Create a programming joke in JSON format")]
-        )
-
-        // Generate structured response
-        for await response in conversation.generateResponse(
-            message: message,
-            generationOptions: options
-        ) {
-            switch response {
-            case .chunk(let token):
-                print(token, terminator: "")
-            case .complete(let fullText, let info):
-                // Parse the structured JSON response
-                do {
-                    let jokeData = fullText.data(using: .utf8)!
-                    let joke = try JSONDecoder().decode(Joke.self, from: jokeData)
-
-                    print("Generated joke:")
-                    print("Text: \(joke.text)")
-                    print("Category: \(joke.category)")
-                    print("Rating: \(joke.rating)/10")
-                    print("Kid-friendly: \(joke.kidFriendly)")
-                } catch {
-                    print("Failed to parse structured response: \(error)")
-                }
-            case .reasoningChunk(_):
-                break
+            print("Usage: \(usage)")
+            print("Finish reason: \(completeInfo.finishReason)")
+            if let stats = completeInfo.stats {
+                print("Generation stats: \(stats.totalTokens) tokens at \(stats.tokenPerSecond) tok/s")
             }
         }
-    } catch {
-        print("Failed to set response format: \(error)")
     }
 }
 ```
-
-<Callout type="info">
-  See the [Constrained Generation guide](/ios/constrained-generation) for comprehensive
-  documentation on defining complex types and advanced usage patterns.
-</Callout>
 
 ## Complete Example
 
@@ -282,9 +256,7 @@ class ChatStore {
             }
 
             modelRunner = try await Leap.load(url: modelURL)
-            conversation = modelRunner!.createConversation(
-                systemPrompt: "You are a helpful assistant."
-            )
+            conversation = Conversation(modelRunner: modelRunner!, history: [])
             isModelLoading = false
         } catch {
             print("Error loading model: \(error)")
@@ -299,17 +271,21 @@ class ChatStore {
         messages.append("User: \(input)")
 
         var assistantResponse = ""
+        let stream = conversation.generateResponse(message: userMessage)
 
-        for await response in conversation.generateResponse(message: userMessage) {
+        for await response in stream {
             switch response {
             case .chunk(let text):
                 assistantResponse += text
             case .reasoningChunk(_):
                 break // Handle reasoning if needed
-            case .complete(let fullText, let info):
-                assistantResponse = fullText.isEmpty ? assistantResponse : fullText
+            case .complete(let usage, let completeInfo):
                 messages.append("Assistant: \(assistantResponse)")
-                print("Generation completed with reason: \(info.finishReason)")
+                print("Usage: \(usage)")
+                print("Finish reason: \(completeInfo.finishReason)")
+                if let stats = completeInfo.stats {
+                    print("Generation stats: \(stats.totalTokens) tokens at \(stats.tokenPerSecond) tok/s")
+                }
             }
         }
     }
@@ -319,12 +295,9 @@ class ChatStore {
 ## Key API Concepts
 
 - **`Leap.load(url:)`**: Loads a model bundle and returns a `ModelRunner`
-- **`ModelRunner.createConversation(systemPrompt:)`**: Creates a new conversation with optional system prompt
-- **`Conversation`**: Manages message state and generates responses
+- **`Conversation`**: Manages chat history and generates responses
 - **`ChatMessage`**: Represents messages with role (`.user`, `.assistant`, `.system`) and content
 - **`MessageResponse`**: Streaming response types (`.chunk`, `.reasoningChunk`, `.complete`)
-- **`GenerationOptions`**: Configure generation parameters like temperature, topP, and structured output
-- **`@Generatable` and `@Guide`**: Swift macros for defining structured output types
 
 ## Performance Tips
 
