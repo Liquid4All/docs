@@ -1,15 +1,24 @@
 # Changelog
 
+## August 4, 2025
+
+- 🤖 Android Edge SDK
+  - Added [constrained generation support](/docs/edge-sdk/android/constrained-generation) to aid in structured output generation
+- 🍎 iOS Edge SDK
+  - Added [constrained generation support](/docs/edge-sdk/ios/constrained-generation) to aid in structured output generation
+- 📦 Model Bundling Service
+  - Fixed a bug regarding file upload
+
 ## July 28, 2025
 
-- 🛠️ **Customization tools: Finetuning**
+- 🛠️ Customization tools: Finetuning
   - Initial release of finetuning tools for LFM2 models on ≤ 1 GPU (Google Colab notebooks) and > 1 GPU (`leap-finetune`)
   - See more details [here](/docs/lfm2/finetuning)
-- 📦 **Model Bundling Service**
+- 📦 Model Bundling Service
   - Use the Finetuning customization tools described above along with `leap-bundle` to develop and deploy finetuned LEAP models on the edge
   - CLI-based service to create model bundles for usage within the Edge SDK - currently supports any model architecture within the LEAP [model library](/models)
   - See more details [here](/docs/leap-bundle/quick-start)
-- 🤖 **Android Edge SDK**
+- 🤖 Android Edge SDK
   - Features
     - Added `ModelLoadingOptions` and `GenerationOptions` for more finegrained control over generation and loading options
     - Exposed model ID via `ModelRunner.modelId`
@@ -18,7 +27,7 @@
   - 🐛 Bug fixes
     - Added Proguard rules to preserve inference engine class names and prevent obfuscation issues.
     - If the generation content hits the maximum context length, `finishReason` field of `MessageResponse.Complete` will be `EXCEED_CONTEXT`. If the prompt exceeds the context length, `LeapGenerationPromptExceedContextLengthException` will be thrown.
-- 🍎 **iOS Edge SDK**
+- 🍎 iOS Edge SDK
   - Features
     - Added `ModelLoadingOptions` and `GenerationOptions` for more finegrained control over generation and loading options
     - Exposed model ID via `ModelRunner.modelId`
