@@ -30,14 +30,20 @@ Add LeapSDK to your project in Xcode:
 1. Open your project in Xcode
 2. Go to **File → Add Package Dependencies**
 3. Enter the repository URL: `https://github.com/Liquid4All/leap-ios.git`
-4. Select the latest version and add to your target
+4. Select the latest version (0.3.0+)
+5. Add **both** `LeapSDK` and `LeapSDKTypes` products to your target
+
+<Callout type="important">
+  Starting with version 0.3.0, you must add both `LeapSDK` and `LeapSDKTypes` products to your
+  target. LeapSDKTypes is a separate framework required for proper runtime linking.
+</Callout>
 
 ### CocoaPods
 
 Add LeapSDK to your `Podfile`:
 
 ```ruby
-pod 'Leap-SDK', '~> 0.1.0'
+pod 'Leap-SDK', '~> 0.3.0'
 ```
 
 Then run:
@@ -48,11 +54,16 @@ pod install
 
 ### Manual Installation
 
-Alternatively, you can download the pre-built XCFramework:
+Alternatively, you can download the pre-built XCFrameworks:
 
-1. Download the latest `LeapSDK.xcframework.zip` from [GitHub Releases](https://github.com/Liquid4All/leap-ios/releases)
-2. Unzip and drag `LeapSDK.xcframework` into your Xcode project
-3. Ensure **"Embed & Sign"** is selected in the frameworks settings
+1. Download both `LeapSDK.xcframework.zip` and `LeapSDKTypes.xcframework.zip` from [GitHub Releases](https://github.com/Liquid4All/leap-ios/releases)
+2. Unzip and drag both `LeapSDK.xcframework` and `LeapSDKTypes.xcframework` into your Xcode project
+3. Ensure **"Embed & Sign"** is selected for both frameworks in the frameworks settings
+
+<Callout type="important">
+  Both XCFrameworks are required starting with version 0.3.0. Make sure to add and embed both
+  `LeapSDK.xcframework` and `LeapSDKTypes.xcframework` to avoid runtime linking errors.
+</Callout>
 
 ## Download Model Bundles
 
@@ -202,36 +213,68 @@ func sendMessage(_ input: String) async {
 
 ## Complete Example
 
-Here's a complete SwiftUI example integrating the LeapSDK:
+For a complete, working example, see our GitHub repository:
+
+- **[LeapChatExample](https://github.com/Liquid4All/LeapSDK-Examples/tree/main/iOS/LeapChatExample)** - Full chat interface with SwiftUI
+- **[LeapSloganExample](https://github.com/Liquid4All/LeapSDK-Examples/tree/main/iOS/LeapSloganExample)** - Simple slogan generator
+
+Here's a minimal working example using modern SwiftUI with `@Observable`:
 
 ```swift
 import SwiftUI
 import LeapSDK
+import Observation
 
 @main
 struct LeapChatApp: App {
+    @State private var chatStore = ChatStore()
+
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .environment(chatStore)
         }
     }
 }
 
 struct ContentView: View {
-    @StateObject private var chatStore = ChatStore()
+    @Environment(ChatStore.self) private var chatStore
+    @State private var inputText = ""
 
     var body: some View {
         VStack {
             if chatStore.isModelLoading {
                 ProgressView("Loading model...")
+                    .task {
+                        await chatStore.setupModel()
+                    }
+            } else if let error = chatStore.error {
+                Text("Error: \(error)")
+                    .foregroundColor(.red)
             } else {
-                // Your chat UI here
-                ChatView()
-                    .environmentObject(chatStore)
+                // Message list
+                ScrollView {
+                    ForEach(chatStore.messages, id: \.self) { message in
+                        Text(message)
+                            .padding()
+                    }
+                }
+
+                // Input field
+                HStack {
+                    TextField("Type a message", text: $inputText)
+                        .textFieldStyle(RoundedBorderTextFieldStyle())
+
+                    Button("Send") {
+                        Task {
+                            await chatStore.sendMessage(inputText)
+                            inputText = ""
+                        }
+                    }
+                    .disabled(chatStore.isGenerating || inputText.isEmpty)
+                }
+                .padding()
             }
-        }
-        .task {
-            await chatStore.setupModel()
         }
     }
 }
@@ -239,7 +282,9 @@ struct ContentView: View {
 @Observable
 class ChatStore {
     var isModelLoading = true
+    var isGenerating = false
     var messages: [String] = []
+    var error: String?
 
     private var modelRunner: ModelRunner?
     private var conversation: Conversation?
@@ -251,7 +296,7 @@ class ChatStore {
                 forResource: "qwen3-0_6b",
                 withExtension: "bundle"
             ) else {
-                print("Could not find model bundle")
+                error = "Could not find model bundle"
                 return
             }
 
@@ -259,7 +304,8 @@ class ChatStore {
             conversation = Conversation(modelRunner: modelRunner!, history: [])
             isModelLoading = false
         } catch {
-            print("Error loading model: \(error)")
+            self.error = error.localizedDescription
+            isModelLoading = false
         }
     }
 
@@ -267,6 +313,7 @@ class ChatStore {
     func sendMessage(_ input: String) async {
         guard let conversation = conversation else { return }
 
+        isGenerating = true
         let userMessage = ChatMessage(role: .user, content: [.text(input)])
         messages.append("User: \(input)")
 
@@ -279,18 +326,19 @@ class ChatStore {
                 assistantResponse += text
             case .reasoningChunk(_):
                 break // Handle reasoning if needed
-            case .complete(let usage, let completeInfo):
+            case .complete(_, _):
                 messages.append("Assistant: \(assistantResponse)")
-                print("Usage: \(usage)")
-                print("Finish reason: \(completeInfo.finishReason)")
-                if let stats = completeInfo.stats {
-                    print("Generation stats: \(stats.totalTokens) tokens at \(stats.tokenPerSecond) tok/s")
-                }
+                isGenerating = false
             }
         }
     }
 }
 ```
+
+<Callout type="info">
+  For production apps, check out the complete examples on GitHub which include proper error
+  handling, typing indicators, message persistence, and polished UI components.
+</Callout>
 
 ## Key API Concepts
 
