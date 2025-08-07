@@ -207,6 +207,15 @@ Uploading directory... ✓
 ⚠ A bundle request with the same input hash already exists: req_xyz789abc123
 ```
 
+**Validation**
+
+- Hidden files and subdirectories (starting with `.`) are ignored
+- The directory must have a valid `config.json` file
+- The directory must have one or more safe tensor files with the `.safetensors` extension
+- Individual files must not exceed 10GB
+- The total size of the directory must not exceed 10GB
+  - This limit will be increased in the future as the bundle service supports more models
+
 **Error Cases**
 
 - Directory doesn't exist: Shows file not found error
