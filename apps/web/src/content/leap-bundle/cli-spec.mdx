@@ -252,6 +252,60 @@ Uploading directory... ✓
 
 If the request is not rate limited, it will usually be completed within 20 minutes for small model checkpoints.
 
+### `validate`
+
+Validate a directory for bundle creation without uploading or creating a request. This command is equivalent to the `create` command with `--dry-run` option, but does not require authentication.
+
+```sh
+leap-bundle validate <input-path>
+```
+
+**Arguments**
+
+- `input-path` (required): Path to the directory to validate
+
+**Behavior**
+
+- Performs the same validation checks as the `create` command
+- Does not require authentication
+- Does not upload files or create bundle requests
+- Useful for checking if a directory is ready for bundling before actually creating a request
+
+**Examples**
+
+```sh
+# Validate a model directory
+leap-bundle validate ./my-model-directory
+
+# Example output on success
+✓ Directory validation passed
+✓ Directory is ready for bundle creation
+
+# Example output on failure
+✗ Validation failed: No config.json found in directory.
+```
+
+**Validation**
+
+The same validation rules apply as for the `create` command:
+
+- Hidden files and subdirectories (starting with `.`) are ignored
+- The directory must have a valid `config.json` file
+- The directory must have one or more safe tensor files with the `.safetensors` extension
+- Individual files must not exceed 10GB
+- The total size of the directory must not exceed 10GB
+
+**Error Cases**
+
+- Directory doesn't exist: Shows file not found error
+- Path is not a directory: Shows invalid path error
+- Validation failure: Shows specific validation error message
+
+<Callout type="info">
+  Use `validate` to check your directory before running `create` to catch validation issues early
+  without using your bundle request quota.
+</Callout>
+
 ### `list`
 
 List bundle requests or get details for a specific request.
