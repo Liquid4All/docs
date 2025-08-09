@@ -23,9 +23,9 @@ const buttonVariants = cva(
         link: 'text-primary hover:text-accent',
       },
       size: {
-        sm: 'rounded-md p-3 text-sm gap-1',
-        default: 'rounded-lg p-3 text-base gap-1',
-        lg: 'rounded-lg p-3.5 text-lg gap-2',
+        sm: 'rounded-md h-[30px] px-2 text-sm gap-1',
+        default: 'rounded-lg h-10 px-3 text-base gap-1',
+        lg: 'rounded-lg h-[46px] px-3.5 text-lg gap-2',
         icon: 'h-5 w-5 p-2 box-content rounded-lg',
       },
       justify: {
