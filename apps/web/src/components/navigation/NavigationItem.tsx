@@ -1,10 +1,15 @@
+import { ComponentType } from 'react';
+
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
 export interface NavigationItemType {
   label: string;
+  // function to generate href based on current location
+  hrefFn?: (context: { location: Location }) => string;
+  // when hrefFn is not provided, this is the fallback href
   href?: string;
-  icon?: React.ComponentType<{
+  icon?: ComponentType<{
     size?: string | number;
     stroke?: string | number;
     className?: string;
@@ -20,11 +25,15 @@ interface NavigationItemProps {
 
 export const NavigationItem = ({ item, isMobile, onClick, className }: NavigationItemProps) => {
   const baseClassName = isMobile ? '' : 'text-md font-normal p-1';
+  const href: string | undefined =
+    item.hrefFn != null && window != null
+      ? item.hrefFn({ location: window.location })
+      : (item.href ?? undefined);
 
   return (
     <Button
       key={item.label}
-      href={item.href ?? undefined}
+      href={href}
       // Use tertiary as default variant, tertiary for mobile
       variant="link"
       icon={item.icon}

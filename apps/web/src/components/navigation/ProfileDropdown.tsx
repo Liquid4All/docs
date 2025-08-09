@@ -79,9 +79,11 @@ export const ProfileDropdown: FC<ProfileDropdownProps> = ({ isSignedIn, user }) 
         case ' ':
           if (focusedIndex >= 0) {
             event.preventDefault();
-            const selectedItem = userNavigations[focusedIndex];
-            if (selectedItem?.href != null) {
-              router.push(selectedItem.href);
+            const { hrefFn, href } = userNavigations[focusedIndex];
+            if (hrefFn != null && window != null) {
+              return router.push(hrefFn({ location: window.location }));
+            } else if (href != null) {
+              return router.push(href);
             }
             setIsOpen(false);
             setFocusedIndex(-1);

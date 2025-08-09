@@ -17,6 +17,28 @@ export const signedInUserNavigations: NavigationItemType[] = [
 
 // Navigation items for signed-out users
 export const signedOutUserNavigations: NavigationItemType[] = [
-  { label: 'Sign In', href: '/sign-in', icon: IconLogin },
-  { label: 'Sign Up', href: '/sign-up', icon: IconUserPlus },
+  {
+    label: 'Sign In',
+    hrefFn: (context: { location: Location }) => {
+      if (location == null || location.pathname === '/') {
+        return '/sign-in';
+      }
+      const redirectUrl = context.location.pathname + context.location.search;
+      return '/sign-in' + `?redirect_url=${encodeURIComponent(redirectUrl)}`;
+    },
+    href: '/sign-in',
+    icon: IconLogin,
+  },
+  {
+    label: 'Sign Up',
+    hrefFn: (context: { location: Location }) => {
+      if (location == null || location.pathname === '/') {
+        return '/sign-up';
+      }
+      const redirectUrl = context.location.pathname + context.location.search;
+      return '/sign-up' + `?redirect_url=${encodeURIComponent(redirectUrl)}`;
+    },
+    href: '/sign-up',
+    icon: IconUserPlus,
+  },
 ];
