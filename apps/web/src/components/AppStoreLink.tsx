@@ -1,3 +1,5 @@
+'use client';
+
 import React from 'react';
 
 import iOSQRCode from '@/assets/images/apollo-ios-qr-code.png';
@@ -10,7 +12,6 @@ type DisplayType = 'badge' | 'qr' | 'badge-qr';
 
 interface AppStoreLinkProps {
   link: string;
-  theme?: 'dark' | 'light';
   className?: string;
   height?: number;
   display?: DisplayType;
@@ -18,12 +19,13 @@ interface AppStoreLinkProps {
 
 const AppStoreLink: React.FC<AppStoreLinkProps> = ({
   link,
-  theme = 'dark',
   className = '',
   height = ORIGINAL_iOS_BADGE_HEIGHT,
   display = 'badge',
 }) => {
-  const badgeUrl = `https://toolbox.marketingtools.apple.com/api/v2/badges/download-on-the-app-store/${theme === 'dark' ? 'black' : 'white'}/en-us?releaseDate=1721692800`;
+  const theme = 'light';
+
+  const badgeUrl = `https://toolbox.marketingtools.apple.com/api/v2/badges/download-on-the-app-store/white/en-us?releaseDate=1721692800`;
   const badgeWidth = Math.round((height * ORIGINAL_iOS_BADGE_WIDTH) / ORIGINAL_iOS_BADGE_HEIGHT);
 
   const showBadge = display === 'badge' || display === 'badge-qr';
@@ -43,7 +45,7 @@ const AppStoreLink: React.FC<AppStoreLinkProps> = ({
       )}
 
       {showQR && (
-        <div className="bg-white rounded rounded-lg border border-black border-1 overflow-hidden">
+        <div className="bg-white rounded rounded-lg border  border-[0.09rem] overflow-hidden border-black">
           <img
             src={iOSQRCode.src}
             alt="QR Code for Apollo App in iOS App Store"
