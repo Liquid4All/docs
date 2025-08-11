@@ -332,12 +332,12 @@ leap-bundle list
 
 # Example output
 Bundle Requests (50 most recent)
-┏━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━┓
-┃ ID    ┃ Input Path               ┃ Status     ┃ Creation             ┃
-┡━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━┩
-│ 18734 │ /path/to/model/directory │ completed  │ 2024-01-15T10:30:00Z │
-│ 18733 │ /path/to/other/directory │ processing │ 2024-01-15T09:15:00Z │
-└───────┴──────────────────────────┴────────────┴──────────────────────┘
+┏━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ ID    ┃ Input Path               ┃ Status     ┃ Creation             ┃ Notes                       ┃
+┡━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┩
+│ 18734 │ /path/to/model/directory │ completed  │ 2024-01-15T10:30:00Z │ Processing completed.       │
+│ 18733 │ /path/to/other/directory │ processing │ 2024-01-15T09:15:00Z │ Request is being processed. │
+└───────┴──────────────────────────┴────────────┴──────────────────────┴─────────────────────────────┘
 ✓ Found 2 bundle requests.
 
 # Get details for specific request
@@ -350,6 +350,7 @@ leap-bundle list 18734
   Status:     completed
   Creation:   2024-01-15T10:30:00Z
   Update:     2024-01-15T10:45:00Z
+  Notes:      Processing completed. Run "leap-bundle download 18734" to download the bundle.
 ```
 
 **Request Statuses**
