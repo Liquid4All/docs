@@ -60,7 +60,7 @@ interface FooterSectionProps {
 }
 
 const LINK_CLASSNAME =
-  'text-sm text-black hover:text-purple-800 transition-colors inline-flex items-center gap-1 py-0';
+  'text-sm text-foreground hover:text-accent transition-colors inline-flex items-center gap-1 py-0';
 
 const FooterSection = ({ title, links }: FooterSectionProps) => (
   <div className="flex-row lg:flex-col md:space-y-4">
@@ -97,7 +97,7 @@ const FooterSection = ({ title, links }: FooterSectionProps) => (
 
 export default function Footer() {
   return (
-    <footer className="bg-white">
+    <footer className="bg-background">
       <Container>
         <div className="py-8">
           <div className="flex flex-col lg:flex-row lg:justify-between gap-8">
@@ -105,7 +105,7 @@ export default function Footer() {
             <div className="flex flex-col gap-2 lg:justify-start">
               <Link href="/" className="block">
                 <span className="sr-only">{TITLE}</span>
-                <Logo color="dark" size={30} />
+                <Logo size={30} />
               </Link>
               <p className="text-foreground text-xs">by Liquid AI</p>
             </div>
@@ -127,7 +127,6 @@ export default function Footer() {
                 </p>
                 <AppStoreLink
                   display="badge-qr"
-                  theme="dark"
                   height={55}
                   link="https://apps.apple.com/us/app/apollo-powered-by-liquid/id6448019325"
                 />
@@ -136,9 +135,9 @@ export default function Footer() {
           </div>
 
           {/* Bottom section */}
-          <div className="mt-6 pt-6 border-t border-gray-200 flex flex-col justify-between text-gray-500 sm:flex-row sm:items-center">
-            <p className="text-xs text-foreground">314 Main St, Cambridge, MA 02142</p>
-            <p className="text-xs text-foreground">
+          <div className="mt-8 pt-4 border-t border-muted-foreground/50 flex flex-col justify-between text-muted-foreground/50 sm:flex-row sm:items-center">
+            <p className="text-xs muted-foreground/50">314 Main St, Cambridge, MA 02142</p>
+            <p className="text-xs muted-foreground/50">
               © {new Date().getFullYear()}, Liquid AI, Inc. All rights reserved.
             </p>
           </div>

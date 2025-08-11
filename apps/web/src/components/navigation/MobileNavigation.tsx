@@ -24,10 +24,7 @@ export const MobileNavigation: FC<MobileNavigationProps> = ({
 }) => {
   return (
     <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <SheetContent
-        side="right"
-        className="w-full overflow-y-auto bg-white px-6 py-6 sm:max-w-sm lg:hidden"
-      >
+      <SheetContent side="right" className="w-full overflow-y-auto px-6 py-6 sm:max-w-sm lg:hidden">
         <SheetTitle className="sr-only">{TITLE}</SheetTitle>
         <div className="flex items-center justify-between">
           <Link href="#" className="-m-1.5 p-1.5">
@@ -36,7 +33,7 @@ export const MobileNavigation: FC<MobileNavigationProps> = ({
           </Link>
         </div>
         <div className="mt-10 flow-root">
-          <div className="-my-6 divide-y divide-neutral-500/10">
+          <div className="-my-6 ">
             <div className="space-y-4 py-2">
               {navigationItems.map((item) => (
                 <div key={item.label} className="block">

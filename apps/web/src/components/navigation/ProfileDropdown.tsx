@@ -132,16 +132,16 @@ export const ProfileDropdown: FC<ProfileDropdownProps> = ({ isSignedIn, user }) 
       </Button>
 
       {isOpen && (
-        <div className="absolute right-0 top-6 z-100 w-fit p-1 text-left origin-top-right divide-y divide-neutral-100 bg-white rounded-sm shadow-lg focus:outline-none">
+        <div className="absolute right-0 top-8 z-100 w-fit p-1 text-left origin-top-right divide-y divide-muted bg-background rounded-sm shadow-lg focus:outline-none">
           <div className="space-y-1">
             {userNavigations.map((item, index) => (
               <div
                 key={item.label}
-                className={`rounded-sm whitespace-nowrap ${focusedIndex === index ? 'bg-neutral-100' : ''}`}
+                className={`rounded-sm whitespace-nowrap ${focusedIndex === index ? 'bg-muted' : ''}`}
                 onMouseEnter={(): void => handleMouseEnter(index)}
                 onMouseLeave={handleMouseLeave}
               >
-                <NavigationItem item={item} isMobile={false} className="px-2! py-1.5! text-sm" />
+                <NavigationItem item={item} isMobile={false} className="px-4! py-2!" />
               </div>
             ))}
           </div>
