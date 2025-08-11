@@ -133,7 +133,7 @@
     --secondary-foreground: var(--color-purple-50);
     --muted: var(--color-neutral-800);
     --muted-foreground: var(--color-neutral-400);
-    --accent: var(--color-purple-100);
+    --accent: var(--color-purple-200);
     --accent-foreground: var(--color-neutral-950);
     --destructive: var(--color-red-200);
     --destructive-foreground: var(--color-red-900);
@@ -153,6 +153,17 @@
     --sidebar-accent-foreground: var(--color-neutral-950);
     --sidebar-border: rgba(0, 0, 0, 0.16);
     --sidebar-ring: var(--color-neutral-500);
+
+     /* base blob colors */
+     --bg-orange-blob: 83, 68, 56;
+     --color-purple-base: 95, 36, 115;
+ 
+     /* blob colors with opacity */
+     --blob-orange: rgba(var(--bg-orange-blob), 1);
+     --blob-purple: rgba(var(--color-purple-base), 1);
+
+    /* base background */
+    --bg-blob-color: rgb(34, 34, 34);
   }
 
   * {
@@ -182,7 +193,7 @@
     @apply text-lg font-bold leading-[140%];
   }
 
-  p {
+  p,ul,li,ol {
     @apply text-sm font-normal -tracking-[0.3px] leading-[140%] text-muted-foreground;
   }
 
@@ -200,8 +211,8 @@
     h4 {
       @apply text-xl font-bold -tracking-[0.4px] leading-[120%];
     }
-    p {
-      @apply text-sm font-normal -tracking-[0.3px] leading-[140%];
+    p,ul,li,ol {
+      @apply text-sm font-normal -tracking-[0.3px] leading-[140%] text-muted-foreground;
     }
   }
 
@@ -219,8 +230,8 @@
     h4 {
       @apply text-xl font-bold tracking-[0.4px] leading-[120%];
     }
-    p {
-      @apply text-base font-normal -tracking-[0.3px] leading-[140%];
+    p,ul,li,ol {
+      @apply text-base font-normal -tracking-[0.3px] leading-[140%] text-muted-foreground;
     }
   }
 
@@ -248,13 +259,15 @@
     @apply font-jetbrains text-xs font-normal -tracking-[0.3px] leading-[140%];
   }
 
+  /*** Background Blobs ***/
+
   .badge-linear-gradient {
     background: linear-gradient(45deg, var(--color-purple-400) 0%, var(--color-fuchsia-400) 50%, var(--color-orange-400) 100%);
   }
 
   .bg-gradient-section-1 {
     position: relative;
-    background:rgba(255,255,255,0.5);
+    background: var(--bg-blob-color);
     background-image: 
       radial-gradient(ellipse 40% 80% at 30% 80%, var(--blob-purple) 30%, transparent 100%),
       radial-gradient(ellipse 20% 50% at 50% 40%, var(--blob-purple) 10%, transparent 100%),
@@ -264,7 +277,7 @@
 
   .bg-gradient-section-2 {
     position: relative;
-    background:rgba(255,255,255,0.2);
+    background:var(--bg-blob-color);
     background-image: 
       radial-gradient(ellipse 50% 80% at 50% 20%, var(--blob-purple) 30%, transparent 100%),
       radial-gradient(ellipse 20% 50% at 50% 70%, var(--blob-orange) 10%, transparent 100%),
@@ -273,7 +286,7 @@
   }
 
   .bg-gradient-tier {
-    background: linear-gradient(150deg, #ffffff 0%, var(--blob-purple) 60%, var(--blob-orange) 90%);
+    background: linear-gradient(150deg, var(--background) 0%, var(--blob-purple) 60%, var(--blob-orange) 90%);
   }
 
   .gradient-text {
@@ -303,6 +316,8 @@
       radial-gradient(ellipse 30vw 50vh at 60% 99%, var(--blob-orange) 40%, transparent 100%);
   }
 
+  /*** Custom Codeblock Styling ***/
+
   .pre-syntax-highlighter {
     width: 100% !important;
     max-width: 100% !important;
@@ -327,10 +342,6 @@
     overflow-wrap: break-word !important;
     white-space: pre-wrap !important;
     letter-spacing: -1px;
-  }
-
-  .prose > p {
-    color: var(--tw-prose-body) !important;
   }
 
   /* Small screens (≥ 640px) */
@@ -365,6 +376,38 @@
   @media (min-width: 1024px) {
     .monospace {
       @apply font-jetbrains text-sm font-normal -tracking-[0.3px] leading-[140%];
+    }
+  }
+
+  /*** Custom markdown styling **/
+
+  .markdown-content {
+    h1 {
+      @apply text-4xl font-normal -tracking-[0.48px] leading-[120%] pb-[1rem];
+    }
+
+    h2 {
+      @apply text-3xl font-normal -tracking-[0.48px] leading-[120%] py-[1rem];
+    }
+
+    h3 {
+      @apply text-2xl font-normal -tracking-[0.48px] leading-[120%];
+    }
+
+    h4 {
+      @apply text-xl font-normal -tracking-[0.48px] leading-[120%];
+    }
+
+    h5 {
+      @apply text-xl font-normal -tracking-[0.48px] leading-[120%];
+    }
+
+    ul {
+      @apply list-disc ml-[1.5rem] mt-[0.25rem];
+    }
+
+    a {
+      @apply text-accent;
     }
   }
 }
