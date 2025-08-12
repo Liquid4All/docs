@@ -4,12 +4,14 @@ const meta: MetaRecord = {
   'ios-quick-start-guide': 'Quick Start',
   'ios-api-spec': 'API Reference',
   'constrained-generation': 'Constrained Generation',
+  'function-calling': 'Function Calling',
   'cloud-ai-comparison': 'Comparison with Cloud AI API',
   '---': {
     type: 'separator',
     title: 'Versions',
   },
-  'v0.3.0': 'v0.3.0 (Latest)',
+  'v0.4.0': 'v0.4.0 (Latest)',
+  'v0.3.0': 'v0.3.0',
   'v0.2.0': 'v0.2.0',
   'v0.1.0': 'v0.1.0',
 };
