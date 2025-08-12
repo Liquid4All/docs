@@ -25,6 +25,7 @@
     "@clerk/nextjs": "^6.23.3",
     "@clerk/types": "^4.59.2",
     "@fontsource/jetbrains-mono": "^5.2.5",
+    "@google-cloud/bigquery": "^8.1.1",
     "@liquidai/leap-database": "*",
     "@liquidai/leap-lib": "*",
     "@modelcontextprotocol/sdk": "^1.15.0",
