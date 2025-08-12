@@ -10,7 +10,10 @@ export interface ScrapingResult {
   scrapedAt: Date;
 }
 
-function parseFormattedNumber(text: string): number {
+export const DEFAULT_LFM_COLLECTION_URL =
+  'https://huggingface.co/collections/LiquidAI/lfm2-686d721927015b2ad73eaa38';
+
+export function parseFormattedNumber(text: string): number {
   const cleanText = text.trim().toLowerCase();
   if (cleanText.includes('k')) {
     const num = parseFloat(cleanText.replace('k', ''));
