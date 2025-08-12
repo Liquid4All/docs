@@ -1,13 +1,9 @@
-import { track } from '@vercel/analytics';
+import { track } from '@vercel/analytics/server';
 import { NextResponse } from 'next/server';
 
 import { AnalyticEvent } from '@/lib/analytics';
 import { TrackingValueType } from '@/lib/analytics/types';
-import {
-  ApiKeyValidationError,
-  ApiKeyValidationResult,
-  ApiKeyValidationSuccess,
-} from '@/lib/api-token-validation';
+import { ApiKeyValidationError, ApiKeyValidationSuccess } from '@/lib/api-token-validation';
 
 export class CliCommandTracker {
   private readonly analyticEvent: AnalyticEvent;
