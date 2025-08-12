@@ -1,4 +1,5 @@
 import { Slot } from '@radix-ui/react-slot';
+import { IconLoader2 } from '@tabler/icons-react';
 import { type VariantProps, cva } from 'class-variance-authority';
 import Link from 'next/link';
 import * as React from 'react';
@@ -8,7 +9,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { cn } from '@/lib/utils';
 
 const buttonVariants = cva(
-  'inline-flex items-center justify-center whitespace-nowrap rounded-sm font-bold ring-offset-background transition-all duration-200 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 cursor-pointer leading-none!',
+  'inline-flex min-w-fit items-center flex-shrink-0 justify-center whitespace-nowrap rounded-sm font-bold ring-offset-background transition-all duration-200 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 cursor-pointer leading-none!',
   {
     variants: {
       variant: {
@@ -16,17 +17,17 @@ const buttonVariants = cva(
           'bg-primary text-primary-foreground hover:bg-accent focus:bg-purple-500 focus:text-accent-foreground',
         destructive: 'bg-destructive text-destructive-foreground hover:bg-red-800 focus:bg-red-900',
         outline:
-          'border border-border bg-transparent hover:bg-accent hover:text-accent-foreground focus:bg-purple-500 focus:text-accent-foreground',
+          'bg-transparent text-foreground border border-border hover:bg-accent hover:text-accent-foreground focus:bg-purple-500 focus:text-accent-foreground',
         secondary:
           'bg-transparent text-foreground hover:bg-accent hover:text-accent-foreground focus:bg-purple-500 focus:text-accent-foreground',
         ghost: 'hover:bg-black/5 focus:bg-black/15 text-foreground',
         link: 'text-primary hover:text-accent',
       },
       size: {
-        sm: 'rounded-md h-[30px] px-2 text-sm gap-1',
-        default: 'rounded-lg h-10 px-3 text-base gap-1',
-        lg: 'rounded-lg h-[46px] px-3.5 text-lg gap-2',
-        icon: 'h-5 w-5 p-2 box-content rounded-lg',
+        sm: 'rounded-md h-[30px] min-h-[30px] max-h-[30px] px-2 text-sm gap-1',
+        default: 'rounded-lg h-10 min-h-10 max-h-10 px-3 text-base gap-1',
+        lg: 'rounded-lg h-[46px] min-h-[46px] max-h-[46px] px-3.5 text-lg gap-2',
+        icon: 'h-5 min-h-5 max-h-5 w-5 min-w-5 max-w-5 p-2 box-content rounded-lg',
       },
       justify: {
         center: 'justify-center',
@@ -133,6 +134,7 @@ type ButtonBaseProps = {
   forceButton?: boolean;
   // Capitalize the button label, enabled by default
   titleize?: boolean;
+  loading?: boolean;
 } & VariantProps<typeof buttonVariants>;
 
 type ButtonAsButton = ButtonBaseProps &
@@ -178,6 +180,7 @@ const Button = React.forwardRef<HTMLButtonElement | HTMLAnchorElement, ButtonPro
       forceButton = false,
       titleize = true,
       children,
+      loading = false,
       ...props
     },
     ref
@@ -190,17 +193,15 @@ const Button = React.forwardRef<HTMLButtonElement | HTMLAnchorElement, ButtonPro
 
     // Render content with icon positioning
     const renderContent = () => {
-      if (!hasIcon) {
-        return buttonLabelChildren;
-      }
-
-      const iconElement = (
+      const iconElement = loading ? (
+        <IconLoader2 size={getButtonIconSize(size)} stroke={1.5} className={'animate-spin'} />
+      ) : hasIcon ? (
         <TablerIcon
           size={getButtonIconSize(size)}
           stroke={1.5}
-          className="transition-all duration-200"
+          className="transition-all duration-200 "
         />
-      );
+      ) : null;
 
       return iconPosition === 'left' ? (
         <>
@@ -228,6 +229,7 @@ const Button = React.forwardRef<HTMLButtonElement | HTMLAnchorElement, ButtonPro
           <button
             className={finalClassName}
             ref={ref as React.Ref<HTMLButtonElement>}
+            disabled={(props as ButtonAsButton).disabled || loading}
             {...(props as ButtonAsButton)}
           >
             {renderContent()}
@@ -267,6 +269,7 @@ const Button = React.forwardRef<HTMLButtonElement | HTMLAnchorElement, ButtonPro
         <button
           className={finalClassName}
           ref={ref as React.Ref<HTMLButtonElement>}
+          disabled={(props as ButtonAsButton).disabled || loading}
           {...(props as ButtonAsButton)}
         >
           {renderContent()}

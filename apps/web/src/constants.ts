@@ -10,3 +10,12 @@ export const DISCORD_INVITE_URL = 'https://discord.gg/liquid-ai';
 export const PRIVACY_POLICY_URL = 'https://liquid.ai/privacy-policy';
 export const TERMS_OF_SERVICE_URL = '/terms';
 export const ACCEPTABLE_USE_URL = '/acceptable-use';
+
+export const ZAPIER_EMAIL_SUBSCRIPTION_URL =
+  'https://hooks.zapier.com/hooks/catch/23886640/u6ymhmj/';
+
+export const PLACEHOLDER_MODEL_CONTENT = {
+  NAME: 'Nothing Here… Yet',
+  DESCRIPTION:
+    'Uh oh, it’s empty here! Hit the submit feedback button and let us know what you’re looking for.',
+};
