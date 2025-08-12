@@ -262,7 +262,7 @@
   /*** Background Blobs ***/
 
   .badge-linear-gradient {
-    background: linear-gradient(45deg, var(--color-purple-400) 0%, var(--color-fuchsia-400) 50%, var(--color-orange-400) 100%);
+    background: linear-gradient(75deg, #5603AD -84.69%, #CD81F1 43.2%, #FF5F1F 107.15%, #FFF 171.1%);
   }
 
   .bg-gradient-section-1 {
