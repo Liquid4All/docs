@@ -40,6 +40,7 @@ export enum AnalyticEvent {
   ClickedPlaygroundButton = 'ClickedPlaygroundButton',
   OpenedMobileFilterDialog = 'OpenedMobileFilterDialog',
   UpdatedModelProviderFilter = 'UpdatedModelProviderFilter',
+  ClickedModelSubscribe = 'ClickedModelSubscribe',
   RanLeapBundleLogin = 'RanLeapBundleLogin',
   RanLeapBundleWhoami = 'RanLeapBundleWhoami',
   RanLeapBundleCreate = 'RanLeapBundleCreate',
