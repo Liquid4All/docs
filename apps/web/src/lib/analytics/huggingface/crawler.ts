@@ -101,7 +101,9 @@ export async function scrapeHuggingFaceCollection(collectionUrl: string): Promis
             downloadCount,
             likeCount,
           });
-          console.info(`Scraped: ${name} - Downloads: ${downloadCount}, Likes: ${likeCount}`);
+          console.info(
+            `Scraped: ${name}: total downloads - ${downloadCount}, total likes - ${likeCount}`
+          );
         }
       } catch (error) {
         console.warn('Error processing model element:', error);
