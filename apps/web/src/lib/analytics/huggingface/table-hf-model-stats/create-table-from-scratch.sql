@@ -1,5 +1,6 @@
 CREATE TABLE `liquid-leap.model_stats.hf_model_stats` (
     -- Core model information
+    id STRING NOT NULL,
     organization STRING NOT NULL,
     model_slug STRING NOT NULL,
     model_size STRING NOT NULL,
@@ -13,7 +14,8 @@ CREATE TABLE `liquid-leap.model_stats.hf_model_stats` (
     new_likes INT64,
 
     -- Timestamp
-    scraped_at TIMESTAMP NOT NULL,
+    stats_date DATE NOT NULL,
+    updated_at TIMESTAMP NOT NULL,
 )
-PARTITION BY DATE(scraped_at)
+PARTITION BY stats_date
 CLUSTER BY model_slug, organization;
