@@ -49,4 +49,5 @@ export enum AnalyticEvent {
   RanLeapBundleUpdate = 'RanLeapBundleUpdate',
   RanLeapBundleCancel = 'RanLeapBundleCancel',
   RanLeapBundleDownload = 'RanLeapBundleDownload',
+  ClickedPricingPageButton = 'ClickedPricingPageButton',
 }
