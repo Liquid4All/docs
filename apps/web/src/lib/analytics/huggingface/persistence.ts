@@ -102,18 +102,18 @@ async function getPreviousModelStats(
   return previousStats;
 }
 
-async function getCurrentModelStats(
+async function getExistingEntriesForDate(
   bqClient: BigQuery,
   entries: BigQueryHfModelStatsEntry[],
   date: string
-): Promise<Map<string, BigQueryHfModelStatsEntry>> {
+): Promise<Set<string>> {
   const datasetName = process.env.GCP_BQ_MODEL_STATS_DATASET;
   if (!datasetName) {
     throw new Error('GCP_BQ_MODEL_STATS_DATASET environment variable is required');
   }
 
   if (entries.length === 0) {
-    return new Map();
+    return new Set();
   }
 
   const modelKeys = entries
@@ -121,21 +121,21 @@ async function getCurrentModelStats(
     .join(', ');
 
   const query = `
-    SELECT *
+    SELECT organization, model_slug
     FROM \`${datasetName}.hf_model_stats\`
     WHERE stats_date = '${date}'
       AND (model_slug, organization) IN (${modelKeys})
   `;
 
   const [rows] = await bqClient.query({ query });
-  const currentStats = new Map<string, BigQueryHfModelStatsEntry>();
+  const existingEntries = new Set<string>();
 
   for (const row of rows) {
     const key = `${row.organization}:${row.model_slug}`;
-    currentStats.set(key, row);
+    existingEntries.add(key);
   }
 
-  return currentStats;
+  return existingEntries;
 }
 
 export function getBigQueryDataEntries(
@@ -181,7 +181,7 @@ export function getBigQueryDataEntries(
   });
 }
 
-async function upsertDataToBigQuery(
+async function insertDataToBigQuery(
   bqClient: BigQuery,
   data: BigQueryHfModelStatsEntry[]
 ): Promise<void> {
@@ -191,7 +191,7 @@ async function upsertDataToBigQuery(
   }
 
   if (data.length === 0) {
-    console.info('No data to upsert, skipping BigQuery operation');
+    console.info('No data to insert, skipping BigQuery operation');
     return;
   }
 
@@ -199,53 +199,35 @@ async function upsertDataToBigQuery(
   const dataset = bqClient.dataset(datasetName);
   const table = dataset.table('hf_model_stats');
 
-  const existingStats = await getCurrentModelStats(bqClient, data, today);
-  const updates: BigQueryHfModelStatsEntry[] = [];
-  const inserts: BigQueryHfModelStatsEntry[] = [];
+  // Check which entries already exist for today
+  const existingEntries = await getExistingEntriesForDate(bqClient, data, today);
 
-  for (const entry of data) {
+  // Filter out entries that already exist
+  const newInserts = data.filter((entry) => {
     const key = `${entry.organization}:${entry.model_slug}`;
-    const existing = existingStats.get(key);
+    return !existingEntries.has(key);
+  });
 
-    if (existing) {
-      updates.push({
-        ...entry,
-        id: existing.id,
-      });
-    } else {
-      inserts.push(entry);
-    }
+  const skippedCount = data.length - newInserts.length;
+  if (skippedCount > 0) {
+    console.info(`Skipping ${skippedCount} entries that already exist for date ${today}`);
+  }
+
+  if (newInserts.length === 0) {
+    console.info('All entries already exist for today, skipping insert');
+    return;
   }
 
   try {
-    // Handle updates via DELETE + INSERT pattern since BigQuery doesn't support UPDATE with streaming
-    if (updates.length > 0) {
-      const updateIds = updates.map((entry) => `'${entry.id}'`).join(', ');
-
-      const deleteQuery = `
-        DELETE FROM \`${datasetName}.hf_model_stats\`
-        WHERE id IN (${updateIds})
-      `;
-
-      await bqClient.query({ query: deleteQuery });
-      console.info(`Deleted ${updates.length} existing records for today`);
-    }
-
-    // Insert all data (both new inserts and updated records)
-    const allInserts = [...inserts, ...updates];
-    if (allInserts.length > 0) {
-      await table.insert(allInserts);
-      console.info(
-        `Successfully inserted ${allInserts.length} rows to BigQuery (${inserts.length} new, ${updates.length} updated)`
-      );
-    }
+    await table.insert(newInserts);
+    console.info(`Successfully inserted ${newInserts.length} new rows to BigQuery`);
   } catch (error: any) {
     if (error.name === 'PartialFailureError') {
       console.error('Some rows failed to insert:', error.errors);
       throw new Error(`BigQuery partial insert failure: ${JSON.stringify(error.errors)}`);
     }
 
-    console.error('Error upserting to BigQuery:', error);
+    console.error('Error inserting to BigQuery:', error);
     throw error;
   }
 }
@@ -264,9 +246,9 @@ export async function persistModelStatsToBigQuery(data: ScrapingResult): Promise
     const bqClient = getBigQueryClient();
     const previousStats = await getPreviousModelStats(bqClient, preliminaryEntries);
     const entries = getBigQueryDataEntries(data, previousStats);
-    await upsertDataToBigQuery(bqClient, entries);
+    await insertDataToBigQuery(bqClient, entries);
 
-    console.info(`Successfully persisted stats for ${entries.length} models on ${today}`);
+    console.info(`Successfully processed stats for ${entries.length} models on ${today}`);
   } catch (error) {
     console.error('Failed to persist model stats to BigQuery:', error);
     throw error;
