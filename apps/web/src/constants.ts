@@ -19,3 +19,5 @@ export const PLACEHOLDER_MODEL_CONTENT = {
   DESCRIPTION:
     'Uh oh, it’s empty here! Hit the submit feedback button and let us know what you’re looking for.',
 };
+
+export const DEFAULT_GTM_ID = 'GTM-WCK7Z5T6';
