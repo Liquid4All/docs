@@ -1,11 +1,11 @@
 'use client';
 
-import { track } from '@vercel/analytics';
 import { ReactNode, useCallback, useState } from 'react';
 
 import { FeedbackModal } from '@/components/FeedbackModal';
 import { Button, ButtonProps } from '@/components/ui/button';
 import { AnalyticEvent } from '@/lib/analytics';
+import { trackClientEvent } from '@/lib/analytics/helpers';
 import { cn } from '@/lib/utils';
 
 interface FeedbackButtonProps {
@@ -25,7 +25,7 @@ const FeedbackButton = ({
 
   const toggleFeedbackModal = useCallback(() => {
     setFeedbackModalOpen((prev) => !prev);
-    track(AnalyticEvent.OpenedFeedbackModal);
+    trackClientEvent(AnalyticEvent.OpenedFeedbackModal);
   }, []);
 
   return (
