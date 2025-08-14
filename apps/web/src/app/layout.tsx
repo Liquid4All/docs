@@ -10,6 +10,7 @@ import { ReactNode } from 'react';
 import { Toaster } from 'sonner';
 
 import {
+  DEFAULT_GTM_ID,
   DESCRIPTION,
   DOMAIN_URL,
   FULL_TITLE,
@@ -82,7 +83,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
       >
         {/* Your additional tags should be passed as `children` of `<Head>` element */}
       </Head>
-      <GoogleTagManager gtmId="GTM-WCK7Z5T6" />
+      <GoogleTagManager gtmId={process.env.NEXT_PUBLIC_GTM_ID ?? DEFAULT_GTM_ID} />
       <body className="h-full flex flex-col">
         <ClerkProvider
           signInFallbackRedirectUrl="/"
