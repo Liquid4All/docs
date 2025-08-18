@@ -38,6 +38,7 @@ export enum AnalyticEvent {
   ToggledViewMode = 'ToggledViewMode',
   ClearedAllFilters = 'ClearedAllFilters',
   ClickedPlaygroundButton = 'ClickedPlaygroundButton',
+  ClickedFinetuneButton = 'ClickedFinetuneButton',
   OpenedMobileFilterDialog = 'OpenedMobileFilterDialog',
   UpdatedModelProviderFilter = 'UpdatedModelProviderFilter',
   ClickedModelSubscribe = 'ClickedModelSubscribe',
