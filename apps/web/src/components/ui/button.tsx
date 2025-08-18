@@ -9,7 +9,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { cn } from '@/lib/utils';
 
 const buttonVariants = cva(
-  'inline-flex min-w-fit items-center flex-shrink-0 justify-center whitespace-nowrap rounded-sm font-bold ring-offset-background transition-all duration-200 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 cursor-pointer leading-none!',
+  'inline-flex min-w-fit items-center flex-shrink-0 justify-center whitespace-nowrap rounded-sm font-bold ring-offset-background transition-all duration-200 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 cursor-pointer',
   {
     variants: {
       variant: {
@@ -24,10 +24,10 @@ const buttonVariants = cva(
         link: 'text-primary hover:text-accent',
       },
       size: {
-        sm: 'rounded-md h-[30px] min-h-[30px] max-h-[30px] px-2 text-sm gap-1',
-        default: 'rounded-lg h-10 min-h-10 max-h-10 px-3 text-base gap-1',
-        lg: 'rounded-lg h-[46px] min-h-[46px] max-h-[46px] px-3.5 text-lg gap-2',
-        icon: 'h-5 min-h-5 max-h-5 w-5 min-w-5 max-w-5 p-2 box-content rounded-lg',
+        sm: 'rounded-md p-2 gap-1 text-sm leading-[14px]',
+        default: 'rounded-lg px-3 py-2.5 gap-1 text-base leading-[18px]',
+        lg: 'rounded-lg px-3.5 py-3 gap-2 text-lg leading-[20px]',
+        icon: 'rounded-lg p-2',
       },
       justify: {
         center: 'justify-center',
@@ -35,6 +35,28 @@ const buttonVariants = cva(
         left: 'justify-start text-left sm:text-center',
       },
     },
+    compoundVariants: [
+      {
+        variant: 'outline',
+        size: 'sm',
+        className: 'p-[7px]',
+      },
+      {
+        variant: 'outline',
+        size: 'default',
+        className: 'px-[11px] py-[9px]',
+      },
+      {
+        variant: 'outline',
+        size: 'lg',
+        className: 'px-[13px] py-[11px]',
+      },
+      {
+        variant: 'outline',
+        size: 'icon',
+        className: 'p-[7px]',
+      },
+    ],
     defaultVariants: {
       variant: 'default',
       size: 'default',
