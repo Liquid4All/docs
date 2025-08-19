@@ -4,44 +4,42 @@ theme:
   pagination: false
 ---
 
-import { IconBrandAndroid, IconBrandApple, IconTerminal } from '@tabler/icons-react';
+import { IconAdjustments, IconCode, IconDeviceLaptop, IconTerminal } from '@tabler/icons-react';
 import { Cards } from 'nextra/components';
 
 # Introduction
 
-Liquid AI Edge Platform, or LEAP, is a developer-first platform that seeks to make deploying AI to the edge as easy as calling a cloud-based model API.
+Liquid AI Edge Platform, or LEAP, is an integrated toolchain that enables developers to
+effectively specialize and deploy small language models to their use case on their hardware.
 
-Developed by [Liquid AI](https://liquid.ai), a foundation model company committed to building capable AI at every scale, LEAP consists of an integrated system of tools:
+LEAP is designed to help any app developer – regardless of their familiarity with AI – to unlock the best quality and
+fastest performance for their edge AI task. Our end-to-end ecosystem of tools simplifies the entire edge AI app
+development process: from model discovery, through customization, to deployment.
 
-- **Model Library:** An online catalog of already trained and quantized model bundles for download
-- **Edge SDK:** An SDK for development across a variety of platforms and operating systems
-- **Cloud Playground:** A sandbox for testing and experimenting with model response quality via API
-- **Apollo:** A mobile app for downloading and vibe-checking LEAP models _in vivo_
-- **Finetuning:** A suite of tools to help simplify the finetuning process for LEAP models
-- **Model Bundling Service:** Bundle your own finetuned checkpoints on-demand for usage with the Edge SDK
-- **Search tool:** Find the ideal model based on your specific use-case requirements and constraints _[coming soon]_
-- _and more coming soon..._
+1. 🔍 **Best Model Search:** Find the ideal model based on your specific use-case requirements and constraints using our model search tool _[coming soon]_.
+2. 📚 **Model Library:** Browse and download our online catalog of pre-trained, pre-quantized model bundles for download.
+3. 🛝 **Cloud Playground:** Vibe-check LFM2 models in a virtual sandbox to test their response quality via API.
+4. 🏹 **Apollo:** Download and vibe-check LEAP models on your own device with our mobile app for iOS (Android coming soon).
+5. 🛠️ **Finetuning:** Base models not good enough? Optionally customize a LEAP base model even further to your use case using our suite of tools to help simplify the finetuning process.
+6. 📦 **Model Bundling Service:** Bundle your finetuned checkpoints on-demand for usage with the Edge SDK (not required for LEAP base models).
+7. 📱 **Edge SDK:** Deploy LEAP models - either from the Model Library or the Model Bundling Service - in your mobile app as easily as calling a cloud API.
+8. 💻 **Laptop support:** Leverage llama.cpp for blazing fast inference on laptops - particularly on AMD Ryzen™ chip technology.
+
+_and more coming soon..._
 
 ## Get started
 
 Choose a tool to get started:
 
 <Cards>
-  <Cards.Card
-    icon={<IconBrandAndroid />}
-    title="Android Edge SDK"
-    href="/docs/edge-sdk/android/android-quick-start-guide"
-  />
-  <Cards.Card
-    icon={<IconBrandApple />}
-    title="iOS Edge SDK"
-    href="/docs/edge-sdk/ios/ios-quick-start-guide"
-  />
+  <Cards.Card icon={<IconCode />} title="Edge SDK" href="/docs/edge-sdk/overview" />
   <Cards.Card
     icon={<IconTerminal />}
     title="Model Bundling Service"
     href="/docs/leap-bundle/quick-start"
   />
+  <Cards.Card icon={<IconDeviceLaptop />} title="Laptop support" href="/docs/laptop-support" />
+  <Cards.Card icon={<IconAdjustments />} title="Finetuning" href="/docs/finetuning" />
 </Cards>
 
 ## Stay involved
