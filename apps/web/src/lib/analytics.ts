@@ -52,4 +52,17 @@ export enum AnalyticEvent {
   RanLeapBundleCancel = 'RanLeapBundleCancel',
   RanLeapBundleDownload = 'RanLeapBundleDownload',
   ClickedPricingPageButton = 'ClickedPricingPageButton',
+  // Best Model Search events
+  BMSSessionStarted = 'BMSSessionStarted',
+  BMSModelSizeSelected = 'BMSModelSizeSelected',
+  BMSTaskDescribed = 'BMSTaskDescribed',
+  BMSContinuedToModelComparison = 'BMSContinuedToModelComparison',
+  BMSEditScenariosSelected = 'BMSEditScenariosSelected',
+  BMSRanModelComparison = 'BMSRanModelComparison',
+  BMSWinnerShown = 'BMSWinnerShown',
+  BMSSharedResults = 'BMSSharedResults',
+  BMSDeployedWithLeap = 'BMSDeployedWithLeap',
+  BMSHuggingfaceOpened = 'BMSHuggingfaceOpened',
+  BMSApolloClicked = 'BMSApolloClicked',
+  BMSPlaygroundOpened = 'BMSPlaygroundOpened',
 }
