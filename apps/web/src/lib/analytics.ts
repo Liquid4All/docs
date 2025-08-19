@@ -25,6 +25,7 @@ export enum AnalyticEvent {
   OpenedProfileDropdown = 'OpenedProfileDropdown',
   ClickedCodeBlockTab = 'ClickedCodeBlockTab',
   OpenedFeedbackModal = 'OpenedFeedbackModal',
+  ClickedSubmitFeedback = 'ClickedSubmitFeedback',
   ToggledMobileMenu = 'ToggledMobileMenu',
   QueriedDocumentation = 'QueriedDocumentation',
   QueriedModelLibrary = 'QueriedModelLibrary',
