@@ -2,7 +2,15 @@
 
 import { isEmptyString } from '@liquidai/leap-lib/utils';
 import * as Sentry from '@sentry/nextjs';
-import React, { ChangeEvent, useState } from 'react';
+import {
+  IconCheck,
+  IconChevronDown,
+  IconExternalLink,
+  IconInfoCircle,
+  IconMessage,
+} from '@tabler/icons-react';
+import { track } from '@vercel/analytics';
+import React, { ChangeEvent, useCallback, useMemo, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -14,7 +22,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Textarea } from '@/components/ui/textarea';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { DISCORD_INVITE_URL } from '@/constants';
+import { AnalyticEvent } from '@/lib/analytics';
 
 interface FeedbackModalProps {
   isOpen: boolean;
@@ -22,16 +39,37 @@ interface FeedbackModalProps {
 }
 
 export const FeedbackModal = ({ isOpen, onClose }: FeedbackModalProps) => {
-  const [feedback, setFeedback] = useState('');
-  const [canContact, setCanContact] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [feedback, setFeedback] = useState<string>('');
+  const [canContact, setCanContact] = useState<boolean>(false);
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [requestType, setRequestType] = useState<string>('Bug report');
+  const [isDropdownOpen, setIsDropdownOpen] = useState<boolean>(false);
+  const [showSuccess, setShowSuccess] = useState<boolean>(false);
 
-  const handleSubmit = async () => {
+  const requestOptions = ['Bug report', 'Feature request', 'General feedback', 'Support issue'];
+
+  const placeholder = useMemo(() => {
+    switch (requestType) {
+      case 'Bug report':
+        return 'Describe what went wrong and the steps to reproduce it. Include what you expected to happen vs. what actually happened.';
+      case 'Feature request':
+        return "Tell us about the feature you'd like to see. What problem would it solve? How would you use it?";
+      case 'General feedback':
+        return 'Share your thoughts about your experience. What do you love? What could be better?';
+      case 'Support issue':
+        return "Describe the issue you're facing. Include any error messages and what you were trying to do.";
+      default:
+        return 'Share your feedback or feature request...';
+    }
+  }, [requestType]);
+
+  const handleSubmit = useCallback(async (): Promise<void> => {
     if (isEmptyString(feedback.trim())) {
       return;
     }
 
     setIsSubmitting(true);
+
     try {
       Sentry.captureFeedback(
         {
@@ -41,67 +79,188 @@ export const FeedbackModal = ({ isOpen, onClose }: FeedbackModalProps) => {
         {
           data: {
             canContact: canContact,
+            requestType: requestType,
           },
         }
       );
 
+      track(AnalyticEvent.ClickedSubmitFeedback, {
+        type: requestType,
+        feedback: feedback,
+        canContact: canContact,
+      });
+
       setFeedback('');
       setCanContact(false);
-      onClose();
+      setRequestType('Bug report');
+      setShowSuccess(true); // Show success dialog
     } catch (error) {
       console.error('Failed to submit feedback:', error);
     } finally {
       setIsSubmitting(false);
     }
-  };
+  }, [feedback, canContact, requestType]);
 
-  const handleFeedbackChange = (e: ChangeEvent<HTMLTextAreaElement>) => {
+  const handleFeedbackChange = useCallback((e: ChangeEvent<HTMLTextAreaElement>): void => {
     setFeedback(e.target.value);
-  };
+  }, []);
 
-  const handleContactChange = (checked: boolean) => {
+  const handleContactChange = useCallback((checked: boolean): void => {
     setCanContact(checked);
-  };
+  }, []);
+
+  const handleRequestTypeSelect = useCallback((option: string): void => {
+    setRequestType(option);
+    setIsDropdownOpen(false);
+  }, []);
+
+  const handleDropdownOpenChange = useCallback((open: boolean): void => {
+    setIsDropdownOpen(open);
+  }, []);
+
+  const handleSuccessClose = useCallback(() => {
+    setShowSuccess(false);
+    onClose();
+  }, [onClose]);
+
+  if (showSuccess) {
+    // Show success dialog instead of main feedback form
+    return (
+      <Dialog open={true} onOpenChange={handleSuccessClose}>
+        <DialogContent className="w-[90%] sm:w-sm sm:top-[60%] sm:translate-y-[-50%] top-auto bottom-4 translate-y-0 sm:bottom-auto">
+          <DialogHeader className="mb-2">
+            {/* Success Icon */}
+            <div className="flex justify-center mb-4">
+              <div className="flex items-center justify-center w-16 h-16 rounded-full border border-muted-foreground/20 bg-[radial-gradient(circle_at_85%_85%,_#f0f9f0_0%,_transparent_100%)]">
+                <IconCheck size={25} className="text-black" stroke={1.5} />
+              </div>
+            </div>
+
+            <DialogTitle className="text-center text-2xl mb-3">
+              Thanks for your feedback!
+            </DialogTitle>
+            <DialogDescription className="text-muted-foreground text-center m-auto text-base">
+              Your feedback makes LEAP better. Hang out with us on Discord for updates, sneak peeks,
+              and community builds.
+              <a
+                href={DISCORD_INVITE_URL}
+                className="text-foreground font-bold inline-flex items-center gap-1 ml-1"
+                target="blank"
+              >
+                Join the Discord <IconExternalLink size={16} />
+              </a>
+            </DialogDescription>
+          </DialogHeader>
+
+          <DialogFooter className="w-full m-auto">
+            <Button
+              variant="outline"
+              onClick={handleSuccessClose}
+              className="w-full focus:bg-background! focus:border-muted! hover:text-background! m-auto"
+            >
+              Done
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    );
+  }
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle>Submit Feedback</DialogTitle>
-          <DialogDescription className="text-muted-foreground">
-            We are actively iterating on this edge AI platform. Any feedback or feature request is
-            welcome.
+      <DialogContent className="w-[90%] sm:w-md sm:top-[50%] sm:translate-y-[-50%] top-auto bottom-4 translate-y-0 sm:bottom-auto">
+        <DialogHeader className="mb-2">
+          {/* Icon */}
+          <div className="flex justify-center mb-3">
+            <div className="flex items-center justify-center w-16 h-16 rounded-full border border-muted-foreground/20 bg-[radial-gradient(circle_at_85%_85%,_#F3EEF8_0%,_transparent_100%)]">
+              <IconMessage size={25} className="text-black" stroke={1.5} />
+            </div>
+          </div>
+
+          <DialogTitle className="text-center text-2xl font-bold">
+            Tell us what you think!
+          </DialogTitle>
+          <DialogDescription className="text-muted-foreground text-center m-auto text-sm">
+            Have a request, issue, or idea? <br /> Your feedback shapes what we build next.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4">
-          <div>
+        <div className="mb-6">
+          {/* Type of request dropdown */}
+          <div className="space-y-4">
+            <label className="block text-base font-bold text-foreground mb-2">
+              Type of request
+            </label>
+            <DropdownMenu open={isDropdownOpen} onOpenChange={handleDropdownOpenChange}>
+              <DropdownMenuTrigger asChild>
+                <button className="w-full px-2 py-1 bg-background border border-muted-forground rounded-md text-base text-foreground cursor-pointer focus:outline-none focus:ring-1 focus:ring-accent focus:border-transparent flex items-center justify-between">
+                  <span>{requestType}</span>
+                  <IconChevronDown size={16} className="text-foreground" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                align="start"
+                style={{ width: 'var(--radix-dropdown-menu-trigger-width)' }}
+                className="-tracking-[0.3px] px-2 py-1"
+              >
+                {requestOptions.map((option) => (
+                  <DropdownMenuItem
+                    key={option}
+                    onSelect={() => handleRequestTypeSelect(option)}
+                    className="cursor-pointer rounded-md px-2 py-1 transition-colors"
+                  >
+                    <p className="text-foreground text-base">{option}</p>
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            {/* Feedback textarea */}
+            <div className="flex items-center gap-1 mb-2">
+              <label className="block text-base font-bold text-foreground">How can we help?</label>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <IconInfoCircle size={16} className="text-foreground my-auto" />
+                  </TooltipTrigger>
+                  <TooltipContent side="top" className="max-w-xs">
+                    <p className="text-sm text-white">{placeholder}</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
             <Textarea
               value={feedback}
               onChange={handleFeedbackChange}
-              placeholder="Share your feedback or feature request..."
-              rows={7}
-              className="resize-none"
+              placeholder={placeholder}
+              rows={5}
+              className="resize-none overflow-y-auto max-h-40 min-h-30 text-base! focus:outline-none focus:ring-1! focus:ring-accent! focus:border-transparent"
             />
           </div>
 
-          <div className="flex gap-2 items-center">
+          <div className="flex gap-2 items-center mt-2">
             <Checkbox
               id="contact-consent"
               checked={canContact}
               onCheckedChange={handleContactChange}
             />
-            <p>Liquid can contact me about this feedback</p>
+            <p className="text-foreground text-base">Leap can contact me about this feedback</p>
           </div>
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button onClick={handleSubmit} disabled={!feedback.trim() || isSubmitting}>
-            {isSubmitting ? 'Submitting...' : 'Submit'}
-          </Button>
+          <div className="flex flex-row gap-4 w-full">
+            <Button variant="outline" onClick={onClose} className="flex-1">
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSubmit}
+              className="flex-1"
+              disabled={!feedback.trim() || isSubmitting}
+            >
+              {isSubmitting ? 'Submitting...' : 'Submit'}
+            </Button>
+          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>
