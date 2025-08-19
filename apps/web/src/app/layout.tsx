@@ -19,7 +19,6 @@ import {
   TITLE,
 } from '@/constants';
 import { cn } from '@/lib/utils';
-import '@/styles/custom-nextra.css';
 import '@/styles/tailwind.css';
 
 export const metadata: Metadata = {
