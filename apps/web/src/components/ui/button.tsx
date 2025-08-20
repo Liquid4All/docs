@@ -65,37 +65,6 @@ const buttonVariants = cva(
   }
 );
 
-// Utility function to convert text to Title Case
-const toTitleCase = (str: string): string => {
-  return str
-    .toLowerCase()
-    .split(' ')
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ');
-};
-
-// Recursively transform text content to Title Case
-const transformTextToTitleCase = (children: React.ReactNode): React.ReactNode => {
-  if (typeof children === 'string') {
-    return toTitleCase(children);
-  }
-
-  if (React.isValidElement(children)) {
-    return React.cloneElement(children, {
-      ...children.props,
-      children: transformTextToTitleCase(children.props.children),
-    });
-  }
-
-  if (Array.isArray(children)) {
-    return children.map((child, index) => (
-      <React.Fragment key={index}>{transformTextToTitleCase(child)}</React.Fragment>
-    ));
-  }
-
-  return children;
-};
-
 type TooltipWrapperProps = {
   tooltipText?: string;
   tooltipAlign?: 'start' | 'center' | 'end';
@@ -155,7 +124,6 @@ type ButtonBaseProps = {
   // Add this prop to force rendering as a button even when href is provided
   forceButton?: boolean;
   // Capitalize the button label, enabled by default
-  titleize?: boolean;
   loading?: boolean;
 } & VariantProps<typeof buttonVariants>;
 
@@ -200,16 +168,12 @@ const Button = React.forwardRef<HTMLButtonElement | HTMLAnchorElement, ButtonPro
       tooltipAlign,
       tooltipSide,
       forceButton = false,
-      titleize = true,
       children,
       loading = false,
       ...props
     },
     ref
   ) => {
-    // Transform children to Title Case when needed
-    const buttonLabelChildren = titleize ? transformTextToTitleCase(children) : children;
-
     // Handle icon spacing and animations
     const hasIcon = TablerIcon;
 
@@ -228,11 +192,11 @@ const Button = React.forwardRef<HTMLButtonElement | HTMLAnchorElement, ButtonPro
       return iconPosition === 'left' ? (
         <>
           {iconElement}
-          {buttonLabelChildren}
+          {children}
         </>
       ) : (
         <>
-          {buttonLabelChildren}
+          {children}
           {iconElement}
         </>
       );
