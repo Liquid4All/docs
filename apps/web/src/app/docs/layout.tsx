@@ -3,7 +3,7 @@ import { getPageMap } from 'nextra/page-map';
 
 import { Container } from '@/components/Container';
 import Footer from '@/components/Footer';
-import NextraNavbar from '@/components/navigation/NextraNavbar';
+import NextraNavbar from '@/components/navigation/nextra/NextraNavbar';
 
 export default async function DocumentationLayout({ children }: { children: React.ReactNode }) {
   const pageMap = await getPageMap();
@@ -11,7 +11,7 @@ export default async function DocumentationLayout({ children }: { children: Reac
   return (
     <div className="nextra-content bg-muted">
       <Layout
-        navbar={<NextraNavbar />}
+        navbar={<NextraNavbar pageMap={pageMap} />}
         sidebar={{
           defaultMenuCollapseLevel: 1,
           autoCollapse: true,

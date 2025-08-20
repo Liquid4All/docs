@@ -1,5 +1,3 @@
-'use client';
-
 import { UserResource } from '@clerk/types';
 import { IconUserCircle } from '@tabler/icons-react';
 import { useRouter } from 'next/navigation';
@@ -117,7 +115,7 @@ export const ProfileDropdown: FC<ProfileDropdownProps> = ({ isSignedIn, user }) 
   }, []);
 
   return (
-    <div ref={dropdownRef} className="relative flex">
+    <div className="relative flex">
       <Button
         variant="link"
         size={isSignedIn ? 'sm' : 'icon'}
@@ -132,7 +130,10 @@ export const ProfileDropdown: FC<ProfileDropdownProps> = ({ isSignedIn, user }) 
       </Button>
 
       {isOpen && (
-        <div className="absolute right-0 top-8 z-100 w-fit p-1 text-left origin-top-right divide-y divide-muted bg-background rounded-sm shadow-lg focus:outline-none">
+        <div
+          ref={dropdownRef}
+          className="absolute right-0 top-8 z-100 w-fit p-1 text-left origin-top-right divide-y divide-muted bg-background rounded-sm shadow-lg focus:outline-none"
+        >
           <div className="space-y-1">
             {userNavigations.map((item, index) => (
               <div
