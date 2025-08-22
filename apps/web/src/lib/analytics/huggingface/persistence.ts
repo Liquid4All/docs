@@ -1,43 +1,20 @@
-import { BigQuery, BigQueryTimestamp } from '@google-cloud/bigquery';
+import { prisma } from '@liquidai/leap-database';
 
-import { DEFAULT_LFM_COLLECTION_URL, ScrapingResult } from '@/lib/analytics/huggingface/crawler';
-import { getBigQueryClient } from '@/lib/bqClient';
+import { HfCrawlerResult } from '@/lib/analytics/huggingface/types';
 
-interface BigQueryHfModelStatsEntry {
-  id: string; // UUID
-  organization: string;
-  model_slug: string;
-  model_size: string;
-  model_variant: string | null;
-  collection_url: string;
-  total_downloads: number;
-  total_likes: number;
-  new_downloads: number | null;
-  new_likes: number | null;
-  stats_date: string; // YYYY-MM-DD format
-  updated_at: string; // ISO 8601 UTC timestamp
-}
-
-interface PreviousModelStats {
-  total_downloads: number;
-  total_likes: number;
-  updated_at: BigQueryTimestamp;
-}
-
+// TODO: extract model modality from full name
+//   e.g. "LiquidAI/LFM2-VL-1.2B-math" -> "VL"
 export function parseModelName(fullName: string): {
   organization: string;
   model_slug: string;
   model_size: string;
   model_variant: string | null;
 } {
-  // Split by first slash to get org and model
   const [organization, modelPart] = fullName.split('/');
 
-  // Extract size (pattern like 1.2B, 700M, 350M)
   const sizeMatch = modelPart.match(/(\d+(?:\.\d+)?[BMK])/i);
   const model_size = sizeMatch ? sizeMatch[1] : '';
 
-  // Extract variant (everything after the size)
   const variantMatch = modelPart.match(/\d+(?:\.\d+)?[BMK]-(.+)/i);
   const model_variant = variantMatch ? variantMatch[1] : null;
 
@@ -49,208 +26,124 @@ export function parseModelName(fullName: string): {
   };
 }
 
-async function getPreviousModelStats(
-  bqClient: BigQuery,
-  entries: BigQueryHfModelStatsEntry[]
-): Promise<Map<string, PreviousModelStats>> {
-  const datasetName = process.env.GCP_BQ_MODEL_STATS_DATASET;
-  if (!datasetName) {
-    throw new Error('GCP_BQ_MODEL_STATS_DATASET environment variable is required');
+function getUtcMidnight(date: Date): Date {
+  const utcDate = new Date(date);
+  utcDate.setUTCHours(0, 0, 0, 0);
+  return utcDate;
+}
+
+function getPreviousUtcDate(currentUtcDate: Date): Date {
+  const previousDate = new Date(currentUtcDate);
+  previousDate.setUTCDate(previousDate.getUTCDate() - 1);
+  return previousDate;
+}
+
+async function processModelStat(
+  modelData: { name: string; downloadCount: number; likeCount: number },
+  currentUtcMidnight: Date
+): Promise<void> {
+  const { organization, model_slug, model_size, model_variant } = parseModelName(modelData.name);
+  const previousUtcMidnight = getPreviousUtcDate(currentUtcMidnight);
+
+  const existingEntries = await prisma.hfModelStat.findMany({
+    where: {
+      organization,
+      model_slug,
+      utc_date: {
+        in: [currentUtcMidnight, previousUtcMidnight],
+      },
+    },
+  });
+
+  const currentMidnight = getUtcMidnight(currentUtcMidnight);
+  const previousMidnight = getUtcMidnight(previousUtcMidnight);
+
+  const todayEntry = existingEntries.find(
+    (entry) => getUtcMidnight(entry.utc_date).getTime() === currentMidnight.getTime()
+  );
+  const yesterdayEntry = existingEntries.find(
+    (entry) => getUtcMidnight(entry.utc_date).getTime() === previousMidnight.getTime()
+  );
+
+  // Calculate new downloads and likes based on yesterday's data
+  let new_downloads: number | null = null;
+  let new_likes: number | null = null;
+
+  if (yesterdayEntry) {
+    new_downloads = modelData.downloadCount - yesterdayEntry.total_downloads;
+    new_likes = modelData.likeCount - yesterdayEntry.total_likes;
+    console.debug(
+      `Daily change for ${organization}/${model_slug}: downloads +${new_downloads}, likes +${new_likes}`
+    );
+  } else {
+    console.debug(
+      `No previous data found for ${organization}/${model_slug}, setting daily changes to null`
+    );
   }
 
-  if (entries.length === 0) {
-    return new Map();
-  }
-
-  const modelKeys = entries
-    .map((entry) => `('${entry.model_slug}', '${entry.organization}')`)
-    .join(', ');
-
-  // Get the most recent stats for each model (latest date)
-  const query = `
-    WITH latest_records AS (
-      SELECT
+  if (todayEntry == null) {
+    await prisma.hfModelStat.create({
+      data: {
         organization,
         model_slug,
-        total_downloads,
-        total_likes,
-        updated_at,
-        ROW_NUMBER() OVER (
-          PARTITION BY organization, model_slug
-          ORDER BY stats_date DESC
-          ) as rn
-      FROM \`${datasetName}.hf_model_stats\`
-      WHERE (model_slug, organization) IN (${modelKeys})
-    )
-    SELECT organization, model_slug, total_downloads, total_likes, updated_at
-    FROM latest_records
-    WHERE rn = 1
-  `;
-
-  const [rows] = await bqClient.query({ query });
-  const previousStats = new Map<string, PreviousModelStats>();
-
-  for (const row of rows) {
-    const key = `${row.organization}:${row.model_slug}`;
-    previousStats.set(key, {
-      total_downloads: row.total_downloads,
-      total_likes: row.total_likes,
-      updated_at: row.updated_at,
+        model_modality: null,
+        model_size,
+        model_variant: model_variant ?? '',
+        hf_url: `https://huggingface.co/${modelData.name}`,
+        total_downloads: modelData.downloadCount,
+        total_likes: modelData.likeCount,
+        new_downloads,
+        new_likes,
+        utc_date: currentUtcMidnight,
+      },
     });
-  }
+    console.info(`Created new entry for ${organization}/${model_slug}`);
+  } else {
+    // Check if totals have changed
+    const downloadsChanged = todayEntry.total_downloads !== modelData.downloadCount;
+    const likesChanged = todayEntry.total_likes !== modelData.likeCount;
 
-  return previousStats;
-}
-
-async function getExistingEntriesForDate(
-  bqClient: BigQuery,
-  entries: BigQueryHfModelStatsEntry[],
-  date: string
-): Promise<Set<string>> {
-  const datasetName = process.env.GCP_BQ_MODEL_STATS_DATASET;
-  if (!datasetName) {
-    throw new Error('GCP_BQ_MODEL_STATS_DATASET environment variable is required');
-  }
-
-  if (entries.length === 0) {
-    return new Set();
-  }
-
-  const modelKeys = entries
-    .map((entry) => `('${entry.model_slug}', '${entry.organization}')`)
-    .join(', ');
-
-  const query = `
-    SELECT organization, model_slug
-    FROM \`${datasetName}.hf_model_stats\`
-    WHERE stats_date = '${date}'
-      AND (model_slug, organization) IN (${modelKeys})
-  `;
-
-  const [rows] = await bqClient.query({ query });
-  const existingEntries = new Set<string>();
-
-  for (const row of rows) {
-    const key = `${row.organization}:${row.model_slug}`;
-    existingEntries.add(key);
-  }
-
-  return existingEntries;
-}
-
-export function getBigQueryDataEntries(
-  data: ScrapingResult,
-  previousStats?: Map<string, PreviousModelStats>
-): BigQueryHfModelStatsEntry[] {
-  const today = data.scrapedAt.toISOString().split('T')[0]; // YYYY-MM-DD format
-
-  return data.models.map((model) => {
-    const parsed = parseModelName(model.name);
-    const key = `${parsed.organization}:${parsed.model_slug}`;
-    const previous = previousStats?.get(key);
-
-    let new_downloads: number | null = null;
-    let new_likes: number | null = null;
-
-    if (previous != null) {
-      const downloadDiff = model.downloadCount - previous.total_downloads;
-      const likesDiff = model.likeCount - previous.total_likes;
-      new_downloads = downloadDiff;
-      new_likes = likesDiff;
-      console.debug(
-        [
-          `New stats for ${key}:`,
-          `new downloads - ${downloadDiff},`,
-          `new likes - ${likesDiff},`,
-          `previous stats - ${previous.updated_at.value}`,
-        ].join(' ')
+    if (downloadsChanged || likesChanged) {
+      // Update existing entry with new totals and recalculated deltas
+      await prisma.hfModelStat.update({
+        where: {
+          id: todayEntry.id,
+        },
+        data: {
+          total_downloads: modelData.downloadCount,
+          total_likes: modelData.likeCount,
+          new_downloads,
+          new_likes,
+        },
+      });
+      console.info(
+        `Updated entry for ${organization}/${model_slug} - downloads: ${todayEntry.total_downloads} → ${modelData.downloadCount}, likes: ${todayEntry.total_likes} → ${modelData.likeCount}`
       );
+    } else {
+      console.info(`No changes for ${organization}/${model_slug}, skipping update`);
     }
-
-    return {
-      ...parsed,
-      id: crypto.randomUUID(),
-      collection_url: DEFAULT_LFM_COLLECTION_URL,
-      total_downloads: model.downloadCount,
-      total_likes: model.likeCount,
-      new_downloads,
-      new_likes,
-      stats_date: today,
-      updated_at: data.scrapedAt.toISOString(),
-    };
-  });
+  }
 }
 
-async function insertDataToBigQuery(
-  bqClient: BigQuery,
-  data: BigQueryHfModelStatsEntry[]
-): Promise<void> {
-  const datasetName = process.env.GCP_BQ_MODEL_STATS_DATASET;
-  if (!datasetName) {
-    throw new Error('GCP_BQ_MODEL_STATS_DATASET environment variable is required');
-  }
+export async function persistModelStatsToDatabase(data: HfCrawlerResult): Promise<void> {
+  const utcDate = getUtcMidnight(data.scrapedAt);
+  console.info(`Persisting model stats for UTC date: ${utcDate.toISOString()}`);
 
-  if (data.length === 0) {
-    console.info('No data to insert, skipping BigQuery operation');
-    return;
-  }
-
-  const today = data[0].stats_date;
-  const dataset = bqClient.dataset(datasetName);
-  const table = dataset.table('hf_model_stats');
-
-  // Check which entries already exist for today
-  const existingEntries = await getExistingEntriesForDate(bqClient, data, today);
-
-  // Filter out entries that already exist
-  const newInserts = data.filter((entry) => {
-    const key = `${entry.organization}:${entry.model_slug}`;
-    return !existingEntries.has(key);
-  });
-
-  const skippedCount = data.length - newInserts.length;
-  if (skippedCount > 0) {
-    console.info(`Skipping ${skippedCount} entries that already exist for date ${today}`);
-  }
-
-  if (newInserts.length === 0) {
-    console.info('All entries already exist for today, skipping insert');
+  if (data.models.length === 0) {
+    console.info('No model stats to persist, skipping database operations');
     return;
   }
 
   try {
-    await table.insert(newInserts);
-    console.info(`Successfully inserted ${newInserts.length} new rows to BigQuery`);
-  } catch (error: any) {
-    if (error.name === 'PartialFailureError') {
-      console.error('Some rows failed to insert:', error.errors);
-      throw new Error(`BigQuery partial insert failure: ${JSON.stringify(error.errors)}`);
+    for (const model of data.models) {
+      await processModelStat(model, utcDate);
     }
 
-    console.error('Error inserting to BigQuery:', error);
-    throw error;
-  }
-}
-
-export async function persistModelStatsToBigQuery(data: ScrapingResult): Promise<void> {
-  const today = data.scrapedAt.toISOString().split('T')[0];
-  console.info(`Persisting model stats for date: ${today}`);
-
-  const preliminaryEntries = getBigQueryDataEntries(data);
-  if (preliminaryEntries.length === 0) {
-    console.info('No model stats to persist, skipping BigQuery insert');
-    return;
-  }
-
-  try {
-    const bqClient = getBigQueryClient();
-    const previousStats = await getPreviousModelStats(bqClient, preliminaryEntries);
-    const entries = getBigQueryDataEntries(data, previousStats);
-    await insertDataToBigQuery(bqClient, entries);
-
-    console.info(`Successfully processed stats for ${entries.length} models on ${today}`);
+    console.info(
+      `Successfully processed stats for ${data.models.length} models on ${utcDate.toISOString().split('T')[0]}`
+    );
   } catch (error) {
-    console.error('Failed to persist model stats to BigQuery:', error);
+    console.error('Failed to persist model stats to database:', error);
     throw error;
   }
 }

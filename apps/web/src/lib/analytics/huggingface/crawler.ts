@@ -1,160 +1,98 @@
-export interface ModelData {
-  name: string;
-  downloadCount: number;
-  likeCount: number;
-}
+import { HfCrawlerResult, HfModelStatEntry } from '@/lib/analytics/huggingface/types';
 
-export interface ScrapingResult {
-  models: ModelData[];
-  totalModels: number;
-  scrapedAt: Date;
-}
+const TARGET_MODELS = [
+  'lmstudio-community/LFM2-1.2B-MLX-8bit',
+  'lmstudio-community/LFM2-1.2B-MLX-bf16',
+  'LiquidAI/LFM2-1.2B-GGUF',
+  'LiquidAI/LFM2-1.2B',
+  'LiquidAI/LFM2-350M',
+  'unsloth/LFM2-700M-GGUF',
+  'LiquidAI/LFM2-350M-GGUF',
+  'LiquidAI/LFM2-700M',
+  'LiquidAI/LFM2-VL-450M',
+  'unsloth/LFM2-1.2B-GGUF',
+  'unsloth/LFM2-1.2B',
+  'LiquidAI/LFM2-700M-GGUF',
+  'onnx-community/LFM2-1.2B-ONNX',
+  'unsloth/LFM2-350M-GGUF',
+  'LiquidAI/LFM2-VL-1.6B',
+  'mradermacher/Tashkeel-700M-i1-GGUF',
+  'onnx-community/LFM2-350M-ONNX',
+  'mradermacher/kulyk-uk-en-i1-GGUF',
+  'unsloth/LFM2-1.2B-unsloth-bnb-4bit',
+  'eternis/eternis_sft_tool_calling_LFM2_1_2B_lora_r8_lora_alpha16_merged',
+  'mradermacher/Tashkeel-700M-GGUF',
+  'mradermacher/PharmaQA-1.2B-GGUF',
+  'mradermacher/LFM2-1.2B-Pirate-i1-GGUF',
+  'mradermacher/LFM2-350M-i1-GGUF',
+  'unsloth/LFM2-350M',
+  'mradermacher/kulyk-en-uk-i1-GGUF',
+  'unsloth/LFM2-700M',
+  'lmstudio-community/LFM2-350M-MLX-8bit',
+  'mradermacher/DentaInstruct-1.2B-GGUF',
+  'mradermacher/SoftwareArchitecture-Instruct-v1-GGUF',
+];
 
-export const DEFAULT_LFM_COLLECTION_URL =
-  'https://huggingface.co/collections/LiquidAI/lfm2-686d721927015b2ad73eaa38';
-
-export function parseFormattedNumber(text: string): number {
-  const cleanText = text.trim().toLowerCase();
-  if (cleanText.includes('k')) {
-    const num = parseFloat(cleanText.replace('k', ''));
-    return Math.round(num * 1000);
-  }
-  return parseInt(cleanText.replace(/,/g, ''), 10) || 0;
-}
-
-function extractTextFromHtml(html: string): string {
-  return html
-    .replace(/<[^>]*>/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
-}
-
-function extractArticleElements(html: string): string[] {
-  const articleRegex = /<article[^>]*>([\s\S]*?)<\/article>/gi;
-  const articles: string[] = [];
-  let match;
-
-  while ((match = articleRegex.exec(html)) !== null) {
-    articles.push(match[1]);
-  }
-
-  return articles;
-}
-
-function extractModelName(articleHtml: string): string {
-  const h4Regex = /<h4[^>]*>([\s\S]*?)<\/h4>/i;
-  const match = articleHtml.match(h4Regex);
-  if (match) {
-    return extractTextFromHtml(match[1]).trim();
-  }
-  return '';
-}
-
-function extractDownloadAndLikeCounts(articleHtml: string): {
-  downloadCount: number;
-  likeCount: number;
-} {
-  // Remove all SVG elements first to simplify parsing
-  const cleanHtml = articleHtml.replace(/<svg[^>]*>[\s\S]*?<\/svg>/gi, ' ');
-
-  // Extract text and split into tokens
-  const fullText = extractTextFromHtml(cleanHtml);
-  const tokens = fullText.split(/\s+/).filter((token: string) => token.trim());
-
-  // Find the position after "Updated" and time info
-  let startIndex = -1;
-  for (let i = 0; i < tokens.length; i++) {
-    if (tokens[i].toLowerCase().includes('updated')) {
-      // Skip ahead past the time information (typically "X day ago" or similar)
-      startIndex = i + 4; // Skip "Updated", number, "day/days", "ago"
-      break;
-    }
-  }
-
-  // If no "Updated" found, start from the beginning but skip obvious non-stats
-  if (startIndex === -1) {
-    startIndex = 0;
-  }
-
-  // Collect numbers that appear after the start position
-  const numbers: string[] = [];
-  for (let i = startIndex; i < tokens.length; i++) {
-    const token = tokens[i];
-    // Look for number patterns but exclude parameter counts (1B, 0.7B, etc.)
-    if (
-      (token.match(/^\d+(\.\d+)?k?$/) || token.match(/^\d{1,3}(,\d{3})*$/)) &&
-      !token.match(/^\d+(\.\d+)?[BM]$/i)
-    ) {
-      numbers.push(token);
-    }
-  }
-
-  // Take the last two numbers found - these should be download count and like count
-  const relevantNumbers = numbers.slice(-2);
-
-  return {
-    downloadCount: relevantNumbers[0] ? parseFormattedNumber(relevantNumbers[0]) : 0,
-    likeCount: relevantNumbers[1] ? parseFormattedNumber(relevantNumbers[1]) : 0,
-  };
-}
-
-export function parseModelCollectionPage(html: string): Omit<ScrapingResult, 'scrapedAt'> {
-  const articleElements = extractArticleElements(html);
-  console.info(`Found ${articleElements.length} model cards`);
-
-  const models: ModelData[] = [];
-
-  for (const articleHtml of articleElements) {
+async function fetchWithRetry<T>(fn: () => Promise<T>, maxRetries = 3): Promise<T> {
+  for (let i = 0; i < maxRetries; i++) {
     try {
-      const name = extractModelName(articleHtml);
-      const { downloadCount, likeCount } = extractDownloadAndLikeCounts(articleHtml);
-
-      if (name) {
-        models.push({
-          name: name,
-          downloadCount,
-          likeCount,
-        });
-        console.info(`Scraped: ${name}: downloads - ${downloadCount}, likes - ${likeCount}`);
+      return await fn();
+    } catch (error: any) {
+      if (error.status === 429 && i < maxRetries - 1) {
+        const delay = Math.pow(2, i) * 1000;
+        console.warn(`Rate limited, waiting ${delay}ms before retry...`);
+        await new Promise((resolve) => setTimeout(resolve, delay));
+        continue;
       }
-    } catch (error) {
-      console.warn('Error processing model element:', error);
+      throw error;
     }
+  }
+  throw new Error('Max retries exceeded');
+}
+
+export async function scrapeHuggingFaceCollection(): Promise<HfCrawlerResult> {
+  const models: HfModelStatEntry[] = [];
+  console.info(`Fetching stats for ${TARGET_MODELS.length} specific LFM2 models...`);
+
+  try {
+    for (const modelName of TARGET_MODELS) {
+      console.info(`Fetching stats for: ${modelName}`);
+
+      const modelData = await fetchWithRetry(async () => {
+        const res = await fetch(`https://huggingface.co/api/models/${modelName}`);
+        if (!res.ok) {
+          if (res.status === 404) {
+            console.warn(`Model not found: ${modelName}`);
+            return null;
+          }
+          const error = new Error(`HTTP ${res.status}: ${res.statusText}`);
+          (error as any).status = res.status;
+          throw error;
+        }
+        return res.json();
+      });
+
+      if (modelData) {
+        const modelStats: HfModelStatEntry = {
+          name: modelData.id || modelName,
+          downloadCount: modelData.downloads || 0,
+          likeCount: modelData.likes || 0,
+        };
+
+        models.push(modelStats);
+        console.info(`- ${modelStats.downloadCount} downloads, ${modelStats.likeCount} likes`);
+      }
+
+      await new Promise((resolve) => setTimeout(resolve, 100));
+    }
+  } catch (error: any) {
+    console.error('Error fetching model stats:', error);
+    throw error;
   }
 
   return {
     models,
     totalModels: models.length,
+    scrapedAt: new Date(),
   };
-}
-
-export async function fetchModelCollectionPage(collectionUrl: string): Promise<string> {
-  console.info(`Fetching HTML from: ${collectionUrl}`);
-
-  const response = await fetch(collectionUrl, {
-    headers: {
-      'User-Agent':
-        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-    },
-  });
-  if (!response.ok) {
-    throw new Error(`HTTP error! status: ${response.status}`);
-  }
-
-  return response.text();
-}
-
-export async function scrapeHuggingFaceCollection(collectionUrl: string): Promise<ScrapingResult> {
-  try {
-    const html = await fetchModelCollectionPage(collectionUrl);
-    const parseResult = parseModelCollectionPage(html);
-
-    return {
-      ...parseResult,
-      scrapedAt: new Date(),
-    };
-  } catch (error) {
-    console.error('Error scraping HuggingFace collection:', error);
-    throw error;
-  }
 }
