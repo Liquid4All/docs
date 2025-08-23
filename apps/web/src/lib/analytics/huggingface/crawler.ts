@@ -59,7 +59,9 @@ export async function scrapeHuggingFaceCollection(): Promise<HfCrawlerResult> {
       console.info(`Fetching stats for: ${modelName}`);
 
       const modelData = await fetchWithRetry(async () => {
-        const res = await fetch(`https://huggingface.co/api/models/${modelName}`);
+        const res = await fetch(
+          `https://huggingface.co/api/models/${modelName}?expand=downloadsAllTime&expand=likes`
+        );
         if (!res.ok) {
           if (res.status === 404) {
             console.warn(`Model not found: ${modelName}`);
@@ -72,10 +74,10 @@ export async function scrapeHuggingFaceCollection(): Promise<HfCrawlerResult> {
         return res.json();
       });
 
-      if (modelData) {
+      if (modelData != null) {
         const modelStats: HfModelStatEntry = {
           name: modelData.id || modelName,
-          downloadCount: modelData.downloads || 0,
+          downloadCount: modelData.downloadsAllTime || 0,
           likeCount: modelData.likes || 0,
         };
 

@@ -26,13 +26,13 @@ export function parseModelName(fullName: string): {
   };
 }
 
-function getUtcMidnight(date: Date): Date {
+export function getUtcMidnight(date: Date): Date {
   const utcDate = new Date(date);
   utcDate.setUTCHours(0, 0, 0, 0);
   return utcDate;
 }
 
-function getPreviousUtcDate(currentUtcDate: Date): Date {
+export function getPreviousUtcDate(currentUtcDate: Date): Date {
   const previousDate = new Date(currentUtcDate);
   previousDate.setUTCDate(previousDate.getUTCDate() - 1);
   return previousDate;
