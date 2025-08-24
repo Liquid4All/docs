@@ -2,27 +2,42 @@ import { prisma } from '@liquidai/leap-database';
 
 import { HfCrawlerResult } from '@/lib/analytics/huggingface/types';
 
-// TODO: extract model modality from full name
-//   e.g. "LiquidAI/LFM2-VL-1.2B-math" -> "VL"
 export function parseModelName(fullName: string): {
   organization: string;
   model_slug: string;
+  model_modality: string | null;
   model_size: string;
-  model_variant: string | null;
+  model_variant: 'VL' | null;
 } {
+  if (!fullName || fullName.trim() === '') {
+    throw new Error('Model name cannot be empty');
+  }
+
   const [organization, modelPart] = fullName.split('/');
+
+  if (!organization || organization.trim() === '') {
+    throw new Error('Organization is required in model name');
+  }
+
+  if (modelPart === undefined) {
+    throw new Error('Model part is required in format "organization/model"');
+  }
+
+  const modalityMatch = modelPart.match(/-([A-Z]{1,3})-\d+(?:\.\d+)?[BMK]/i);
+  const model_modality = modalityMatch ? modalityMatch[1].toUpperCase() : null;
 
   const sizeMatch = modelPart.match(/(\d+(?:\.\d+)?[BMK])/i);
   const model_size = sizeMatch ? sizeMatch[1] : '';
 
   const variantMatch = modelPart.match(/\d+(?:\.\d+)?[BMK]-(.+)/i);
-  const model_variant = variantMatch ? variantMatch[1] : null;
+  const model_variant = (variantMatch ? variantMatch[1] : null) as 'VL' | null;
 
   return {
     organization,
     model_slug: modelPart,
     model_size,
     model_variant,
+    model_modality,
   };
 }
 
@@ -42,7 +57,12 @@ async function processModelStat(
   modelData: { name: string; downloadCount: number; likeCount: number },
   currentUtcMidnight: Date
 ): Promise<void> {
-  const { organization, model_slug, model_size, model_variant } = parseModelName(modelData.name);
+  const { organization, model_slug, model_modality, model_size, model_variant } = parseModelName(
+    modelData.name
+  );
+  console.group(
+    `Processing model ${modelData.name} (${model_modality} | ${model_size} | ${model_variant})`
+  );
   const previousUtcMidnight = getPreviousUtcDate(currentUtcMidnight);
 
   const existingEntries = await prisma.hfModelStat.findMany({
@@ -76,9 +96,7 @@ async function processModelStat(
       `Daily change for ${organization}/${model_slug}: downloads +${new_downloads}, likes +${new_likes}`
     );
   } else {
-    console.debug(
-      `No previous data found for ${organization}/${model_slug}, setting daily changes to null`
-    );
+    console.debug(`No previous data found for ${organization}/${model_slug}`);
   }
 
   if (todayEntry == null) {
@@ -86,9 +104,9 @@ async function processModelStat(
       data: {
         organization,
         model_slug,
-        model_modality: null,
+        model_modality,
         model_size,
-        model_variant: model_variant ?? '',
+        model_variant,
         hf_url: `https://huggingface.co/${modelData.name}`,
         total_downloads: modelData.downloadCount,
         total_likes: modelData.likeCount,
@@ -120,9 +138,10 @@ async function processModelStat(
         `Updated entry for ${organization}/${model_slug} - downloads: ${todayEntry.total_downloads} → ${modelData.downloadCount}, likes: ${todayEntry.total_likes} → ${modelData.likeCount}`
       );
     } else {
-      console.info(`No changes for ${organization}/${model_slug}, skipping update`);
+      console.info(`No changes found for ${organization}/${model_slug}`);
     }
   }
+  console.groupEnd();
 }
 
 export async function persistModelStatsToDatabase(data: HfCrawlerResult): Promise<void> {
