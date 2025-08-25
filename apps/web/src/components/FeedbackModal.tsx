@@ -9,8 +9,7 @@ import {
   IconInfoCircle,
   IconMessage,
 } from '@tabler/icons-react';
-import { track } from '@vercel/analytics';
-import React, { ChangeEvent, useCallback, useMemo, useState } from 'react';
+import { ChangeEvent, useCallback, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -32,6 +31,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { DISCORD_INVITE_URL } from '@/constants';
 import { AnalyticEvent } from '@/lib/analytics';
+import { trackClientEvent } from '@/lib/analytics/helpers';
+import { FEEDBACK_PLACEHOLDERS, FEEDBACK_TITLES } from '@/lib/feedback/constants';
+import { FeedbackRequestBody, FeedbackType } from '@/lib/feedback/types';
 
 interface FeedbackModalProps {
   isOpen: boolean;
@@ -40,31 +42,15 @@ interface FeedbackModalProps {
 
 export const FeedbackModal = ({ isOpen, onClose }: FeedbackModalProps) => {
   const [feedback, setFeedback] = useState<string>('');
+  const [email, setEmail] = useState<string>('');
   const [canContact, setCanContact] = useState<boolean>(false);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-  const [requestType, setRequestType] = useState<string>('Bug report');
+  const [feedbackType, setFeedbackType] = useState<FeedbackType>(FeedbackType.BUG_REPORT);
   const [isDropdownOpen, setIsDropdownOpen] = useState<boolean>(false);
   const [showSuccess, setShowSuccess] = useState<boolean>(false);
 
-  const requestOptions = ['Bug report', 'Feature request', 'General feedback', 'Support issue'];
-
-  const placeholder = useMemo(() => {
-    switch (requestType) {
-      case 'Bug report':
-        return 'Describe what went wrong and the steps to reproduce it. Include what you expected to happen vs. what actually happened.';
-      case 'Feature request':
-        return "Tell us about the feature you'd like to see. What problem would it solve? How would you use it?";
-      case 'General feedback':
-        return 'Share your thoughts about your experience. What do you love? What could be better?';
-      case 'Support issue':
-        return "Describe the issue you're facing. Include any error messages and what you were trying to do.";
-      default:
-        return 'Share your feedback or feature request...';
-    }
-  }, [requestType]);
-
   const handleSubmit = useCallback(async (): Promise<void> => {
-    if (isEmptyString(feedback.trim())) {
+    if (isEmptyString(feedback.trim()) || isEmptyString(email.trim())) {
       return;
     }
 
@@ -78,28 +64,50 @@ export const FeedbackModal = ({ isOpen, onClose }: FeedbackModalProps) => {
         },
         {
           data: {
-            canContact: canContact,
-            requestType: requestType,
+            canContact,
+            feedbackType,
+            email,
           },
         }
       );
 
-      track(AnalyticEvent.ClickedSubmitFeedback, {
-        type: requestType,
-        feedback: feedback,
-        canContact: canContact,
+      try {
+        const requestBody: FeedbackRequestBody = {
+          email,
+          feedback,
+          feedback_type: feedbackType,
+          can_contact: canContact,
+        };
+        const response = await fetch('/api/feedback', {
+          method: 'POST',
+          body: JSON.stringify(requestBody),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          console.warn('Failed to save feedback to database:', errorData.error);
+        }
+      } catch (dbError) {
+        console.warn('Failed to save feedback to database:', dbError);
+      }
+
+      trackClientEvent(AnalyticEvent.ClickedSubmitFeedback, {
+        type: feedbackType,
+        canContact,
+        email,
       });
 
       setFeedback('');
+      setEmail('');
       setCanContact(false);
-      setRequestType('Bug report');
-      setShowSuccess(true); // Show success dialog
+      setFeedbackType(FeedbackType.BUG_REPORT);
+      setShowSuccess(true);
     } catch (error) {
       console.error('Failed to submit feedback:', error);
     } finally {
       setIsSubmitting(false);
     }
-  }, [feedback, canContact, requestType]);
+  }, [feedback, email, canContact, feedbackType]);
 
   const handleFeedbackChange = useCallback((e: ChangeEvent<HTMLTextAreaElement>): void => {
     setFeedback(e.target.value);
@@ -109,8 +117,8 @@ export const FeedbackModal = ({ isOpen, onClose }: FeedbackModalProps) => {
     setCanContact(checked);
   }, []);
 
-  const handleRequestTypeSelect = useCallback((option: string): void => {
-    setRequestType(option);
+  const handleFeedbackTypeSelect = useCallback((option: FeedbackType): void => {
+    setFeedbackType(option);
     setIsDropdownOpen(false);
   }, []);
 
@@ -194,7 +202,7 @@ export const FeedbackModal = ({ isOpen, onClose }: FeedbackModalProps) => {
             <DropdownMenu open={isDropdownOpen} onOpenChange={handleDropdownOpenChange}>
               <DropdownMenuTrigger asChild>
                 <button className="w-full px-2 py-1 bg-background border border-muted-forground rounded-md text-base text-foreground cursor-pointer focus:outline-none focus:ring-1 focus:ring-accent focus:border-transparent flex items-center justify-between">
-                  <span>{requestType}</span>
+                  <span>{FEEDBACK_TITLES[feedbackType]}</span>
                   <IconChevronDown size={16} className="text-foreground" />
                 </button>
               </DropdownMenuTrigger>
@@ -203,13 +211,13 @@ export const FeedbackModal = ({ isOpen, onClose }: FeedbackModalProps) => {
                 style={{ width: 'var(--radix-dropdown-menu-trigger-width)' }}
                 className="-tracking-[0.3px] px-2 py-1"
               >
-                {requestOptions.map((option) => (
+                {Object.values(FeedbackType).map((feedbackType) => (
                   <DropdownMenuItem
-                    key={option}
-                    onSelect={() => handleRequestTypeSelect(option)}
+                    key={feedbackType}
+                    onSelect={() => handleFeedbackTypeSelect(feedbackType)}
                     className="cursor-pointer rounded-md px-2 py-1 transition-colors"
                   >
-                    <p className="text-foreground text-base">{option}</p>
+                    <p className="text-foreground text-base">{FEEDBACK_TITLES[feedbackType]}</p>
                   </DropdownMenuItem>
                 ))}
               </DropdownMenuContent>
@@ -224,7 +232,7 @@ export const FeedbackModal = ({ isOpen, onClose }: FeedbackModalProps) => {
                     <IconInfoCircle size={16} className="text-foreground my-auto" />
                   </TooltipTrigger>
                   <TooltipContent side="top" className="max-w-xs">
-                    <p className="text-sm text-white">{placeholder}</p>
+                    <p className="text-sm text-white">{FEEDBACK_PLACEHOLDERS[feedbackType]}</p>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
@@ -232,10 +240,24 @@ export const FeedbackModal = ({ isOpen, onClose }: FeedbackModalProps) => {
             <Textarea
               value={feedback}
               onChange={handleFeedbackChange}
-              placeholder={placeholder}
+              placeholder={FEEDBACK_PLACEHOLDERS[feedbackType]}
               rows={5}
               className="resize-none overflow-y-auto max-h-40 min-h-30 text-base! focus:outline-none focus:ring-1! focus:ring-accent! focus:border-transparent"
             />
+
+            <div className="mt-4">
+              <label className="block text-base font-bold text-foreground mb-2">
+                Email address
+              </label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="your.email@example.com"
+                className="w-full px-3 py-2 bg-background border border-muted-foreground rounded-md text-base text-foreground focus:outline-none focus:ring-1 focus:ring-accent focus:border-transparent"
+                required
+              />
+            </div>
           </div>
 
           <div className="flex gap-2 items-center mt-2">
@@ -256,7 +278,7 @@ export const FeedbackModal = ({ isOpen, onClose }: FeedbackModalProps) => {
             <Button
               onClick={handleSubmit}
               className="flex-1"
-              disabled={!feedback.trim() || isSubmitting}
+              disabled={!feedback.trim() || !email.trim() || isSubmitting}
             >
               {isSubmitting ? 'Submitting...' : 'Submit'}
             </Button>
