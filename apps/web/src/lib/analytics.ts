@@ -22,6 +22,8 @@ export enum AnalyticEvent {
   CancelledBundleDownloadCard = 'CancelledBundleDownloadCard',
   DownloadedModelBundle = 'DownloadedModelBundle',
   // end of bundle download events
+  ScannedApolloQRCode = 'ScannedApolloQRCode',
+  ClickedApolloDeeplink = 'ClickedApolloDeeplink',
   OpenedProfileDropdown = 'OpenedProfileDropdown',
   ClickedCodeBlockTab = 'ClickedCodeBlockTab',
   OpenedFeedbackModal = 'OpenedFeedbackModal',
