@@ -125,7 +125,7 @@ export const ProfileDropdown: FC<ProfileDropdownProps> = ({ isSignedIn, user }) 
         aria-haspopup="true"
         className="font-normal px-0"
       >
-        <IconUserCircle stroke={1.5} className="h-5 w-5" />
+        <IconUserCircle stroke={1.5} className="h-6 w-6" />
         {isSignedIn && <span className="uppercase">{getUserInitials()}</span>}
       </Button>
 

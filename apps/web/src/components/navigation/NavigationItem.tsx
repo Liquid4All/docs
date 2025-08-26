@@ -26,7 +26,7 @@ interface NavigationItemProps {
 }
 
 export const NavigationItem = ({ item, isMobile, onClick, className }: NavigationItemProps) => {
-  const baseClassName = isMobile ? 'text-md' : 'text-md font-normal p-1';
+  const baseClassName = isMobile ? 'text-md font-normal' : 'text-md font-normal p-1';
   const href: string | undefined =
     item.hrefFn != null && window != null
       ? item.hrefFn({ location: window.location })

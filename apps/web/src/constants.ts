@@ -8,6 +8,7 @@ export const CONTACT_EMAIL = `contact@${DOMAIN}`;
 
 export const DISCORD_INVITE_URL = 'https://discord.gg/liquid-ai';
 export const PRIVACY_POLICY_URL = 'https://liquid.ai/privacy-policy';
+export const HACKATHON_URL = 'https://hackathons.liquid.ai';
 export const TERMS_OF_SERVICE_URL = '/terms';
 export const ACCEPTABLE_USE_URL = '/acceptable-use';
 

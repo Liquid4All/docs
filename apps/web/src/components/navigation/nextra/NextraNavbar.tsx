@@ -1,6 +1,5 @@
 'use client';
 
-import { useClerk } from '@clerk/nextjs';
 import { PageMapItem } from 'nextra';
 import { Navbar } from 'nextra-theme-docs';
 import { Search } from 'nextra/components/search';
@@ -16,11 +15,6 @@ import { trackClientEvent } from '@/lib/analytics/helpers';
 import { cn } from '@/lib/utils';
 
 import { MobileNavigation } from '../MobileNavigation';
-import {
-  generalNavigations,
-  signedInUserNavigations,
-  signedOutUserNavigations,
-} from '../navigationConstants';
 import { extractDocNavItems } from '../nextra/extractDocNavItems';
 
 interface NextraNavbarProps {
@@ -31,10 +25,6 @@ export default function NextraNavbar({ pageMap = [] }: NextraNavbarProps) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
-  const { isSignedIn, loaded, user } = useClerk();
-
-  const userNavigations = isSignedIn ? signedInUserNavigations : signedOutUserNavigations;
-  const allMobileNavigations = [...generalNavigations, ...userNavigations];
 
   const docNavItems = extractDocNavItems(pageMap, '/docs');
 
@@ -91,7 +81,6 @@ export default function NextraNavbar({ pageMap = [] }: NextraNavbarProps) {
       <MobileNavigation
         isOpen={mobileMenuOpen}
         onClose={() => handleMobileMenuToggle(false)}
-        navigationItems={allMobileNavigations}
         docNavItems={docNavItems}
       />
     </Container>
