@@ -184,6 +184,7 @@ leap-bundle create <input-path>
 **Options**
 
 - `--dry-run`: Validate the input directory without actually creating a request or uploading files.
+- `--json`: Output result in JSON format for programmatic parsing.
 
 **Behavior**
 
@@ -209,6 +210,15 @@ Uploading directory... ✓
 
 # Example output when request already exists
 ⚠ A bundle request with the same input hash already exists: req_xyz789abc123
+
+# Create bundle with JSON output
+leap-bundle create ./my-model-directory --json
+
+# Example JSON output on success
+{"request_id": "18734", "status": "success"}
+
+# Example JSON output when request already exists
+{"error": "A bundle request with the same input hash already exists: req_xyz789abc123", "status": "exists"}
 ```
 
 **Validation**
@@ -319,6 +329,10 @@ leap-bundle list [<request-id>]
 
 - `request-id` (optional): Specific request ID to get detailed information
 
+**Options**
+
+- `--json`: Output result in JSON format for programmatic parsing (only available when querying a specific request)
+
 **Behavior**
 
 - Without arguments: Lists 50 most recent bundle requests
@@ -352,6 +366,18 @@ leap-bundle list 18734
   Creation:   2024-01-15T10:30:00Z
   Update:     2024-01-15T10:45:00Z
   Notes:      Processing completed. Run "leap-bundle download 18734" to download the bundle.
+
+# Get details with JSON output
+leap-bundle list 18734 --json
+
+# Example JSON output
+{
+  "request_id": "18734",
+  "input_path": "/path/to/model/directory",
+  "status": "completed",
+  "created_at": "2024-01-15T10:30:00Z",
+  "user_message": "Processing completed. Run \"leap-bundle download 18734\" to download the bundle."
+}
 ```
 
 **Request Statuses**
