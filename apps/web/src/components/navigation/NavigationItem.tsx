@@ -1,6 +1,8 @@
 import { ComponentType } from 'react';
 
 import { Button } from '@/components/ui/button';
+import { AnalyticEvent } from '@/lib/analytics';
+import { trackClientEvent } from '@/lib/analytics/helpers';
 import { cn } from '@/lib/utils';
 
 export interface NavigationItemType {
@@ -30,6 +32,14 @@ export const NavigationItem = ({ item, isMobile, onClick, className }: Navigatio
       ? item.hrefFn({ location: window.location })
       : (item.href ?? undefined);
 
+  const handleClick = () => {
+    trackClientEvent(AnalyticEvent.ClickedNavbarItem, {
+      linkText: item.label,
+    });
+
+    onClick?.();
+  };
+
   return (
     <Button
       key={item.label}
@@ -37,7 +47,7 @@ export const NavigationItem = ({ item, isMobile, onClick, className }: Navigatio
       // Use tertiary as default variant, tertiary for mobile
       variant="link"
       icon={item.icon}
-      onClick={onClick}
+      onClick={handleClick}
       className={cn(baseClassName, className)}
       size="sm"
     >
