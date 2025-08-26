@@ -54,6 +54,7 @@ export enum AnalyticEvent {
   RanLeapBundleCancel = 'RanLeapBundleCancel',
   RanLeapBundleDownload = 'RanLeapBundleDownload',
   ClickedPricingPageButton = 'ClickedPricingPageButton',
+  ClickedNavbarItem = 'ClickedNavbarItem',
   // Best Model Search events
   BMSSessionStarted = 'BMSSessionStarted',
   BMSModelSizeSelected = 'BMSModelSizeSelected',
