@@ -23,9 +23,7 @@ const AppStoreLink: React.FC<AppStoreLinkProps> = ({
   height = ORIGINAL_iOS_BADGE_HEIGHT,
   display = 'badge',
 }) => {
-  const theme = 'light';
-
-  const badgeUrl = `https://toolbox.marketingtools.apple.com/api/v2/badges/download-on-the-app-store/white/en-us?releaseDate=1721692800`;
+  const badgeUrl = `https://toolbox.marketingtools.apple.com/api/v2/badges/download-on-the-app-store/black/en-us?releaseDate=1721692800`;
   const badgeWidth = Math.round((height * ORIGINAL_iOS_BADGE_WIDTH) / ORIGINAL_iOS_BADGE_HEIGHT);
 
   const showBadge = display === 'badge' || display === 'badge-qr';
