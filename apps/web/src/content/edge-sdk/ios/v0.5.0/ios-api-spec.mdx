@@ -1,0 +1,660 @@
+import { Callout } from 'nextra/components';
+
+# iOS API Spec
+
+## Leap
+
+The entrypoint of LEAP SDK for iOS. It provides static methods for model loading and doesn't hold any data.
+
+```swift
+public struct Leap {
+    public static func load(url: URL) async throws -> ModelRunner
+}
+```
+
+### `load`
+
+This function loads a model from a local file URL. The `url` should point to a model bundle file. The app needs to hold the model runner object returned by this function until there is no need to interact with the model anymore. See [`ModelRunner`](#modelrunner) for more details.
+
+<Callout type="info">
+  The function will throw `LeapError.modelLoadingFailure` if LEAP fails to load the model.
+</Callout>
+
+## Conversation
+
+The instance of a conversation, which stores the message history and states that are needed by the model runner for generation.
+
+While this `Conversation` instance holds the data necessary for the model runner to perform generation, the app still needs to maintain the UI state of the message history representation.
+
+```swift
+public class Conversation {
+    public let modelRunner: ModelRunner
+    public private(set) var history: [ChatMessage]
+
+    public init(modelRunner: ModelRunner, history: [ChatMessage])
+
+    // Generating response from a plain text message
+    public func generateResponse(userTextMessage: String) -> AsyncStream<MessageResponse>
+
+    // Generating response from a chat message
+    public func generateResponse(message: ChatMessage) -> AsyncStream<MessageResponse>
+
+    // Register a function for the model to invoke
+    public func registerFunction(_ function: LeapFunction)
+}
+```
+
+### `generateResponse`
+
+This method adds the message to the conversation history, generates a response, and returns an `AsyncStream<MessageResponse>`. It can be called from the main thread.
+
+The return value is a Swift [`AsyncStream`](https://developer.apple.com/documentation/swift/asyncstream). The generation will start immediately when the stream is created. Use `for await` loops or other async iteration patterns to consume the stream.
+
+`MessageResponse` instances will be emitted from this stream, which contain chunks of data generated from the model.
+
+<Callout type="info">
+  Errors can be thrown within the async stream. Use `do-catch` blocks around the async iteration to
+  capture errors from the generation.
+</Callout>
+
+<Callout type="warning">
+  If there is already a running generation, a new request will return an empty stream that finishes
+  immediately.
+</Callout>
+
+### Cancellation of the generation
+
+Generation will be stopped when the task that iterates the `AsyncStream` is canceled. We highly recommend that generation be started within a Task associated with a lifecycle-aware component so that the generation can be stopped if the component is destroyed. Here is an example:
+
+```swift
+task = Task {
+    let userMessage = ChatMessage(role: .user, content: [.text("Hello")])
+    for await response in conversation.generateResponse(message: userMessage) {
+        switch response {
+        case .chunk(let text):
+            print("Chunk: \(text)")
+        case .reasoningChunk(let text):
+            print("Reasoning: \(text)")
+        case .functionCalls(let calls):
+            for call in calls {
+                print("  Function: \(call.name)")
+                print("     Arguments: \(call.arguments)")
+            }
+        case .complete(let usage, let completeInfo):
+            print("Generation complete")
+            print("Usage: \(usage)")
+            print("Finish reason: \(completeInfo.finishReason)")
+            if let stats = completeInfo.stats {
+                print("Stats: \(stats.totalTokens) tokens at \(stats.tokenPerSecond) tok/s")
+            }
+        }
+    }
+}
+
+// Stop the generation by canceling the task
+task.cancel()
+```
+
+### `history`
+
+The `history` property returns the current chat message history. This is a read-only property that provides access to all messages in the conversation. If there is an ongoing generation, the partial message may not be available in the history until the generation completes. However, it is guaranteed that when `MessageResponse.complete` is received, the history will be updated to include the latest message.
+
+### Creation
+
+Instances of this class are created directly using the initializer with a `ModelRunner` and initial message history.
+
+### Lifetime
+
+While a `Conversation` stores the history and state that is needed by the model runner to generate content, its generation function relies on the model runner that creates it. As a result, if that model runner instance has been destroyed, the `Conversation` instance will fail to run subsequent generations.
+
+## ModelRunner
+
+An instance of a model loaded in memory. This is returned by `Leap.load(url:)` and is used to create `Conversation` instances. The application needs to own the model runner object. If the model runner object is destroyed, ongoing generations may fail.
+
+If you need your model runner to survive after view controllers are destroyed, you may need to manage it at the app level or in a service-like object.
+
+### Creating Conversations
+
+Conversations are created directly using the `Conversation` initializer:
+
+```swift
+// Create a new conversation
+let conversation = Conversation(modelRunner: modelRunner, history: [])
+
+// Create conversation with system prompt
+let systemMessage = ChatMessage(role: .system, content: [.text("You are a helpful assistant.")])
+let conversation = Conversation(modelRunner: modelRunner, history: [systemMessage])
+```
+
+<Callout type="info">
+  The `ModelRunner` protocol is implemented internally by the SDK and should not be implemented by
+  application code.
+</Callout>
+
+## ChatMessage
+
+Data structure that is compatible with the message object in OpenAI chat completion API.
+
+```swift
+public enum ChatMessageRole: String, Codable {
+    case user = "user"
+    case system = "system"
+    case assistant = "assistant"
+}
+
+public struct ChatMessage: Codable {
+    public var role: ChatMessageRole
+    public var content: [ChatMessageContent]
+    public var reasoningContent: String?
+    public var functionCalls: [LeapFunctionCall]?
+
+    public init(role: ChatMessageRole, content: [ChatMessageContent], reasoningContent: String? = nil)
+}
+```
+
+### Properties
+
+- `role`: The role of the message sender (user, system, or assistant)
+- `content`: An array of `ChatMessageContent` items (currently only text content is supported)
+- `reasoningContent`: Optional field for models that support chain-of-thought reasoning
+- `functionCalls`: Optional field for function call requests generated by the model. See [Function Calling](./function-calling) guide for more details.
+
+The structure is compatible with OpenAI API message format.
+
+## ChatMessageContent
+
+Data structure that is compatible with the content object in OpenAI chat completion API. It is implemented as an enum.
+
+```swift
+public enum ChatMessageContent {
+    case text(String)
+    case image(Data)
+}
+```
+
+Currently, only text and image content are supported. Future versions may add support for other content types like audio.
+
+Image data should be in JPEG format. Following extention functions are available to create image content with other image objects:
+
+<Callout type="warning">
+  Only the models with vision capabilities can process image content. Sending image content to other
+  models may result in unexpected outputs or errors.
+</Callout>
+
+```swift
+extension ChatMessageContent {
+    public static func fromUIImage(_ image: UIImage, compressionQuality: CGFloat = 0.85) throws -> ChatMessageContent
+    public static func fromNSImage(_ image: NSImage, compressionQuality: CGFloat = 0.85) throws -> ChatMessageContent
+    public static func fromJPEGData(_ jpegData: Data) -> ChatMessageContent
+}
+```
+
+Currently, only text content is supported. Future versions may add support for other content types like images or audio.
+
+## MessageResponse
+
+The response generated from models. Generation may take a long time to finish, so generated text is sent out as "chunks". When generation completes, a complete response object is sent out. This is an enum with the following cases:
+
+```swift
+public enum GenerationFinishReason {
+    case stop
+    case exceed_context
+}
+
+public struct GenerationStats {
+    public var promptTokens: UInt64      // Tokens in the prompt
+    public var completionTokens: UInt64  // Tokens in the completion
+    public var totalTokens: UInt64       // Total tokens used
+    public var tokenPerSecond: Float     // Average generation speed
+}
+
+public struct GenerationCompleteInfo {
+    public let finishReason: GenerationFinishReason
+    public let stats: GenerationStats?  // Optional generation statistics
+}
+
+public enum MessageResponse {
+    case chunk(String)
+    case reasoningChunk(String)
+    case functionCalls([LeapFunctionCall])
+    case complete(String, GenerationCompleteInfo)
+}
+```
+
+- `chunk(String)`: Contains a piece of generated text
+- `reasoningChunk(String)`: Contains reasoning text for models that support chain-of-thought
+- `functionCalls([LeapFunctionCall])`: Contains function call requestes from the model. It will only be available when some functions are registered to the conversation.
+- `complete(String, GenerationCompleteInfo)`: Indicates generation completion. The String contains usage information, and the `GenerationCompleteInfo` provides the finish reason and optional generation statistics including token counts and speed.
+
+## Function Calling
+
+Please refer to [Function calling](./function-calling) guide on detailed usage.
+
+### LeapFunction
+
+`LeapFunction` describes the signature of a function that can be called by the model.
+
+```swift
+public struct LeapFunction {
+    public let name: String
+    public let description: String
+    public let parameters: [LeapFunctionParameter]
+}
+```
+
+- `name` Name of the function.
+- `description` A human and LLM readable description for the function.
+- `parameteres` The list of parameters that is accepted by the function.
+
+### LeapFunctionParameter
+
+`LeapFunctionParameter` describes the signature of a parameter in a function.
+
+```swift
+public struct LeapFunctionParameter {
+    public let name: String
+    public let type: LeapFunctionParameterType
+    public let description: String
+    public let optional: Bool
+}
+```
+
+- `name` Name of the paramter.
+- `type` Data type of the parameter. See [Function Calling > Function Definition](./function-calling#function-definition) on the detailed explanation of `LeapFunctionParameterType`.
+- `description` A human and LLM readable description for the parameter.
+- `optional`: Whether this parameter is optional.
+
+### LeapFunctionCall
+
+`LeapFunctionCall` describes a function call request generated by the model.
+
+```swift
+public struct LeapFunctionCall {
+    public let name: String
+    public let arguments: [String : Any?]
+}
+```
+
+- `name` Name of the function to be called
+- `arguments` The arguments (parameters) of this call in a map. Values could be strings, numbers, booleans, null, arrays, or dictionaries for objects.
+
+### LeapFunctionCallParser
+
+`LeapFunctionCallParser` is capable to parse the function call requests from the models into `LeapFunctionCall` instances. There are two implementations:
+
+- `LFMFunctionCallParser` The function call parser for Liquid Foundation Models (LFM2). This is the default parser.
+- `HermesFunctionCallParser` The function call parser for Hermes function calling format.
+
+## Error Handling
+
+All errors are thrown as `LeapError`. Currently defined cases include:
+
+```swift
+public enum LeapError: Error {
+    case loadModelFailure
+    case modelLoadingFailure(String, Error?)
+    case generationFailure(String, Error?)
+    case serializationFailure(String, Error?)
+}
+```
+
+- `loadModelFailure`: Generic model loading failure
+- `modelLoadingFailure`: Model loading failure with error details
+- `generationFailure`: Generation failure with error details
+- `serializationFailure`: JSON serialization/deserialization failure
+
+## LeapModelDownloader
+
+The model downloader module allows downloading model bundles on-demand directly in your app, rather than bundling them with your app. This is useful for apps that need to support multiple models or want to reduce initial app size.
+
+<Callout type="warning">
+  The model downloader is currently intended for prototyping and development use cases. For
+  production applications, we recommend bundling models directly with your app or using your own
+  secure download infrastructure with proper authentication, error handling, and retry logic.
+</Callout>
+
+```swift
+import LeapModelDownloader
+
+public class LeapModelDownloader {
+    // Download status tracking
+    public enum ModelDownloadStatus: Equatable {
+        case notOnLocal
+        case downloadInProgress(progress: Double)
+        case downloaded
+    }
+
+    public init(notificationConfig: LeapModelDownloaderNotificationConfig? = nil)
+
+    // Get local file URL for a model
+    public func getModelFile(_ model: DownloadableModel) -> URL
+
+    // Non-blocking download request
+    public func requestDownloadModel(_ model: DownloadableModel, forceDownload: Bool = false)
+
+    // Await download completion
+    public func downloadModel(_ model: DownloadableModel, forceDownload: Bool = false) async -> Result<URL, Error>
+
+    // Check download status
+    public func queryStatus(_ model: DownloadableModel) async -> ModelDownloadStatus
+
+    // Cancel download
+    public func requestStopDownload(_ model: DownloadableModel)
+
+    // Remove downloaded model
+    public func removeModel(_ model: DownloadableModel) async throws
+
+    // Utility methods
+    public func getModelFileSize(_ model: DownloadableModel) -> Int64?
+    public func getAvailableDiskSpace() -> Int64?
+    public func requestNotificationPermissions() async -> Bool
+}
+```
+
+### DownloadableModel Protocol
+
+Models available for download implement the `DownloadableModel` protocol:
+
+```swift
+public protocol DownloadableModel: Sendable {
+    /// The remote URI where the model can be downloaded from
+    var uri: URL { get }
+
+    /// Human-readable name of the model
+    var name: String { get }
+
+    /// Local filename to use when storing the model on device
+    var localFilename: String { get }
+}
+```
+
+### LeapDownloadableModel
+
+The easiest way to download models from the [Leap Model Library](https://leap.liquid.ai/models) is using `LeapDownloadableModel`, which automatically resolves download URLs from the Leap API:
+
+```swift
+public struct LeapDownloadableModel: DownloadableModel {
+    /// Model slug on Leap (e.g., "qwen-0.6b")
+    public let modelSlug: String
+
+    /// Quantization slug (e.g., "qwen-0.6b-20250610-8da4w")
+    public let quantizationSlug: String
+
+    /// Resolve a model from the Leap API
+    public static func resolve(
+        modelSlug: String,
+        quantizationSlug: String
+    ) async -> LeapDownloadableModel?
+}
+```
+
+**Usage:**
+
+```swift
+// Resolve a model from the Leap API
+let model = await LeapDownloadableModel.resolve(
+    modelSlug: "qwen-0.6b",
+    quantizationSlug: "qwen-0.6b-20250610-8da4w"
+)
+
+if let model = model {
+    let downloader = LeapModelDownloader()
+    downloader.requestDownloadModel(model)
+}
+```
+
+### HuggingFaceDownloadableModel
+
+For HuggingFace models, you can use the `HuggingFaceDownloadableModel`:
+
+```swift
+public struct HuggingFaceDownloadableModel: DownloadableModel {
+    /// Owner name on HuggingFace (e.g., "LiquidAI")
+    public let ownerName: String
+
+    /// Repository name on HuggingFace (e.g., "LeapBundles")
+    public let repoName: String
+
+    /// Filename of the model in the repository
+    public let filename: String
+
+    public init(ownerName: String, repoName: String, filename: String)
+}
+```
+
+**Usage:**
+
+```swift
+let hfModel = HuggingFaceDownloadableModel(
+    ownerName: "LiquidAI",
+    repoName: "LeapBundles",
+    filename: "qwen3-0_6b_8da4w_4096.bundle"
+)
+
+let downloader = LeapModelDownloader()
+downloader.requestDownloadModel(hfModel)
+```
+
+### Example Usage
+
+Here's a complete example showing how to resolve, download, and load a model from the Leap API:
+
+```swift
+import LeapSDK
+import LeapModelDownloader
+
+@MainActor
+class ModelDownloadManager: ObservableObject {
+    private let downloader = LeapModelDownloader()
+    @Published var downloadStatus: LeapModelDownloader.ModelDownloadStatus = .notOnLocal
+    @Published var isResolvingModel = false
+
+    func downloadAndLoadLeapModel(modelSlug: String, quantizationSlug: String) async {
+        isResolvingModel = true
+
+        // First, resolve the model from the Leap API
+        guard let model = await LeapDownloadableModel.resolve(
+            modelSlug: modelSlug,
+            quantizationSlug: quantizationSlug
+        ) else {
+            print("Failed to resolve model: \(modelSlug) with quantization: \(quantizationSlug)")
+            isResolvingModel = false
+            return
+        }
+
+        isResolvingModel = false
+        print("Resolved model: \(model.name)")
+        print("Download URL: \(model.uri)")
+
+        // Request notification permissions first
+        await downloader.requestNotificationPermissions()
+
+        // Check current status
+        downloadStatus = await downloader.queryStatus(model)
+
+        if downloadStatus.type == .notOnLocal {
+            // Download the model
+            let result = await downloader.downloadModel(model)
+
+            switch result {
+            case .success(let fileURL):
+                print("Model downloaded to: \(fileURL)")
+
+                // Load the model with LeapSDK
+                do {
+                    let modelRunner = try await Leap.load(url: fileURL)
+                    // Use modelRunner...
+                } catch {
+                    print("Failed to load model: \(error)")
+                }
+
+            case .failure(let error):
+                print("Download failed: \(error)")
+            }
+        }
+    }
+
+    func trackDownloadProgress(_ model: DownloadableModel) async {
+        // Monitor download progress
+        while true {
+            let status = await downloader.queryStatus(model)
+            downloadStatus = status
+
+            if status.type != .downloadInProgress {
+                break
+            }
+
+            try? await Task.sleep(nanoseconds: 500_000_000) // 0.5 seconds
+        }
+    }
+}
+
+// Usage in a SwiftUI view
+struct ContentView: View {
+    @StateObject private var downloadManager = ModelDownloadManager()
+
+    var body: some View {
+        VStack {
+            if downloadManager.isResolvingModel {
+                ProgressView("Resolving model...")
+            } else {
+                Button("Download Qwen-0.6B Model") {
+                    Task {
+                        await downloadManager.downloadAndLoadLeapModel(
+                            modelSlug: "qwen-0.6b",
+                            quantizationSlug: "qwen-0.6b-20250610-8da4w"
+                        )
+                    }
+                }
+            }
+
+            switch downloadManager.downloadStatus {
+            case .notOnLocal:
+                Text("Model not downloaded")
+            case .downloadInProgress(let progress):
+                ProgressView("Downloading...", value: progress, total: 1.0)
+            case .downloaded:
+                Text("Model ready!")
+            }
+        }
+    }
+}
+```
+
+## GenerationOptions
+
+Control generation parameters using `GenerationOptions`:
+
+```swift
+public struct GenerationOptions {
+    public var temperature: Float?      // Sampling temperature (higher = more random)
+    public var topP: Float?            // Nucleus sampling parameter
+    public var minP: Float?            // Minimal possibility threshold
+    public var repetitionPenalty: Float? // Repetition penalty (positive decreases repetition)
+    public var jsonSchemaConstraint: String? // JSON schema constraint for structured output generation.
+    public var functionCallParser: (any LeapFunctionCallParserProtocol)? // Function call parser
+
+    public init(temperature: Float? = nil, topP: Float? = nil, minP: Float? = nil, repetitionPenalty: Float? = nil)
+}
+```
+
+### Usage with Conversation
+
+```swift
+let options = GenerationOptions(
+    temperature: 0.7,
+    topP: 0.9,
+    repetitionPenalty: 1.1
+)
+
+// Pass options to generateResponse
+for await response in conversation.generateResponse(message: userMessage, options: options) {
+    // Handle response...
+}
+```
+
+## Complete Example
+
+Here's a complete example showing how to use the iOS SDK with the latest APIs:
+
+```swift
+import LeapSDK
+import SwiftUI
+
+@MainActor
+class ChatStore: ObservableObject {
+    @Published var conversation: Conversation?
+    @Published var modelRunner: ModelRunner?
+    @Published var isModelLoading = true
+    @Published var outputText = ""
+
+    private var generationTask: Task<Void, Never>?
+
+    func setupModel() async {
+        guard modelRunner == nil else { return }
+        isModelLoading = true
+
+        do {
+            guard let modelURL = Bundle.main.url(
+                forResource: "qwen3-0_6b",
+                withExtension: "bundle"
+            ) else {
+                print("❗️ Could not find model bundle")
+                isModelLoading = false
+                return
+            }
+
+            let modelRunner = try await Leap.load(url: modelURL)
+            self.modelRunner = modelRunner
+
+            // Create conversation with optional system message
+            let systemMessage = ChatMessage(
+                role: .system,
+                content: [.text("You are a helpful assistant.")]
+            )
+            conversation = Conversation(modelRunner: modelRunner, history: [systemMessage])
+            print("✅ Model loaded successfully!")
+        } catch {
+            print("🚨 Failed to load model: \(error)")
+        }
+
+        isModelLoading = false
+    }
+
+    func sendMessage(_ text: String) {
+        guard let conversation = conversation else { return }
+
+        generationTask?.cancel()
+        outputText = ""
+
+        generationTask = Task {
+            let userMessage = ChatMessage(role: .user, content: [.text(text)])
+
+            // Optional: Configure generation options
+            let options = GenerationOptions(temperature: 0.7, topP: 0.9)
+
+            for await response in conversation.generateResponse(message: userMessage, options: options) {
+                if Task.isCancelled { break }
+
+                switch response {
+                case .chunk(let chunk):
+                    outputText += chunk
+                case .reasoningChunk(let reasoning):
+                    // Handle reasoning if needed
+                    print("Reasoning: \(reasoning)")
+                case .complete(let usage, let completeInfo):
+                    print("Complete. Usage: \(usage)")
+                    print("Finish reason: \(completeInfo.finishReason)")
+                    if let stats = completeInfo.stats {
+                        print("Generation stats: \(stats.totalTokens) tokens, \(stats.tokenPerSecond) tok/s")
+                    }
+                }
+            }
+        }
+    }
+
+    func stopGeneration() {
+        generationTask?.cancel()
+    }
+}
+```

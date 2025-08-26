@@ -1,0 +1,422 @@
+import { Callout } from 'nextra/components';
+
+# Constrained Generation with Swift Macros
+
+LeapSDK provides powerful constrained generation capabilities using Swift macros that enable you to generate structured JSON output with compile-time validation. This feature ensures the AI model produces responses that conform to your predefined Swift types.
+
+## Overview
+
+Constrained generation allows you to:
+
+- Define structured output formats using Swift types
+- Get compile-time validation of your type definitions
+- Generate JSON responses that are guaranteed to match your Swift structures
+- Decode responses directly into type-safe Swift objects
+
+## Setup
+
+To use constrained generation, you need to import both the main SDK and the constrained generation package:
+
+```swift
+import LeapSDK
+import LeapSDKConstrainedGeneration
+```
+
+### Installation
+
+When adding LeapSDK via Swift Package Manager, the constrained generation macros are automatically available. No additional setup is required.
+
+<Callout type="info">
+  Constrained generation requires Swift 5.9+ and uses Swift macros for compile-time code generation.
+</Callout>
+
+## Defining Structured Types
+
+Use the `@Generatable` and `@Guide` macros to define types for structured output:
+
+### Basic Example
+
+```swift
+import LeapSDKConstrainedGeneration
+
+@Generatable("A joke with metadata")
+struct Joke: Codable {
+    @Guide("The joke text")
+    let text: String
+
+    @Guide("The category of humor (pun, dad-joke, programming, etc.)")
+    let category: String
+
+    @Guide("Humor rating from 1-10")
+    let rating: Int
+
+    @Guide("Whether the joke is suitable for children")
+    let kidFriendly: Bool
+}
+```
+
+### What the Macros Do
+
+The `@Generatable` macro automatically generates:
+
+- Conformance to the `GeneratableType` protocol
+- A `typeDescription` property with your provided description
+- A `jsonSchema()` method that creates a JSON schema from your type
+
+The `@Guide` macro provides descriptions for individual properties that help the AI understand what each field should contain.
+
+## Using Constrained Generation
+
+Once you've defined your types, use them with `GenerationOptions`:
+
+```swift
+import LeapSDK
+
+class ChatViewModel: ObservableObject {
+    private var modelRunner: ModelRunner?
+    private var conversation: Conversation?
+
+    func generateStructuredJoke() async {
+        guard let conversation = conversation else { return }
+
+        // Configure generation options for structured output
+        var options = GenerationOptions()
+        options.temperature = 0.7
+
+        do {
+            // Set the response format to your custom type
+            try options.setResponseFormat(type: Joke.self)
+
+            let message = ChatMessage(
+                role: .user,
+                content: [.text("Create a programming joke in JSON format")]
+            )
+
+            // Generate response with structured output
+            for await response in conversation.generateResponse(
+                message: message,
+                generationOptions: options
+            ) {
+                switch response {
+                case .chunk(let token):
+                    print(token, terminator: "")
+                case .complete(let fullText, let info):
+                    // Parse the structured JSON response
+                    await parseJokeResponse(fullText)
+                case .reasoningChunk(_):
+                    break
+                }
+            }
+        } catch {
+            print("Failed to set response format: \(error)")
+        }
+    }
+
+    private func parseJokeResponse(_ jsonText: String) async {
+        do {
+            let jokeData = jsonText.data(using: .utf8)!
+            let joke = try JSONDecoder().decode(Joke.self, from: jokeData)
+
+            print("Generated joke:")
+            print("Text: \(joke.text)")
+            print("Category: \(joke.category)")
+            print("Rating: \(joke.rating)/10")
+            print("Kid-friendly: \(joke.kidFriendly)")
+        } catch {
+            print("Failed to parse joke: \(error)")
+        }
+    }
+}
+```
+
+## Advanced Examples
+
+### Complex Nested Structures
+
+You can define complex types with arrays, optionals, and nested objects:
+
+```swift
+@Generatable("A recipe with ingredients and instructions")
+struct Recipe: Codable {
+    @Guide("Name of the dish")
+    let name: String
+
+    @Guide("List of ingredients with quantities")
+    let ingredients: [String]
+
+    @Guide("Step-by-step cooking instructions")
+    let instructions: [String]
+
+    @Guide("Cooking time in minutes")
+    let cookingTimeMinutes: Int
+
+    @Guide("Difficulty level: easy, medium, or hard")
+    let difficulty: String
+
+    @Guide("Number of servings this recipe makes")
+    let servings: Int?
+
+    @Guide("Nutritional information if available")
+    let nutrition: NutritionInfo?
+}
+
+@Generatable("Nutritional information for a recipe")
+struct NutritionInfo: Codable {
+    @Guide("Calories per serving")
+    let caloriesPerServing: Int
+
+    @Guide("Protein in grams")
+    let proteinGrams: Double
+
+    @Guide("Carbohydrates in grams")
+    let carbsGrams: Double
+}
+```
+
+### Mathematical Problem Solving
+
+```swift
+@Generatable("Mathematical calculation result with detailed steps")
+struct MathResult: Codable {
+    @Guide("The mathematical expression that was solved")
+    let expression: String
+
+    @Guide("The final numeric result")
+    let result: Double
+
+    @Guide("Step-by-step solution process")
+    let steps: [String]
+
+    @Guide("The mathematical operation type (addition, multiplication, etc.)")
+    let operationType: String
+
+    @Guide("Whether the solution is exact or approximate")
+    let isExact: Bool
+}
+
+// Usage example
+func solveMathProblem() async {
+    var options = GenerationOptions()
+    options.temperature = 0.3  // Lower temperature for mathematical accuracy
+
+    try options.setResponseFormat(type: MathResult.self)
+
+    let message = ChatMessage(
+        role: .user,
+        content: [.text("Solve: 15 × 4 + 8 ÷ 2. Show your work step by step.")]
+    )
+
+    // Process the response...
+}
+```
+
+### Data Analysis Results
+
+```swift
+@Generatable("Analysis results for a dataset")
+struct DataAnalysis: Codable {
+    @Guide("Name or description of the dataset")
+    let datasetName: String
+
+    @Guide("Key insights discovered")
+    let insights: [String]
+
+    @Guide("Statistical summary")
+    let statistics: StatisticalSummary
+
+    @Guide("Recommended next steps")
+    let recommendations: [String]
+}
+
+@Generatable("Statistical summary of data")
+struct StatisticalSummary: Codable {
+    @Guide("Total number of data points")
+    let totalPoints: Int
+
+    @Guide("Mean value")
+    let mean: Double
+
+    @Guide("Standard deviation")
+    let standardDeviation: Double
+
+    @Guide("Minimum value observed")
+    let minimum: Double
+
+    @Guide("Maximum value observed")
+    let maximum: Double
+}
+```
+
+## How It Works
+
+The constrained generation system works through a three-step process:
+
+1. **Compile-time**: The `@Generatable` macro analyzes your Swift type and generates a JSON schema based on property types and `@Guide` descriptions
+2. **Runtime**: `GenerationOptions.setResponseFormat()` configures the AI model with the generated schema to constrain its output
+3. **Generation**: The LLM produces valid JSON that conforms to your structure, which you can decode directly into your Swift type
+
+<Callout type="info">
+  The JSON schema generation happens at compile time, not runtime, ensuring optimal performance.
+</Callout>
+
+## Best Practices
+
+### 1. Use Descriptive Guide Annotations
+
+Good `@Guide` descriptions help the AI understand what each field should contain:
+
+```swift
+// Good - specific and descriptive
+@Guide("The programming language name (e.g., Swift, Python, JavaScript)")
+let language: String
+
+// Less helpful - too generic
+@Guide("A string")
+let language: String
+```
+
+### 2. Keep Structures Focused
+
+Smaller, well-defined types work better than large complex ones:
+
+```swift
+// Good - focused single responsibility
+@Generatable("A user's basic profile information")
+struct UserProfile: Codable {
+    @Guide("Full name") let name: String
+    @Guide("Email address") let email: String
+    @Guide("Age in years") let age: Int
+}
+
+// Less ideal - too many responsibilities
+@Generatable("Everything about a user")
+struct ComplexUser: Codable {
+    // ... 20+ properties mixing profile, preferences, history, etc.
+}
+```
+
+### 3. Handle Optional Fields Appropriately
+
+Use `Optional` types when fields might not always be present:
+
+```swift
+@Generatable("A book review")
+struct BookReview: Codable {
+    @Guide("The book title")
+    let title: String
+
+    @Guide("Review text")
+    let reviewText: String
+
+    @Guide("Rating from 1-5 stars, if provided")
+    let rating: Int?  // Optional - reviewer might not provide a rating
+
+    @Guide("Reviewer's name, if available")
+    let reviewerName: String?  // Optional - might be anonymous
+}
+```
+
+### 4. Test with Different Prompts
+
+Ensure your types work across various use cases and prompt styles:
+
+```swift
+// Test with different prompt styles
+let prompts = [
+    "Create a joke about programming",
+    "Generate a programming joke in JSON format",
+    "I need a structured joke about coding",
+    "Give me a joke with metadata about programming"
+]
+```
+
+### 5. Validate Generated Output
+
+Always handle potential parsing errors gracefully:
+
+```swift
+private func parseResponse<T: Codable>(_ jsonText: String, as type: T.Type) -> T? {
+    guard let data = jsonText.data(using: .utf8) else {
+        print("Failed to convert response to data")
+        return nil
+    }
+
+    do {
+        return try JSONDecoder().decode(type, from: data)
+    } catch {
+        print("Failed to decode response as \(type): \(error)")
+        return nil
+    }
+}
+```
+
+## Error Handling
+
+Common issues and solutions:
+
+### Compile-time Errors
+
+```swift
+// Error: Missing @Guide annotation
+@Generatable("A person")
+struct Person: Codable {
+    let name: String  // ❌ Missing @Guide
+    @Guide("Age in years") let age: Int
+}
+
+// Fixed: All properties must have @Guide
+@Generatable("A person")
+struct Person: Codable {
+    @Guide("Full name") let name: String  // ✅
+    @Guide("Age in years") let age: Int
+}
+```
+
+### Runtime Parsing Errors
+
+Handle cases where the AI generates invalid JSON:
+
+```swift
+func handleResponse(_ jsonText: String) {
+    do {
+        let data = jsonText.data(using: .utf8)!
+        let result = try JSONDecoder().decode(Joke.self, from: data)
+        // Use the structured result
+        processJoke(result)
+    } catch {
+        print("Failed to parse structured response: \(error)")
+        // Fallback to treating as plain text
+        processPlainText(jsonText)
+    }
+}
+```
+
+## Troubleshooting
+
+### "Cannot find type 'GeneratableType' in scope"
+
+Make sure you've imported the constrained generation package:
+
+```swift
+import LeapSDK
+import LeapSDKConstrainedGeneration  // Required for macros
+```
+
+### "External macro implementation could not be found"
+
+This typically means there's an issue with the macro plugin. Try:
+
+1. Clean your build folder (⌘+Shift+K)
+2. Restart Xcode
+3. Ensure you're using Swift 5.9 or later
+
+### Generated JSON doesn't match expected format
+
+- Check your `@Guide` descriptions are clear and specific
+- Try adjusting the temperature in `GenerationOptions` (lower values like 0.3-0.5 can improve structured output)
+- Ensure your prompt clearly requests JSON format output
+
+<Callout type="warning">
+  If you encounter persistent issues with constrained generation, try testing with a simpler
+  structure first to verify the basic functionality is working.
+</Callout>
