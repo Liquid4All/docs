@@ -1,5 +1,18 @@
 # Changelog
 
+## `v0.3.0`
+
+2025-08-26
+
+**New features**
+
+- Support `lfm2-vl` models.
+
+**Improvements**
+
+- Show user-friendly information and error messages.
+- Fix minor bugs.
+
 ## `v0.2.0`
 
 2025-08-12
