@@ -26,58 +26,58 @@ type LlamaBinary = {
 const ARTIFACT_MAP: Record<OperatingSystem, Record<string, LlamaBinary>> = {
   Windows: {
     'Nvidia GPU': {
-      name: 'llama-b6178-bin-win-cuda-12.4-x64.zip',
+      name: 'llama-b6318-bin-win-cuda-12.4-x64.zip',
       downloadUrl:
-        'https://github.com/ggml-org/llama.cpp/releases/download/b6178/llama-b6178-bin-win-cuda-12.4-x64.zip',
+        'https://github.com/ggml-org/llama.cpp/releases/download/b6318/llama-b6318-bin-win-cuda-12.4-x64.zip',
     },
     'Intel GPU': {
-      name: 'llama-b6178-bin-win-sycl-x64.zip',
+      name: 'llama-b6318-bin-win-sycl-x64.zip',
       downloadUrl:
-        'https://github.com/ggml-org/llama.cpp/releases/download/b6178/llama-b6178-bin-win-sycl-x64.zip',
+        'https://github.com/ggml-org/llama.cpp/releases/download/b6318/llama-b6318-bin-win-sycl-x64.zip',
     },
     'AMD GPU': {
-      name: 'llama-b6178-bin-win-vulkan-x64.zip',
+      name: 'llama-b6318-bin-win-vulkan-x64.zip',
       downloadUrl:
-        'https://github.com/ggml-org/llama.cpp/releases/download/b6178/llama-b6178-bin-win-vulkan-x64.zip',
+        'https://github.com/ggml-org/llama.cpp/releases/download/b6318/llama-b6318-bin-win-vulkan-x64.zip',
     },
     'Other GPU': {
-      name: 'llama-b6178-bin-win-vulkan-x64.zip',
+      name: 'llama-b6318-bin-win-vulkan-x64.zip',
       downloadUrl:
-        'https://github.com/ggml-org/llama.cpp/releases/download/b6178/llama-b6178-bin-win-vulkan-x64.zip',
+        'https://github.com/ggml-org/llama.cpp/releases/download/b6318/llama-b6318-bin-win-vulkan-x64.zip',
     },
     'Qualcomm Snapdragon CPU': {
-      name: 'llama-b6178-bin-win-cpu-arm64.zip',
+      name: 'llama-b6318-bin-win-cpu-arm64.zip',
       downloadUrl:
-        'https://github.com/ggml-org/llama.cpp/releases/download/b6178/llama-b6178-bin-win-cpu-arm64.zip',
+        'https://github.com/ggml-org/llama.cpp/releases/download/b6318/llama-b6318-bin-win-cpu-arm64.zip',
     },
     'Other (CPU-only)': {
-      name: 'llama-b6178-bin-win-cpu-x64.zip',
+      name: 'llama-b6318-bin-win-cpu-x64.zip',
       downloadUrl:
-        'https://github.com/ggml-org/llama.cpp/releases/download/b6178/llama-b6178-bin-win-cpu-x64.zip',
+        'https://github.com/ggml-org/llama.cpp/releases/download/b6318/llama-b6318-bin-win-cpu-x64.zip',
     },
   },
   macOS: {
     Intel: {
-      name: 'llama-b6178-bin-macos-x64.zip',
+      name: 'llama-b6318-bin-macos-x64.zip',
       downloadUrl:
-        'https://github.com/ggml-org/llama.cpp/releases/download/b6178/llama-b6178-bin-macos-x64.zip',
+        'https://github.com/ggml-org/llama.cpp/releases/download/b6318/llama-b6318-bin-macos-x64.zip',
     },
     'Apple Silicon': {
-      name: 'llama-b6178-bin-macos-arm64.zip',
+      name: 'llama-b6318-bin-macos-arm64.zip',
       downloadUrl:
-        'https://github.com/ggml-org/llama.cpp/releases/download/b6178/llama-b6178-bin-macos-arm64.zip',
+        'https://github.com/ggml-org/llama.cpp/releases/download/b6318/llama-b6318-bin-macos-arm64.zip',
     },
   },
   Ubuntu: {
     GPU: {
-      name: 'llama-b6178-bin-ubuntu-vulkan-x64.zip',
+      name: 'llama-b6318-bin-ubuntu-vulkan-x64.zip',
       downloadUrl:
-        'https://github.com/ggml-org/llama.cpp/releases/download/b6178/llama-b6178-bin-ubuntu-vulkan-x64.zip',
+        'https://github.com/ggml-org/llama.cpp/releases/download/b6318/llama-b6318-bin-ubuntu-vulkan-x64.zip',
     },
     'CPU-only': {
-      name: 'llama-b6178-bin-ubuntu-x64.zip',
+      name: 'llama-b6318-bin-ubuntu-x64.zip',
       downloadUrl:
-        'https://github.com/ggml-org/llama.cpp/releases/download/b6178/llama-b6178-bin-ubuntu-x64.zip',
+        'https://github.com/ggml-org/llama.cpp/releases/download/b6318/llama-b6318-bin-ubuntu-x64.zip',
     },
   },
 };
