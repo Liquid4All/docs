@@ -55,7 +55,7 @@
     "cross-fetch": "^4.1.0",
     "form-data": "^4.0.4",
     "lodash.debounce": "^4.0.8",
-    "next": "^15.3.2",
+    "next": "^15.4.7",
     "nextra": "^4.3.0-alpha.25",
     "nextra-theme-docs": "^4.3.0-alpha.25",
     "otpauth": "^9.4.1",
