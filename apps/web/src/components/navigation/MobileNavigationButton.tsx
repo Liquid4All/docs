@@ -18,7 +18,7 @@ const MobileNavigationButton = ({ onToggle }: MobileNavigationButtonProps) => {
   }, [onToggle]);
 
   return (
-    <div className="flex md:hidden">
+    <div className="flex lg:hidden">
       <Button variant="link" size="icon" onClick={handleMobileMenuToggle}>
         <span className="sr-only">Open main menu</span>
         <IconMenu2 aria-hidden="true" className="h-6 w-6" />

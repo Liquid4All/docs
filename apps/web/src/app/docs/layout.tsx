@@ -11,7 +11,7 @@ export default async function DocumentationLayout({ children }: { children: Reac
   return (
     <div className="nextra-content bg-muted">
       <Layout
-        navbar={<NextraNavbar pageMap={pageMap} />}
+        navbar={<NextraNavbar key="docs-nav" pageMap={pageMap} />}
         sidebar={{
           defaultMenuCollapseLevel: 1,
           autoCollapse: true,

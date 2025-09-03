@@ -1,9 +1,10 @@
-import { IconLogin, IconLogout, IconUserPlus } from '@tabler/icons-react';
+import { IconLogout } from '@tabler/icons-react';
 
 import { NavigationItemType } from '@/components/navigation/NavigationItem';
 
 // Navigation items that are userprofile independent
 export const generalNavigations: NavigationItemType[] = [
+  { label: 'Platform', href: '/platform' },
   { label: 'Models', href: '/models' },
   { label: 'Pricing', href: '/pricing' },
   { label: 'Documentation', href: '/docs' },
@@ -27,7 +28,6 @@ export const signedOutUserNavigations: NavigationItemType[] = [
       return '/sign-in' + `?redirect_url=${encodeURIComponent(redirectUrl)}`;
     },
     href: '/sign-in',
-    icon: IconLogin,
   },
   {
     label: 'Sign up',
