@@ -24,6 +24,7 @@ const AppStoreLink: React.FC<AppStoreLinkProps> = ({
   display = 'badge',
 }) => {
   const badgeUrl = `https://toolbox.marketingtools.apple.com/api/v2/badges/download-on-the-app-store/black/en-us?releaseDate=1721692800`;
+
   const badgeWidth = Math.round((height * ORIGINAL_iOS_BADGE_WIDTH) / ORIGINAL_iOS_BADGE_HEIGHT);
 
   const showBadge = display === 'badge' || display === 'badge-qr';
@@ -37,18 +38,18 @@ const AppStoreLink: React.FC<AppStoreLinkProps> = ({
             src={badgeUrl}
             alt="Download Apollo from the App Store"
             className="object-contain"
-            style={{ width: `${badgeWidth}px`, height: `${height}px`, background: 'transparent' }}
+            style={{ width: `${badgeWidth}px`, background: 'transparent' }}
           />
         </a>
       )}
 
       {showQR && (
-        <div className="bg-white rounded rounded-lg border  border-[0.09rem] overflow-hidden border-black">
+        <div className="bg-white rounded rounded-lg border border-[0.09rem] overflow-hidden border-black">
           <img
             src={iOSQRCode.src}
             alt="QR Code for Apollo App in iOS App Store"
             className="object-contain"
-            style={{ width: `${height - 2}px`, height: `${height - 2}px` }}
+            style={{ width: `${height - 2}px` }}
           />
         </div>
       )}
