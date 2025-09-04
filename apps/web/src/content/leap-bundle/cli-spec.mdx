@@ -331,13 +331,16 @@ leap-bundle list [<request-id>]
 
 **Options**
 
-- `--json`: Output result in JSON format for programmatic parsing (only available when querying a specific request)
+- `--json`: Output result in JSON format for programmatic parsing
+- `--last`: Show only the most recent request
 
 **Behavior**
 
 - Without arguments: Lists 50 most recent bundle requests
 - With request ID: Shows detailed information for the specific request
-- Displays requests in a formatted table
+- With `--last`: Shows only the most recent request
+- Displays requests in a formatted table (unless `--json` is used)
+- JSON output available for both list and specific request queries
 
 **Examples**
 
@@ -377,6 +380,57 @@ leap-bundle list 18734 --json
   "status": "completed",
   "created_at": "2024-01-15T10:30:00Z",
   "user_message": "Processing completed. Run \"leap-bundle download 18734\" to download the bundle."
+}
+
+# List all requests with JSON output
+leap-bundle list --json
+
+# Example JSON output
+{
+  "requests": [
+    {
+      "request_id": "18734",
+      "input_path": "/path/to/model/directory",
+      "status": "completed",
+      "created_at": "2024-01-15T10:30:00Z",
+      "user_message": "Processing completed."
+    },
+    {
+      "request_id": "18733",
+      "input_path": "/path/to/other/directory",
+      "status": "processing",
+      "created_at": "2024-01-15T09:15:00Z",
+      "user_message": "Request is being processed."
+    }
+  ]
+}
+
+# Show only the most recent request
+leap-bundle list --last
+
+# Example output
+Most Recent Bundle Request
+┏━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ ID    ┃ Input Path               ┃ Status     ┃ Creation             ┃ Notes                       ┃
+┡━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┩
+│ 18734 │ /path/to/model/directory │ completed  │ 2024-01-15T10:30:00Z │ Processing completed.       │
+└───────┴──────────────────────────┴────────────┴──────────────────────┴─────────────────────────────┘
+✓ Found 1 bundle request.
+
+# Show most recent request with JSON output
+leap-bundle list --last --json
+
+# Example JSON output
+{
+  "requests": [
+    {
+      "request_id": "18734",
+      "input_path": "/path/to/model/directory",
+      "status": "completed",
+      "created_at": "2024-01-15T10:30:00Z",
+      "user_message": "Processing completed."
+    }
+  ]
 }
 ```
 
