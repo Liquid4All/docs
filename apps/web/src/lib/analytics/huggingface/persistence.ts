@@ -1,13 +1,13 @@
 import { prisma } from '@liquidai/leap-database';
 
-import { HfCrawlerResult } from '@/lib/analytics/huggingface/types';
+import { HfCrawlerResult, Lfm2Modality } from '@/lib/analytics/huggingface/types';
 
 export function parseModelName(fullName: string): {
   organization: string;
   model_slug: string;
-  model_modality: string | null;
+  model_modality: Lfm2Modality | null;
   model_size: string;
-  model_variant: 'VL' | null;
+  model_variant: string | null;
 } {
   if (!fullName || fullName.trim() === '') {
     throw new Error('Model name cannot be empty');
@@ -23,14 +23,14 @@ export function parseModelName(fullName: string): {
     throw new Error('Model part is required in format "organization/model"');
   }
 
-  const modalityMatch = modelPart.match(/-([A-Z]{1,3})-\d+(?:\.\d+)?[BMK]/i);
-  const model_modality = modalityMatch ? modalityMatch[1].toUpperCase() : null;
+  const modalityMatch = modelPart.match(/-VL-\d+(?:\.\d+)?[BMK]/i);
+  const model_modality = modalityMatch ? Lfm2Modality.VL : null;
 
   const sizeMatch = modelPart.match(/(\d+(?:\.\d+)?[BMK])/i);
   const model_size = sizeMatch ? sizeMatch[1] : '';
 
   const variantMatch = modelPart.match(/\d+(?:\.\d+)?[BMK]-(.+)/i);
-  const model_variant = (variantMatch ? variantMatch[1] : null) as 'VL' | null;
+  const model_variant = variantMatch ? variantMatch[1] : null;
 
   return {
     organization,

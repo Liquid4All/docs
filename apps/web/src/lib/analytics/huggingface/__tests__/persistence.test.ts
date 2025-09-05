@@ -1,231 +1,253 @@
+import { Lfm2Modality } from '@/lib/analytics/huggingface/types';
+
 import { parseModelName } from '../persistence';
 
 describe('parseModelName', () => {
-  describe('complete model names with all components', () => {
-    it('parses model with VL modality and variant', () => {
-      const result = parseModelName('LiquidAI/LFM2-VL-1.2B-math');
-      expect(result).toEqual({
-        organization: 'LiquidAI',
-        model_slug: 'LFM2-VL-1.2B-math',
-        model_size: '1.2B',
-        model_variant: 'math',
-        model_modality: 'VL',
-      });
-    });
+  describe('valid inputs', () => {
+    const testCases = [
+      // Models without modality
+      {
+        input: 'LiquidAI/LFM2-1.2B',
+        expected: {
+          organization: 'LiquidAI',
+          model_slug: 'LFM2-1.2B',
+          model_size: '1.2B',
+          model_variant: null,
+          model_modality: null,
+        },
+        description: 'simple LFM2',
+      },
+      {
+        input: 'LiquidAI/LFM2-350M',
+        expected: {
+          organization: 'LiquidAI',
+          model_slug: 'LFM2-350M',
+          model_size: '350M',
+          model_variant: null,
+          model_modality: null,
+        },
+        description: 'simple LFM2 with M size',
+      },
+      {
+        input: 'LiquidAI/LFM2-9000K',
+        expected: {
+          organization: 'LiquidAI',
+          model_slug: 'LFM2-9000K',
+          model_size: '9000K',
+          model_variant: null,
+          model_modality: null,
+        },
+        description: 'simplest LFM2 with K size',
+      },
+      {
+        input: 'LiquidAI/LFM2-1.2B-unsloth-bnb-4bit',
+        expected: {
+          organization: 'LiquidAI',
+          model_slug: 'LFM2-1.2B-unsloth-bnb-4bit',
+          model_size: '1.2B',
+          model_variant: 'unsloth-bnb-4bit',
+          model_modality: null,
+        },
+        description: 'BNB model',
+      },
+      {
+        input: 'LiquidAI/LFM2-700M-MLX-8bit',
+        expected: {
+          organization: 'LiquidAI',
+          model_slug: 'LFM2-700M-MLX-8bit',
+          model_size: '700M',
+          model_variant: 'MLX-8bit',
+          model_modality: null,
+        },
+        description: 'MLX model',
+      },
+      {
+        input: 'Meta/Llama-7B',
+        expected: {
+          organization: 'Meta',
+          model_slug: 'Llama-7B',
+          model_size: '7B',
+          model_variant: null,
+          model_modality: null,
+        },
+        description: 'model from other organization',
+      },
+      {
+        input: 'OpenAI/GPT-3.5B-turbo',
+        expected: {
+          organization: 'OpenAI',
+          model_slug: 'GPT-3.5B-turbo',
+          model_size: '3.5B',
+          model_variant: 'turbo',
+          model_modality: null,
+        },
+        description: 'model from other organization with more tokens',
+      },
+      // Models with modality
+      {
+        input: 'LiquidAI/LFM2-VL-1.2B',
+        expected: {
+          organization: 'LiquidAI',
+          model_slug: 'LFM2-VL-1.2B',
+          model_size: '1.2B',
+          model_variant: null,
+          model_modality: Lfm2Modality.VL,
+        },
+        description: 'model with VL modality',
+      },
+      {
+        input: 'LiquidAI/LFM2-VL-1.2B-math',
+        expected: {
+          organization: 'LiquidAI',
+          model_slug: 'LFM2-VL-1.2B-math',
+          model_size: '1.2B',
+          model_variant: 'math',
+          model_modality: Lfm2Modality.VL,
+        },
+        description: 'model with VL modality and variant',
+      },
+      {
+        input: 'Meta/Llama-VL-500M-base',
+        expected: {
+          organization: 'Meta',
+          model_slug: 'Llama-VL-500M-base',
+          model_size: '500M',
+          model_variant: 'base',
+          model_modality: Lfm2Modality.VL,
+        },
+        description: 'model with VL modality and M size',
+      },
+      {
+        input: 'TestOrg/Model-VL-250K-test',
+        expected: {
+          organization: 'TestOrg',
+          model_slug: 'Model-VL-250K-test',
+          model_size: '250K',
+          model_variant: 'test',
+          model_modality: Lfm2Modality.VL,
+        },
+        description: 'model with VL modality and K size',
+      },
+      {
+        input: 'TestOrg/Model-VL-1.3B-test',
+        expected: {
+          organization: 'TestOrg',
+          model_slug: 'Model-VL-1.3B-test',
+          model_size: '1.3B',
+          model_variant: 'test',
+          model_modality: Lfm2Modality.VL,
+        },
+        description: 'model with VL modality and decimal size',
+      },
+      {
+        input: 'TestOrg/Model-VL-1B',
+        expected: {
+          organization: 'TestOrg',
+          model_slug: 'Model-VL-1B',
+          model_size: '1B',
+          model_variant: null,
+          model_modality: Lfm2Modality.VL,
+        },
+        description: 'model with VL modality but no variant',
+      },
+      {
+        input: 'TestOrg/Model-VL-1B-chat-instruct',
+        expected: {
+          organization: 'TestOrg',
+          model_slug: 'Model-VL-1B-chat-instruct',
+          model_size: '1B',
+          model_variant: 'chat-instruct',
+          model_modality: Lfm2Modality.VL,
+        },
+        description: 'model with VL modality and complex variant',
+      },
+      {
+        input: 'TestOrg/Model-VL-1B-v2.1',
+        expected: {
+          organization: 'TestOrg',
+          model_slug: 'Model-VL-1B-v2.1',
+          model_size: '1B',
+          model_variant: 'v2.1',
+          model_modality: Lfm2Modality.VL,
+        },
+        description: 'model with VL modality and version variant',
+      },
+      {
+        input: 'TestOrg/Model-vl-1B-test',
+        expected: {
+          organization: 'TestOrg',
+          model_slug: 'Model-vl-1B-test',
+          model_size: '1B',
+          model_variant: 'test',
+          model_modality: Lfm2Modality.VL,
+        },
+        description: 'case insensitive VL modality',
+      },
+      // Edge cases
+      {
+        input: 'TestOrg/SimpleModel',
+        expected: {
+          organization: 'TestOrg',
+          model_slug: 'SimpleModel',
+          model_size: '',
+          model_variant: null,
+          model_modality: null,
+        },
+        description: 'model names without size',
+      },
+      {
+        input: 'TestOrg/',
+        expected: {
+          organization: 'TestOrg',
+          model_slug: '',
+          model_size: '',
+          model_variant: null,
+          model_modality: null,
+        },
+        description: 'model names with empty model part',
+      },
+    ];
 
-    it('parses model with different size formats', () => {
-      const result = parseModelName('OpenAI/GPT-VL-7B-instruct');
-      expect(result).toEqual({
-        organization: 'OpenAI',
-        model_slug: 'GPT-VL-7B-instruct',
-        model_size: '7B',
-        model_variant: 'instruct',
-        model_modality: 'VL',
-      });
-    });
-
-    it('parses model with M (million) size', () => {
-      const result = parseModelName('Meta/Llama-VL-500M-base');
-      expect(result).toEqual({
-        organization: 'Meta',
-        model_slug: 'Llama-VL-500M-base',
-        model_size: '500M',
-        model_variant: 'base',
-        model_modality: 'VL',
-      });
-    });
-
-    it('parses model with K (thousand) size', () => {
-      const result = parseModelName('TestOrg/Model-VL-250K-test');
-      expect(result).toEqual({
-        organization: 'TestOrg',
-        model_slug: 'Model-VL-250K-test',
-        model_size: '250K',
-        model_variant: 'test',
-        model_modality: 'VL',
+    testCases.forEach(({ input, expected, description }) => {
+      it(description, () => {
+        const result = parseModelName(input);
+        expect(result).toEqual(expected);
       });
     });
   });
 
-  describe('models without modality', () => {
-    it('parses model without modality but with variant', () => {
-      const result = parseModelName('OpenAI/GPT-3.5B-turbo');
-      expect(result).toEqual({
-        organization: 'OpenAI',
-        model_slug: 'GPT-3.5B-turbo',
-        model_size: '3.5B',
-        model_variant: 'turbo',
-        model_modality: null,
-      });
-    });
+  describe('error cases', () => {
+    const testCases = [
+      {
+        input: '',
+        expectedError: 'Model name cannot be empty',
+        description: 'empty string',
+      },
+      {
+        input: '   ',
+        expectedError: 'Model name cannot be empty',
+        description: 'whitespace-only string',
+      },
+      {
+        input: 'SimpleModel-VL-1B-test',
+        expectedError: 'Model part is required in format "organization/model"',
+        description: 'model names without organization separator',
+      },
+      {
+        input: '/Model-VL-1B-test',
+        expectedError: 'Organization is required in model name',
+        description: 'empty organization',
+      },
+      {
+        input: '   /Model-VL-1B-test',
+        expectedError: 'Organization is required in model name',
+        description: 'whitespace-only organization',
+      },
+    ];
 
-    it('parses simple model without modality or variant', () => {
-      const result = parseModelName('Meta/Llama-7B');
-      expect(result).toEqual({
-        organization: 'Meta',
-        model_slug: 'Llama-7B',
-        model_size: '7B',
-        model_variant: null,
-        model_modality: null,
-      });
-    });
-  });
-
-  describe('models without variants', () => {
-    it('parses model with modality but no variant', () => {
-      const result = parseModelName('TestOrg/Model-VL-1B');
-      expect(result).toEqual({
-        organization: 'TestOrg',
-        model_slug: 'Model-VL-1B',
-        model_size: '1B',
-        model_variant: null,
-        model_modality: 'VL',
-      });
-    });
-  });
-
-  describe('edge cases and error handling', () => {
-    it('handles model names without size', () => {
-      const result = parseModelName('TestOrg/SimpleModel');
-      expect(result).toEqual({
-        organization: 'TestOrg',
-        model_slug: 'SimpleModel',
-        model_size: '',
-        model_variant: null,
-        model_modality: null,
-      });
-    });
-
-    it('throws error for empty string', () => {
-      expect(() => parseModelName('')).toThrow('Model name cannot be empty');
-    });
-
-    it('throws error for whitespace-only string', () => {
-      expect(() => parseModelName('   ')).toThrow('Model name cannot be empty');
-    });
-
-    it('throws error for model names without organization separator', () => {
-      expect(() => parseModelName('SimpleModel-VL-1B-test')).toThrow(
-        'Model part is required in format "organization/model"'
-      );
-    });
-
-    it('throws error for empty organization', () => {
-      expect(() => parseModelName('/Model-VL-1B-test')).toThrow(
-        'Organization is required in model name'
-      );
-    });
-
-    it('throws error for whitespace-only organization', () => {
-      expect(() => parseModelName('   /Model-VL-1B-test')).toThrow(
-        'Organization is required in model name'
-      );
-    });
-
-    it('handles model names with empty model part', () => {
-      const result = parseModelName('TestOrg/');
-      expect(result).toEqual({
-        organization: 'TestOrg',
-        model_slug: '',
-        model_size: '',
-        model_variant: null,
-        model_modality: null,
-      });
-    });
-  });
-
-  describe('case sensitivity', () => {
-    it('handles lowercase modality and converts to uppercase', () => {
-      const result = parseModelName('TestOrg/Model-vl-1B-test');
-      expect(result).toEqual({
-        organization: 'TestOrg',
-        model_slug: 'Model-vl-1B-test',
-        model_size: '1B',
-        model_variant: 'test',
-        model_modality: 'VL',
-      });
-    });
-
-    it('handles mixed case modality', () => {
-      const result = parseModelName('TestOrg/Model-Vl-1B-test');
-      expect(result).toEqual({
-        organization: 'TestOrg',
-        model_slug: 'Model-Vl-1B-test',
-        model_size: '1B',
-        model_variant: 'test',
-        model_modality: 'VL',
-      });
-    });
-  });
-
-  describe('different modality lengths', () => {
-    it('handles single character modality', () => {
-      const result = parseModelName('TestOrg/Model-V-1B-test');
-      expect(result).toEqual({
-        organization: 'TestOrg',
-        model_slug: 'Model-V-1B-test',
-        model_size: '1B',
-        model_variant: 'test',
-        model_modality: 'V',
-      });
-    });
-
-    it('handles three character modality', () => {
-      const result = parseModelName('TestOrg/Model-VLA-1B-test');
-      expect(result).toEqual({
-        organization: 'TestOrg',
-        model_slug: 'Model-VLA-1B-test',
-        model_size: '1B',
-        model_variant: 'test',
-        model_modality: 'VLA',
-      });
-    });
-  });
-
-  describe('complex variants', () => {
-    it('handles variant with multiple words separated by dashes', () => {
-      const result = parseModelName('TestOrg/Model-VL-1B-chat-instruct');
-      expect(result).toEqual({
-        organization: 'TestOrg',
-        model_slug: 'Model-VL-1B-chat-instruct',
-        model_size: '1B',
-        model_variant: 'chat-instruct',
-        model_modality: 'VL',
-      });
-    });
-
-    it('handles variant with numbers', () => {
-      const result = parseModelName('TestOrg/Model-VL-1B-v2.1');
-      expect(result).toEqual({
-        organization: 'TestOrg',
-        model_slug: 'Model-VL-1B-v2.1',
-        model_size: '1B',
-        model_variant: 'v2.1',
-        model_modality: 'VL',
-      });
-    });
-  });
-
-  describe('decimal sizes', () => {
-    it('handles decimal sizes with modality', () => {
-      const result = parseModelName('TestOrg/Model-VL-1.3B-test');
-      expect(result).toEqual({
-        organization: 'TestOrg',
-        model_slug: 'Model-VL-1.3B-test',
-        model_size: '1.3B',
-        model_variant: 'test',
-        model_modality: 'VL',
-      });
-    });
-
-    it('handles decimal sizes without modality', () => {
-      const result = parseModelName('TestOrg/Model-2.7B-instruct');
-      expect(result).toEqual({
-        organization: 'TestOrg',
-        model_slug: 'Model-2.7B-instruct',
-        model_size: '2.7B',
-        model_variant: 'instruct',
-        model_modality: null,
+    testCases.forEach(({ input, expectedError, description }) => {
+      it(description, () => {
+        expect(() => parseModelName(input)).toThrow(expectedError);
       });
     });
   });

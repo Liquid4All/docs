@@ -9,3 +9,7 @@ export interface HfCrawlerResult {
   totalModels: number;
   scrapedAt: Date;
 }
+
+export enum Lfm2Modality {
+  VL = 'VL',
+}
