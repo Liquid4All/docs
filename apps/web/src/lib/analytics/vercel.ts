@@ -2,7 +2,7 @@ import bigquery from '@google-cloud/bigquery/build/src/types';
 
 import { getBigQueryClient } from '@/lib/bqClient';
 
-interface BaseAnalyticsEvent {
+interface BaseAnalyticEvent {
   eventType: 'event' | 'pageview';
   timestamp: number;
   projectId: string;
@@ -33,23 +33,23 @@ interface BaseAnalyticsEvent {
   schema?: string;
 }
 
-interface AnalyticsEvent extends BaseAnalyticsEvent {
+export interface AnalyticEvent extends BaseAnalyticEvent {
   eventType: 'event';
   eventName: string;
   eventData?: string;
 }
 
-interface PageviewEvent extends BaseAnalyticsEvent {
+export interface PageviewEvent extends BaseAnalyticEvent {
   eventType: 'pageview';
 }
 
-type VercelAnalyticsEvent = AnalyticsEvent | PageviewEvent;
+export type VercelAnalyticEvent = AnalyticEvent | PageviewEvent;
 
 // Transform functions to convert camelCase to snake_case for BigQuery
-function transformEventForBigQuery(event: AnalyticsEvent) {
+function transformEventForBigQuery(event: AnalyticEvent) {
   return {
     event_name: event.eventName,
-    event_data: event.eventData ? JSON.parse(event.eventData) : null,
+    event_data: event.eventData,
     event_type: event.eventType,
     timestamp: new Date(event.timestamp).toISOString(),
     date: new Date(event.timestamp).toISOString().split('T')[0],
@@ -60,7 +60,7 @@ function transformEventForBigQuery(event: AnalyticsEvent) {
     device_id: event.deviceId,
     origin: event.origin || null,
     path: event.path || null,
-    query_params: event.queryParams ? JSON.parse(event.queryParams) : null,
+    query_params: event.queryParams,
     route: event.route || null,
     country: event.country || null,
     os_name: event.osName || null,
@@ -94,7 +94,7 @@ function transformPageviewForBigQuery(event: PageviewEvent) {
     device_id: event.deviceId,
     origin: event.origin || null,
     path: event.path || null,
-    query_params: event.queryParams ? JSON.parse(event.queryParams) : null,
+    query_params: event.queryParams,
     route: event.route || null,
     country: event.country || null,
     os_name: event.osName || null,
@@ -116,25 +116,27 @@ function transformPageviewForBigQuery(event: PageviewEvent) {
   };
 }
 
-const isTableDataInsertAllResponse = (
-  response: bigquery.ITableDataInsertAllResponse | bigquery.ITable
-): response is bigquery.ITableDataInsertAllResponse => {
-  return response.kind === 'bigquery#tableDataInsertAllResponse';
-};
+export const PROD_DATASET = 'vercel_analytics';
+export const DEV_DATASET = 'vercel_analytics_dev';
 
 export class VercelAnalyticsBigQueryService {
   private bigQuery = getBigQueryClient();
-  private dataset = 'vercel_analytics';
-  private eventsTable = 'event';
-  private pageviewsTable = 'pageview';
+  private dataset: string;
+  private eventsTable: string = 'event';
+  private pageviewsTable: string = 'pageview';
 
-  async insertEvents(events: VercelAnalyticsEvent[]): Promise<void> {
+  public constructor(dataset: string = DEV_DATASET) {
+    console.info(`Using BigQuery dataset: ${dataset}`);
+    this.dataset = dataset;
+  }
+
+  async insertEvents(events: VercelAnalyticEvent[]): Promise<void> {
     if (events.length === 0) {
       return;
     }
 
     const analyticsEvents = events.filter(
-      (event): event is AnalyticsEvent => event.eventType === 'event'
+      (event): event is AnalyticEvent => event.eventType === 'event'
     );
     if (analyticsEvents.length > 0) {
       await this.insertAnalyticsEvents(analyticsEvents);
@@ -151,29 +153,20 @@ export class VercelAnalyticsBigQueryService {
       (event) => event.eventType !== 'event' && event.eventType !== 'pageview'
     );
     if (unknownEvents.length > 0) {
-      console.warn(`Encountered ${unknownEvents.length} events with unknown eventType`);
+      console.warn(
+        `Encountered ${unknownEvents.length} events with unknown eventType`,
+        unknownEvents
+      );
     }
   }
 
-  private async insertAnalyticsEvents(events: AnalyticsEvent[]): Promise<void> {
+  private async insertAnalyticsEvents(events: AnalyticEvent[]): Promise<void> {
     try {
       const rows = events.map(transformEventForBigQuery);
-
-      const [response] = await this.bigQuery
-        .dataset(this.dataset)
-        .table(this.eventsTable)
-        .insert(rows);
-
-      if (isTableDataInsertAllResponse(response)) {
-        if (response.insertErrors != null) {
-          console.error('BigQuery insert errors for events:', response.insertErrors);
-          throw new Error(`Failed to insert ${response.insertErrors.length} events`);
-        }
-      }
-
+      await this.bigQuery.dataset(this.dataset).table(this.eventsTable).insert(rows);
       console.info(`Successfully inserted ${events.length} analytics events to BigQuery`);
     } catch (error) {
-      console.error('Error inserting analytics events to BigQuery:', error);
+      this.handleBigQueryInsertError(error, events);
       throw error;
     }
   }
@@ -181,22 +174,36 @@ export class VercelAnalyticsBigQueryService {
   private async insertPageviewEvents(events: PageviewEvent[]): Promise<void> {
     try {
       const rows = events.map(transformPageviewForBigQuery);
-
-      const [response] = await this.bigQuery
-        .dataset(this.dataset)
-        .table(this.pageviewsTable)
-        .insert(rows);
-
-      if (isTableDataInsertAllResponse(response) && response.insertErrors != null) {
-        console.error('BigQuery insert errors for pageviews:', response.insertErrors);
-        throw new Error(`Failed to insert ${response.insertErrors.length} pageviews`);
-      }
-
+      await this.bigQuery.dataset(this.dataset).table(this.pageviewsTable).insert(rows);
       console.info(`Successfully inserted ${events.length} pageview events to BigQuery`);
-    } catch (error) {
-      console.error('Error inserting pageview events to BigQuery:', error);
+    } catch (error: any) {
+      this.handleBigQueryInsertError(error, events);
       throw error;
     }
+  }
+
+  private handleBigQueryInsertError(error: any, events: any[]): void {
+    console.error('BigQuery insert error:', {
+      name: error.name,
+      message: error.message,
+      errors: JSON.stringify(error.errors),
+      response: JSON.stringify(error.response),
+    });
+
+    if (events.length > 0) {
+      const sampleEvent = events[0];
+      console.error('Sample event data:', JSON.stringify(sampleEvent));
+      console.error(
+        'Sample transformed data:',
+        JSON.stringify(transformPageviewForBigQuery(sampleEvent))
+      );
+    }
+  }
+
+  private static isTableDataInsertAllResponse(
+    response: bigquery.ITableDataInsertAllResponse | bigquery.ITable
+  ): response is bigquery.ITableDataInsertAllResponse {
+    return response.kind === 'bigquery#tableDataInsertAllResponse';
   }
 
   async testConnection(): Promise<boolean> {
@@ -209,5 +216,3 @@ export class VercelAnalyticsBigQueryService {
     }
   }
 }
-
-export const vercelAnalyticsService = new VercelAnalyticsBigQueryService();

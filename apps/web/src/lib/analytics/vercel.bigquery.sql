@@ -52,7 +52,6 @@ CREATE OR REPLACE TABLE `liquid-leap.vercel_analytics.event` (
 
   -- Metadata
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP(),
-  _inserted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP()
 )
 PARTITION BY date
 CLUSTER BY event_type, device_id, session_id
@@ -105,7 +104,6 @@ CREATE OR REPLACE TABLE `liquid-leap.vercel_analytics.pageview` (
 
   -- Metadata
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP(),
-  _inserted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP()
 )
 PARTITION BY date
 CLUSTER BY device_id, session_id, path
