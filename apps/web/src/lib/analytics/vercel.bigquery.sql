@@ -56,8 +56,7 @@ CREATE OR REPLACE TABLE `liquid-leap.vercel_analytics.event` (
 PARTITION BY date
 CLUSTER BY event_type, device_id, session_id
 OPTIONS (
-  description = "Vercel Analytics events data",
-  partition_expiration_days = 730
+  description = "Vercel Analytics events data"
 );
 
 CREATE OR REPLACE TABLE `liquid-leap.vercel_analytics.pageview` (
@@ -108,8 +107,7 @@ CREATE OR REPLACE TABLE `liquid-leap.vercel_analytics.pageview` (
 PARTITION BY date
 CLUSTER BY device_id, session_id, path
 OPTIONS (
-  description = "Vercel Analytics pageviews data",
-  partition_expiration_days = 730
+  description = "Vercel Analytics pageviews data"
 );
 
 CREATE OR REPLACE VIEW `liquid-leap.vercel_analytics.analytics_unified` AS
