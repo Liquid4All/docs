@@ -277,6 +277,10 @@
     background: linear-gradient(75deg, #5603AD -84.69%, #CD81F1 43.2%, #FF5F1F 107.15%, #FFF 171.1%);
   }
 
+  .search-linear-gradient {
+    background: linear-gradient(75deg, white -50%, #FF5F1F 25%, #CD81F1 50%, #5603AD 150%);
+  }
+
   .bg-gradient-section-1 {
     position: relative;
     background: var(--bg-blob-color);
