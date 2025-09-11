@@ -196,6 +196,17 @@ describe('parseModelName', () => {
         description: 'model names without size',
       },
       {
+        input: 'TestOrg/LFM-TTS-ALIAS-1',
+        expected: {
+          organization: 'TestOrg',
+          model_slug: 'LFM-TTS-ALIAS-1',
+          model_size: '',
+          model_variant: 'TTS-ALIAS-1',
+          model_modality: null,
+        },
+        description: 'model names with variant but without size',
+      },
+      {
         input: 'TestOrg/',
         expected: {
           organization: 'TestOrg',

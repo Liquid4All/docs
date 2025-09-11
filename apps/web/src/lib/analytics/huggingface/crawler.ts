@@ -76,7 +76,9 @@ function isLfm2Model(model: HubModelResponse): boolean {
 }
 
 function isBasedOnLfm2(model: HubModelResponse): boolean {
-  return (model.tags ?? []).some((tag) => tag.match(/base_model:.*\/lfm2/i));
+  return (model.tags ?? []).some(
+    (tag) => tag.toLowerCase() === 'lfm2' || tag.match(/base_model:.*\/lfm2/i)
+  );
 }
 
 function isLfm2Architecture(model: HubModelResponse): boolean {

@@ -1,4 +1,5 @@
 import { prisma } from '@liquidai/leap-database';
+import { isEmptyString } from '@liquidai/leap-lib/utils';
 
 import { HfCrawlerResult, Lfm2Modality } from '@/lib/analytics/huggingface/types';
 
@@ -29,8 +30,14 @@ export function parseModelName(fullName: string): {
   const sizeMatch = modelPart.match(/(\d+(?:\.\d+)?[BMK])/i);
   const model_size = sizeMatch ? sizeMatch[1] : '';
 
-  const variantMatch = modelPart.match(/\d+(?:\.\d+)?[BMK]-(.+)/i);
-  const model_variant = variantMatch ? variantMatch[1] : null;
+  let model_variant: string | null = null;
+  if (!isEmptyString(model_size)) {
+    const variantMatch = modelPart.match(/\d+(?:\.\d+)?[BMK]-(.+)/i);
+    model_variant = variantMatch ? variantMatch[1] : null;
+  } else {
+    const variantMatch = modelPart.match(/-(.+)/);
+    model_variant = variantMatch ? variantMatch[1] : null;
+  }
 
   return {
     organization,
