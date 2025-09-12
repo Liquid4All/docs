@@ -397,7 +397,6 @@
             rgba(118, 75, 162, 0) 100%);
         background-origin: border-box;
         background-clip: padding-box, border-box;
-        pointer-events: none;
       }
   
       .gradient-box-2 {
@@ -413,7 +412,6 @@
             rgba(118, 75, 162, 0) 100%);
         background-origin: border-box;
         background-clip: padding-box, border-box;
-        pointer-events: none;
       }
   
       .gradient-box-3 {
@@ -430,7 +428,6 @@
             rgba(118, 75, 162, 0) 100%);
         background-origin: border-box;
         background-clip: padding-box, border-box;
-        pointer-events: none;
       }
   
       .gradient-box-4::before {
@@ -441,7 +438,6 @@
         width: 2px;
         height: 100%;
         background: linear-gradient(to bottom, rgba(225, 114, 156, 1) 0%, rgba(206, 129, 236, 1) 100%);
-        pointer-events: none;
       }
       
       .gradient-box-4::after {
@@ -456,7 +452,6 @@
         border-bottom: 1px dashed rgba(206, 129, 236, 1);
         border-top-right-radius: 20px;
         border-bottom-right-radius: 20px;
-        pointer-events: none;
       }
       
 
@@ -471,7 +466,6 @@
             rgba(166, 87, 219, 1) 100%);
         background-origin: border-box;
         background-clip: padding-box, border-box;
-        pointer-events: none;
       }
     }
 
