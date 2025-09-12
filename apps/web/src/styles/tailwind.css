@@ -568,6 +568,10 @@
     a {
       @apply text-accent;
     }
+
+    p:not(:last-child) {
+      @apply mb-2;
+    }
   }
 }
 
