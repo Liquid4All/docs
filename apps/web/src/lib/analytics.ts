@@ -49,6 +49,7 @@ export enum AnalyticEvent {
   RanLeapBundleLogin = 'RanLeapBundleLogin',
   RanLeapBundleWhoami = 'RanLeapBundleWhoami',
   RanLeapBundleCreate = 'RanLeapBundleCreate',
+  RanLeapBundleResume = 'RanLeapBundleResume',
   RanLeapBundleListAll = 'RanLeapBundleListAll',
   RanLeapBundleListRequest = 'RanLeapBundleListRequest',
   RanLeapBundleUpdate = 'RanLeapBundleUpdate',
