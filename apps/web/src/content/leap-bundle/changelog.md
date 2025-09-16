@@ -1,8 +1,26 @@
 # Changelog
 
-## `v0.3.0`
+## `v0.4.0` - 2025-09-16
 
-2025-08-26
+**New features**
+
+- Add `resume` command to resume an interrupted or failed upload.
+
+**Improvements**
+
+- Add parallel upload support for faster upload speed.
+  - Users can choose between `--parallel` and `--sequential` upload modes for `create` and `resume` commands.
+  - By default, `--parallel` upload is used. If it fails, upload will fall back to `--sequential` mode.
+- Add `--json` option to `create`, `resume`, and `list` commands to output the final results in JSON for easy parsing.
+- Add `--last` option to `list` command to show only the last request.
+- Show user-friendly information when upload fails.
+
+**Fixes**
+
+- Fix `--output-path` option for `download` command.
+  - Previously this option was ignored and the bundle file would always be downloaded to the current directory.
+
+## `v0.3.0` - 2025-08-26
 
 **New features**
 
@@ -13,9 +31,7 @@
 - Show user-friendly information and error messages.
 - Fix minor bugs.
 
-## `v0.2.0`
-
-2025-08-12
+## `v0.2.0` - 2025-08-12
 
 **New features**
 
@@ -28,16 +44,12 @@
 - Update and add processing error message.
 - Show download URL and link to doc page.
 
-## `v0.1.1`
-
-2025-07-30
+## `v0.1.1` - 2025-07-30
 
 **Improvements**
 
 - Test and report network connectivity before model upload.
 
-## `v0.1.0`
-
-2025-07-25
+## `v0.1.0` - 2025-07-25
 
 Initial release of the [`leap-bundle` package](https://pypi.org/project/leap-bundle).
