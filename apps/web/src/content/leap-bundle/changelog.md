@@ -1,5 +1,13 @@
 # Changelog
 
+## `v0.5.0` - 2025-09-24
+
+**New features**
+
+- Add `--quantization` option for the `create` command to specify the quantization type.
+  - Supported quantization types: `8da4w_output_8da8w`, `8da8w_output_8da8w`.
+  - Default quantization: `8da4w_output_8da8w`.
+
 ## `v0.4.0` - 2025-09-16
 
 **New features**
