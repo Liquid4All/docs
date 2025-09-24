@@ -204,6 +204,7 @@ leap-bundle create <input-path>
 - `--sequential`: Upload files sequentially. This is the fallback option if parallel upload fails.
   - If neither `--parallel` nor `--sequential` is specified, the CLI will attempt parallel upload first, and fall back to sequential if it fails.
   - If both `--parallel` and `--sequential` are specified, `--parallel` takes precedence.
+- `--quantization <type>`: Specify the quantization type for the model bundle. Valid options: `8da4w_output_8da8w` (default), `8da8w_output_8da8w`.
 
 **Behavior**
 
@@ -238,6 +239,9 @@ leap-bundle create ./my-model-directory --json
 
 # Example JSON output when request already exists
 {"error": "A bundle request with the same input hash already exists: req_xyz789abc123", "status": "exists"}
+
+# Create bundle with specific quantization
+leap-bundle create ./my-model-directory --quantization 8da8w_output_8da8w
 ```
 
 **Validation**
