@@ -1,0 +1,36 @@
+import { Callout } from 'nextra/components';
+
+# Data Privacy
+
+This page outlines how the LEAP Model Bundling Service handles your data, what information we collect and delete.
+
+## Data We Keep
+
+### Bundle Request Information
+
+When you create a bundle request using `leap-bundle create`, we store the following information:
+
+- **Input file path**: The path of your input model directory.
+- **Input file hash**: A cryptographic hash of your model directory contents for deduplication.
+- **Bundle arguments**: All command-line arguments passed to the bundling service. E.g. required quantization type.
+- **Request metadata**: Creation time, etc.
+- **User identification**: Your internal user ID to associate requests with your account.
+
+### Event Logs and Audit Trail
+
+- **Bundle request events**: Status changes for each request.
+- **Internal processing logs**: Technical details for debugging (not exposed to users).
+
+## Data Deletion
+
+<Callout type="info">
+  The uploaded model files are auto archived (deleted) after 7 days. We do not retain any of your
+  model weights or parameters beyond the 7-day window.
+</Callout>
+
+- **Uploaded model files**: All uploaded model files are permanently deleted 7 days after they are uploaded.
+- **Model outputs**: Generated bundle files are deleted after 7 days.
+
+## General Privacy Policy
+
+For the full details about how we handle personal data on the broader LEAP platform, please refer to our main [Privacy Policy](https://www.liquid.ai/privacy-policy).
