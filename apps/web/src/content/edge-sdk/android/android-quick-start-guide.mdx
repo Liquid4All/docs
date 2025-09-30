@@ -7,17 +7,24 @@ import { Callout } from 'nextra/components';
 You should already have:
 
 - An Android project created in Android Studio. You may create an empty project with the wizard. LEAP Android SDK is Kotlin-first. We recommend to work with the SDK only in Kotlin.
+- Leap Android SDK needs [Kotlin Android plugin](https://kotlinlang.org/docs/releases.html#update-to-a-new-kotlin-version) v2.2.0 or above and [Android Gradle Plugin](https://developer.android.com/build/releases/gradle-plugin) v8.12.0 or above to build. Declare it in `build.gradle.kts` as
+  ```kotlin
+  plugins {
+  	id("com.android.application") version "8.12.0" apply false
+  	id("com.android.library") version "8.12.0" apply false
+  	id("org.jetbrains.kotlin.android") version "2.2.0" apply false
+  }
+  ```
 - A working Android device that supports `arm64-v8a` ABI with [developer mode enabled](https://developer.android.com/studio/debug/dev-options). We recommend having 3GB+ of RAM to run the models.
 - The minimal SDK requirement is API 31. Declare it in `build.gradle.kts` as
-
-```kotlin
-android {
-    defaultConfig {
-        minSdk = 31
-        targetSdk = 36
-    }
-}
-```
+  ```kotlin
+  android {
+  	defaultConfig {
+  		minSdk = 31
+  		targetSdk = 36
+  	}
+  }
+  ```
 
 <Callout type="warning">
   The SDK may crash on loading model bundles on simulators. A physical Android device is
