@@ -1,5 +1,13 @@
 # Changelog
 
+## `v0.5.1` - 2025-10-06
+
+**Bug fixes**
+
+- Add validation to reject Liquid audio model submissions.
+  - Liquid audio models are not supported by the bundle service yet.
+  - They will be in a future release.
+
 ## `v0.5.0` - 2025-09-24
 
 **New features**
