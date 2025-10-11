@@ -16,7 +16,7 @@ export const GITHUB_URL = 'https://github.com/Liquid4All';
 export const GITHUB_EXAMPLES_URL = 'https://github.com/Liquid4All/LeapSDK-Examples';
 export const HACKATHONS_URL = 'https://hackathons.liquid.ai';
 export const PLAYGROUND_URL = 'https://playground.liquid.ai';
-export const LQ_JOB_PAGE_URL = 'https://jobs.lever.co/liquid.ai';
+export const LQ_JOB_PAGE_URL = 'https://jobs.ashbyhq.com/liquid-ai';
 export const LQ_ABOUT_URL = 'https://www.liquid.ai/company/about';
 
 export const ZAPIER_EMAIL_SUBSCRIPTION_URL =
