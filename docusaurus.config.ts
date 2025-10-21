@@ -5,8 +5,7 @@ import type * as Preset from '@docusaurus/preset-classic';
 // This runs in Node.js - Don't use client-side code here (browser APIs, JSX...)
 
 const config: Config = {
-  title: 'My Site',
-  tagline: 'Dinosaurs are cool',
+  title: 'Liquid Documentation',
   favicon: 'img/favicon.ico',
 
   // Future flags, see https://docusaurus.io/docs/api/docusaurus-config#future
@@ -15,15 +14,15 @@ const config: Config = {
   },
 
   // Set the production url of your site here
-  url: 'https://your-docusaurus-site.example.com',
+  url: 'https://docs.liquid.ai',
   // Set the /<baseUrl>/ pathname under which your site is served
   // For GitHub pages deployment, it is often '/<projectName>/'
   baseUrl: '/',
 
   // GitHub pages deployment config.
   // If you aren't using GitHub pages, you don't need these.
-  organizationName: 'facebook', // Usually your GitHub org/user name.
-  projectName: 'docusaurus', // Usually your repo name.
+  organizationName: 'Liquid4All', // Usually your GitHub org/user name.
+  projectName: 'docs', // Usually your repo name.
 
   markdown: {
     hooks: {
@@ -40,37 +39,18 @@ const config: Config = {
     locales: ['en'],
   },
 
-  plugins: [
-    [
-      '@docusaurus/plugin-content-docs',
-      {
-        id: 'ios_sdk',
-        path: 'ios_sdk',
-        routeBasePath: 'ios-sdk',
-        sidebarPath: require.resolve('./sidebarsIosSdk.ts'),
-      },
-    ],
-    [
-      '@docusaurus/plugin-content-docs',
-      {
-        id: 'android_sdk',
-        path: 'android_sdk',
-        routeBasePath: 'android-sdk',
-        sidebarPath: require.resolve('./sidebarsAndroidSdk.ts'),
-      },
-    ],
-  ],
-
   presets: [
     [
       'classic',
       {
         docs: {
+          path: 'docs',
+          routeBasePath: 'docs',
           sidebarPath: './sidebars.ts',
           // Please change this to your repo.
           // Remove this to remove the "edit this page" links.
-          editUrl:
-            'https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/',
+          // editUrl:
+          //     'https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/',
         },
         blog: {
           showReadingTime: true,
@@ -81,7 +61,7 @@ const config: Config = {
           // Please change this to your repo.
           // Remove this to remove the "edit this page" links.
           editUrl:
-            'https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/',
+              'https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/',
           // Useful options to enforce blogging best practices
           onInlineTags: 'warn',
           onInlineAuthors: 'warn',
@@ -94,13 +74,50 @@ const config: Config = {
     ],
   ],
 
+  plugins: [
+    [
+      '@docusaurus/plugin-content-docs',
+      {
+        id: 'ios_sdk',
+        path: 'ios_sdk',
+        routeBasePath: 'ios-sdk',
+        sidebarPath: require.resolve('./sidebarsIosSdk.ts'),
+        versions: {
+          current: {
+            label: 'Next',
+            path: 'next',
+            banner: 'unreleased',
+          },
+        },
+        includeCurrentVersion: true,
+      },
+    ],
+    [
+      '@docusaurus/plugin-content-docs',
+      {
+        id: 'android_sdk',
+        path: 'android_sdk',
+        routeBasePath: 'android-sdk',
+        sidebarPath: require.resolve('./sidebarsAndroidSdk.ts'),
+        versions: {
+          current: {
+            label: 'Next',
+            path: 'next',
+            banner: 'unreleased',
+          },
+        },
+        includeCurrentVersion: true,
+      },
+    ],
+  ],
+
   themeConfig: {
     // Replace with your project's social card
     image: 'img/docusaurus-social-card.jpg',
     navbar: {
       title: 'Home',
       logo: {
-        alt: 'My Site Logo',
+        alt: 'Logo',
         src: 'img/logo.svg',
       },
       items: [
@@ -112,16 +129,23 @@ const config: Config = {
         },
         // {
         //   type: 'docSidebar',
+        //   docsPluginId: 'ios_sdk',
         //   sidebarId: 'iosSdkSidebar',
         //   position: 'left',
         //   label: 'iOS SDK',
         // },
-        // {
-        //   type: 'docSidebar',
-        //   sidebarId: 'androidSdkSidebar',
-        //   position: 'left',
-        //   label: 'Android SDK',
-        // },
+        {
+          type: 'docsVersion',
+          docsPluginId: 'ios_sdk',
+          position: 'left',
+          label: 'iOS SDK',
+        },
+        {
+          type: 'docsVersion',
+          docsPluginId: 'android_sdk',
+          position: 'left',
+          label: 'Android SDK',
+        },
         {
           type: 'docsVersionDropdown',
           docsPluginId: 'ios_sdk',
@@ -136,7 +160,7 @@ const config: Config = {
         },
         {to: '/blog', label: 'Blog', position: 'left'},
         {
-          href: 'https://github.com/facebook/docusaurus',
+          href: 'https://github.com/Liquid4All',
           label: 'GitHub',
           position: 'right',
         },
