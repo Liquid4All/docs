@@ -1,6 +1,247 @@
-import { VersionCallout } from '../../../components/VersionCallout';
-import QuickStartGuide from './v0.6.0/ios-quick-start-guide.mdx';
 
-<VersionCallout docType="ios-quick-start-guide" />
 
-<QuickStartGuide />
+# iOS Quick Start Guide
+
+## Prerequisites
+
+Make sure you have:
+
+- Xcode 15.0 or later with Swift 5.9.
+- An iOS project targeting **iOS 15.0+** (macOS 12.0+ or Mac Catalyst 15.0+ are also supported).
+- A physical iPhone or iPad with at least 3 GB RAM for best performance. The simulator works for development but runs models much slower.
+
+```text
+iOS Deployment Target: 15.0
+macOS Deployment Target: 12.0
+```
+
+:::warning
+
+
+Always test on a real device before shipping. Simulator performance is not representative of
+production behaviour.
+
+
+:::
+
+## Install the SDK
+
+### Swift Package Manager (recommended)
+
+1. In Xcode choose **File -> Add Package Dependencies**.
+2. Enter `https://github.com/Liquid4All/leap-ios.git`.
+3. Select the `0.6.0` release (or newer).
+4. Add the **`LeapSDK`** product to your app target.
+5. (Optional) Add **`LeapModelDownloader`** if you plan to download model bundles at runtime.
+
+:::info
+
+
+The constrained-generation macros (`@Generatable`, `@Guide`) ship inside the `LeapSDK` product. No
+additional package is required.
+
+
+:::
+
+### CocoaPods
+
+Add the pod to your `Podfile`:
+
+```ruby
+pod 'Leap-SDK', '~> 0.6.0'
+# Optional: pod 'Leap-Model-Downloader', '~> 0.6.0'
+```
+
+Then run `pod install` and reopen the `.xcworkspace`.
+
+### Manual installation
+
+1. Download `LeapSDK.xcframework.zip` (and optionally `LeapModelDownloader.xcframework.zip`) from the [GitHub releases](https://github.com/Liquid4All/leap-ios/releases).
+2. Unzip and drag the XCFramework(s) into Xcode.
+3. Set the Embed setting to **Embed & Sign** for each framework.
+
+## Get a model bundle
+
+Browse the [Leap Model Library](https://leap.liquid.ai/models) and download a `.bundle` file for the model/quantization you want. `.bundle` packages contain metadata plus assets for the Executorch backend, which is the recommended format for most iOS projects.
+
+You can either:
+
+- **Ship it with the app** - drag the bundle into your Xcode project and ensure it is added to the main target.
+- **Download at runtime** - use `LeapModelDownloader` to fetch bundles on demand.
+
+Example dynamic download:
+
+```swift
+import LeapModelDownloader
+
+let model = await LeapDownloadableModel.resolve(
+  modelSlug: "qwen3-0_6b",
+  quantizationSlug: "qwen3-0_6b-8da4w-4096"
+)
+
+if let model {
+  let downloader = ModelDownloader()
+  downloader.requestDownloadModel(model)
+
+  let status = await downloader.queryStatus(model)
+  switch status {
+  case .downloaded:
+    let bundleURL = downloader.getModelFile(model)
+    try await runModel(at: bundleURL)
+  case .downloadInProgress(let progress):
+    print("Progress: \(Int(progress * 100))%")
+  case .notOnLocal:
+    print("Waiting for download...")
+  }
+}
+```
+
+:::info
+
+
+Prefer bundles for the smoothest integration. The loader also supports raw `.gguf` files (see the
+note below) and will automatically choose the correct backend based on the file extension.
+
+
+:::
+
+For bundles, the necessary metadata - including any multimodal projection - is packaged inside the
+archive. When you work with `.gguf` checkpoints, place the companion `mmproj-*.gguf` next to the
+model file so the loader can enable vision features.
+
+## Load a model
+
+Use `Leap.load(url:options:)` inside an async context. Passing a `.bundle` loads the model through the Executorch backend. Supplying a `.gguf` file selects the embedded llama.cpp backend automatically. In either case, if an `mmproj-*.gguf` sits next to the model, the loader wires it in so multimodal-capable checkpoints can accept image inputs.
+
+```swift
+import LeapSDK
+
+@MainActor
+final class ChatViewModel: ObservableObject {
+  @Published var isLoading = false
+  @Published var conversation: Conversation?
+
+  private var modelRunner: ModelRunner?
+  private var generationTask: Task<Void, Never>?
+
+  func loadModel() async {
+    guard let bundleURL = Bundle.main.url(forResource: "qwen3-0_6b", withExtension: "bundle") else {
+      assertionFailure("Model bundle missing")
+      return
+    }
+
+    isLoading = true
+    defer { isLoading = false }
+
+    do {
+      modelRunner = try await Leap.load(url: bundleURL)
+      conversation = modelRunner?.createConversation(systemPrompt: "You are a helpful travel assistant.")
+    } catch {
+      print("Failed to load model: \(error)")
+    }
+  }
+
+  func send(_ text: String) {
+    guard let conversation else { return }
+
+    generationTask?.cancel()
+
+    let userMessage = ChatMessage(role: .user, content: [.text(text)])
+
+    generationTask = Task { [weak self] in
+      do {
+        for try await response in conversation.generateResponse(
+          message: userMessage,
+          generationOptions: GenerationOptions(temperature: 0.7)
+        ) {
+          await self?.handle(response)
+        }
+      } catch {
+        print("Generation failed: \(error)")
+      }
+    }
+  }
+
+  func stopGeneration() {
+    generationTask?.cancel()
+  }
+
+  @MainActor
+  private func handle(_ response: MessageResponse) {
+    switch response {
+    case .chunk(let delta):
+      print(delta, terminator: "") // Update UI binding here
+    case .reasoningChunk(let thought):
+      print("Reasoning:", thought)
+    case .functionCall(let calls):
+      print("Requested calls: \(calls)")
+    case .complete(_, let info):
+      if let stats = info.stats {
+        print("Finished with \(stats.totalTokens) tokens")
+      }
+    }
+  }
+}
+```
+
+Need custom runtime settings (threads, context size, GPU layers)? Pass a `LiquidInferenceEngineOptions` value:
+
+```swift
+let options = LiquidInferenceEngineOptions(
+  bundlePath: bundleURL.path,
+  cpuThreads: 6,
+  contextSize: 8192,
+  nGpuLayers: 8
+)
+let runner = try await Leap.load(url: bundleURL, options: options)
+```
+
+### Alternate: load a GGUF file
+
+```swift
+// Loading a GGUF file instead (automatically selects the llama.cpp backend)
+let ggufURL = Bundle.main.url(forResource: "qwen3-0_6b", withExtension: "gguf")!
+let runner = try await Leap.load(url: ggufURL)
+// Keep mmproj-qwen3-0_6b.gguf in the same directory to unlock vision features
+```
+
+## Stream responses
+
+`send(_:)` (shown above) launches a `Task` that consumes the `AsyncThrowingStream` returned by `Conversation.generateResponse`. Each `MessageResponse` case maps to UI updates, tool execution, or completion metadata. Cancel the task manually (for example via `stopGeneration()`) to interrupt generation early. You can also observe `conversation.isGenerating` to disable UI controls while a request is in flight.
+
+### Send images (optional)
+
+When the loaded model ships with multimodal weights (and you either provide the matching mmproj for a bundle or the SDK finds an `mmproj-*.gguf` next to a GGUF file), you can mix image and text parts in the same message:
+
+```swift
+let message = ChatMessage(
+  role: .user,
+  content: [
+    .text("Describe what you see."),
+    .image(jpegData)  // Data containing JPEG bytes
+  ]
+)
+```
+
+## Add tool results back to the history
+
+```swift
+let toolMessage = ChatMessage(
+  role: .tool,
+  content: [.text("{\"temperature\":72,\"conditions\":\"sunny\"}")]
+)
+
+guard let current = conversation else { return }
+let updatedHistory = current.history + [toolMessage]
+conversation = current.modelRunner.createConversationFromHistory(
+  history: updatedHistory
+)
+```
+
+## Next steps
+
+- Learn how to expose structured JSON outputs with the [`@Generatable` macros](./constrained-generation).
+- Wire up tools and external APIs with [Function Calling](./function-calling).
+- Compare on-device and cloud behaviour in [Cloud AI Comparison](./cloud-ai-comparison).
+
+You now have a project that loads an on-device model, streams responses, and is ready for advanced features like structured output and tool use.

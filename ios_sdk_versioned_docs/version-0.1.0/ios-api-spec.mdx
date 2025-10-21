@@ -1,10 +1,3 @@
-import { Callout } from 'nextra/components';
-
-<Callout type="warning">
-  You are viewing iOS SDK documentation for v0.1.0. This version is outdated. See the [latest
-  version](../ios-api-spec) for current features including the model downloader and updated APIs.
-</Callout>
-
 # iOS API Spec
 
 ## Leap
@@ -21,9 +14,13 @@ public struct Leap {
 
 This function loads a model from a local file URL. The `url` should point to a model bundle file. The app needs to hold the model runner object returned by this function until there is no need to interact with the model anymore. See [`ModelRunner`](#modelrunner) for more details.
 
-<Callout type="info">
+:::info
+
+
   The function will throw `LeapError.modelLoadingFailure` if LEAP fails to load the model.
-</Callout>
+
+
+:::
 
 ## Conversation
 
@@ -54,15 +51,23 @@ The return value is a Swift [`AsyncStream`](https://developer.apple.com/document
 
 `MessageResponse` instances will be emitted from this stream, which contain chunks of data generated from the model.
 
-<Callout type="info">
+:::info
+
+
   Errors can be thrown within the async stream. Use `do-catch` blocks around the async iteration to
   capture errors from the generation.
-</Callout>
 
-<Callout type="warning">
+
+:::
+
+:::warning
+
+
   If there is already a running generation, a new request will return an empty stream that finishes
   immediately.
-</Callout>
+
+
+:::
 
 ### Cancellation of the generation
 
@@ -120,10 +125,14 @@ let systemMessage = ChatMessage(role: .system, content: [.text("You are a helpfu
 let conversation = Conversation(modelRunner: modelRunner, history: [systemMessage])
 ```
 
-<Callout type="info">
+:::info
+
+
   The `ModelRunner` protocol is implemented internally by the SDK and should not be implemented by
   application code.
-</Callout>
+
+
+:::
 
 ## ChatMessage
 

@@ -98,7 +98,7 @@ const config: Config = {
     // Replace with your project's social card
     image: 'img/docusaurus-social-card.jpg',
     navbar: {
-      title: 'My Site',
+      title: 'Home',
       logo: {
         alt: 'My Site Logo',
         src: 'img/logo.svg',
@@ -110,13 +110,29 @@ const config: Config = {
           position: 'left',
           label: 'Tutorial',
         },
+        // {
+        //   type: 'docSidebar',
+        //   sidebarId: 'iosSdkSidebar',
+        //   position: 'left',
+        //   label: 'iOS SDK',
+        // },
+        // {
+        //   type: 'docSidebar',
+        //   sidebarId: 'androidSdkSidebar',
+        //   position: 'left',
+        //   label: 'Android SDK',
+        // },
         {
           type: 'docsVersionDropdown',
           docsPluginId: 'ios_sdk',
+          position: 'right',
+          dropdownActiveClassDisabled: true,
         },
         {
           type: 'docsVersionDropdown',
-          docsPluginId: 'android_sdK',
+          docsPluginId: 'android_sdk',
+          position: 'right',
+          dropdownActiveClassDisabled: true,
         },
         {to: '/blog', label: 'Blog', position: 'left'},
         {

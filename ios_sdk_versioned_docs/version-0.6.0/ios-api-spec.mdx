@@ -1,4 +1,4 @@
-import { Callout } from 'nextra/components';
+
 
 # iOS API Spec
 
@@ -56,13 +56,17 @@ public struct LiquidInferenceEngineOptions {
 - `nGpuLayers`: Number of layers to offload to GPU (for macOS/macCatalyst targets with Metal support).
 - `mmProjPath`: Path to an auxiliary multimodal projection model (required for some vision-capable models). Leave `nil` to enable automatic detection.
 
-<Callout type="info">
+:::info
+
+
   Backend selection is automatic: `.bundle` files run on the ExecuTorch backend, while `.gguf`
   checkpoints use the embedded llama.cpp backend. Bundled models reference their projection data in
   metadata; GGUF checkpoints look for a sibling `mmproj-*.gguf` unless you specify the path through
   `LiquidInferenceEngineOptions`. Make sure the projection is available if you want vision-capable
   checkpoints to consume image content.
-</Callout>
+
+
+:::
 
 Example overriding the number of CPU threads and context size:
 
@@ -222,10 +226,14 @@ handler?.stop()
 
 If a generation is already running, the method returns `nil` and emits a `.complete` message with `finishReason == .stop` via the callback.
 
-<Callout type="warning">
+:::warning
+
+
   The callback overload does not surface generation errors. Use the async-stream helper or call
   `ModelRunner.generateResponse` with `onErrorCallback` when you need error handling.
-</Callout>
+
+
+:::
 
 ### Export Chat History
 

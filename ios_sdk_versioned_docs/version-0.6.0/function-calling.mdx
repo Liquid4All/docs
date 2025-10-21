@@ -1,20 +1,28 @@
-import { Callout } from 'nextra/components';
+
 
 # Function calling
 
 Function calling allows the model to make requests to call some predefined functions provided by the app to interact with the environment.
 
-<Callout type="warning">
+:::warning
+
+
   Not all models support function calling. Please check the model card before using the model for
   function calling.
-</Callout>
 
-<Callout type="info">
+
+:::
+
+:::info
+
+
   Vision-capable models need the matching mmproj. Bundles include this path as part of their
   metadata; GGUF checkpoints require an `mmproj-*.gguf` sitting beside the model file. When the SDK
   detects the projection, you can attach `ChatMessageContent.image` parts (for tools, vision
   prompts, etc.).
-</Callout>
+
+
+:::
 
 ## Register functions to conversations
 

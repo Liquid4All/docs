@@ -1,11 +1,3 @@
-import { Callout } from 'nextra/components';
-
-<Callout type="warning">
-  You are viewing iOS SDK documentation for v0.1.0. This version is outdated. See the [latest
-  version](../ios-quick-start-guide) for current features including the model downloader and updated
-  APIs.
-</Callout>
-
 # iOS Quick Start Guide
 
 ## Prerequisites
@@ -22,10 +14,14 @@ iOS Deployment Target: 15.0
 macOS Deployment Target: 12.0
 ```
 
-<Callout type="warning">
+:::warning
+
+
   While the SDK works on iOS Simulator, performance may be significantly slower than on physical
   devices. A physical iPhone or iPad is recommended for optimal inference speed.
-</Callout>
+
+
+:::
 
 ## Import the LeapSDK
 
@@ -221,10 +217,14 @@ func generateStructuredJoke() async {
 }
 ```
 
-<Callout type="info">
+:::info
+
+
   See the [Constrained Generation guide](/ios/constrained-generation) for comprehensive
   documentation on defining complex types and advanced usage patterns.
-</Callout>
+
+
+:::
 
 ## Complete Example
 

@@ -1,4 +1,4 @@
-import { Callout } from 'nextra/components';
+
 
 # iOS Quick Start Guide
 
@@ -15,10 +15,14 @@ iOS Deployment Target: 15.0
 macOS Deployment Target: 12.0
 ```
 
-<Callout type="warning">
+:::warning
+
+
   Always test on a real device before shipping. Simulator performance is not representative of
   production behaviour.
-</Callout>
+
+
+:::
 
 ## Install the SDK
 
@@ -30,10 +34,14 @@ macOS Deployment Target: 12.0
 4. Add the **`LeapSDK`** product to your app target.
 5. (Optional) Add **`LeapModelDownloader`** if you plan to download model bundles at runtime.
 
-<Callout type="info">
+:::info
+
+
   The constrained-generation macros (`@Generatable`, `@Guide`) ship inside the `LeapSDK` product. No
   additional package is required.
-</Callout>
+
+
+:::
 
 ### CocoaPods
 
@@ -88,10 +96,14 @@ if let model {
 }
 ```
 
-<Callout type="info">
+:::info
+
+
   Prefer bundles for the smoothest integration. The loader also supports raw `.gguf` files (see the
   note below) and will automatically choose the correct backend based on the file extension.
-</Callout>
+
+
+:::
 
 For bundles, the necessary metadata - including any multimodal projection - is packaged inside the
 archive. When you work with `.gguf` checkpoints, place the companion `mmproj-*.gguf` next to the

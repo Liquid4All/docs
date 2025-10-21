@@ -1,4 +1,4 @@
-import { Callout } from 'nextra/components';
+
 
 # Android API Spec
 
@@ -12,10 +12,14 @@ dependencies {
 }
 ```
 
-<Callout type="info">
+:::info
+
+
   Note: All functions listed in this document are safe to call from the main or UI thread and all
   callbacks will be run on the main thread, unless there are explicit instructions or explanations.
-</Callout>
+
+
+:::
 
 ## LeapClient
 
@@ -32,10 +36,14 @@ object LeapClient {
 
 This function can be called from UI thread. The `path` should be a local path pointing to model bundle file. The app should hold the `ModelRunner` object returned by this function until there is no need to interact with the model anymore. See [`ModelRunner`](https://www.notion.so/ModelRunner-1f2cbef042ad80b8a0ffeb5df20762b0?pvs=21) for more details.
 
-<Callout type="info">
+:::info
+
+
   {' '}
   The function will throw `LeapModelLoadingException` if LEAP fails to load the model.
-</Callout>
+
+
+:::
 
 ### `loadModelAsResult`
 
@@ -115,16 +123,24 @@ The return value is a Kotlin [asynchronous flow](https://kotlinlang.org/docs/flo
 
 A `MessageResponse` instance will be emitted from this flow, which contains the chunk of data generated from the model.
 
-<Callout type="info">
+:::info
+
+
   Errors will be thrown as `LeapGenerationException` in the stream. Use `.catch` to capture errors
   from the generation.
-</Callout>
-<Callout type="warning">
+
+
+:::
+:::warning
+
+
   {' '}
   If there is already a running generation, further generation requests are blocked until the
   current generation is done. However, there is no guarantee that the order in which requests are
   received will be the order in which they are processed.
-</Callout>
+
+
+:::
 
 ### `registerFunction`
 
@@ -252,10 +268,14 @@ Unload the model from memory. The model runner will not be able to perform gener
 
 This function is **not** recommended to be called by the app directly. It is an internal interface for the model runner implementation to expose the generation ability to LEAP SDK. `Conversation.generateResponse` is the better wrapper of this method, which relies on Kotlin coroutines to connect with lifecycle-aware components.
 
-<Callout type="warning">
+:::warning
+
+
   This function may block the caller thread. If you must use it, please call it outside the main
   thread.
-</Callout>
+
+
+:::
 
 ## ChatMessage
 
@@ -291,11 +311,15 @@ See also: [Gson Support](#gson-supports).
 
 Construct a `ChatMessage` instance from a `JSONObject`. Not all JSON object variants in `ChatCompletionRequestMessage` of OpenAI API are acceptable. As of now, `role` supports `user`, `system` and `assistant`; `content` can be a string or an array.
 
-<Callout type="info">
+:::info
+
+
   {' '}
   `LeapSerializationException` will be thrown if the provided JSONObject cannot be recognized as a
   message.{' '}
-</Callout>
+
+
+:::
 
 See also: [Gson Support](#gson-supports).
 
@@ -331,11 +355,15 @@ fun ChatMessageContent.fromJSONObject(obj: JSONObject): ChatMessageContent
 - `fromJSONObject` receives an OpenAI API compatible content object to build a message content. Not all OpenAI content objects are accepted. Currently, only following content types are supported:
   - `Text` : pure text content.
 
-<Callout type="info">
+:::info
+
+
   {' '}
   `LeapSerializationException` will be thrown if the provided JSONObject cannot be recognized as a
   message.{' '}
-</Callout>
+
+
+:::
 
 ## MessageResponse
 

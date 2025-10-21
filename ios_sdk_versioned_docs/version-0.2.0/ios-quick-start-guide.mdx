@@ -1,4 +1,4 @@
-import { Callout } from 'nextra/components';
+
 
 # iOS Quick Start Guide
 
@@ -16,10 +16,14 @@ iOS Deployment Target: 15.0
 macOS Deployment Target: 12.0
 ```
 
-<Callout type="warning">
+:::warning
+
+
   While the SDK works on iOS Simulator, performance may be significantly slower than on physical
   devices. A physical iPhone or iPad is recommended for optimal inference speed.
-</Callout>
+
+
+:::
 
 ## Import the LeapSDK
 
@@ -125,10 +129,14 @@ downloader.requestDownloadModel(hfModel)
 
 See the [Model Downloader API documentation](ios-api-spec#leapmodeldownloader) for complete details on implementing on-demand model downloading.
 
-<Callout type="info">
+:::info
+
+
   Note: The model downloader is intended for prototyping and development. For production apps,
   consider bundling models directly or implementing your own secure download system.
-</Callout>
+
+
+:::
 
 ## Load Model in Code
 

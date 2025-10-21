@@ -1,4 +1,4 @@
-import { Callout } from 'nextra/components';
+
 
 # iOS Quick Start Guide
 
@@ -16,10 +16,14 @@ iOS Deployment Target: 15.0
 macOS Deployment Target: 12.0
 ```
 
-<Callout type="warning">
+:::warning
+
+
   While the SDK works on iOS Simulator, performance may be significantly slower than on physical
   devices. A physical iPhone or iPad is recommended for optimal inference speed.
-</Callout>
+
+
+:::
 
 ## Import the LeapSDK
 
@@ -33,10 +37,14 @@ Add LeapSDK to your project in Xcode:
 4. Select the latest version (0.5.0+)
 5. Add **both** `LeapSDK` and `LeapSDKTypes` products to your target
 
-<Callout type="important">
+:::important
+
+
   Starting with version 0.5.0, you must add both `LeapSDK` and `LeapSDKTypes` products to your
   target. LeapSDKTypes is a separate framework required for proper runtime linking.
-</Callout>
+
+
+:::
 
 ### CocoaPods
 
@@ -60,10 +68,14 @@ Alternatively, you can download the pre-built XCFrameworks:
 2. Unzip and drag both `LeapSDK.xcframework` and `LeapSDKTypes.xcframework` into your Xcode project
 3. Ensure **"Embed & Sign"** is selected for both frameworks in the frameworks settings
 
-<Callout type="important">
+:::important
+
+
   Both XCFrameworks are required starting with version 0.5.0. Make sure to add and embed both
   `LeapSDK.xcframework` and `LeapSDKTypes.xcframework` to avoid runtime linking errors.
-</Callout>
+
+
+:::
 
 ## Download Model Bundles
 
@@ -136,10 +148,14 @@ downloader.requestDownloadModel(hfModel)
 
 See the [Model Downloader API documentation](ios-api-spec#leapmodeldownloader) for complete details on implementing on-demand model downloading.
 
-<Callout type="info">
+:::info
+
+
   Note: The model downloader is intended for prototyping and development. For production apps,
   consider bundling models directly or implementing your own secure download system.
-</Callout>
+
+
+:::
 
 ## Load Model in Code
 
@@ -335,10 +351,14 @@ class ChatStore {
 }
 ```
 
-<Callout type="info">
+:::info
+
+
   For production apps, check out the complete examples on GitHub which include proper error
   handling, typing indicators, message persistence, and polished UI components.
-</Callout>
+
+
+:::
 
 ## Key API Concepts
 

@@ -1,6 +1,430 @@
-import { VersionCallout } from '../../../components/VersionCallout';
-import ApiSpec from './v0.6.0/ios-api-spec.mdx';
 
-<VersionCallout docType="ios-api-spec" />
 
-<ApiSpec />
+# iOS API Spec
+
+Latest version: `v0.6.0`.
+
+## Leap
+
+`Leap` is the static entry point for loading on-device models.
+
+```swift
+public struct Leap {
+  public static func load(
+    url: URL,
+    options: LiquidInferenceEngineOptions? = nil
+  ) async throws -> ModelRunner
+}
+```
+
+### `load(url:options:)`
+
+- Loads a local model file (either a `.bundle` package or a `.gguf` checkpoint) and returns a `ModelRunner` instance.
+- Throws `LeapError.modelLoadingFailure` if the file cannot be loaded.
+- When an `mmproj-*.gguf` companion sits alongside the model, the loader forwards it to the backend so multimodal tokens are available (for both bundle and GGUF flows).
+- Must be called from an async context (for example inside an `async` function or a `Task`). Keep the returned `ModelRunner` alive while you need to interact with the model.
+
+```swift
+// ExecuTorch backend via .bundle
+let bundleURL = Bundle.main.url(forResource: "qwen3-0_6b", withExtension: "bundle")!
+let runner = try await Leap.load(url: bundleURL)
+
+// llama.cpp backend via .gguf
+let ggufURL = Bundle.main.url(forResource: "qwen3-0_6b", withExtension: "gguf")!
+let ggufRunner = try await Leap.load(url: ggufURL)
+```
+
+### `LiquidInferenceEngineOptions`
+
+Pass a `LiquidInferenceEngineOptions` value when you need to override the default runtime configuration.
+
+```swift
+public struct LiquidInferenceEngineOptions {
+  public var bundlePath: String
+  public let cacheOptions: LiquidCacheOptions?
+  public let cpuThreads: UInt32?
+  public let contextSize: UInt32?
+  public let nGpuLayers: UInt32?
+  public let mmProjPath: String?
+}
+```
+
+- `bundlePath`: Path to the model file on disk. When you call `Leap.load(url:)`, this is filled automatically.
+- `cacheOptions`: Configure persistence of KV-cache data between generations.
+- `cpuThreads`: Number of CPU threads for token generation.
+- `contextSize`: Override the default maximum context length for the model.
+- `nGpuLayers`: Number of layers to offload to GPU (for macOS/macCatalyst targets with Metal support).
+- `mmProjPath`: Path to an auxiliary multimodal projection model (required for some vision-capable models). Leave `nil` to enable automatic detection.
+
+:::info
+
+
+Backend selection is automatic: `.bundle` files run on the ExecuTorch backend, while `.gguf`
+checkpoints use the embedded llama.cpp backend. Bundled models reference their projection data in
+metadata; GGUF checkpoints look for a sibling `mmproj-*.gguf` unless you specify the path through
+`LiquidInferenceEngineOptions`. Make sure the projection is available if you want vision-capable
+checkpoints to consume image content.
+
+
+:::
+
+Example overriding the number of CPU threads and context size:
+
+```swift
+let options = LiquidInferenceEngineOptions(
+  bundlePath: bundleURL.path,
+  cpuThreads: 6,
+  contextSize: 8192
+)
+let runner = try await Leap.load(url: bundleURL, options: options)
+```
+
+## ModelRunner
+
+A `ModelRunner` represents a loaded model instance. The SDK returns concrete `ModelRunner` implementations, but your code only needs the protocol surface:
+
+```swift
+public protocol ModelRunner {
+  func createConversation(systemPrompt: String?) -> Conversation
+  func createConversationFromHistory(history: [ChatMessage]) -> Conversation
+  func generateResponse(
+    conversation: Conversation,
+    generationOptions: GenerationOptions?,
+    onResponseCallback: @escaping (MessageResponse) -> Void,
+    onErrorCallback: ((LeapError) -> Void)?
+  ) -> GenerationHandler
+  func unload() async
+  var modelId: String { get }
+}
+```
+
+### Lifecycle
+
+- Create conversations using `createConversation(systemPrompt:)` or `createConversationFromHistory(history:)`.
+- Hold a strong reference to the `ModelRunner` for as long as you need to perform generations.
+- Call `unload()` when you are done to release native resources (optional, happens automatically on deinit).
+- Access `modelId` to identify the loaded model (for analytics, debugging, or UI labels).
+
+### Low-level generation API
+
+`generateResponse(...)` drives generation with callbacks and returns a `GenerationHandler` you can store to cancel the run. Most apps call the higher-level streaming helpers on `Conversation`, but you can invoke this method directly when you need fine-grained control (for example, integrating with custom async primitives).
+
+```swift
+let handler = runner.generateResponse(
+  conversation: conversation,
+  generationOptions: options,
+  onResponseCallback: { message in
+    // Handle MessageResponse values here
+  },
+  onErrorCallback: { error in
+    // Handle LeapError
+  }
+)
+
+// Stop generation early if needed
+handler.stop()
+```
+
+## GenerationHandler
+
+```swift
+public protocol GenerationHandler: Sendable {
+  func stop()
+}
+```
+
+The handler returned by `ModelRunner.generateResponse` or `Conversation.generateResponse(..., onResponse:)` lets you cancel generation without tearing down the conversation.
+
+## Conversation
+
+`Conversation` tracks chat state and provides streaming helpers built on top of the model runner.
+
+```swift
+public class Conversation {
+  public let modelRunner: ModelRunner
+  public private(set) var history: [ChatMessage]
+  public private(set) var functions: [LeapFunction]
+  public private(set) var isGenerating: Bool
+
+  public init(modelRunner: ModelRunner, history: [ChatMessage])
+
+  public func registerFunction(_ function: LeapFunction)
+  public func exportToJSON() throws -> [[String: Any]]
+
+  public func generateResponse(
+    userTextMessage: String,
+    generationOptions: GenerationOptions? = nil
+  ) -> AsyncThrowingStream<MessageResponse, Error>
+
+  public func generateResponse(
+    message: ChatMessage,
+    generationOptions: GenerationOptions? = nil
+  ) -> AsyncThrowingStream<MessageResponse, Error>
+
+  @discardableResult
+  public func generateResponse(
+    message: ChatMessage,
+    generationOptions: GenerationOptions? = nil,
+    onResponse: @escaping (MessageResponse) -> Void
+  ) -> GenerationHandler?
+}
+```
+
+### Properties
+
+- `history`: Copy of the accumulated chat messages. The SDK appends the assistant reply when a generation finishes successfully.
+- `functions`: Functions registered via `registerFunction(_:)` for function calling.
+- `isGenerating`: Boolean flag indicating whether a generation is currently running. Attempts to start a new generation while this is `true` immediately finish with an empty stream (or `nil` handler for the callback variant).
+
+### Streaming Convenience
+
+The most common pattern is to use the async-stream helpers:
+
+```swift
+let user = ChatMessage(role: .user, content: [.text("Hello! What can you do?")])
+
+Task {
+  do {
+    for try await response in conversation.generateResponse(
+      message: user,
+      generationOptions: GenerationOptions(temperature: 0.7)
+    ) {
+      switch response {
+      case .chunk(let delta):
+        print(delta, terminator: "")
+      case .reasoningChunk(let thought):
+        print("Reasoning:", thought)
+      case .functionCall(let calls):
+        handleFunctionCalls(calls)
+      case .complete(let fullText, let info):
+        print("\nComplete:", fullText)
+        if let stats = info.stats {
+          print("Prompt tokens: \(stats.promptTokens), completions: \(stats.completionTokens)")
+        }
+      }
+    }
+  } catch {
+    print("Generation failed: \(error)")
+  }
+}
+```
+
+Cancelling the task that iterates the stream stops generation and cleans up native resources.
+
+### Callback Convenience
+
+Use `generateResponse(message:onResponse:)` when you prefer callbacks or need to integrate with imperative UI components:
+
+```swift
+let handler = conversation.generateResponse(message: user) { response in
+  updateUI(with: response)
+}
+
+// Later
+handler?.stop()
+```
+
+If a generation is already running, the method returns `nil` and emits a `.complete` message with `finishReason == .stop` via the callback.
+
+:::warning
+
+
+The callback overload does not surface generation errors. Use the async-stream helper or call
+`ModelRunner.generateResponse` with `onErrorCallback` when you need error handling.
+
+
+:::
+
+### Export Chat History
+
+`exportToJSON()` serializes the conversation history into a `[[String: Any]]` payload that mirrors OpenAI's chat-completions format. This is useful for persistence, analytics, or debugging tools.
+
+## MessageResponse
+
+```swift
+public enum MessageResponse {
+  case chunk(String)
+  case reasoningChunk(String)
+  case complete(String, GenerationCompleteInfo)
+  case functionCall([LeapFunctionCall])
+}
+```
+
+- `chunk`: Partial assistant text emitted during streaming.
+- `reasoningChunk`: Model reasoning tokens wrapped between `<think>` / `</think>` (only for models that expose reasoning traces).
+- `functionCall`: One or more function/tool invocations requested by the model. See the [Function Calling](./function-calling) guide.
+- `complete`: Signals the end of generation. The first argument is the full assistant reply assembled by the SDK. `GenerationCompleteInfo` contains the `finishReason` (`.stop` or `.exceed_context`) and optional `GenerationStats` (prompt/completion token counts and throughput).
+
+```swift
+public struct GenerationCompleteInfo {
+  public let finishReason: GenerationFinishReason
+  public let stats: GenerationStats?
+}
+
+public struct GenerationStats {
+  public var promptTokens: UInt64
+  public var completionTokens: UInt64
+  public var totalTokens: UInt64
+  public var tokenPerSecond: Float
+}
+```
+
+Errors surfaced during streaming are delivered through the thrown error of `AsyncThrowingStream`, or via the `onErrorCallback` closure when using the lower-level API.
+
+## Chat Messages
+
+### Roles
+
+```swift
+public enum ChatMessageRole: String {
+  case user
+  case system
+  case assistant
+  case tool
+}
+```
+
+Include `.tool` messages when you append function-call results back into the conversation.
+
+### Message Structure
+
+```swift
+public struct ChatMessage {
+  public var role: ChatMessageRole
+  public var content: [ChatMessageContent]
+  public var reasoningContent: String?
+  public var functionCalls: [LeapFunctionCall]?
+
+  public init(
+    role: ChatMessageRole,
+    content: [ChatMessageContent],
+    reasoningContent: String? = nil,
+    functionCalls: [LeapFunctionCall]? = nil
+  )
+
+  public init(from json: [String: Any]) throws
+}
+```
+
+- `content`: Ordered fragments of the message. The SDK currently supports `.text` and `.image` parts.
+- `reasoningContent`: Optional text produced inside `<think>` tags by eligible models.
+- `functionCalls`: Attach the calls returned by `MessageResponse.functionCall` when you include tool execution results in the history.
+
+### Message Content
+
+```swift
+public enum ChatMessageContent {
+  case text(String)
+  case image(Data)
+
+  public init(from json: [String: Any]) throws
+}
+```
+
+Provide JPEG-encoded bytes for `.image`. Helper initializers (e.g. `ChatMessageContent.fromUIImage`) are available for UIKit/AppKit targets. Images are only consumed when the loaded model exposes multimodal weights and an `mmproj-*.gguf` companion was detected alongside the main GGUF.
+
+## GenerationOptions
+
+Tune generation behaviour with `GenerationOptions`.
+
+```swift
+public struct GenerationOptions {
+  public var temperature: Float?
+  public var topP: Float?
+  public var minP: Float?
+  public var repetitionPenalty: Float?
+  public var jsonSchemaConstraint: String?
+  public var functionCallParser: LeapFunctionCallParserProtocol?
+
+  public init(
+    temperature: Float? = nil,
+    topP: Float? = nil,
+    minP: Float? = nil,
+    repetitionPenalty: Float? = nil,
+    jsonSchemaConstraint: String? = nil,
+    functionCallParser: LeapFunctionCallParserProtocol? = LFMFunctionCallParser()
+  )
+}
+```
+
+- Leave a field as `nil` to fall back to the defaults packaged with the model bundle.
+- `functionCallParser` controls how tool-call tokens are parsed. Supply your own parser conforming to `LeapFunctionCallParserProtocol` to support custom formats, or set it to `nil` to receive raw tool-call text in `MessageResponse.chunk`.
+- `jsonSchemaConstraint` activates constrained generation. Use `setResponseFormat(type:)` to populate it from a type annotated with the `@Generatable` macro.
+
+```swift
+var options = GenerationOptions(temperature: 0.6, topP: 0.9)
+try options.setResponseFormat(type: CityFact.self)
+
+for try await response in conversation.generateResponse(
+  message: user,
+  generationOptions: options
+) {
+  // Handle structured output
+}
+```
+
+## Function Calling Types
+
+```swift
+public struct LeapFunction {
+  public let name: String
+  public let description: String
+  public let parameters: [LeapFunctionParameter]
+}
+
+public struct LeapFunctionParameter {
+  public let name: String
+  public let type: LeapFunctionParameterType
+  public let description: String
+  public let optional: Bool
+}
+
+public indirect enum LeapFunctionParameterType: Codable, Equatable {
+  case string(StringType)
+  case number(NumberType)
+  case integer(IntegerType)
+  case boolean(BooleanType)
+  case array(ArrayType)
+  case object(ObjectType)
+  case null(NullType)
+}
+```
+
+The parameter type wrappers (`StringType`, `NumberType`, etc.) let you attach descriptions and enumerations so that JSON schemas accurately describe your tools. See the [Function Calling](./function-calling) guide for in-depth usage patterns.
+
+## Errors
+
+Errors are surfaced as `LeapError` values. The most common cases are:
+
+- `LeapError.modelLoadingFailure`: Problems reading or validating the model bundle.
+- `LeapError.generationFailure`: Unexpected native inference errors.
+- `LeapError.promptExceedContextLengthFailure`: Prompt length exceeded the configured context size.
+- `LeapError.serializationFailure`: JSON encoding/decoding problems when working with chat history or function calls.
+
+Handle thrown errors with `do` / `catch` when using async streams, or use the `onErrorCallback` in the lower-level API.
+
+## Putting it together
+
+```swift
+let runner = try await Leap.load(url: bundleURL)
+let conversation = runner.createConversation(systemPrompt: "You are a travel assistant.")
+
+conversation.registerFunction(weatherFunction)
+
+var options = GenerationOptions(temperature: 0.8)
+try options.setResponseFormat(type: TripRecommendation.self)
+
+let userMessage = ChatMessage(
+  role: .user,
+  content: [.text("Plan a 3-day trip to Kyoto with food highlights")]
+)
+
+for try await response in conversation.generateResponse(
+  message: userMessage,
+  generationOptions: options
+) {
+  process(response)
+}
+```
+
+Refer to the [Quick Start](../ios-quick-start-guide) for end-to-end project setup, [Function Calling](./function-calling) for tool invocation, and [Constrained Generation](./constrained-generation) for structured outputs.
