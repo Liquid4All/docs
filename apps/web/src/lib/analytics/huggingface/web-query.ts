@@ -28,8 +28,6 @@ export const extractModelSlugs = (html: string): string[] => {
 const fetchPage = async (pageNumber: number): Promise<string> => {
   const url = `https://huggingface.co/models?p=${pageNumber}&sort=created&search=lfm2`;
 
-  console.info(`Fetching page ${pageNumber + 1}...`);
-
   try {
     const response = await fetch(url, {
       headers: {
@@ -71,7 +69,7 @@ export const searchLfm2ModelSlugsFromWebQuery = async (): Promise<string[]> => {
         break;
       }
 
-      console.info(`Found ${models.length} models on page ${p + 1}`);
+      console.debug(`Found ${models.length} models on page ${p + 1}`);
       allModels.push(...models);
       successfulPages++;
 

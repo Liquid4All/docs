@@ -77,7 +77,6 @@ export function appendQueryParams(url: URL): void {
 export const getHfModel = async (modelSlug: string): Promise<HubModelResponse> => {
   const url = new URL(`https://huggingface.co/api/models/${modelSlug}`);
   appendQueryParams(url);
-  console.debug(`Fetching model info with URL: ${url.toString()}`);
 
   const res = await fetch(url.toString());
   if (!res.ok) {
