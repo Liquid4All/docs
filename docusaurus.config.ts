@@ -25,8 +25,12 @@ const config: Config = {
   organizationName: 'facebook', // Usually your GitHub org/user name.
   projectName: 'docusaurus', // Usually your repo name.
 
+  markdown: {
+    hooks: {
+      onBrokenMarkdownLinks: 'warn',
+    }
+  },
   onBrokenLinks: 'throw',
-  onBrokenMarkdownLinks: 'warn',
 
   // Even if you don't use internationalization, you can use this field to set
   // useful metadata like html lang. For example, if your site is Chinese, you
@@ -35,6 +39,27 @@ const config: Config = {
     defaultLocale: 'en',
     locales: ['en'],
   },
+
+  plugins: [
+    [
+      '@docusaurus/plugin-content-docs',
+      {
+        id: 'ios_sdk',
+        path: 'ios_sdk',
+        routeBasePath: 'ios-sdk',
+        sidebarPath: require.resolve('./sidebarsIosSdk.ts'),
+      },
+    ],
+    [
+      '@docusaurus/plugin-content-docs',
+      {
+        id: 'android_sdk',
+        path: 'android_sdk',
+        routeBasePath: 'android-sdk',
+        sidebarPath: require.resolve('./sidebarsAndroidSdk.ts'),
+      },
+    ],
+  ],
 
   presets: [
     [
@@ -84,6 +109,14 @@ const config: Config = {
           sidebarId: 'tutorialSidebar',
           position: 'left',
           label: 'Tutorial',
+        },
+        {
+          type: 'docsVersionDropdown',
+          docsPluginId: 'ios_sdk',
+        },
+        {
+          type: 'docsVersionDropdown',
+          docsPluginId: 'android_sdK',
         },
         {to: '/blog', label: 'Blog', position: 'left'},
         {

@@ -1,0 +1,177 @@
+# Comparision with Cloud AI API
+
+If you are familiar with cloud-based AI APIs (e.g. [OpenAI API](https://openai.com/api/)), this document
+shows the similarity and differences between these clould APIs and Leap.
+
+We will inspect this piece of Python-based OpenAI API chat completion request to figure out how to migrate it to LeapSDK.
+This example code is modified from [OpenAI API document](https://platform.openai.com/docs/guides/streaming-responses?api-mode=chat).
+
+```python
+from openai import OpenAI
+client = OpenAI()
+
+stream = client.chat.completions.create(
+    model="gpt-4.1",
+    messages=[
+        {
+            "role": "user",
+            "content": "Say 'double bubble bath' ten times fast.",
+        },
+    ],
+    stream=True,
+)
+
+for chunk in stream:
+    if chunk.choices:
+        delta_content = chunk.choices[0].delta.get("content")
+        if delta_content:
+            print(delta_content, end="", flush=True)
+
+print("")
+print("Generation done!")
+```
+
+## Loading the model
+
+While models can be directly used on the cloud-based APIs once the API client is created,
+LeapSDK requires the developers to explicitly load the model before requesting the generation.
+It is necessary because the model will run locally. This step generally takes a few seconds
+depending on the model size and the device performance.
+
+On cloud API, you need to create a API client:
+
+```python
+client = OpenAI()
+```
+
+In LeapSDK, you need to load the model to create a model runner.
+
+```swift
+let modelRunner = try await Leap.load(url: modelURL)
+```
+
+The parameter will be the URL to the model bundle file. This URL must be local. The return
+value is a "model runner" which plays the similar role of client object in the clould API
+except that it carries the model weights. If the model runner is released, the app has to
+reload the model before requesting new generations.
+
+## Request for generation
+
+In the cloud API calls, `client.chat.completions.create` will return a stream object for
+caller to fetch the generated contents.
+
+```python
+stream = client.chat.completions.create(
+    model="gpt-4.1",
+    messages=[
+        {
+            "role": "user",
+            "content": "Say 'double bubble bath' ten times fast.",
+        },
+    ],
+    stream=True,
+)
+```
+
+In LeapSDK iOS, we use `generateResponse` on
+the conversation object to obtain a Swift AsyncStream (equivalent to a Python stream) for generation. Since
+the model runner object contains all information about the model, we don't need to indicate the model name
+in the call again.
+
+```swift
+let conversation = Conversation(modelRunner: modelRunner, history: [])
+let stream = conversation.generateResponse(
+    message: ChatMessage(
+        role: .user,
+        content: [.text("Say 'double bubble bath' ten times fast.")]
+    )
+)
+
+// This simplified call has the exactly same effect of the above call
+let stream = conversation.generateResponse(userTextMessage: "Say 'double bubble bath' ten times fast.")
+```
+
+## Process generated contents
+
+In clould API Python code, a for-loop on the stream object retrieves the contents.
+
+```python
+for chunk in stream:
+    if chunk.choices:
+        delta_content = chunk.choices[0].delta.get("content")
+        if delta_content:
+            print(delta_content, end="", flush=True)
+
+print("")
+print("Generation done!")
+```
+
+In LeapSDK, we use a `for await` loop on the Swift AsyncStream to process the content. When the completion is done,
+a `MessageResponse.complete` case will be received.
+
+```swift
+for await response in stream {
+    switch response {
+    case .chunk(let text):
+        print(text, terminator: "")
+    case .reasoningChunk(let reasoning):
+        // Handle reasoning content if needed
+        break
+    case .complete(let usage, let reason):
+        print("")
+        print("Generation done!")
+        print("Usage: \(usage)")
+        print("Finish reason: \(reason)")
+    }
+}
+```
+
+## Task and async/await
+
+LeapSDK API is similar to cloud-based API. It is worth noting that most LeapSDK iOS APIs are based on
+[Swift async/await](https://docs.swift.org/swift-book/documentation/the-swift-programming-language/concurrency/).
+You will need to use an async context to execute these functions. In iOS, we recommend using Task
+or async functions within SwiftUI views with lifecycle-aware components.
+
+```swift
+func sendMessage(_ text: String) {
+    Task {
+        guard let modelURL = Bundle.main.url(
+            forResource: "qwen3-0_6b",
+            withExtension: "bundle"
+        ) else {
+            print("Could not find model bundle")
+            return
+        }
+
+        let modelRunner = try await Leap.load(url: modelURL)
+        let conversation = Conversation(modelRunner: modelRunner, history: [])
+
+        let stream = conversation.generateResponse(
+            message: ChatMessage(
+                role: .user,
+                content: [.text(text)]
+            )
+        )
+
+        for await response in stream {
+            switch response {
+            case .chunk(let text):
+                print(text, terminator: "")
+            case .reasoningChunk(let reasoning):
+                // Handle reasoning content if needed
+                break
+            case .complete(let usage, let reason):
+                print("")
+                print("Generation done!")
+                print("Usage: \(usage)")
+                print("Finish reason: \(reason)")
+            }
+        }
+    }
+}
+```
+
+## Next steps
+
+For more information, please refer to the [quick start guide](./ios-quick-start-guide) and [API reference](ios-api-spec).

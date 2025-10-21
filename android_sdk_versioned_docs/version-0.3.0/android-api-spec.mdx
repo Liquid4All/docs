@@ -1,0 +1,589 @@
+import { Callout } from 'nextra/components';
+
+# Android API Spec
+
+Latest version: `v0.3.0`.
+
+Import the SDK with following code in `build.gradle.kts`:
+
+```kotlin
+dependencies {
+  implementation("ai.liquid.leap:leap-sdk:0.3.0")
+}
+```
+
+<Callout type="info">
+  Note: All functions listed in this document are safe to call from the main or UI thread and all
+  callbacks will be run on the main thread, unless there are explicit instructions or explanations.
+</Callout>
+
+## LeapClient
+
+The entrypoint of LEAP SDK. It doesn’t hold any data.
+
+```kotlin
+object LeapClient {
+  suspend fun loadModel(path: String, options: ModelLoadingOptions? = null): ModelRunner
+  suspend fun loadModelAsResult(path: String, options: ModelLoadingOptions? = null): Result<ModelRunner>
+}
+```
+
+### `loadModel`
+
+This function can be called from UI thread. The `path` should be a local path pointing to model bundle file. The app should hold the `ModelRunner` object returned by this function until there is no need to interact with the model anymore. See [`ModelRunner`](https://www.notion.so/ModelRunner-1f2cbef042ad80b8a0ffeb5df20762b0?pvs=21) for more details.
+
+<Callout type="info">
+  {' '}
+  The function will throw `LeapModelLoadingException` if LEAP fails to load the model.
+</Callout>
+
+### `loadModelAsResult`
+
+This function can be called from UI thread. The `path` should be a local path pointing to model bundle file. This function is merely a wrapper around `loadModel` function to return a [`Result`](https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-result/).
+
+### `ModelLoadingOptions`
+
+A data class to represents options in loading a model.
+
+```kotlin
+data class ModelLoadingOptions(var randomSeed: Long? = null, var cpuThreads: Int = 2)
+```
+
+- `randomSeed`: Set the random seed for loading the model to reproduce the output
+- `cpuThreads`: How many threads to use in the generation.
+
+Kotlin builder function `modelLoadingOptions` is also available. For example, loading a model with 4 CPU threads can be done by
+
+```kotlin
+val modelRunner = LeapClient.loadModel(
+  MODEL_PATH,
+  modelLoadingOptions {
+    cpuThread = 4
+  }
+)
+```
+
+## Conversation
+
+The instance of a conversation, which stores the message history and states that are needed by the model runner for generation.
+
+While this `Conversation` instance holds the data necessary for the model runner to perform generation, the app still needs to maintain the UI state of the message history representation.
+
+```kotlin
+interface Conversation {
+  // Chat history
+  val history: List<ChatMessage>
+  // Whether a generation is in progress
+  val isGenerating: Boolean
+
+  // Generating response from a text input as user message
+  fun generateResponse(userTextMessage: String, generationOptions: GenerationOptions? = null): Flow<MessageResponse>
+  // Generating response from an arbitrary new message
+  fun generateResponse(message: ChatMessage, generationOptions: GenerationOptions? = null): Flow<MessageResponse>
+  // Export the chat history in this conversation to a `JSONArray`.
+  fun exportToJSONArray(): JSONArray
+}
+```
+
+### Creation
+
+Instance of this class should not be directly initialized. It should instead be created by the `ModelRunner` instance.
+
+### Lifetime
+
+While a `Conversation` stores the history and state that is needed by the model runner to generate content, its generation function relies on the model runner that creates it. As a result, if that model runner instance has been destroyed, the `Conversation` instance will fail to run subsequent generations.
+
+### `history`
+
+`history` value field will return a **copy** of the chat message history. Any mutations to its return value will **not** change the internal state of the generation. If there is an ongoing generation, the partial message may not be available in the return value of this field. However, it is guaranteed that when `MessageResponse.Complete` is received and when the flow is completed, the history value field will be updated to have the latest message.
+
+### `isGenerating`
+
+`isGenerating` value field is true if the generation is still in progress. Its value will be consistent across all threads.
+
+### `generateResponse`
+
+`generateResponse(message: ChatMessage)` is the preferred method for response generation. It can be called from UI thread.
+
+The return value is a Kotlin [asynchronous flow](https://kotlinlang.org/docs/flow.html). The generation will **not** start until the flow is collected (following the convention of flows). Refer to [Android documentation](https://developer.android.com/topic/libraries/architecture/coroutines) on how to properly handle the flow with lifecycle-aware components.
+
+A `MessageResponse` instance will be emitted from this flow, which contains the chunk of data generated from the model.
+
+<Callout type="info">
+  Errors will be thrown as `LeapGenerationException` in the stream. Use `.catch` to capture errors
+  from the generation.
+</Callout>
+<Callout type="warning">
+  {' '}
+  If there is already a running generation, further generation requests are blocked until the
+  current generation is done. However, there is no guarantee that the order in which requests are
+  received will be the order in which they are processed.
+</Callout>
+
+### `exportToJSONArray`
+
+Export the whole conversation history into a `JSONArray`. Each element can be interpreted as a `ChatCompletionRequestMessage` instance in OpenAI API schema.
+
+See also: [Gson Support](#gson-supports).
+
+### Cancellation of the generation
+
+Generation will be stopped when the coroutine job that runs the flow is canceled, but it may (no guarantee) keep going as long as the job of the flow is still active.
+
+Hence, we highly recommend the generation be started within a coroutine scope associated with a lifecycle-aware component, so that the generation can be stopped if the lifecycle-aware components are destroyed. Here is an example:
+
+```kotlin
+job = lifecycleScope.launch {
+  conversation.generateResponse(userInput)
+  .onEach {
+     when (it) {
+       is MessageResponse.Chunk -> {
+         Log.d(TAG, it.text)
+       }
+       is MessageResponse.Complete -> {
+         Log.d(TAG, "Generation is done!")
+       }
+       else -> {}
+     }
+  }
+  .collect()
+
+// Stop the generation by cancelling the job
+job.cancel()
+```
+
+### GenerationOptions
+
+A data class to represents options in generating responses from a model.
+
+```kotlin
+data class GenerationOptions(
+    var temperature: Float? = null,
+    var topP: Float? = null,
+    var minP: Float? = null,
+    var repetitionPenalty: Float? = null,
+    var jsonSchemaConstraint: String? = null,
+) {
+  fun setResponseFormatType(kClass: KClass<*>)
+}
+```
+
+Fields
+
+- `temperature`: Sampling temperature parameter. Higher values will make the output more random, while lower values will make it more focused and deterministic.
+- `topP`: Nucleus sampling parameter.In nucleus sampling, the model only considers the results of the tokens with `topP` probability mass.
+- `minP`: Minimal possibility for a token to be considered in generation.
+- `repetitionPenalty`: Repetition penalty parameter. A positive value will decrease the model's likelihood to repeat the same line verbatim.
+- `jsonSchemaConstraint`: Enable constrained generation with a [JSON Schema](https://json-schema.org/). See [constrained generation](#constrained-generation) for more details.
+
+Methods
+
+- `setResponseFormatType`: Enable constrained generation with a `Generatable` data class. See [constrained generation](#constrained-generation) for more details.
+
+Kotlin builder function `generationOptions` is also available. If a parameter is not set in this options, the default value from the model bundle will be used.
+
+## ModelRunner
+
+An instance of the model loaded in memory. `Conversation` instances should always be created from an instance of `ModelRunner`. The application needs to own the model runner object – if the model runner object is destroyed, any ongoing generations may fail.
+
+If you need your model runner to survive after the destruction of activities, you may need to wrap it in an [Android Service](https://developer.android.com/develop/background-work/services).
+
+```kotlin
+interface ModelRunner {
+  // create a conversation instance
+	fun createConversation(systemPrompt: String? = null): Conversation
+
+	// create a conversation from chat message history
+	fun createConversationFromHistory(history: List<ChatMessage>): Conversation
+
+	// unload the model: the runner cannot be used after unload is called.
+	suspend fun unload()
+
+
+	// Start generation from the conversation instance.
+	fun generateFromConversation(
+		conversation: Conversation,
+    callback: GenerationCallback,
+    generationOptions: GenerationOptions? = null,
+  ): GenerationHandler
+}
+```
+
+### `createConversation`
+
+Factory method to create a conversation instance based on this model runner. As a result, the model runner instance will be used for any generation around the created conversation instance. The model runner will have access to the internal state of the created conversation.
+
+If the model runner is unloaded, any conversation instances created from the model runner will be read only.
+
+### `createConversationFromHistory`
+
+This factory method will create a conversation object with the provided chat history. It can be used to restore a conversation from persistent storage while ensuring that a living model runner is backing it.
+
+### `unload`
+
+Unload the model from memory. The model runner will not be able to perform generation once this method is invoked. An exception may be thrown by any ongoing generation. It is the app developer’s responsibility to ensure that `unload` is called after all generation is complete.
+
+### `generateFromConversation`
+
+This function is **not** recommended to be called by the app directly. It is an internal interface for the model runner implementation to expose the generation ability to LEAP SDK. `Conversation.generateResponse` is the better wrapper of this method, which relies on Kotlin coroutines to connect with lifecycle-aware components.
+
+<Callout type="warning">
+  This function may block the caller thread. If you must use it, please call it outside the main
+  thread.
+</Callout>
+
+## ChatMessage
+
+Data class that is compatible with the message object in OpenAI chat completion API.
+
+```kotlin
+data class ChatMessage(
+  val role: Role,
+  val content: List<ChatMessageContent>
+  val reasoningContent: String? = null
+) {
+  fun toJSONObject(): JSONObject
+}
+
+ChatMessage.fromJSONObject(obj: JSONObject): ChatMessage
+```
+
+### Fields
+
+- `role`: The role of this message (see [`ChatMessage.Role`](#chatmessagerole)).
+- `content`: A list of message contents. Each element is an instance of [`ChatMessageContent`](#chatmessagecontent).
+- `reasoningContent`: The reasoning content generated by the reasoning models. Only messages generated by reasoning models will have this field. For other models or other roles, this field should be `null`.
+
+### `toJSONObject`
+
+Return a `JSONObject` that represents the chat message. The returned object is compatible with `ChatCompletionRequestMessage` from OpenAI API. It contains 2 fields: `role` and `content` .
+
+See also: [Gson Support](#gson-supports).
+
+### `fromJSONObject`
+
+Construct a `ChatMessage` instance from a `JSONObject`. Not all JSON object variants in `ChatCompletionRequestMessage` of OpenAI API are acceptable. As of now, `role` supports `user`, `system` and `assistant`; `content` can be a string or an array.
+
+<Callout type="info">
+  {' '}
+  `LeapSerializationException` will be thrown if the provided JSONObject cannot be recognized as a
+  message.{' '}
+</Callout>
+
+See also: [Gson Support](#gson-supports).
+
+### ChatMessage.Role
+
+Roles of the chat messages, which follows the OpenAI API definition. It is an enum with the following values:
+
+```kotlin
+enum class Role(val type: String) {
+  SYSTEM("system"),
+  USER("user"),
+  ASSISTANT("assistant"),
+}
+```
+
+- `SYSTEM`: Indicates the associated content is part of the system prompt. It is generally the first message, to provide guidance on how the model should behave.
+- `USER`: Indicates the associated content is user input.
+- `ASSISTANT`: Indicates the associated content is model-generated output.
+
+## ChatMessageContent
+
+Data class that is compatible with the content object in OpenAI chat completion API. It is a sealed class.
+
+```kotlin
+abstract class ChatMessageContent {
+  fun clone(): ChatMessageContent
+  fun toJSONObject(): JSONObject
+}
+fun ChatMessageContent.fromJSONObject(obj: JSONObject): ChatMessageContent
+```
+
+- `toJSONObject` returns an OpenAI API compatible content object (with a `type` field and the real content fields)
+- `fromJSONObject` receives an OpenAI API compatible content object to build a message content. Not all OpenAI content objects are accepted. Currently, only following content types are supported:
+  - `Text` : pure text content.
+
+<Callout type="info">
+  {' '}
+  `LeapSerializationException` will be thrown if the provided JSONObject cannot be recognized as a
+  message.{' '}
+</Callout>
+
+## MessageResponse
+
+The response generated from models. The generation may take a while to finish, so the generated text will be emitted as “chunks”. When the generation completes, a complete response object will be emitted. This is a sealed class where only the following options are available:
+
+```kotlin
+sealed class MessageResponse {
+  class Chunk(val text: String) : MessageResponse()
+  class ReasoningChunk(val reasoning: String) : MessageResponse()
+  class Complete(
+    val fullMessage: ChatMessage,
+    val finishReason: GenerationFinishReason,
+    val stats: GenerationStats?,
+  ) : MessageResponse()
+}
+```
+
+- `Chunk` is a piece of generated text.
+- `ReasoningChunk` is a piece of generated reasoning text. It will be emitted only by reasoning models.
+- `Complete` indicates the completion of a generation.
+  - The `fullMessage` field contains the complete `ChatMessage` with all the content generated from this round of generation
+  - The `finishReason` indicates why the generation is done. `STOP` means the model decides to stop generation, while `EXCEED_CONTEXT` means that the generated content reaches the maximum context length.
+  - The `stats` field contains statistics of the generation including `promptTokens`, `completionTokens`, `totalTokens` and `tokenPerSecond`. This field could be `null`.
+
+## Constrained Generation
+
+Please refer to [Constrained Generation](./constrained-generation) guide on detailed usage.
+
+### JSONSchemaGenerator
+
+`JSONSchemaGenerator` only exposes one public method:
+
+```kotlin
+package ai.liquid.leap.structuredoutput
+
+object JSONSchemaGenerator {
+  @Throws(LeapGeneratableSchematizationException::class)
+  fun <T : Any> getJSONSchema(
+    klass: KClass<T>,
+    indentSpaces: Int? = null,
+  ): String
+}
+```
+
+For the method `getJSONSchema`:
+
+- `klass`: the Kotlin class object created from `T::class`. It must be a data class annotated with `Generatable`.
+- `indentSpaces`: a non null value will format the JSON output into a pretty style with the given indent spaces.
+
+If the data class cannot be supported or any other issues blocking the generation of JSONSchema, an `LeapGeneratableSchematizationException` will be thrown.
+
+### GeneratableFactory
+
+`GeneratableFactory` exposes `createFromJSONObject` methods:
+
+```kotlin
+package ai.liquid.leap.structuredoutput
+
+object GeneratableFactory {
+  @Throws(LeapGeneratableDeserializationException::class)
+  fun <T : Any> createFromJSONObject(
+    jsonObject: JSONObject,
+    klass: KClass<T>,
+  ): T
+
+  @Throws(LeapGeneratableDeserializationException::class)
+  inline fun <reified T : Any> createFromJSONObject(jsonObject: JSONObject): T {
+    return createFromJSONObject(jsonObject, T::class)
+  }
+}
+```
+
+The single parameter version can be called if the returned data type can be inferred from the context. It's only a wrapper of the complete version.
+
+- `jsonObject`: the JSON object as the data source for creating the generatable data class instance.
+- `klass`: the Koltin class object created from `T::class`. It must be a data class annotated with `Generatable`.
+
+### Annotations
+
+```
+package ai.liquid.leap.structuredoutput
+
+@Target(AnnotationTarget.CLASS)
+annotation class Generatable(val description: String)
+
+@Target(AnnotationTarget.PROPERTY)
+annotation class Guide(val description: String)
+```
+
+`Generatable` annotation is for the data class to be used as the generation constraints. `Guide` is for the fields of the generatable data class to add helpful
+descriptions for the fields.
+
+## Error Handling
+
+All errors are thrown as `LeapException`, which has following subclasses:
+
+- `LeapModelLoadingException` : error in loading the model
+- `LeapGenerationException` : error in generating content
+- `LeapGenerationPromptExceedContextLengthException`: the prompt text exceeds the maximum context length so no content will be generated
+- `LeapSerializationException` : error in serializing / deserializing data.
+
+## Gson Support
+
+Leap Android SDK also has [Gson](https://github.com/google/gson) support. The Gson support has the same behaviors as the existing `org.json` implementation.
+
+The `leap_gson` package should be imported to enable Gson to serialize and deserialize Leap objects.
+
+```
+dependencies {
+  implementation("ai.liquid.leap:leap-gson:0.2.0")
+}
+```
+
+The following types are supported:
+
+- [`ChatMessage`](#chatmessage)
+- [`ChatMessageContent`](#chatmessagecontent)
+
+### Create Gson Object
+
+To create a Gson object that supports Leap objects, call `registerLeapAdapters` on the `GsonBuilder` before creating the Gson object.
+
+```kotlin
+import ai.liquid.leap.gson.registerLeapAdapters
+import com.google.gson.GsonBuilder
+
+val gson = GsonBuilder().registerLeapAdapters().create()
+```
+
+### Serializing and Deserializing Conversation History
+
+With a [`Conversation`](#conversation) object, simply call `Gson.toJson` to convert the chat message history into a JSON string. The returned JSON will be an array.
+
+```kotlin
+val json = gson.toJson(conversation.history)
+```
+
+To deserialize the conversation history from a JSON array, use `LeapGson.messageListTypeToken` as the type hint for Gson.
+
+```kotlin
+import ai.liquid.leap.gson.LeapGson
+
+val chatHistory: List<ChatMessage> = gson.fromJson(json, LeapGson.messageListTypeToken)
+```
+
+## Model Downloader
+
+LeapSDK Android Model Downloader module is a helper for downloading models from Leap Model Library.
+While it is good for early prototyping and demos, you may want to build your own model downloaders to support private
+models and have sophisticated authentication mechanisms.
+
+Model downloader runs as a [foreground service](https://developer.android.com/develop/background-work/services/fgs),
+which is required to show a notification visible to the users when the service is running. As a result, you will need
+to request the permission to show notifications. Please follow [Android official documents on notifications](https://developer.android.com/develop/ui/views/notifications)
+for more details. Here is only a simple code snippet of end-to-end usage of this module.
+
+```kotlin
+// In build.gradle.kts
+dependencies {
+  implementation("ai.liquid.leap:leap-model-downloader:0.2.0")
+}
+
+// in onCreate() of the activity
+val requestPermissionLauncher =
+      registerForActivityResult(
+        ActivityResultContracts.RequestPermission(),
+      ) {}
+modelDownloader = LeapModelDownloader(context)
+
+// When the model downloading is requested
+if (ContextCompat.checkSelfPermission(
+      context,
+      android.Manifest.permission.POST_NOTIFICATIONS,
+     ) != PackageManager.PERMISSION_GRANTED
+   ) {
+    requestPermissionLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+  }
+
+lifecycleScope.launch {
+  val modelToUse = LeapDownloadableModel.resolve("lfm2-1.2b", "lfm2-1.2b-20250710-8da4w")
+  if (modelToUse == null) {
+    Log.e(TAG, "Failed to retrieve LFM2 1.2B model")
+    return@launch
+  }
+  modelDownloader.requestDownloadModel(modelToUse)
+}
+```
+
+### LeapModelDownloader
+
+`LeapModelDownloader` is the instance to make request of downloading models and to query the status of a model download request.
+
+```kotlin
+class LeapModelDownloader(
+    private val context: Context,
+    modelFileDir: File? = null,
+    private val extraHTTPRequestHeaders: Map<String, String> = mapOf(),
+    private val notificationConfig: LeapModelDownloaderNotificationConfig = LeapModelDownloaderNotificationConfig(),
+) {
+  fun getModelFile(model: DownloadableModel): File
+  fun requestDownloadModel(model: DownloadableModel, forceDownload: Boolean = false)
+  fun requestStopDownload(model: DownloadableModel)
+  suspend fun queryStatus(model: DownloadableModel): ModelDownloadStatus
+  fun requestStopService()
+}
+```
+
+#### Constructor parameters
+
+- `context`: The Android context to retrieve cache directory and launch services. The activity context works for this purpose.
+- `modelFileDir`: The path to store model files. If it is not set, a path in the app's external file dir will be used.
+- `extraHTTPRequestHeaders`: Any extra HTTP request headers to send when downloading a model.
+- `notificationConfig`: Configuration on the content of Android notifications visible to the users.
+
+#### getModelFile
+
+Return a file object of the model file based on the `DownloadableModel` instance. The file may not exists.
+
+#### requestDownloadModel
+
+Make a request to download the model. If the model file already exists locally, it won't be downloaded.
+
+- `model`: A [`DownloadableModel`](#downloadablemodel) instance.
+- `forceDownload`: If it's true, downloader will remove the model bundle file that exists locally and to conduct the download.
+
+#### requestStopDownload
+
+Make a request to stop downloading a model.
+
+#### queryStatus
+
+Query the status of the model. The return value is a `ModelDownloadStatus` object:
+
+```kotlin
+data class ModelDownloadStatus(val type: ModelDownloadStatusType, val progress: Double)
+```
+
+- `type` field has 3 possible values: `NOT_ON_LOCAL`, `DOWNLOAD_IN_PROGRESS` and `DOWNLOADED`.
+- `progress` is a value within 0 to 1.0 indicates the current progress of the model downloading.
+
+#### requestStopService
+
+Make a request to stop the foreground service of the model downloader.
+
+### DownloadableModel
+
+`DownloadableModel` is an interface to describe the model can be downloaded by the LeapSDK Model Downloader.
+
+```kotlin
+interface DownloadableModel {
+  val uri: Uri
+  val name: String
+  val localFilename: String
+}
+```
+
+- `uri`: The URI of the model to download.
+- `name`: A user-friendly name of the model. It will be displayed in the notification.
+- `localFilename`: The filename to store the model bundle file locally.
+
+### LeapDownloadableModel
+
+`LeapDownloadableModel` implements [`DownloadableModel`](#downloadablemodel).
+It is designed to download models from Leap Model Library. `resolve` method is provided to retrieve the model
+from Leap Model Library.
+
+```kotlin
+class LeapDownloadableModel {
+  companion object {
+    suspend fun resolve(modelSlug: String, quantizationSlug: String) : LeapDownloadableModel?
+  }
+}
+```
+
+The `resolve` method accepts 2 parameters:
+
+- `modelSlug`: The model slug that identifies the model. It is usually the lowercase string of the model name. For example, the slug of `LFM2-1.2B` is `lfm2-1.2b`.
+- `quantizationSlug`: The model quantization slug. It can be found in the "Available quantizations" section of the model card.
