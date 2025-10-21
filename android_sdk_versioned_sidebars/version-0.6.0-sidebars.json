@@ -1,13 +1,13 @@
 {
-  "iosSdkSidebar": [
+  "android_sdk": [
     {
       "type": "doc",
-      "id": "ios-quick-start-guide",
+      "id": "android-quick-start-guide",
       "label": "Quick Start"
     },
     {
       "type": "doc",
-      "id": "ios-api-spec",
+      "id": "android-api-spec",
       "label": "API Reference"
     },
     {
@@ -19,11 +19,6 @@
       "type": "doc",
       "id": "function-calling",
       "label": "Function Calling"
-    },
-    {
-      "type": "doc",
-      "id": "cloud-ai-comparison",
-      "label": "Comparison with Cloud AI API"
     }
   ]
 }

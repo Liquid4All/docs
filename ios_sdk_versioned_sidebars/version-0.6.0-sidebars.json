@@ -1,5 +1,5 @@
 {
-  "iosSdkSidebar": [
+  "ios_sdk": [
     {
       "type": "doc",
       "id": "ios-quick-start-guide",
@@ -19,11 +19,6 @@
       "type": "doc",
       "id": "function-calling",
       "label": "Function Calling"
-    },
-    {
-      "type": "doc",
-      "id": "cloud-ai-comparison",
-      "label": "Comparison with Cloud AI API"
     }
   ]
 }

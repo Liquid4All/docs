@@ -1,5 +1,5 @@
 {
-  "androidSdkSidebar": [
+  "android_sdk": [
     {
       "type": "doc",
       "id": "android-quick-start-guide",
@@ -14,16 +14,6 @@
       "type": "doc",
       "id": "constrained-generation",
       "label": "Constrained Generation"
-    },
-    {
-      "type": "doc",
-      "id": "function-calling",
-      "label": "Function Calling"
-    },
-    {
-      "type": "doc",
-      "id": "cloud-ai-comparison",
-      "label": "Comparison with Cloud AI API"
     }
   ]
 }

@@ -1,7 +1,7 @@
 import type {SidebarsConfig} from '@docusaurus/plugin-content-docs';
 
 const sidebars: SidebarsConfig = {
-  iosSdkSidebar: [
+  ios_sdk: [
     { type: 'doc', id: 'ios-quick-start-guide', label: 'Quick Start' },
     { type: 'doc', id: 'ios-api-spec', label: 'API Reference' },
     { type: 'doc', id: 'constrained-generation', label: 'Constrained Generation' },
