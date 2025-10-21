@@ -96,7 +96,7 @@ async function processModelStat(
   let new_downloads: number | null = null;
   let new_likes: number | null = null;
 
-  if (yesterdayEntry) {
+  if (yesterdayEntry != null) {
     new_downloads = modelData.downloadCount - yesterdayEntry.total_downloads;
     new_likes = modelData.likeCount - yesterdayEntry.total_likes;
     console.debug(

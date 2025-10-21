@@ -92,6 +92,7 @@ export const searchLfm2ModelsFromWebQuery = async (
 
   const newModelSlugs = webQueryModelSlugs.filter((slug) => !existingModelSlugs.has(slug));
   const models: HfModelStatEntry[] = [];
+  console.info('New models from web query:', newModelSlugs.length);
 
   for (const model of newModelSlugs) {
     const modelResponse = await getHfModel(model);
@@ -122,9 +123,15 @@ export const searchAllLfm2Models = async (): Promise<HfModelStatEntry[]> => {
       ])
     );
 
-    const allModels: HfModelStatEntry[] = [
-      ...new Set([...modelsFromApiQuery, ...modelsFromLiquidCollection, ...modelsFromWebQuery]),
-    ];
+    const allModels: HfModelStatEntry[] = Object.values(
+      [...modelsFromApiQuery, ...modelsFromLiquidCollection, ...modelsFromWebQuery].reduce(
+        (acc, model) => {
+          acc[model.name] = model;
+          return acc;
+        },
+        {} as Record<string, HfModelStatEntry>
+      )
+    );
     console.info(`Total unique models discovered: ${allModels.length}`);
 
     return allModels;
