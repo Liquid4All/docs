@@ -1,3 +1,21 @@
+export interface HubModelResponse {
+  id: string;
+  downloads?: number;
+  downloadsAllTime?: number;
+  likes?: number;
+  cardData?: {
+    base_model?: string;
+  };
+  author?: string;
+  tags?: string[];
+  config?: {
+    model_type?: string;
+  };
+  gguf?: {
+    architecture?: string;
+  };
+}
+
 export interface HfModelStatEntry {
   name: string;
   downloadCount: number;
