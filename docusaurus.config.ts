@@ -137,31 +137,34 @@ const config: Config = {
       },
       items: [
         {
-          type: 'docSidebar',
-          sidebarId: 'tutorialSidebar',
+          type: 'dropdown',
+          label: 'Leap',
           position: 'left',
-          label: 'Docs',
-        },
-        {
-          type: 'docSidebar',
-          docsPluginId: 'ios_sdk',
-          sidebarId: 'ios_sdk',
-          position: 'left',
-          label: 'iOS SDK',
-        },
-        {
-          type: 'docSidebar',
-          docsPluginId: 'android_sdk',
-          sidebarId: 'android_sdk',
-          position: 'left',
-          label: 'Android SDK',
-        },
-        {
-          type: 'docSidebar',
-          docsPluginId: 'leap_bundle',
-          sidebarId: 'leapBundleSidebar',
-          position: 'left',
-          label: 'Model Bundling',
+          items: [
+            {
+              type: 'docSidebar',
+              sidebarId: 'tutorialSidebar',
+              label: 'Docs',
+            },
+            {
+              type: 'docSidebar',
+              docsPluginId: 'ios_sdk',
+              sidebarId: 'ios_sdk',
+              label: 'iOS SDK',
+            },
+            {
+              type: 'docSidebar',
+              docsPluginId: 'android_sdk',
+              sidebarId: 'android_sdk',
+              label: 'Android SDK',
+            },
+            {
+              type: 'docSidebar',
+              docsPluginId: 'leap_bundle',
+              sidebarId: 'leapBundleSidebar',
+              label: 'Model Bundling',
+            },
+          ],
         },
         {
           type: 'docSidebar',
