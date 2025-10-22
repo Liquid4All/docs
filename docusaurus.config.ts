@@ -6,7 +6,7 @@ import {PluginOptions} from '@docusaurus/plugin-content-docs';
 // This runs in Node.js - Don't use client-side code here (browser APIs, JSX...)
 
 const config: Config = {
-  title: 'Liquid Documentation',
+  title: 'Liquid Edge AI Platform',
   favicon: 'img/favicon.ico',
 
   // Future flags, see https://docusaurus.io/docs/api/docusaurus-config#future
@@ -53,21 +53,7 @@ const config: Config = {
           // editUrl:
           //     'https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/',
         },
-        blog: {
-          showReadingTime: true,
-          feedOptions: {
-            type: ['rss', 'atom'],
-            xslt: true,
-          },
-          // Please change this to your repo.
-          // Remove this to remove the "edit this page" links.
-          editUrl:
-              'https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/',
-          // Useful options to enforce blogging best practices
-          onInlineTags: 'warn',
-          onInlineAuthors: 'warn',
-          onUntruncatedBlogPosts: 'warn',
-        },
+        blog: false,
         theme: {
           customCss: './src/css/custom.css',
         },
@@ -120,15 +106,33 @@ const config: Config = {
         includeCurrentVersion: true,
       } satisfies Partial<PluginOptions>,
     ],
+    [
+      '@docusaurus/plugin-content-docs',
+      {
+        id: 'leap_bundle',
+        path: 'leap-bundle',
+        routeBasePath: 'leap-bundle',
+        sidebarPath: require.resolve('./sidebarsLeapBundle.ts'),
+      } satisfies Partial<PluginOptions>,
+    ],
+    [
+      '@docusaurus/plugin-content-docs',
+      {
+        id: 'example',
+        path: 'example',
+        routeBasePath: 'example',
+        sidebarPath: require.resolve('./sidebarsExample.ts'),
+      } satisfies Partial<PluginOptions>,
+    ],
   ],
 
   themeConfig: {
     // Replace with your project's social card
     image: 'img/docusaurus-social-card.jpg',
     navbar: {
-      title: 'Home',
+      title: 'Liquid AI Docs',
       logo: {
-        alt: 'Logo',
+        alt: 'Liquid AI Logo',
         src: 'img/logo.svg',
       },
       items: [
@@ -136,7 +140,7 @@ const config: Config = {
           type: 'docSidebar',
           sidebarId: 'tutorialSidebar',
           position: 'left',
-          label: 'Tutorial',
+          label: 'Docs',
         },
         {
           type: 'docSidebar',
@@ -153,6 +157,20 @@ const config: Config = {
           label: 'Android SDK',
         },
         {
+          type: 'docSidebar',
+          docsPluginId: 'leap_bundle',
+          sidebarId: 'leapBundleSidebar',
+          position: 'left',
+          label: 'Model Bundling',
+        },
+        {
+          type: 'docSidebar',
+          docsPluginId: 'example',
+          sidebarId: 'exampleSidebar',
+          position: 'left',
+          label: 'Example',
+        },
+        {
           type: 'docsVersionDropdown',
           docsPluginId: 'ios_sdk',
           position: 'right',
@@ -166,7 +184,6 @@ const config: Config = {
           // This attribute must be false to auto show / hide the dropdown using custom css
           dropdownActiveClassDisabled: false,
         },
-        {to: '/blog', label: 'Blog', position: 'left'},
         {
           href: 'https://github.com/Liquid4All',
           label: 'GitHub',
@@ -187,8 +204,20 @@ const config: Config = {
           title: 'Docs',
           items: [
             {
-              label: 'Tutorial',
+              label: 'Introduction',
               to: '/docs/intro',
+            },
+            {
+              label: 'iOS SDK',
+              to: '/ios-sdk',
+            },
+            {
+              label: 'Android SDK',
+              to: '/android-sdk',
+            },
+            {
+              label: 'Model Bundling',
+              to: '/leap-bundle/quick-start',
             },
           ],
         },
@@ -196,16 +225,12 @@ const config: Config = {
           title: 'Community',
           items: [
             {
-              label: 'Stack Overflow',
-              href: 'https://stackoverflow.com/questions/tagged/docusaurus',
-            },
-            {
               label: 'Discord',
-              href: 'https://discordapp.com/invite/docusaurus',
+              href: 'https://discord.gg/liquid-ai',
             },
             {
               label: 'X',
-              href: 'https://x.com/docusaurus',
+              href: 'https://x.com/LiquidAI_',
             },
           ],
         },
@@ -213,17 +238,17 @@ const config: Config = {
           title: 'More',
           items: [
             {
-              label: 'Blog',
-              to: '/blog',
+              label: 'GitHub',
+              href: 'https://github.com/Liquid4All',
             },
             {
-              label: 'GitHub',
-              href: 'https://github.com/facebook/docusaurus',
+              label: 'Liquid AI',
+              href: 'https://www.liquid.ai',
             },
           ],
         },
       ],
-      copyright: `Copyright © ${new Date().getFullYear()} My Project, Inc. Built with Docusaurus.`,
+      copyright: `Copyright © ${new Date().getFullYear()} Liquid AI. All rights reserved.`,
     },
     prism: {
       theme: prismThemes.github,
