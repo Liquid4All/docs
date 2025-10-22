@@ -1,0 +1,14 @@
+{
+  "ios_sdk": [
+    {
+      "type": "doc",
+      "id": "ios-quick-start-guide",
+      "label": "Quick Start"
+    },
+    {
+      "type": "doc",
+      "id": "ios-api-spec",
+      "label": "API Reference"
+    }
+  ]
+}

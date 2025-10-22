@@ -1,0 +1,384 @@
+
+
+# iOS Quick Start Guide
+
+## Prerequisites
+
+You should already have:
+
+- An iOS project created in Xcode. You may create an empty project with the wizard. Leap iOS SDK is Swift-first and requires iOS 15.0+ or macOS 12.0+.
+- A working iOS device or simulator. For real-time performance, a physical device is recommended.
+- Xcode 15.0+ with Swift 5.9+
+
+```swift
+// In your project's deployment target settings
+iOS Deployment Target: 15.0
+macOS Deployment Target: 12.0
+```
+
+:::warning
+
+
+  While the SDK works on iOS Simulator, performance may be significantly slower than on physical
+  devices. A physical iPhone or iPad is recommended for optimal inference speed.
+
+
+:::
+
+## Import the LeapSDK
+
+### Swift Package Manager (Recommended)
+
+Add LeapSDK to your project in Xcode:
+
+1. Open your project in Xcode
+2. Go to **File → Add Package Dependencies**
+3. Enter the repository URL: `https://github.com/Liquid4All/leap-ios.git`
+4. Select the latest version (0.4.0+)
+5. Add **both** `LeapSDK` and `LeapSDKTypes` products to your target
+
+:::important
+
+
+  Starting with version 0.4.0, you must add both `LeapSDK` and `LeapSDKTypes` products to your
+  target. LeapSDKTypes is a separate framework required for proper runtime linking.
+
+
+:::
+
+### CocoaPods
+
+Add LeapSDK to your `Podfile`:
+
+```ruby
+pod 'Leap-SDK', '~> 0.4.0'
+```
+
+Then run:
+
+```bash
+pod install
+```
+
+### Manual Installation
+
+Alternatively, you can download the pre-built XCFrameworks:
+
+1. Download both `LeapSDK.xcframework.zip` and `LeapSDKTypes.xcframework.zip` from [GitHub Releases](https://github.com/Liquid4All/leap-ios/releases)
+2. Unzip and drag both `LeapSDK.xcframework` and `LeapSDKTypes.xcframework` into your Xcode project
+3. Ensure **"Embed & Sign"** is selected for both frameworks in the frameworks settings
+
+:::important
+
+
+  Both XCFrameworks are required starting with version 0.4.0. Make sure to add and embed both
+  `LeapSDK.xcframework` and `LeapSDKTypes.xcframework` to avoid runtime linking errors.
+
+
+:::
+
+## Download Model Bundles
+
+Browse the [Leap Model Library](https://leap.liquid.ai/models) to find and download a model bundle that matches your needs.
+
+For iOS development, you have two options:
+
+### Option 1: Bundle with App (Static)
+
+Include the model bundle directly in your app bundle:
+
+1. Drag the downloaded `.bundle` file into your Xcode project
+2. Ensure **"Add to target"** is checked for your app target
+3. The model will be accessible via `Bundle.main.url(forResource:withExtension:)`
+
+### Option 2: Download On-Demand (Dynamic)
+
+You can also use the model downloader module to download model bundles on-demand in your app, which reduces initial app size and allows for dynamic model selection.
+
+#### Using LeapDownloadableModel
+
+The easiest way to download models is using `LeapDownloadableModel`, which automatically resolves download URLs from the [Leap Model Library](https://leap.liquid.ai/models):
+
+```swift
+import LeapModelDownloader
+
+// Resolve a model from the Leap API
+let model = await LeapDownloadableModel.resolve(
+    modelSlug: "qwen-0.6b",
+    quantizationSlug: "qwen-0.6b-20250610-8da4w"
+)
+
+if let model = model {
+    let downloader = LeapModelDownloader()
+
+    // Request download (non-blocking)
+    downloader.requestDownloadModel(model)
+
+    // Monitor download progress
+    let status = await downloader.queryStatus(model)
+    switch status {
+    case .notOnLocal:
+        print("Download not started")
+    case .downloadInProgress(let progress):
+        print("Download progress: \(Int(progress * 100))%")
+    case .downloaded:
+        print("Model ready!")
+        let modelFile = downloader.getModelFile(model)
+        // Use modelFile.url with Leap.load()
+    }
+}
+```
+
+#### Using HuggingFaceDownloadableModel
+
+For HuggingFace models, you can use the `HuggingFaceDownloadableModel`:
+
+```swift
+import LeapModelDownloader
+
+let hfModel = HuggingFaceDownloadableModel(
+    ownerName: "LiquidAI",
+    repoName: "LeapBundles",
+    filename: "qwen3-0_6b_8da4w_4096.bundle"
+)
+
+let downloader = LeapModelDownloader()
+downloader.requestDownloadModel(hfModel)
+```
+
+See the [Model Downloader API documentation](ios-api-spec#leapmodeldownloader) for complete details on implementing on-demand model downloading.
+
+:::info
+
+
+  Note: The model downloader is intended for prototyping and development. For production apps,
+  consider bundling models directly or implementing your own secure download system.
+
+
+:::
+
+## Load Model in Code
+
+Import LeapSDK and load a model bundle using the `Leap.load` function. This function is async and should be called from a Task or async context:
+
+```swift
+import LeapSDK
+
+class ChatViewModel: ObservableObject {
+    @Published var isModelLoading = true
+    private var modelRunner: ModelRunner?
+
+    func setupModel() async {
+        do {
+            guard let modelURL = Bundle.main.url(
+                forResource: "qwen3-0_6b",
+                withExtension: "bundle"
+            ) else {
+                print("Could not find model bundle")
+                return
+            }
+
+            modelRunner = try await Leap.load(url: modelURL)
+            isModelLoading = false
+        } catch {
+            print("Failed to load model: \(error)")
+        }
+    }
+}
+```
+
+## Generate Content with the Model
+
+Create a conversation from the model runner and use it to generate streaming responses:
+
+```swift
+import LeapSDK
+
+@MainActor
+func sendMessage(_ input: String) async {
+    guard let modelRunner = modelRunner else { return }
+
+    // Create a conversation
+    let conversation = Conversation(modelRunner: modelRunner, history: [])
+
+    // Create a user message
+    let userMessage = ChatMessage(role: .user, content: [.text(input)])
+
+    // Generate streaming response
+    let stream = conversation.generateResponse(message: userMessage)
+
+    for await response in stream {
+        switch response {
+        case .chunk(let text):
+            print("Received text chunk: \(text)")
+            // Update your UI with the text chunk
+        case .reasoningChunk(let text):
+            print("Received reasoning chunk: \(text)")
+            // Handle reasoning content if needed
+        case .complete(let usage, let completeInfo):
+            print("Generation complete!")
+            print("Usage: \(usage)")
+            print("Finish reason: \(completeInfo.finishReason)")
+            if let stats = completeInfo.stats {
+                print("Generation stats: \(stats.totalTokens) tokens at \(stats.tokenPerSecond) tok/s")
+            }
+        }
+    }
+}
+```
+
+## Complete Example
+
+For a complete, working example, see our GitHub repository:
+
+- **[LeapChatExample](https://github.com/Liquid4All/LeapSDK-Examples/tree/main/iOS/LeapChatExample)** - Full chat interface with SwiftUI
+- **[LeapSloganExample](https://github.com/Liquid4All/LeapSDK-Examples/tree/main/iOS/LeapSloganExample)** - Simple slogan generator
+
+Here's a minimal working example using modern SwiftUI with `@Observable`:
+
+```swift
+import SwiftUI
+import LeapSDK
+import Observation
+
+@main
+struct LeapChatApp: App {
+    @State private var chatStore = ChatStore()
+
+    var body: some Scene {
+        WindowGroup {
+            ContentView()
+                .environment(chatStore)
+        }
+    }
+}
+
+struct ContentView: View {
+    @Environment(ChatStore.self) private var chatStore
+    @State private var inputText = ""
+
+    var body: some View {
+        VStack {
+            if chatStore.isModelLoading {
+                ProgressView("Loading model...")
+                    .task {
+                        await chatStore.setupModel()
+                    }
+            } else if let error = chatStore.error {
+                Text("Error: \(error)")
+                    .foregroundColor(.red)
+            } else {
+                // Message list
+                ScrollView {
+                    ForEach(chatStore.messages, id: \.self) { message in
+                        Text(message)
+                            .padding()
+                    }
+                }
+
+                // Input field
+                HStack {
+                    TextField("Type a message", text: $inputText)
+                        .textFieldStyle(RoundedBorderTextFieldStyle())
+
+                    Button("Send") {
+                        Task {
+                            await chatStore.sendMessage(inputText)
+                            inputText = ""
+                        }
+                    }
+                    .disabled(chatStore.isGenerating || inputText.isEmpty)
+                }
+                .padding()
+            }
+        }
+    }
+}
+
+@Observable
+class ChatStore {
+    var isModelLoading = true
+    var isGenerating = false
+    var messages: [String] = []
+    var error: String?
+
+    private var modelRunner: ModelRunner?
+    private var conversation: Conversation?
+
+    @MainActor
+    func setupModel() async {
+        do {
+            guard let modelURL = Bundle.main.url(
+                forResource: "qwen3-0_6b",
+                withExtension: "bundle"
+            ) else {
+                error = "Could not find model bundle"
+                return
+            }
+
+            modelRunner = try await Leap.load(url: modelURL)
+            conversation = Conversation(modelRunner: modelRunner!, history: [])
+            isModelLoading = false
+        } catch {
+            self.error = error.localizedDescription
+            isModelLoading = false
+        }
+    }
+
+    @MainActor
+    func sendMessage(_ input: String) async {
+        guard let conversation = conversation else { return }
+
+        isGenerating = true
+        let userMessage = ChatMessage(role: .user, content: [.text(input)])
+        messages.append("User: \(input)")
+
+        var assistantResponse = ""
+        let stream = conversation.generateResponse(message: userMessage)
+
+        for await response in stream {
+            switch response {
+            case .chunk(let text):
+                assistantResponse += text
+            case .reasoningChunk(_):
+                break // Handle reasoning if needed
+            case .complete(_, _):
+                messages.append("Assistant: \(assistantResponse)")
+                isGenerating = false
+            }
+        }
+    }
+}
+```
+
+:::info
+
+
+  For production apps, check out the complete examples on GitHub which include proper error
+  handling, typing indicators, message persistence, and polished UI components.
+
+
+:::
+
+## Key API Concepts
+
+- **`Leap.load(url:)`**: Loads a model bundle and returns a `ModelRunner`
+- **`Conversation`**: Manages chat history and generates responses
+- **`ChatMessage`**: Represents messages with role (`.user`, `.assistant`, `.system`) and content
+- **`MessageResponse`**: Streaming response types (`.chunk`, `.reasoningChunk`, `.complete`)
+
+## Performance Tips
+
+- Load models once and reuse the `ModelRunner` instance
+- Use physical devices for better inference performance
+- Consider showing loading indicators as model loading can take several seconds
+- Handle errors gracefully as model loading may fail on low-memory devices
+
+## Examples
+
+See [LeapSDK Examples](https://github.com/Liquid4All/leap-ios/tree/main/Examples) for complete example applications demonstrating:
+
+- Basic chat interface with SwiftUI
+- Streaming response handling
+- Error handling and model loading states
+- Message history management

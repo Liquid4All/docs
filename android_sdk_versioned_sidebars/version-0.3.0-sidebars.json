@@ -1,0 +1,19 @@
+{
+  "android_sdk": [
+    {
+      "type": "doc",
+      "id": "android-quick-start-guide",
+      "label": "Quick Start"
+    },
+    {
+      "type": "doc",
+      "id": "android-api-spec",
+      "label": "API Reference"
+    },
+    {
+      "type": "doc",
+      "id": "constrained-generation",
+      "label": "Constrained Generation"
+    }
+  ]
+}
