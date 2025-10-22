@@ -142,26 +142,19 @@ const config: Config = {
           position: 'left',
           items: [
             {
-              type: 'docSidebar',
-              sidebarId: 'tutorialSidebar',
+              to: '/docs/intro',
               label: 'Docs',
             },
             {
-              type: 'docSidebar',
-              docsPluginId: 'ios_sdk',
-              sidebarId: 'ios_sdk',
+              to: '/ios-sdk/ios-quick-start-guide',
               label: 'iOS SDK',
             },
             {
-              type: 'docSidebar',
-              docsPluginId: 'android_sdk',
-              sidebarId: 'android_sdk',
+              to: '/android-sdk/android-quick-start-guide',
               label: 'Android SDK',
             },
             {
-              type: 'docSidebar',
-              docsPluginId: 'leap_bundle',
-              sidebarId: 'leapBundleSidebar',
+              to: '/leap-bundle/quick-start',
               label: 'Model Bundling',
             },
           ],

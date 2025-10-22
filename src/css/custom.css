@@ -29,6 +29,7 @@
   --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.3);
 }
 
-.navbar__item.dropdown:not(:has(.navbar__link.active)) {
+/* Hide version dropdowns when not on the respective SDK pages */
+.navbar__item.dropdown.dropdown-version:not(:has(.navbar__link.active)) {
   display: none;
 }
