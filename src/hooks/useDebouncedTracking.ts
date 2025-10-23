@@ -21,17 +21,17 @@ export const useDebouncedTracking = ({
     transformRef.current = transform;
   }, [transform]);
 
-  const debouncedTrack = useMemo(
-    () =>
-      debounce((data: any) => {
-        if (data == null) {
-          return;
-        }
-        const trackingData = transformRef.current(data);
-        trackClientEvent(eventName, trackingData);
-      }, delayMillis),
-    [delayMillis, eventName]
-  );
+  const debouncedTrack = useMemo(() => {
+    const trackFn = (data: any) => {
+      if (data == null) {
+        return;
+      }
+      const trackingData = transformRef.current(data);
+      trackClientEvent(eventName, trackingData);
+    };
+
+    return debounce(trackFn, delayMillis);
+  }, [delayMillis, eventName]);
 
   useEffect(() => {
     return () => {
