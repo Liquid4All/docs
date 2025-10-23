@@ -43,7 +43,8 @@
     "postcss.config.mjs",
     "tailwind.config",
     ".storybook/preview.tsx",
-    ".storybook/main.ts"
+    ".storybook/main.ts",
+    ".eslintrc.js"
   ],
   "exclude": ["node_modules", ".next"]
 }
