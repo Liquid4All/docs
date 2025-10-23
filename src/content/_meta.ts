@@ -5,6 +5,10 @@ export default {
     type: 'page',
     display: 'hidden',
   },
+  index: {
+    type: 'page',
+    display: 'hidden',
+  },
   lfm: {
     type: 'page',
     title: 'LFM',
