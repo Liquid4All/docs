@@ -5,12 +5,139 @@ theme:
   timestamp: false
 ---
 
-import { Cards } from 'nextra/components';
+<h1 className="text-center text-5xl md:text-6xl lg:text-7xl font-normal tracking-tight leading-tight">
+  Liquid for Developers
+</h1>
 
-# Liquid Documentation
+<div className="mt-8 mb-12">
+  <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-16">
+    <a href="/lfm" className="block border-2 border-border dark:border-purple-400 rounded-xl p-8 hover:shadow-md transition-all duration-200 bg-card min-h-[200px] flex flex-col justify-center items-center cursor-pointer hover:scale-105">
+      <div className="text-center">
+        <h3 className="text-2xl font-semibold mb-4 text-foreground">Liquid Foundation Models</h3>
+        <div className="text-base text-muted-foreground leading-relaxed">
+          Learn more about our SOTA text, vision, and audio models →
+        </div>
+      </div>
+    </a>
+    
+    <a href="/leap" className="block border-2 border-border dark:border-purple-400 rounded-xl p-8 hover:shadow-md transition-all duration-200 bg-card min-h-[200px] flex flex-col justify-center items-center cursor-pointer hover:scale-105">
+      <div className="text-center">
+        <h3 className="text-2xl font-semibold mb-4 text-foreground">LEAP by Liquid AI</h3>
+        <div className="text-base text-muted-foreground leading-relaxed">
+          Our developer tool for easily choosing, customizing, and deploying your ideal model →
+        </div>
+      </div>
+    </a>
+  </div>
 
-<Cards>
-  <Cards.Card title="Liquid Foundation Model" href="/lfm" />
-  <Cards.Card title="Liquid Edge AI Platform" href="/leap" />
-  <Cards.Card title="Examples" href="/examples" />
-</Cards>
+<div className="mb-12">
+  <h2 className="text-2xl font-semibold mb-6 text-center">Featured Examples</h2>
+  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+    <div
+      className="rounded-xl p-6 min-h-[280px] relative overflow-hidden group cursor-pointer transition-transform hover:scale-105"
+      style={{ background: 'linear-gradient(135deg, #5603ad 0%, #864bc4 50%, #cd81f1 100%)' }}
+    >
+      <div className="relative z-10 h-full flex flex-col justify-between text-white">
+        <div>
+          <h3 className="text-xl font-semibold mb-3 leading-tight">
+            Deploy an OpenAI-compatible LLM service
+          </h3>
+          <p className="text-sm opacity-90 leading-relaxed">
+            Run large language models with a drop-in replacement for the OpenAI API
+          </p>
+        </div>
+        <div className="flex justify-end">
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M17 8l4 4m0 0l-4 4m4-4H3"
+            />
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <div
+      className="rounded-xl p-6 min-h-[280px] relative overflow-hidden group cursor-pointer transition-transform hover:scale-105"
+      style={{ background: 'linear-gradient(135deg, #864bc4 0%, #cd81f1 50%, #f0abfc 100%)' }}
+    >
+      <div className="relative z-10 h-full flex flex-col justify-between text-white">
+        <div>
+          <h3 className="text-xl font-semibold mb-3 leading-tight">
+            Custom pet art from Flux with Hugging Face and Gradio
+          </h3>
+          <p className="text-sm opacity-90 leading-relaxed">
+            Fine-tune an image generation model on pictures of your pet
+          </p>
+        </div>
+        <div className="flex justify-end">
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M17 8l4 4m0 0l-4 4m4-4H3"
+            />
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <div
+      className="rounded-xl p-6 min-h-[280px] relative overflow-hidden group cursor-pointer transition-transform hover:scale-105"
+      style={{ background: 'linear-gradient(135deg, #5603ad 20%, #864bc4 60%, #3b82f6 100%)' }}
+    >
+      <div className="relative z-10 h-full flex flex-col justify-between text-white">
+        <div>
+          <h3 className="text-xl font-semibold mb-3 leading-tight">Run llama.cpp</h3>
+          <p className="text-sm opacity-90 leading-relaxed">
+            Run DeepSeek-R1 and Phi-4 on llama.cpp
+          </p>
+        </div>
+        <div className="flex justify-end">
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M17 8l4 4m0 0l-4 4m4-4H3"
+            />
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <div
+      className="rounded-xl p-6 min-h-[280px] relative overflow-hidden group cursor-pointer transition-transform hover:scale-105"
+      style={{ background: 'linear-gradient(135deg, #cd81f1 0%, #a855f7 40%, #5603ad 100%)' }}
+    >
+      <div className="relative z-10 h-full flex flex-col justify-between text-white">
+        <div>
+          <h3 className="text-xl font-semibold mb-3 leading-tight">Deploy vibe coding at scale</h3>
+          <p className="text-sm opacity-90 leading-relaxed">
+            Build an AI coding platform for thousands of users
+          </p>
+        </div>
+        <div className="flex justify-end">
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M17 8l4 4m0 0l-4 4m4-4H3"
+            />
+          </svg>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+  <div className="text-center">
+    <div className="text-sm text-muted-foreground">
+      + links to Discord, Hackathons, Informal Newsletter
+    </div>
+  </div>
+</div>

@@ -96,11 +96,10 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
               content: null,
             }}
             footer={<Footer key="footer" />}
-            darkMode={false}
+            darkMode={true}
             search={null}
             nextThemes={{
-              defaultTheme: 'light',
-              forcedTheme: 'light',
+              defaultTheme: 'system',
             }}
           >
             <Container>

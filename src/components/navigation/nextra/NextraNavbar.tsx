@@ -7,6 +7,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Container } from '@/components/Container';
 import CustomSearch from '@/components/CustomSearch';
 import { Logo } from '@/components/Logo';
+import { ThemeToggle } from '@/components/ThemeToggle';
 import MainNavigation from '@/components/navigation/MainNavigation';
 import MobileNavigationButton from '@/components/navigation/MobileNavigationButton';
 import { TITLE } from '@/constants';
@@ -74,6 +75,7 @@ export default function NextraNavbar({ pageMap = [] }: NextraNavbarProps) {
       >
         <MainNavigation />
         <CustomSearch />
+        <ThemeToggle />
         <MobileNavigationButton onToggle={handleMobileMenuToggle} />
       </Navbar>
 
