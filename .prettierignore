@@ -19,6 +19,3 @@ htmlcov
 __pycache__
 
 _pagefind
-
-packages/database/prisma/migrations/
-packages/database/generated/
