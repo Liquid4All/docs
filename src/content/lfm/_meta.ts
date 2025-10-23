@@ -1,7 +1,7 @@
 import { MetaRecord } from 'nextra';
 
 const meta: MetaRecord = {
-  index: 'Liquid Foundation Model',
+  index: 'Overview',
 };
 
 export default meta;
