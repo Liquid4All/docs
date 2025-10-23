@@ -33,7 +33,7 @@ import { AnalyticEvent } from '@/lib/analytics';
 import { trackClientEvent } from '@/lib/analytics/helpers';
 import { FEEDBACK_PLACEHOLDERS, FEEDBACK_TITLES } from '@/lib/feedback/constants';
 import { FeedbackRequestBody, FeedbackType } from '@/lib/feedback/types';
-import { isEmptyString } from "@/lib/string";
+import { isEmptyString } from '@/lib/string';
 
 interface FeedbackModalProps {
   isOpen: boolean;
