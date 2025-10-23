@@ -2,10 +2,10 @@
 
 import { PageMapItem } from 'nextra';
 import { Navbar } from 'nextra-theme-docs';
-import { Search } from 'nextra/components/search';
 import { useCallback, useEffect, useState } from 'react';
 
 import { Container } from '@/components/Container';
+import CustomSearch from '@/components/CustomSearch';
 import { Logo } from '@/components/Logo';
 import MainNavigation from '@/components/navigation/MainNavigation';
 import MobileNavigationButton from '@/components/navigation/MobileNavigationButton';
@@ -76,7 +76,7 @@ export default function NextraNavbar({ pageMap = [] }: NextraNavbarProps) {
         <MobileNavigationButton onToggle={handleMobileMenuToggle} />
       </Navbar>
 
-      {isMobile && <Search className="mt-2" />}
+      {isMobile && <CustomSearch className="mt-2" />}
 
       <MobileNavigation
         isOpen={mobileMenuOpen}

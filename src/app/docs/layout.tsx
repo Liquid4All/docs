@@ -2,6 +2,7 @@ import { Layout } from 'nextra-theme-docs';
 import { getPageMap } from 'nextra/page-map';
 
 import { Container } from '@/components/Container';
+import CustomSearch from '@/components/CustomSearch';
 import Footer from '@/components/Footer';
 import NextraNavbar from '@/components/navigation/nextra/NextraNavbar';
 
@@ -23,6 +24,7 @@ export default async function DocumentationLayout({ children }: { children: Reac
         }}
         footer={<Footer key="footer" />}
         darkMode={false}
+        search={<CustomSearch />}
         nextThemes={{
           defaultTheme: 'light',
           forcedTheme: 'light',

@@ -8,15 +8,7 @@ import { Head } from 'nextra/components';
 import { ReactNode } from 'react';
 import { Toaster } from 'sonner';
 
-import {
-  DEFAULT_GTM_ID,
-  DESCRIPTION,
-  DOMAIN_URL,
-  FULL_TITLE,
-  PRIVACY_POLICY_URL,
-  TERMS_OF_SERVICE_URL,
-  TITLE,
-} from '@/constants';
+import { DEFAULT_GTM_ID, DESCRIPTION, DOMAIN_URL, FULL_TITLE, TITLE } from '@/constants';
 import { cn } from '@/lib/utils';
 import '@/styles/tailwind.css';
 
@@ -83,7 +75,6 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
       </Head>
       <GoogleTagManager gtmId={process.env.NEXT_PUBLIC_GTM_ID ?? DEFAULT_GTM_ID} />
       <body className="h-full flex flex-col">
-
         {children}
         <Analytics />
         <Toaster position="top-right" />
