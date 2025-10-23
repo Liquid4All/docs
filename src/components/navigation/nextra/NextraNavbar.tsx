@@ -26,7 +26,7 @@ export default function NextraNavbar({ pageMap = [] }: NextraNavbarProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
 
-  const docNavItems = extractDocNavItems(pageMap, '/docs');
+  const docNavItems = extractDocNavItems(pageMap, '/');
 
   const handleMobileMenuToggle = useCallback((isOpen: boolean) => {
     setMobileMenuOpen(isOpen);

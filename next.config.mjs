@@ -12,7 +12,7 @@ const withNextra = nextra({
   },
   search: true,
   defaultShowCopyCode: true,
-  contentDirBasePath: '/docs',
+  contentDirBasePath: '/',
 });
 
 export default withSentryConfig(
