@@ -355,33 +355,33 @@
     from { transform: translateX(0); }
     to { transform: translateX(-50%); }
   }
-  
+
   @keyframes marquee-right {
     from { transform: translateX(-50%); }
     to { transform: translateX(0); }
   }
-  
+
   .animate-marquee-left {
     animation: marquee-left 30s linear infinite;
   }
-  
+
   .animate-marquee-right {
     animation: marquee-right 30s linear infinite;
   }
-  
+
   .hover\:pause:hover {
     animation-play-state: paused;
   }
-  
+
   @media (prefers-reduced-motion: reduce) {
-    .animate-marquee-left, 
+    .animate-marquee-left,
     .animate-marquee-right {
       animation: none !important;
     }
   }
 
     /*** Custom Gradient Border for curvy wave ***/
-  
+
     @media (min-width: 1024px) {
       .gradient-box-1 {
         border-radius: 0 0 20px 0;
@@ -398,7 +398,7 @@
         background-origin: border-box;
         background-clip: padding-box, border-box;
       }
-  
+
       .gradient-box-2 {
         border-radius: 20px 0 0 0;
         border-left: 2px solid transparent;
@@ -413,7 +413,7 @@
         background-origin: border-box;
         background-clip: padding-box, border-box;
       }
-  
+
       .gradient-box-3 {
         border-radius: 40px 0 0 0;
         border-left: 2px solid transparent;
@@ -429,7 +429,7 @@
         background-origin: border-box;
         background-clip: padding-box, border-box;
       }
-  
+
       .gradient-box-4::before {
         content: '';
         position: absolute;
@@ -439,7 +439,7 @@
         height: 100%;
         background: linear-gradient(to bottom, rgba(225, 114, 156, 1) 0%, rgba(206, 129, 236, 1) 100%);
       }
-      
+
       .gradient-box-4::after {
         content: '';
         position: absolute;
@@ -453,7 +453,7 @@
         border-top-right-radius: 20px;
         border-bottom-right-radius: 20px;
       }
-      
+
 
       .gradient-box-5 {
         border-radius: 0 0 0 20px;
@@ -569,134 +569,143 @@
   }
 }
 
-/**** Custom Nextra Styling ****/ 
+/**** Custom Nextra Styling ****/
+
+/*
+ * This is a hack to hide the default Nextra navigation links in the header.
+ * We are using a custom navigation component instead.
+ * TODO: use a more robust approach.
+ */
+header nav > * > a {
+  display: none;
+}
 
 .nextra-content {
-  .nextra-scrollbar {   
+  .nextra-scrollbar {
     @apply md:pt-8 md:pb-0 md:pl-0 font-normal;
-  
+
     button, a  {
         @apply text-sm font-normal -tracking-[0.3px] leading-[140%] py-1.5 px-2 rounded-md;
     }
-  
+
     button:hover {
         @apply text-accent! bg-muted-foreground/10;
     }
-  
+
     a:hover  {
         @apply text-sm text-accent! bg-muted-foreground/10;
     }
-  
+
     li.active a {
         @apply text-accent font-bold bg-muted-foreground/10!;
-    } 
+    }
   }
-  
+
   article {
     @apply px-1 lg:px-14 md:pt-7 md:py-2 transition-all duration-300;
-  
+
     h1 {
       @apply text-3xl sm:text-4xl font-normal -tracking-[0.48px] leading-[120%];
     }
-  
+
     h2 {
       @apply text-2xl sm:text-3xl font-normal -tracking-[0.48px] leading-[120%] py-[1rem] mt-5;
     }
-  
+
     h2.border {
       @apply border-b-muted-foreground;
     }
-  
+
     h3 {
       @apply text-xl sm:text-2xl font-normal -tracking-[0.48px] leading-[120%] mt-[2rem] md:mt-[2rem];
     }
-  
+
     h4 {
       @apply text-xl font-normal -tracking-[0.48px] leading-[120%];
     }
-  
+
     h5 {
       @apply text-xl font-normal -tracking-[0.48px] leading-[120%];
     }
-  
+
     p {
       @apply mt-2 leading-6 text-foreground/80;
     }
-    
+
     ul, li, ol, tr, td, dd, dt, dl {
       @apply my-1 text-foreground/80;
     }
-  
+
     ol, ul, dl, img {
       @apply my-2;
     }
-  
-    pre { 
+
+    pre {
       @apply bg-[#3a3a3a]; /* Force dark code block */
-  
+
       button {
         @apply bg-white hover:bg-white/80; /* As the code block is dark, the copy button should be light */
-      } 
+      }
     }
   }
-  
+
   .nextra-breadcrumb {
     @apply text-sm -tracking-[0.3px] leading-[140%] text-muted-foreground bg-transparent mb-8 mt-3;
   }
-  
+
   .nextra-code {
     @apply my-2;
   }
-  
+
   .nextra-toc {
     p {
       @apply px-1 text-muted-foreground;
     }
-  
+
     a {
       @apply text-sm font-normal -tracking-[0.3px] leading-[140%] py-1.5 px-2 rounded-md;
     }
-  
+
     li {
       @apply my-1;
     }
-  
+
     ul {
       @apply pl-2;
     }
   }
-  
+
   .nextra-callout {
     p {
       @apply mt-0 text-xs leading-4 md:text-sm md:leading-6;
     }
   }
-  
+
   .nextra-cards {
     a {
       @apply border-muted-foreground/20 bg-background/50 text-foreground hover:bg-background;
     }
-  } 
-  
+  }
+
   .nextra-navbar-blur {
     @apply backdrop-blur-none! bg-muted/90!;
   }
-  
+
   .nextra-border {
     a {
       @apply text-sm -tracking-[0.3px] leading-[140%] text-muted-foreground hover:text-accent;
     }
   }
-  
+
   .nextra-hamburger {
     @apply hidden;
   }
-  
+
   .nextra-sidebar-footer {
     @apply bg-transparent mx-0 border-t-0 sticky top-0;
   }
 
-  .nextra-search {   
+  .nextra-search {
     input {
       @apply bg-muted-foreground/10 text-sm md:text-base text-foreground;
     }
@@ -705,7 +714,7 @@
       @apply text-muted-foreground;
     }
   }
-  
+
   header {
     .nextra-navbar-blur {
       @apply bg-transparent border-none;

@@ -5,9 +5,7 @@ import Link from 'next/link';
 import { FC, useEffect, useState } from 'react';
 
 import { Logo } from '@/components/Logo';
-import {
-  generalNavigations,
-} from '@/components/navigation/navigationConstants';
+import { generalNavigations } from '@/components/navigation/navigationConstants';
 import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
 import { TITLE } from '@/constants';
 

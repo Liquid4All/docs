@@ -20,8 +20,20 @@ const meta: MetaRecord = {
       </div>
     ),
   },
-  'leap-bundle': { title: 'Model Bundling Service', theme: { collapsed: true, copyPage: true } },
-  'edge-sdk': { title: 'Edge SDK', theme: { collapsed: true, copyPage: true } },
+  'leap-bundle': {
+    title: 'Model Bundling Service',
+    theme: {
+      collapsed: true,
+      copyPage: true,
+    },
+  },
+  'edge-sdk': {
+    title: 'Edge SDK',
+    theme: {
+      collapsed: true,
+      copyPage: true,
+    },
+  },
   'laptop-support': 'Laptop Support',
   '---': {
     type: 'separator',

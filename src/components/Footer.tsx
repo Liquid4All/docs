@@ -2,7 +2,6 @@
 
 import { IconExternalLink } from '@tabler/icons-react';
 import Link from 'next/link';
-import { useState } from 'react';
 
 import { Container } from '@/components/Container';
 import FeedbackButton from '@/components/FeedbackButton';
@@ -37,10 +36,9 @@ interface FooterType {
 
 const footerData: FooterType = {
   explore: [
-    { label: 'Models', href: '/models' },
-    { label: 'Documentation', href: '/docs' },
-    { label: 'Changelog', href: '/docs/changelog' },
-    { label: 'Pricing', href: '/pricing' },
+    { label: 'LFM', href: '/lfm' },
+    { label: 'LEAP', href: '/leap' },
+    { label: 'Examples', href: '/examples' },
     { label: 'Playground', href: PLAYGROUND_URL, external: true },
   ],
 

@@ -33,6 +33,6 @@ function walk(nodes: any[], baseRoute: string): NavNode[] {
   return result;
 }
 
-export function extractDocNavItems(pageMap: any[], baseRoute = '/docs'): NavNode[] {
+export function extractDocNavItems(pageMap: any[], baseRoute = '/'): NavNode[] {
   return walk(pageMap, baseRoute);
 }
