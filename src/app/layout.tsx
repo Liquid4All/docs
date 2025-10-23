@@ -11,7 +11,6 @@ import { ReactNode } from 'react';
 import { Toaster } from 'sonner';
 
 import { Container } from '@/components/Container';
-import CustomSearch from '@/components/CustomSearch';
 import Footer from '@/components/Footer';
 import NextraNavbar from '@/components/navigation/nextra/NextraNavbar';
 import { DEFAULT_GTM_ID, DESCRIPTION, DOMAIN_URL, FULL_TITLE, TITLE } from '@/constants';
@@ -98,7 +97,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
             }}
             footer={<Footer key="footer" />}
             darkMode={false}
-            search={<CustomSearch />}
+            search={null}
             nextThemes={{
               defaultTheme: 'light',
               forcedTheme: 'light',

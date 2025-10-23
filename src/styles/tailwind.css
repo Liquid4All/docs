@@ -571,6 +571,15 @@
 
 /**** Custom Nextra Styling ****/
 
+/*
+ * This is a hack to hide the default Nextra navigation links in the header.
+ * We are using a custom navigation component instead.
+ * TODO: use a more robust approach.
+ */
+header nav > * > a {
+  display: none;
+}
+
 .nextra-content {
   .nextra-scrollbar {
     @apply md:pt-8 md:pb-0 md:pl-0 font-normal;

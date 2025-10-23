@@ -73,6 +73,7 @@ export default function NextraNavbar({ pageMap = [] }: NextraNavbarProps) {
         className="bg-transparent! px-0! pt-[3px]"
       >
         <MainNavigation />
+        <CustomSearch />
         <MobileNavigationButton onToggle={handleMobileMenuToggle} />
       </Navbar>
 

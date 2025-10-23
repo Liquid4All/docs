@@ -34,7 +34,7 @@ const MainNavigation = ({}) => {
           ))}
         </div>
 
-        <div className="hidden lg:block h-5 w-2 border-r border-foreground/20"></div>
+        <div className="hidden lg:block h-5 border-r border-foreground/20"></div>
 
         <div className="flex flex-row justify-right gap-3">
           <Button
