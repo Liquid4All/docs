@@ -16,7 +16,10 @@ export const useDebouncedTracking = ({
   transform,
 }: TrackingConfig) => {
   const transformRef = useRef(transform);
-  transformRef.current = transform;
+
+  useEffect(() => {
+    transformRef.current = transform;
+  }, [transform]);
 
   const debouncedTrack = useMemo(
     () =>
