@@ -59,7 +59,6 @@ const MainNavigation = ({}) => {
             <span className="sr-only">Open LiquidAI GitHub</span>
             <IconBrandGithub aria-hidden="true" className="h-5.5 w-5.5" stroke={1.7} />
           </Button>
-          {/*{loaded && <ProfileDropdown isSignedIn={isSignedIn} user={user} />}*/}
         </div>
       </div>
     </nav>

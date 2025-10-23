@@ -1,11 +1,23 @@
 export default {
-  '*': {
-    type: 'page',
+  // '*': {
+  //   type: 'page',
+  //   display: 'hidden',
+  // },
+  index: {
     display: 'hidden',
   },
-  docs: {
+  lfm: {
     type: 'doc',
-    title: 'Documentation',
-    display: 'children',
+    title: 'LFM',
+  },
+  leap: {
+    // type: 'doc',
+    title: '',
+    // display: 'children',
+  },
+  examples: {
+    // type: 'doc',
+    title: 'Examples',
+    // display: 'children',
   },
 };

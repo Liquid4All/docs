@@ -3,11 +3,17 @@ import { GoogleTagManager } from '@next/third-parties/google';
 import { Analytics } from '@vercel/analytics/next';
 import { type Metadata } from 'next';
 import { Inter, Lexend } from 'next/font/google';
+import { Layout } from 'nextra-theme-docs';
 import 'nextra-theme-docs/style.css';
 import { Head } from 'nextra/components';
+import { getPageMap } from 'nextra/page-map';
 import { ReactNode } from 'react';
 import { Toaster } from 'sonner';
 
+import { Container } from '@/components/Container';
+import CustomSearch from '@/components/CustomSearch';
+import Footer from '@/components/Footer';
+import NextraNavbar from '@/components/navigation/nextra/NextraNavbar';
 import { DEFAULT_GTM_ID, DESCRIPTION, DOMAIN_URL, FULL_TITLE, TITLE } from '@/constants';
 import { cn } from '@/lib/utils';
 import '@/styles/tailwind.css';
@@ -53,6 +59,8 @@ const lexend = Lexend({
 });
 
 export default async function RootLayout({ children }: { children: ReactNode }) {
+  const pageMap = await getPageMap();
+
   return (
     <html
       lang="en"
@@ -75,7 +83,32 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
       </Head>
       <GoogleTagManager gtmId={process.env.NEXT_PUBLIC_GTM_ID ?? DEFAULT_GTM_ID} />
       <body className="h-full flex flex-col">
-        {children}
+        <div className="nextra-content bg-muted">
+          <Layout
+            key="doc-layout"
+            navbar={<NextraNavbar key="docs-nav" pageMap={pageMap} />}
+            sidebar={{
+              defaultMenuCollapseLevel: 1,
+              autoCollapse: true,
+            }}
+            pageMap={pageMap}
+            editLink={null}
+            feedback={{
+              content: null,
+            }}
+            footer={<Footer key="footer" />}
+            darkMode={false}
+            search={<CustomSearch />}
+            nextThemes={{
+              defaultTheme: 'light',
+              forcedTheme: 'light',
+            }}
+          >
+            <Container>
+              <div className="mx-auto items-center">{children}</div>
+            </Container>
+          </Layout>
+        </div>
         <Analytics />
         <Toaster position="top-right" />
       </body>
