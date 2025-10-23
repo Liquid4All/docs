@@ -24,14 +24,14 @@ const meta: MetaRecord = {
     title: 'Model Bundling Service',
     theme: {
       collapsed: true,
-      // copyPage: true,
+      copyPage: true,
     },
   },
   'edge-sdk': {
     title: 'Edge SDK',
     theme: {
       collapsed: true,
-      // copyPage: true,
+      copyPage: true,
     },
   },
   'laptop-support': 'Laptop Support',
