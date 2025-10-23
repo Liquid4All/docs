@@ -8,7 +8,4 @@ export default {
     title: 'Documentation',
     display: 'children',
   },
-  models: {
-    type: 'page',
-  },
 };

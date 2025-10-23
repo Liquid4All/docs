@@ -1,11 +1,9 @@
 'use client';
 
-import { useClerk } from '@clerk/nextjs';
 import { IconBrandDiscord, IconBrandGithub } from '@tabler/icons-react';
 import { useCallback } from 'react';
 
 import { NavigationItem } from '@/components/navigation/NavigationItem';
-import { ProfileDropdown } from '@/components/navigation/ProfileDropdown';
 import { generalNavigations } from '@/components/navigation/navigationConstants';
 import { DISCORD_INVITE_URL, GITHUB_URL } from '@/constants';
 import { AnalyticEvent } from '@/lib/analytics';
@@ -15,8 +13,6 @@ import { Button } from '../ui/button';
 
 // Main Navbar Component
 const MainNavigation = ({}) => {
-  const { isSignedIn, loaded, user } = useClerk();
-
   const handleDiscordClicked = useCallback((): void => {
     trackClientEvent(AnalyticEvent.ClickedNavbarItem, {
       link: DISCORD_INVITE_URL,
@@ -63,7 +59,7 @@ const MainNavigation = ({}) => {
             <span className="sr-only">Open LiquidAI GitHub</span>
             <IconBrandGithub aria-hidden="true" className="h-5.5 w-5.5" stroke={1.7} />
           </Button>
-          {loaded && <ProfileDropdown isSignedIn={isSignedIn} user={user} />}
+          {/*{loaded && <ProfileDropdown isSignedIn={isSignedIn} user={user} />}*/}
         </div>
       </div>
     </nav>

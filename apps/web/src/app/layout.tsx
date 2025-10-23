@@ -1,4 +1,3 @@
-import { ClerkProvider } from '@clerk/nextjs';
 import '@fontsource/jetbrains-mono';
 import { GoogleTagManager } from '@next/third-parties/google';
 import { Analytics } from '@vercel/analytics/next';
@@ -84,19 +83,10 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
       </Head>
       <GoogleTagManager gtmId={process.env.NEXT_PUBLIC_GTM_ID ?? DEFAULT_GTM_ID} />
       <body className="h-full flex flex-col">
-        <ClerkProvider
-          signInFallbackRedirectUrl="/"
-          appearance={{
-            layout: {
-              privacyPageUrl: PRIVACY_POLICY_URL,
-              termsPageUrl: TERMS_OF_SERVICE_URL,
-            },
-          }}
-        >
-          {children}
-          <Analytics />
-          <Toaster position="top-right" />
-        </ClerkProvider>
+
+        {children}
+        <Analytics />
+        <Toaster position="top-right" />
       </body>
     </html>
   );

@@ -17,7 +17,6 @@ const withNextra = nextra({
 
 export default withSentryConfig(
   withNextra({
-    transpilePackages: ['@liquidai/leap-lib'],
     output: 'standalone',
     reactStrictMode: true,
     pageExtensions: ['js', 'jsx', 'md', 'mdx', 'ts', 'tsx'],
@@ -34,7 +33,7 @@ export default withSentryConfig(
     // For all available options, see:
     // https://www.npmjs.com/package/@sentry/webpack-plugin#options
     org: 'liquid-ai',
-    project: 'leap-web',
+    project: 'liquid-docs',
 
     // Mute source map uploading logs on Vercel or non-CI environments
     silent: !process.env.CI || process.env.VERCEL,

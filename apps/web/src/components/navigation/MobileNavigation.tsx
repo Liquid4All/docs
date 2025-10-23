@@ -1,6 +1,5 @@
 'use client';
 
-import { useClerk } from '@clerk/nextjs';
 import { IconX } from '@tabler/icons-react';
 import Link from 'next/link';
 import { FC, useEffect, useState } from 'react';
@@ -8,14 +7,11 @@ import { FC, useEffect, useState } from 'react';
 import { Logo } from '@/components/Logo';
 import {
   generalNavigations,
-  signedInUserNavigations,
-  signedOutUserNavigations,
 } from '@/components/navigation/navigationConstants';
-import { Sheet, SheetContent, SheetFooter, SheetTitle } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
 import { TITLE } from '@/constants';
 
 import AppStoreLink from '../AppStoreLink';
-import { Button } from '../ui/button';
 import { NavigationItem } from './NavigationItem';
 import { DocNavItem } from './nextra/DocNavItem';
 import { NavNode } from './nextra/extractDocNavItems';
@@ -32,10 +28,9 @@ export const MobileNavigation: FC<MobileNavigationProps> = ({
   docNavItems = [],
 }) => {
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
-  const { isSignedIn, loaded, user } = useClerk();
 
-  const userNavigations = isSignedIn ? signedInUserNavigations : signedOutUserNavigations;
-  const allMobileNavigations = [...generalNavigations, ...userNavigations];
+  // const userNavigations = isSignedIn ? signedInUserNavigations : signedOutUserNavigations;
+  const allMobileNavigations = [...generalNavigations];
 
   const toggleGroup = (key: string) => {
     setOpenGroups((prev) => ({
@@ -119,19 +114,19 @@ export const MobileNavigation: FC<MobileNavigationProps> = ({
           </div>
         </div>
 
-        <SheetFooter className="sticky bottom-0 p-4 w-full bg-white z-10 py-6">
-          {userNavigations.map((item, index) => (
-            <Button
-              key={item.label}
-              variant={index === 0 ? 'default' : 'outline'}
-              icon={item.icon}
-              iconPosition="left"
-              href={item.href}
-            >
-              {item.label}
-            </Button>
-          ))}
-        </SheetFooter>
+        {/*<SheetFooter className="sticky bottom-0 p-4 w-full bg-white z-10 py-6">*/}
+        {/*  {userNavigations.map((item, index) => (*/}
+        {/*    <Button*/}
+        {/*      key={item.label}*/}
+        {/*      variant={index === 0 ? 'default' : 'outline'}*/}
+        {/*      icon={item.icon}*/}
+        {/*      iconPosition="left"*/}
+        {/*      href={item.href}*/}
+        {/*    >*/}
+        {/*      {item.label}*/}
+        {/*    </Button>*/}
+        {/*  ))}*/}
+        {/*</SheetFooter>*/}
       </SheetContent>
     </Sheet>
   );

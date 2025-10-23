@@ -21,7 +21,7 @@ export default async function DocumentationLayout({ children }: { children: Reac
         feedback={{
           content: null,
         }}
-        footer={<Footer />}
+        footer={<Footer key="footer" />}
         darkMode={false}
         nextThemes={{
           defaultTheme: 'light',

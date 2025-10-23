@@ -1,6 +1,5 @@
 'use client';
 
-import { isEmptyString } from '@liquidai/leap-lib/utils';
 import * as Sentry from '@sentry/nextjs';
 import {
   IconCheck,
@@ -34,6 +33,7 @@ import { AnalyticEvent } from '@/lib/analytics';
 import { trackClientEvent } from '@/lib/analytics/helpers';
 import { FEEDBACK_PLACEHOLDERS, FEEDBACK_TITLES } from '@/lib/feedback/constants';
 import { FeedbackRequestBody, FeedbackType } from '@/lib/feedback/types';
+import { isEmptyString } from "@/lib/string";
 
 interface FeedbackModalProps {
   isOpen: boolean;
@@ -50,7 +50,7 @@ export const FeedbackModal = ({ isOpen, onClose }: FeedbackModalProps) => {
   const [showSuccess, setShowSuccess] = useState<boolean>(false);
 
   const handleSubmit = useCallback(async (): Promise<void> => {
-    if (isEmptyString(feedback.trim()) || isEmptyString(email.trim())) {
+    if (isEmptyString(feedback) || isEmptyString(email)) {
       return;
     }
 
