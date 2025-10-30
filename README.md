@@ -17,6 +17,15 @@ npm run dev
 
 The local server will be available at `http://localhost:3000`.
 
+To test the build:
+
+```sh
+npm run build
+npm run serve
+```
+
+The `npm run serve` script does not support hot loading. It is only useful to test the local search function.
+
 ## Search
 
 Currently, the search function is powered by `@cmfcmf/docusaurus-search-local`.
