@@ -13,14 +13,4 @@ module.exports = {
   importOrder: ['^@/(.*)$', '^[./]'],
   importOrderSeparation: true,
   importOrderSortSpecifiers: true,
-
-  overrides: [
-    {
-      files: '*.sql',
-      options: {
-        language: 'postgresql',
-        parser: 'sql',
-      },
-    },
-  ],
 };

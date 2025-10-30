@@ -8,8 +8,8 @@
     "deploy": "docusaurus deploy",
     "dev": "docusaurus start",
     "docusaurus": "docusaurus",
-    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json}\" --log-level=warn",
-    "format:write": "prettier --write \"**/*.{ts,tsx,js,jsx,json}\" --log-level=warn",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md,mdx}\" --log-level=warn",
+    "format:write": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md,mdx}\" --log-level=warn",
     "postinstall": "husky",
     "lint": "eslint . --max-warnings 0",
     "prepare": "husky",
@@ -21,7 +21,7 @@
     "write-translations": "docusaurus write-translations"
   },
   "lint-staged": {
-    "*.{ts,tsx,js,jsx,json,mdx}": "prettier --write"
+    "*.{ts,tsx,js,jsx,json,md,mdx}": "prettier --write"
   },
   "browserslist": {
     "production": [
