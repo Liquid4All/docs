@@ -64,6 +64,13 @@ const config: Config = {
 
   plugins: [
     [
+      '@cmfcmf/docusaurus-search-local',
+      // https://github.com/cmfcmf/docusaurus-search-local?tab=readme-ov-file#usage
+      {
+        maxSearchResults: 10,
+      },
+    ],
+    [
       '@docusaurus/plugin-content-docs',
       {
         id: 'lfm',
