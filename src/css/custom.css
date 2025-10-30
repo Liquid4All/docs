@@ -1,0 +1,39 @@
+/**
+ * Any CSS included here will be global. The classic template
+ * bundles Infima by default. Infima is a CSS framework designed to
+ * work well for content-centric websites.
+ */
+
+/* LEAP Brand Colors - Purple theme */
+:root {
+  --ifm-color-primary: #5603ad;
+  --ifm-color-primary-dark: #490294;
+  --ifm-color-primary-darker: #3d027b;
+  --ifm-color-primary-darkest: #310162;
+  --ifm-color-primary-light: #864bc4;
+  --ifm-color-primary-lighter: #b693db;
+  --ifm-color-primary-lightest: #e6dbf3;
+  --ifm-code-font-size: 95%;
+  --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.1);
+
+  /* Additional LEAP brand colors */
+  --leap-orange-500: #e9571b;
+  --leap-purple-500: #5603ad;
+  --leap-fuchsia-500: #af6ece;
+}
+
+/* For readability concerns, you should choose a lighter palette in dark mode. */
+[data-theme='dark'] {
+  --ifm-color-primary: #b693db;
+  --ifm-color-primary-dark: #864bc4;
+  --ifm-color-primary-darker: #5603ad;
+  --ifm-color-primary-darkest: #490294;
+  --ifm-color-primary-light: #e6dbf3;
+  --ifm-color-primary-lighter: #f2edf9;
+  --ifm-color-primary-lightest: #f2edf9;
+  --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.3);
+}
+
+.navbar__item.dropdown:not(:has(.navbar__link.active)) {
+  display: none;
+}
