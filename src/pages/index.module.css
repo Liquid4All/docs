@@ -21,3 +21,23 @@
   align-items: center;
   justify-content: center;
 }
+
+.cardContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  max-width: 400px;
+  width: 100%;
+}
+
+@media (min-width: 768px) {
+  .cardContainer {
+    flex-direction: row;
+    max-width: 1200px;
+  }
+
+  .cardContainer > * {
+    flex: 1;
+    min-width: 0;
+  }
+}

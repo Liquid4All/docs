@@ -1,4 +1,4 @@
-import clsx from 'clsx';
+import { clsx } from 'clsx';
 import React, { CSSProperties, ReactNode } from 'react';
 
 interface CardFooterProps {

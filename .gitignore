@@ -141,3 +141,4 @@ vite.config.ts.timestamp-*
 .vite/
 
 public/_pagefind/
+build/

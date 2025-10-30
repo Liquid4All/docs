@@ -52,6 +52,8 @@ module.exports = {
     'coverage/',
     'storybook-static/',
     '_pagefind/',
+    'build/',
+    '.docusaurus/',
   ],
   rules: {
     'no-unused-vars': 'off',
@@ -59,6 +61,12 @@ module.exports = {
     'no-empty-pattern': 'off',
     curly: 'error',
     'eol-last': ['error', 'always'],
+    'import/no-unresolved': [
+      'error',
+      {
+        ignore: ['^@docusaurus/', '^@theme/', '^@theme-original/', '^@site/'],
+      },
+    ],
     'import/no-extraneous-dependencies': [
       'error',
       {

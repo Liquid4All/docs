@@ -4,7 +4,7 @@ import CardBody from '@site/src/components/Card/CardBody';
 import CardHeader from '@site/src/components/Card/CardHeader';
 import Heading from '@theme/Heading';
 import Layout from '@theme/Layout';
-import clsx from 'clsx';
+import { clsx } from 'clsx';
 import type { ReactNode } from 'react';
 
 import styles from './index.module.css';
@@ -29,29 +29,20 @@ export default function Home(): ReactNode {
     <Layout title={siteConfig.title} description={siteConfig.tagline}>
       <HomepageHeader />
       <main style={{ display: 'flex', justifyContent: 'center' }}>
-        <div
-          className="margin-vert--lg padding-horiz--md"
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '1.5rem',
-            maxWidth: '400px',
-            width: '100%',
-          }}
-        >
-          <Card shadow="tl" href="/lfm">
+        <div className={clsx('margin-vert--xl padding-horiz--md', styles.cardContainer)}>
+          <Card shadow="md" href="/lfm">
             <CardHeader>
               <h3>LFM</h3>
             </CardHeader>
             <CardBody>Liquid Foundation Model (LFM)</CardBody>
           </Card>
-          <Card shadow="tl" href="/leap">
+          <Card shadow="md" href="/leap">
             <CardHeader>
               <h3>LEAP</h3>
             </CardHeader>
             <CardBody>Liquid Edge AI Platform (LEAP)</CardBody>
           </Card>
-          <Card shadow="tl" href="/examples">
+          <Card shadow="md" href="/examples">
             <CardHeader>
               <h3>Examples</h3>
             </CardHeader>
