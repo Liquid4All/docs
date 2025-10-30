@@ -1,3 +1,0 @@
-# Liquid Foundation Modal
-
-Coming soon...

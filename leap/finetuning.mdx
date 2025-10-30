@@ -1,0 +1,42 @@
+# Finetuning
+
+Part of the power of SLMs, and LFM2 in particular, is their adaptability to specific use cases or tasks. One way to
+adapt models to your specific use case is via finetuning – or training the model on an additional set of data specific
+to your task.
+
+This guide is a starting point for running Supervised Fine-Tuning (SFT) or Direct Preference Optimization (DPO) on
+LFM2 models. The same techniques can be applied to any model, but **the tools provided in LEAP are so far only tested
+thoroughly for compatability with LFM2.**
+
+:::info
+It's important to note that a critical aspect of finetuning is the dataset that is used;
+finetuning on poor quality data can even hinder model performance. For more information on what
+makes an effective dataset, check the documentation
+[here](https://github.com/mlabonne/llm-datasets).
+:::
+
+## ≤ 1 GPUs
+
+If you don't have your own GPUs to run finetuning, don't worry – Liquid has developed a set of easy-to-use Jupyter
+notebooks in conjunction with our friends at Unsloth and Axolotl to enable easily finetuning LFM2 models in Google
+Colab on a single GPU. You can find the notebooks here:
+
+| Notebook      | Description                                                               | Link                                                                                                                                                                                                                                                  |
+| ------------- | ------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| DPO (TRL)     | Preference alignment with Direct Preference Optimization (DPO) using TRL. | [<img src="https://unpkg.com/@lobehub/icons-static-png@1.55.0/light/colab-color.png" width={32} height={32} alt="colab-icon" />](https://colab.research.google.com/drive/1MQdsPxFHeZweGsNx4RH7Ia8lG8PiGE1t)                                           |
+| SFT (TRL)     | Supervised Fine-Tuning (SFT) notebook with a LoRA adapter using TRL.      | [<img src="https://unpkg.com/@lobehub/icons-static-png@1.55.0/light/colab-color.png" width={32} height={32} alt="colab-icon" />](https://colab.research.google.com/drive/1j5Hk_SyBb2soUsuhU0eIEA9GwLNRnElF)                                           |
+| SFT (Unsloth) | Supervised Fine-Tuning (SFT) notebook with a LoRA adapter using Unsloth.  | [<img src="https://unpkg.com/@lobehub/icons-static-png@1.55.0/light/colab-color.png" width={32} height={32} alt="colab-icon" />](<https://colab.research.google.com/github/unslothai/notebooks/blob/main/nb/Liquid_LFM2_(1.2B)-Conversational.ipynb>) |
+| SFT (Axolotl) | Supervised Fine-Tuning (SFT) notebook with a LoRA adapter using Axolotl.  | [<img src="https://unpkg.com/@lobehub/icons-static-png@1.55.0/light/colab-color.png" width={32} height={32} alt="colab-icon" />](https://colab.research.google.com/drive/155lr5-uYsOJmZfO6_QZPjbs8hA_v8S7t)                                           |
+
+## > 1 GPUs
+
+If you have your own GPUs, you can use Liquid's `leap-finetune` package
+[here](https://github.com/Liquid4All/leap-finetune). `leap-finetune` simplifies the process of finetuning LFM2 models by
+allowing you to (1) provide your own data loader, (2) specify your training configuration, and (3) hit run. The tool is
+fully built with open source tools and handles distributed training up to a single node (e.g. 8 GPUs).
+
+## Support
+
+If you encounter an issue with the finetuning materials above, or if you have a feature request, please reach out to us!
+You can join our [Discord](https://discord.gg/liquid-ai), submit a GitHub issue, or send us a note at
+[support@liquid.ai](mailto:support@liquid.ai).
