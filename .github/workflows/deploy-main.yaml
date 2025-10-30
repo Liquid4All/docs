@@ -1,0 +1,31 @@
+name: Deploy main to production
+
+on: workflow_dispatch
+
+permissions:
+  contents: write
+
+jobs:
+  deploy_to_prod:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: '0'
+      - name: Configure git
+        run: |
+          git config user.name "GitHub Actions Bot"
+          git config user.email "actions@github.com"
+      - name: Fast-forward merge
+        run: |
+          git checkout production
+          git pull origin production
+          
+          if git merge --ff-only origin/main; then
+            git push origin production
+            echo "Successfully fast-forwarded production to main"
+          else
+            echo "Cannot fast-forward merge main into production. Production might have diverged from main."
+            exit 1
+          fi
