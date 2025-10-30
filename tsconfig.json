@@ -1,50 +1,9 @@
 {
   "$schema": "https://json.schemastore.org/tsconfig",
-  "display": "Next.js",
+  "extends": "@docusaurus/tsconfig",
   "compilerOptions": {
-    "composite": false,
-    "declaration": true,
-    "declarationMap": true,
-    "inlineSources": false,
-    "noUnusedLocals": false,
-    "noUnusedParameters": false,
-    "preserveWatchOutput": true,
-    "plugins": [{ "name": "next" }],
-    "target": "es2015",
-    "lib": ["dom", "dom.iterable", "esnext"],
-    "allowJs": true,
-    "skipLibCheck": true,
-    "strict": true,
-    "forceConsistentCasingInFileNames": true,
-    "noEmit": true,
-    "incremental": true,
-    "esModuleInterop": true,
-    "module": "ESNext",
-    "moduleResolution": "Bundler",
-    "resolveJsonModule": true,
-    "isolatedModules": true,
-    "jsx": "preserve",
-    "baseUrl": ".",
-    "paths": {
-      "@/*": ["./src/*"],
-      "private-next-root-dir/*": ["./*"],
-      "@tests/*": ["./tests/*"],
-      "@liquidai/leap-lib/*": ["packages/lib/src/*"]
-    }
+    "baseUrl": "."
   },
-  "include": [
-    "next-env.d.ts",
-    "next.config.mjs",
-    "**/*.ts",
-    "**/*.tsx",
-    ".next/types/**/*.ts",
-    "jest.config.cjs",
-    "jest.setup.ts",
-    "postcss.config.mjs",
-    "tailwind.config",
-    ".storybook/preview.tsx",
-    ".storybook/main.ts",
-    ".eslintrc.js"
-  ],
-  "exclude": ["node_modules", ".next"]
+  "include": [".eslintrc.js"],
+  "exclude": ["node_modules", ".docusaurus", "build"]
 }

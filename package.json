@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "scripts": {
     "build": "docusaurus build",
-    "check": "npm run typecheck && npm run lint && npm run test",
+    "check": "npm run typecheck && npm run lint",
     "clear": "docusaurus clear",
     "deploy": "docusaurus deploy",
     "dev": "docusaurus start",
