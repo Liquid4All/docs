@@ -1,0 +1,14 @@
+{
+  "ignorePatterns": [
+    {
+      "reason": "Protected deployment",
+      "pattern": "https://docs-staging.liquid.ai/"
+    },
+    {
+      "reason": "Private repo",
+      "pattern": "https://github.com/Liquid4All"
+    }
+  ],
+  "retryOn429": false,
+  "aliveStatusCodes": [0, 200, 202, 206, 400, 403, 429, 503]
+}
