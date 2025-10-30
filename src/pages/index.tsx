@@ -4,7 +4,7 @@ import CardBody from '@site/src/components/Card/CardBody';
 import CardHeader from '@site/src/components/Card/CardHeader';
 import Heading from '@theme/Heading';
 import Layout from '@theme/Layout';
-import clsx from 'clsx';
+import { clsx } from 'clsx';
 import type { ReactNode } from 'react';
 
 import styles from './index.module.css';

@@ -1,5 +1,5 @@
 import useBaseUrl from '@docusaurus/useBaseUrl';
-import clsx from 'clsx';
+import { clsx } from 'clsx';
 import React, { CSSProperties } from 'react';
 
 interface CardImageProps {
