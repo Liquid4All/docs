@@ -12,19 +12,19 @@ You should already have:
 - Leap Android SDK needs [Kotlin Android plugin](https://kotlinlang.org/docs/releases.html#update-to-a-new-kotlin-version) v2.2.0 or above and [Android Gradle Plugin](https://developer.android.com/build/releases/gradle-plugin) v8.12.0 or above to build. Declare it in `build.gradle.kts` as
   ```kotlin
   plugins {
-  	id("com.android.application") version "8.12.0" apply false
-  	id("com.android.library") version "8.12.0" apply false
-  	id("org.jetbrains.kotlin.android") version "2.2.0" apply false
+   id("com.android.application") version "8.12.0" apply false
+   id("com.android.library") version "8.12.0" apply false
+   id("org.jetbrains.kotlin.android") version "2.2.0" apply false
   }
   ```
 - A working Android device that supports `arm64-v8a` ABI with [developer mode enabled](https://developer.android.com/studio/debug/dev-options). We recommend having 3GB+ of RAM to run the models.
 - The minimal SDK requirement is API 31. Declare it in `build.gradle.kts` as
   ```kotlin
   android {
-  	defaultConfig {
-  		minSdk = 31
-  		targetSdk = 36
-  	}
+   defaultConfig {
+    minSdk = 31
+    targetSdk = 36
+   }
   }
   ```
 
@@ -54,8 +54,8 @@ Browse the [Leap Model Library](https://leap.liquid.ai/models) to find and downl
 In order to easily load the model on device, push the bundle file to the device using `adb push`. Assuming the downloaded model file is located at `~/Downloads/model.bundle`, run the following commands to push the model file to the device:
 
 ```shell
-$ adb shell mkdir -p /data/local/tmp/leap/
-$ adb push ~/Downloads/model.bundle /data/local/tmp/leap/model.bundle
+adb shell mkdir -p /data/local/tmp/leap/
+adb push ~/Downloads/model.bundle /data/local/tmp/leap/model.bundle
 ```
 
 ## Load Model in Code
@@ -86,26 +86,26 @@ With user input text, we can use `Conversation.generateResponse` function to inv
 ```kotlin
 val input = "Here is a user message!"
 val generationJob = lifecycleScope.launch {
-	conversation.generateResponse(input).onEach {
-		when (it) {
-	    is MessageResponse.Chunk -> {
-		    Log.d(TAG, "text chunk: ${it.text}")
-	    }
-	    is MessageResponse.ReasoningChunk -> {
-		    Log.d(TAG, "reasoning chunk: ${it.text}")
-	    }
-	    else -> {
-		    // ignore other response
-	    }
-	  }
-	}
-	.onCompletion {
-	   Log.d(TAG, "Generation done!")
-	}
-	.catch { exception ->
-	  Log.e(TAG, "Error in generation: $exception")
-	}
-	.collect()
+  conversation.generateResponse(input).onEach {
+    when (it) {
+      is MessageResponse.Chunk -> {
+        Log.d(TAG, "text chunk: ${it.text}")
+      }
+      is MessageResponse.ReasoningChunk -> {
+        Log.d(TAG, "reasoning chunk: ${it.text}")
+      }
+      else -> {
+        // ignore other response
+      }
+    }
+  }
+  .onCompletion {
+     Log.d(TAG, "Generation done!")
+  }
+  .catch { exception ->
+    Log.e(TAG, "Error in generation: $exception")
+  }
+  .collect()
 }
 ```
 
