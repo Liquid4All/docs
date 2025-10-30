@@ -25,7 +25,7 @@ env:
   CI: 1
 
 jobs:
-  lint:
+  run-linter:
     if: ${{ !github.event.pull_request.draft || github.event.pull_request.requested_reviewers[0] || github.event.pull_request.requested_teams[0] }}
     runs-on: ubuntu-latest
     env:
@@ -47,7 +47,7 @@ jobs:
           npm run lint
           npm run format:check
 
-  check-markdown-link:
+  check-link:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
