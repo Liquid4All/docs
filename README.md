@@ -1,5 +1,13 @@
 # Liquid Documentation
 
+## Docs
+
+| Doc | Directory | Sidebar |
+| --- | --- | --- |
+| LFM | [lfm](./lfm) | [`sidebarsLfm.ts`](./sidebarsLfm.ts) |
+| LEAP | [leap](./leap) | [`sidebarsLeap.ts`](./sidebarsLeap.ts) |
+| Examples | [examples](./examples) | [`sidebarsExamples.ts`](./sidebarsExamples.ts) |
+
 ## Local Development
 
 ```sh
