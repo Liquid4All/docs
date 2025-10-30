@@ -34,6 +34,13 @@ Currently, the search function is powered by `@cmfcmf/docusaurus-search-local`.
 > Search only works for the statically built documentation (i.e., after running `npm run build` under the repo root).
 > It does not work in development (i.e., when running `npm run dev`). To test search locally, first build the documentation with `npm run build build`, and then serve it with `npm run serve`.
 
+## Link check
+
+There are two link checks in this repo:
+
+- Docusaurus will throw error for any broken as configured by `onBrokenLinks` in [`docusaurus.config.ts`](./docusaurus.config.ts). If the broken build is annoying for preview, change it to `warn`.
+- The [`check.yaml`](./.github/workflows/check.yaml) workflow has a `check-link` job that examine markdown links. Customize the config in [`link-check.json`](./link-check.json). If a link cannot be accessed (e.g. Github private repo), add the URL pattern to the `ignorePatterns` array.
+
 ## Deployment
 
 The deployment is automated through Vercel.
