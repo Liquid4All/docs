@@ -4,6 +4,6 @@
   "compilerOptions": {
     "baseUrl": "."
   },
-  "include": [".eslintrc.js"],
+  "include": [".eslintrc.js", "**/*.ts", "**/*.tsx"],
   "exclude": ["node_modules", ".docusaurus", "build"]
 }
