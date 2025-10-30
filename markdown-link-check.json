@@ -1,0 +1,10 @@
+{
+  "ignorePatterns": [
+    {
+      "reason": "Example",
+      "pattern": "https://docs.google.com"
+    }
+  ],
+  "retryOn429": false,
+  "aliveStatusCodes": [0, 200, 202, 206, 400, 403, 429, 503]
+}
