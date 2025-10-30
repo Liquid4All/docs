@@ -11,8 +11,12 @@
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json}\" --log-level=warn",
     "format:write": "prettier --write \"**/*.{ts,tsx,js,jsx,json}\" --log-level=warn",
     "postinstall": "husky",
-    "lint": "eslint . --max-warnings 0",
-    "lint:md": "markdownlint-cli --config .markdownlintrc.yaml **/*.md **/*.mdx",
+    "lint": "npm run lint:eslint && npm run lint:md",
+    "lint:eslint": "eslint . --max-warnings 0",
+    "lint:eslint:fix": "eslint . --max-warnings 0 --fix",
+    "lint:fix": "npm run lint:eslint:fix && npm run lint:md:fix",
+    "lint:md": "markdownlint --config .markdownlintrc.yaml '**/*.{md,mdx}'",
+    "lint:md:fix": "markdownlint --fix --config .markdownlintrc.yaml '**/*.{md,mdx}'",
     "prepare": "husky",
     "serve": "docusaurus serve",
     "start": "docusaurus start",
@@ -22,7 +26,8 @@
     "write-translations": "docusaurus write-translations"
   },
   "lint-staged": {
-    "*.{ts,tsx,js,jsx,json}": "prettier --write"
+    "*.{ts,tsx,js,jsx,json}": "prettier --write",
+    "*.{md,mdx}": "markdownlint --fix --config .markdownlintrc.yaml -f"
   },
   "browserslist": {
     "production": [
