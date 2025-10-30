@@ -1,0 +1,14 @@
+default: true
+line-length: false
+no-inline-html: false
+blanks-around-headings: false
+blanks-around-lists: false
+blanks-around-tables: false
+no-bare-urls: false
+no-trailing-punctuation: false
+no-emphasis-as-heading: false
+no-duplicate-heading: false
+no-alt-text: false
+fenced-code-language: false
+ol-prefix: false
+descriptive-link-text: false
