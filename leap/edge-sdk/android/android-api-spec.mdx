@@ -245,18 +245,18 @@ If you need your model runner to survive after the destruction of activities, yo
 ```kotlin
 interface ModelRunner {
   // create a conversation instance
-	fun createConversation(systemPrompt: String? = null): Conversation
+  fun createConversation(systemPrompt: String? = null): Conversation
 
-	// create a conversation from chat message history
-	fun createConversationFromHistory(history: List<ChatMessage>): Conversation
+  // create a conversation from chat message history
+  fun createConversationFromHistory(history: List<ChatMessage>): Conversation
 
-	// unload the model: the runner cannot be used after unload is called.
-	suspend fun unload()
+  // unload the model: the runner cannot be used after unload is called.
+  suspend fun unload()
 
 
-	// Start generation from the conversation instance.
-	fun generateFromConversation(
-		conversation: Conversation,
+  // Start generation from the conversation instance.
+  fun generateFromConversation(
+    conversation: Conversation,
     callback: GenerationCallback,
     generationOptions: GenerationOptions? = null,
   ): GenerationHandler
