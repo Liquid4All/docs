@@ -63,6 +63,7 @@ const config: Config = {
   ],
 
   plugins: [
+    'vercel-analytics',
     [
       '@cmfcmf/docusaurus-search-local',
       // https://github.com/cmfcmf/docusaurus-search-local?tab=readme-ov-file#usage
