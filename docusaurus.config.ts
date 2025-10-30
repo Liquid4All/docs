@@ -67,7 +67,9 @@ const config: Config = {
       '@cmfcmf/docusaurus-search-local',
       // https://github.com/cmfcmf/docusaurus-search-local?tab=readme-ov-file#usage
       {
-        maxSearchResults: 10,
+        indexDocSidebarParentCategories: 5,
+        includeParentCategoriesInPageTitle: false,
+        maxSearchResults: 8,
         indexBlog: false,
       },
     ],
