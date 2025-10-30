@@ -52,6 +52,8 @@ module.exports = {
     'coverage/',
     'storybook-static/',
     '_pagefind/',
+    'build/',
+    '.docusaurus/',
   ],
   rules: {
     'no-unused-vars': 'off',
