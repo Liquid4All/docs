@@ -45,7 +45,7 @@ The [**LEAP Edge SDK**](https://leap.liquid.ai/docs/edge-sdk/overview) enables o
 ## Additional Resources
 
 - **[Complete Documentation](https://leap.liquid.ai/docs)** - Full API reference and guides
-- **[Apollo App](https://apps.apple.com/app/apollo-by-liquid-ai/id6738746137)** - Test LEAP models on your iOS or Android device
+- **[Apollo App](https://www.liquid.ai/apollo)** - Test LEAP models on your iOS or Android device
 - **[Liquid AI Cookbook](https://github.com/Liquid4All/cookbook)** - End‑to‑end finetuning notebooks and project examples
 - **[Join the Community](https://discord.gg/liquid-ai)** - Get support and stay updated on Discord
 
