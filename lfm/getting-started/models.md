@@ -6,7 +6,7 @@ The LFM model collection includes general-purpose language models, vision-langua
 - All models support a **32k token text context length** for extended conversations and document processing.
 - Our models are compatible with various open-source deployment libraries including [Transformers](../inference/transformers.md), [llama.cpp](../inference/llama-cpp.md), [vLLM](../inference/vllm.md), [MLX](../inference/mlx.md), [Ollama](../inference/ollama.md), and our own edge deployment platform [LEAP](../frameworks/leap.md).
 
-## 💬 LFM2
+## 💬 LFM2 {#lfm2}
 
 [LFM2](https://huggingface.co/collections/LiquidAI/lfm2-686d721927015b2ad73eaa38) is a family of general-purpose text-only language models optimized for edge AI and on-device deployment.
 
@@ -18,7 +18,7 @@ The LFM model collection includes general-purpose language models, vision-langua
 | [`LiquidAI/LFM2-700M`](https://huggingface.co/LiquidAI/LFM2-700M) | Lightweight model for edge deployment. |
 | [`LiquidAI/LFM2-350M`](https://huggingface.co/LiquidAI/LFM2-350M) | Tiny model for big data operations and edge deployment. Fastest inference. |
 
-## 👁️ LFM2-VL
+## 👁️ LFM2-VL {#lfm2-vl}
 
 [LFM2-VL](https://huggingface.co/collections/LiquidAI/lfm2-vl-68963bbc84a610f7638d5ffa) is a family of Vision Language Models (VLMs) that support text and image as inputs and text as outputs. These models are built on the LFM2 text model backbone with dynamic, user-tunable SigLIP2 NaFlex image encoders (Base 86M and shape-optimized 400M variants).
 
@@ -28,7 +28,7 @@ The LFM model collection includes general-purpose language models, vision-langua
 | [`LiquidAI/LFM2-VL-1.6B`](https://huggingface.co/LiquidAI/LFM2-VL-1.6B) | Fast and capable model for scene understanding and other vision language tasks. |
 | [`LiquidAI/LFM2-VL-450M`](https://huggingface.co/LiquidAI/LFM2-VL-450M) | Compact multimodal model for edge deployment and fast inference. |
 
-## 🎵 LFM2-Audio
+## 🎵 LFM2-Audio {#lfm2-audio}
 
 [LFM2-Audio](https://huggingface.co/collections/LiquidAI/lfm2-audio-68ddd9cf81a89f1f4b5bb391) is a family of audio foundation models that support text and audio both as inputs and outputs.
 
@@ -36,7 +36,7 @@ The LFM model collection includes general-purpose language models, vision-langua
 |-------|-------------|
 | [`LiquidAI/LFM2-Audio-1.5B`](https://huggingface.co/LiquidAI/LFM2-Audio-1.5B) | Audio-to-audio processing model for speech tasks, like chat, ASR, and TTS. |
 
-## 🎯 Liquid Nanos
+## 🎯 Liquid Nanos {#liquid-nanos}
 
 [Liquid Nanos](https://huggingface.co/collections/LiquidAI/liquid-nanos-68b98d898414dd94d4d5f99a) are task-specific models fine-tuned for specialized use cases.
 
