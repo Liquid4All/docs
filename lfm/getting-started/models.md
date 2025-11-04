@@ -4,7 +4,7 @@ The LFM model collection includes general-purpose language models, vision-langua
 
 - These models are built on the backbone of a new hybrid architecture that's designed for incredibly fast training and inference. Learn more in our [blog post](https://www.liquid.ai/blog/liquid-foundation-models-v2-our-second-series-of-generative-ai-models).
 - All models support a **32k token text context length** for extended conversations and document processing.
-- Our models are compatible with various open-source deployment libraries including [Transformers](../inference/transformers.md), [llama.cpp](../inference/llama.cpp.md), [vLLM](../inference/vllm.md), [MLX](../inference/mlx.md), [Ollama](../inference/ollama.md), and our own edge deployment platform [LEAP](../framework/leap.md).
+- Our models are compatible with various open-source deployment libraries including [Transformers](../inference/transformers.md), [llama.cpp](../inference/llama-cpp.md), [vLLM](../inference/vllm.md), [MLX](../inference/mlx.md), [Ollama](../inference/ollama.md), and our own edge deployment platform [LEAP](../frameworks/leap.md).
 
 ## 💬 LFM2
 
@@ -46,14 +46,14 @@ The LFM model collection includes general-purpose language models, vision-langua
 | [`LiquidAI/LFM2-350M-Extract`](https://huggingface.co/LiquidAI/LFM2-350M-Extract) | Smaller version of the extraction model. |
 | [`LiquidAI/LFM2-350M-ENJP-MT`](https://huggingface.co/LiquidAI/LFM2-350M-ENJP-MT) | Near real-time bi-directional Japanese/English translation of short-to-medium inputs. |
 | [`LiquidAI/LFM2-1.2B-RAG`](https://huggingface.co/LiquidAI/LFM2-1.2B-RAG) | Answer questions based on provided contextual documents, for use in RAG systems. |
-| [`LiquidAI/LFM2-1.2B-Tool`](https://huggingface.co/LiquidAI/LFM2-1.2B-Tool) | Efficient model optimized for concise and precise tool calling. See the [Tool Use guide](tool_use.md) for details. |
+| [`LiquidAI/LFM2-1.2B-Tool`](https://huggingface.co/LiquidAI/LFM2-1.2B-Tool) | Efficient model optimized for concise and precise tool calling. See the [Tool Use guide](tool-use.md) for details. |
 | [`LiquidAI/LFM2-350M-Math`](https://huggingface.co/LiquidAI/LFM2-350M-Math) | Tiny reasoning model designed for tackling tricky math problems. |
 | [`LiquidAI/LFM2-350M-PII-Extract-JP`](https://huggingface.co/LiquidAI/LFM2-350M-PII-Extract-JP) | Extract personally identifiable information (PII) from Japanese text and output it in JSON format. |
 | [`LiquidAI/LFM2-ColBERT-350M`](https://huggingface.co/LiquidAI/LFM2-ColBERT-350M) | Embed documents and queries for fast retrieval and reranking across many languages. |
 
 ## GGUF Models
 
-GGUF quantized versions are available for all LFM2 models for efficient inference with [llama.cpp](../inference/llama.cpp.md), [LM Studio](../inference/lmstudio.md), and [Ollama](../inference/ollama.md). These models offer reduced memory usage and faster CPU inference.
+GGUF quantized versions are available for all LFM2 models for efficient inference with [llama.cpp](../inference/llama-cpp.md), [LM Studio](../inference/lm-studio.md), and [Ollama](../inference/ollama.md). These models offer reduced memory usage and faster CPU inference.
 
 To access our official GGUF models, append `-GGUF` to any model repository name (e.g., `LiquidAI/LFM2-1.2B-GGUF`). All models are available in multiple quantization levels (`Q4_0`, `Q4_K_M`, `Q5_K_M`, `Q6_K`, `Q8_0`, `F16`).
 

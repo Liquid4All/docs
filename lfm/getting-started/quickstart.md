@@ -2,7 +2,7 @@
 
 The easiest way to get started with LFM models in 2 minutes is with [Transformers](../inference/transformers.md). All LFM models are available on [Hugging Face](https://huggingface.co/LiquidAI/collections).
 
-:::{note} **Just want to chat with LFM models?**
+:::note[**Just want to chat with LFM models?**]
 Try [Liquid Playground](https://playground.liquid.ai) to interact with our base models directly in your browser—no installation required.
 :::
 
@@ -37,7 +37,7 @@ Try it in [Google Colab →](https://colab.research.google.com/drive/1_q3jQ6Ltyi
 ## Next Steps
 
 - **[Explore Models](models.md)** - Browse all available models and sizes
-- **[Key Concepts](key_concepts.md)** - Understand chat templates, sampling, and tool use
+<!-- - **[Key Concepts](key_concepts.md)** - Understand chat templates, sampling, and tool use -->
 - **[Inference](../inference/transformers.md)** - Streaming, vision models, batching, and more
-- **[Fine-tuning](../finetuning/trl.md)** - Customize models for your use case
+- **[Fine-tuning](../fine-tuning/trl.md)** - Customize models for your use case
 - **[Liquid AI Cookbook](https://github.com/Liquid4All/cookbook)** - End‑to‑end finetuning notebooks and project examples

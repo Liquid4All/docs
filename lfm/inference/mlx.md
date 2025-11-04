@@ -23,7 +23,7 @@ pip install mlx-lm
 
 The `mlx-lm` package provides a simple interface for text generation with MLX models.
 
-See the [Models page](../getting_started/models.md#mlx-models) for all available MLX models, or browse MLX community models at [mlx-community LFM2 models](https://huggingface.co/models?sort=created&search=mlx-communityLFM2).
+See the [Models page](../getting-started/models.md#mlx-models) for all available MLX models, or browse MLX community models at [mlx-community LFM2 models](https://huggingface.co/models?sort=created&search=mlx-communityLFM2).
 
 ```python
 from mlx_lm import load, generate

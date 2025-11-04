@@ -19,7 +19,7 @@ Download and install LM Studio directly from [lmstudio.ai](https://lmstudio.ai/d
 3. Select a model and quantization level (`Q4_K_M` recommended)
 4. Click **Download**
 
-See the [Models page](models.md#gguf-models) for all available GGUF models.
+See the [Models page](../getting-started/models.md#gguf-models) for all available GGUF models.
 
 ## Using the Chat Interface
 

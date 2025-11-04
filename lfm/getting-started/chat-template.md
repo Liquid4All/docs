@@ -26,7 +26,7 @@ LFM2 supports four conversation roles:
 - **`system`** — (Optional) Sets the assistant's behavior and context. Defines who the assistant is and how it should respond.
 - **`user`** — Messages from the user containing questions, instructions, or requests.
 - **`assistant`** — Responses from the model.
-- **`tool`** — Results from tool/function execution. Used for [tool use](tool_use.md) workflows.
+- **`tool`** — Results from tool/function execution. Used for [tool use](tool-use.md) workflows.
 
 ## Using the Chat Template
 

@@ -60,7 +60,7 @@ For detailed build instructions including GPU support, see the [llama.cpp docume
 
 ## Downloading GGUF Models
 
-llama.cpp uses the GGUF format, which stores quantized model weights for efficient inference. All LFM models are available in GGUF format on Hugging Face. See the [Models page](../getting_started/models.md#gguf-models) for all available GGUF models.
+llama.cpp uses the GGUF format, which stores quantized model weights for efficient inference. All LFM models are available in GGUF format on Hugging Face. See the [Models page](../getting-started/models.md#gguf-models) for all available GGUF models.
 
 You can download LFM models in GGUF format from Hugging Face as follows:
 
