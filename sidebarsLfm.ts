@@ -2,7 +2,7 @@ import type { SidebarsConfig } from '@docusaurus/plugin-content-docs';
 
 const sidebars: SidebarsConfig = {
   lfm: [
-    'index',
+    // 'index',
     {
       type: 'category',
       label: 'Getting started',
