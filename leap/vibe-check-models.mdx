@@ -1,0 +1,96 @@
+# Vibe-check models
+
+Before integrating a model into your application, it's essential to test its performance and behavior with your specific use cases. "Vibe-checking" allows you to evaluate how well a model responds to your prompts, assess response quality, and understand its capabilities and limitations.
+
+LEAP provides multiple ways to interact with and test LFM2 models without any setup or configuration. Whether you prefer testing on your device or in the cloud, you can quickly validate that a model meets your requirements before moving to full deployment.
+
+<style>{`
+.vibe-check-grid {
+  display: grid;
+  gap: 1.5rem;
+  margin: 2rem 0;
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 768px) {
+  .vibe-check-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.vibe-check-card {
+  border: 1px solid var(--ifm-color-emphasis-300);
+  border-radius: 8px;
+  padding: 1.5rem;
+  background: var(--ifm-background-color);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  text-decoration: none;
+  color: inherit;
+}
+
+.vibe-check-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border-color: var(--ifm-color-primary);
+  text-decoration: none;
+  color: inherit;
+}
+
+.vibe-check-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.vibe-check-icon {
+  font-size: 2rem;
+  display: block;
+}
+
+.vibe-check-title {
+  font-size: 1.1rem;
+  font-weight: bold;
+  color: var(--ifm-heading-color);
+  margin: 0;
+}
+
+.vibe-check-description {
+  color: var(--ifm-color-content-secondary);
+  line-height: 1.5;
+  flex-grow: 1;
+}
+
+.vibe-check-badge {
+  color: var(--ifm-color-primary);
+  font-style: italic;
+  font-size: 0.9rem;
+}
+`}</style>
+
+<div className="vibe-check-grid">
+
+<a href="https://www.liquid.ai/apollo" className="vibe-check-card">
+<div className="vibe-check-header">
+<span className="vibe-check-icon">🏹</span>
+<div className="vibe-check-title">Apollo Mobile App</div>
+</div>
+<div className="vibe-check-description">
+Test LFM2 models directly on your device with our mobile app for iOS and Android. Experience real on-device performance and privacy.
+</div>
+</a>
+
+<a href="https://playground.liquid.ai/" className="vibe-check-card">
+<div className="vibe-check-header">
+<span className="vibe-check-icon">🛝</span>
+<div className="vibe-check-title">Cloud Playground</div>
+</div>
+<div className="vibe-check-description">
+Quickly test LFM2 models in our web-based sandbox. No installation required - just open your browser and start experimenting.
+</div>
+</a>
+
+</div>
