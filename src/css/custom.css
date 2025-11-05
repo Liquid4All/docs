@@ -37,3 +37,8 @@
 .navbar__item.dropdown:not(:has(.navbar__link.active)) {
   display: none;
 }
+
+/* Make sidebar category labels bold */
+.theme-doc-sidebar-item-category > .menu__list-item-collapsible > .menu__link {
+  font-weight: bold;
+}

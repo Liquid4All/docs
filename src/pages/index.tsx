@@ -30,7 +30,7 @@ export default function Home(): ReactNode {
       <HomepageHeader />
       <main style={{ display: 'flex', justifyContent: 'center' }}>
         <div className={clsx('margin-vert--xl padding-horiz--md', styles.cardContainer)}>
-          <Card shadow="md" href="/lfm">
+          <Card shadow="md" href="/lfm/getting-started">
             <CardHeader>
               <h3>LFM</h3>
             </CardHeader>
