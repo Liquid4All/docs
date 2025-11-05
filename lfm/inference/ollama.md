@@ -64,7 +64,7 @@ You can run LFM2 models directly from Hugging Face:
 ollama run hf.co/LiquidAI/LFM2-1.2B-GGUF
 ```
 
-See the [Models page](../getting-started/models.md#gguf-models) for all available GGUF repositories.
+See the [Models page](../key-concepts/models.md#gguf-models) for all available GGUF repositories.
 
 To use a local GGUF file, first download a model from Hugging Face:
 

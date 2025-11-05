@@ -83,25 +83,25 @@ Built on a new hybrid architecture, LFM2 sets a new standard in terms of quality
 
 <div className="model-grid-1122">
 
-<a href="getting-started/models#lfm2" className="model-card">
+<a href="/lfm/key-concepts/models#lfm2" className="model-card">
 <h3>💬 Text Models</h3>
 <p>General-purpose language models from 350M to 8B parameters</p>
 <span className="learn-more">Learn more →</span>
 </a>
 
-<a href="getting-started/models#lfm2-vl" className="model-card">
+<a href="/lfm/key-concepts/models#lfm2-vl" className="model-card">
 <h3>👁️ Vision-Language</h3>
 <p>Multimodal models for image understanding and scene analysis</p>
 <span className="learn-more">Learn more →</span>
 </a>
 
-<a href="getting-started/models#lfm2-audio" className="model-card">
+<a href="/lfm/key-concepts/models#lfm2-audio" className="model-card">
 <h3>🎵 Audio</h3>
 <p>Speech and audio processing models for ASR, TTS, and chat</p>
 <span className="learn-more">Learn more →</span>
 </a>
 
-<a href="getting-started/models#liquid-nanos" className="model-card">
+<a href="/lfm/key-concepts/models#liquid-nanos" className="model-card">
 <h3>🎯 Task-Specific</h3>
 <p>Specialized models for extraction, translation, RAG, and tool use</p>
 <span className="learn-more">Learn more →</span>
@@ -109,7 +109,7 @@ Built on a new hybrid architecture, LFM2 sets a new standard in terms of quality
 
 </div>
 
-[Explore all models →](key-concepts/models.md)
+[Explore all models →](/lfm/key-concepts/models.md)
 
 ## Get Started
 
@@ -136,19 +136,19 @@ Built on a new hybrid architecture, LFM2 sets a new standard in terms of quality
 
 <div className="get-started-grid-1124">
 
-<a href="getting-started/quickstart" className="model-card">
+<a href="quickstart" className="model-card">
 <h3>🏃 Quickstart</h3>
 <p>Install and run your first LFM2 model in minutes</p>
 <span className="learn-more">Get started →</span>
 </a>
 
-<a href="inference/transformers" className="model-card">
+<a href="/lfm/inference/transformers" className="model-card">
 <h3>🚀 Inference</h3>
 <p>Deploy models with popular inference tools</p>
 <span className="learn-more">Learn more →</span>
 </a>
 
-<a href="fine-tuning/trl" className="model-card">
+<a href="/lfm/fine-tuning/trl" className="model-card">
 <h3>🔧 Fine-tuning</h3>
 <p>Train models with TRL, Unsloth, and Axolotl</p>
 <span className="learn-more">Learn more →</span>
