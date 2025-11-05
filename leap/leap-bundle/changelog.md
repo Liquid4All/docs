@@ -4,6 +4,16 @@ sidebar_position: 4
 
 # Changelog
 
+## `v0.6.0` - 2025-11-05
+
+**New features**
+
+- Support latest `LFM2-VL` model.
+
+**Improvements**
+
+- Move model type validation to server side for faster new model support in the future.
+
 ## `v0.5.1` - 2025-10-06
 
 **Bug fixes**

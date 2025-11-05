@@ -6,7 +6,7 @@
 
 Built on a new hybrid architecture, LFM2 sets a new standard in terms of quality, speed, and memory efficiency.
 
-- ⚡ **3x faster training** - New hybrid architecture accelerates training and inference
+&nbsp;&nbsp;⚡ **3x faster training** - New hybrid architecture accelerates training and inference
 
 &nbsp;&nbsp;🏆 **State-of-the-art quality** - Outperforms similar-sized models on benchmarks
 
