@@ -1,0 +1,90 @@
+# Find the best model for your use case
+
+Choosing the right model is crucial for achieving optimal performance in your edge AI application. The model you select impacts everything from inference speed and memory usage to the quality of responses and compatibility with your target hardware.
+
+LFM2 offers a diverse range of models optimized for different use cases, from lightweight models perfect for resource-constrained environments to more capable models that deliver state-of-the-art performance.
+
+<style>{`
+.model-finder-grid {
+  display: grid;
+  gap: 1.5rem;
+  margin: 2rem 0;
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 768px) {
+  .model-finder-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.model-finder-card {
+  border: 1px solid var(--ifm-color-emphasis-300);
+  border-radius: 8px;
+  padding: 1.5rem;
+  background: var(--ifm-background-color);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  text-decoration: none;
+  color: inherit;
+}
+
+.model-finder-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border-color: var(--ifm-color-primary);
+  text-decoration: none;
+  color: inherit;
+}
+
+.model-finder-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.model-finder-icon {
+  font-size: 2rem;
+  display: block;
+}
+
+.model-finder-title {
+  font-size: 1.1rem;
+  font-weight: bold;
+  color: var(--ifm-heading-color);
+  margin: 0;
+}
+
+.model-finder-description {
+  color: var(--ifm-color-content-secondary);
+  line-height: 1.5;
+  flex-grow: 1;
+}
+`}</style>
+
+<div className="model-finder-grid">
+
+<a href="https://leap.liquid.ai/search" className="model-finder-card">
+<div className="model-finder-header">
+<span className="model-finder-icon">🔍</span>
+<div className="model-finder-title">Automatic Best Model Search</div>
+</div>
+<div className="model-finder-description">
+Use our intelligent model search tool to find the ideal LFM2 model based on your specific use-case requirements, performance constraints, and hardware limitations.
+</div>
+</a>
+
+<a href="https://leap.liquid.ai/models" className="model-finder-card">
+<div className="model-finder-header">
+<span className="model-finder-icon">📚</span>
+<div className="model-finder-title">Explore the Model Library</div>
+</div>
+<div className="model-finder-description">
+Browse our comprehensive catalog of pre-trained, pre-quantized LFM2 model bundles. Compare specifications, download sizes, and performance metrics.
+</div>
+</a>
+
+</div>

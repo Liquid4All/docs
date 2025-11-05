@@ -1,32 +1,186 @@
-# Introduction
+# Welcome to LEAP!
 
-Liquid AI Edge Platform, or LEAP, is an integrated toolchain that enables developers to
+## What is LEAP?
+
+<span style={{color: 'var(--ifm-color-primary)', fontWeight: 'bold'}}>L</span>iquid <span style={{color: 'var(--ifm-color-primary)', fontWeight: 'bold'}}>E</span>dge <span style={{color: 'var(--ifm-color-primary)', fontWeight: 'bold'}}>A</span>I <span style={{color: 'var(--ifm-color-primary)', fontWeight: 'bold'}}>P</span>latform (LEAP) is an integrated toolchain that enables developers to
 effectively specialize and deploy small language models to their use case on their hardware.
 
 LEAP is designed to help any app developer – regardless of their familiarity with AI – to unlock the best quality and
 fastest performance for their edge AI task. Our end-to-end ecosystem of tools simplifies the entire edge AI app
 development process: from model discovery, through customization, to deployment.
 
-1. 🔍 **Best Model Search:** Find the ideal model based on your specific use-case requirements and constraints using our model search tool _[coming soon]_.
-2. 📚 **Model Library:** Browse and download our online catalog of pre-trained, pre-quantized model bundles for download.
-3. 🛝 **Cloud Playground:** Vibe-check LFM2 models in a virtual sandbox to test their response quality via API.
-4. 🏹 **Apollo:** Download and vibe-check LEAP models on your own device with our mobile app for iOS (Android coming soon).
-5. 🛠️ **Finetuning:** Base models not good enough? Optionally customize a LEAP base model even further to your use case using our suite of tools to help simplify the finetuning process.
-6. 📦 **Model Bundling Service:** Bundle your finetuned checkpoints on-demand for usage with the Edge SDK (not required for LEAP base models).
-7. 📱 **Edge SDK:** Deploy LEAP models - either from the Model Library or the Model Bundling Service - in your mobile app as easily as calling a cloud API.
-8. 💻 **Laptop support:** Leverage llama.cpp for blazing fast inference on laptops - particularly on AMD Ryzen™ chip technology.
+## Steps
 
-_and more coming soon..._
+### 1. Find the right LFM model for your use case
 
-## Get started
+<style>{`
+.leap-features-grid {
+  display: grid;
+  gap: 1.5rem;
+  margin: 2rem 0;
+  grid-template-columns: 1fr;
+}
 
-Choose a tool to get started:
+.leap-features-grid-two {
+  display: grid;
+  gap: 1.5rem;
+  margin: 2rem 0;
+  grid-template-columns: 1fr;
+}
 
-- [Edge SDK](/leap/edge-sdk/overview)
-- [Model Bundling Service](/leap/leap-bundle/quick-start)
-- [Laptop support](/leap/laptop-support)
-- [Finetuning](/leap/finetuning)
+@media (min-width: 768px) {
+  .leap-features-grid-two {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
 
-## Stay involved
+.leap-feature-card {
+  border: 1px solid var(--ifm-color-emphasis-300);
+  border-radius: 8px;
+  padding: 1.5rem;
+  background: var(--ifm-background-color);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
 
-Interested in joining our community? Join our [Discord](https://discord.gg/liquid-ai) to stay informed about updates, provide feedback, receive developer support, participate in competitions/events, and a lot more.
+.leap-feature-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border-color: var(--ifm-color-primary);
+}
+
+.leap-feature-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.leap-feature-icon {
+  font-size: 2rem;
+  display: block;
+}
+
+.leap-feature-title {
+  font-size: 1.1rem;
+  font-weight: bold;
+  color: var(--ifm-heading-color);
+  margin: 0;
+}
+
+.leap-feature-description {
+  color: var(--ifm-color-content-secondary);
+  line-height: 1.5;
+  flex-grow: 1;
+}
+
+.leap-feature-badge {
+  color: var(--ifm-color-primary);
+  font-style: italic;
+  font-size: 0.9rem;
+}
+`}</style>
+
+<div className="leap-features-grid-two">
+
+<a href="https://leap.liquid.ai/search" className="leap-feature-card" style={{textDecoration: 'none', color: 'inherit'}}>
+<div className="leap-feature-header">
+<span className="leap-feature-icon">🔍</span>
+<div className="leap-feature-title">Automatic Best Model Search</div>
+</div>
+<div className="leap-feature-description">
+Find the ideal model based on your specific use-case requirements and constraints using our model search tool.
+</div>
+</a>
+
+<a href="https://leap.liquid.ai/models" className="leap-feature-card" style={{textDecoration: 'none', color: 'inherit'}}>
+<div className="leap-feature-header">
+<span className="leap-feature-icon">📚</span>
+<div className="leap-feature-title">Explore the Model Library</div>
+</div>
+<div className="leap-feature-description">
+Browse and download our online catalog of pre-trained, pre-quantized model bundles for download.
+</div>
+</a>
+
+</div>
+
+### 2. Vibe-check the model on device or in the cloud
+
+<div className="leap-features-grid-two">
+
+<a href="https://www.liquid.ai/apollo" className="leap-feature-card" style={{textDecoration: 'none', color: 'inherit'}}>
+<div className="leap-feature-header">
+<span className="leap-feature-icon">🏹</span>
+<div className="leap-feature-title">Apollo</div>
+</div>
+<div className="leap-feature-description">
+Download and vibe-check LEAP models on your own device with our mobile app for iOS and Android.
+</div>
+</a>
+
+<a href="https://playground.liquid.ai/" className="leap-feature-card" style={{textDecoration: 'none', color: 'inherit'}}>
+<div className="leap-feature-header">
+<span className="leap-feature-icon">🛝</span>
+<div className="leap-feature-title">Cloud Playground</div>
+</div>
+<div className="leap-feature-description">
+Vibe-check LFM2 models in a virtual sandbox to test their response quality via API.
+</div>
+</a>
+
+</div>
+
+### 3. Deploy the model to your device
+
+<div className="leap-features-grid-two">
+
+<a href="edge-sdk/overview" className="leap-feature-card" style={{textDecoration: 'none', color: 'inherit'}}>
+<div className="leap-feature-header">
+<span className="leap-feature-icon">📱</span>
+<div className="leap-feature-title">Android and iOS with the Edge SDK</div>
+</div>
+<div className="leap-feature-description">
+Deploy LEAP models - either from the Model Library or the Model Bundling Service - in your mobile app as easily as calling a cloud API.
+</div>
+</a>
+
+<a href="laptop-support" className="leap-feature-card" style={{textDecoration: 'none', color: 'inherit'}}>
+<div className="leap-feature-header">
+<span className="leap-feature-icon">💻</span>
+<div className="leap-feature-title">Laptop Support</div>
+</div>
+<div className="leap-feature-description">
+Leverage llama.cpp for blazing fast inference on laptops - particularly on AMD Ryzen™ chip technology.
+</div>
+</a>
+
+</div>
+
+### 4. Customize the model to boost performance
+
+<div className="leap-features-grid-two">
+
+<a href="finetuning" className="leap-feature-card" style={{textDecoration: 'none', color: 'inherit'}}>
+<div className="leap-feature-header">
+<span className="leap-feature-icon">🛠️</span>
+<div className="leap-feature-title">Finetuning</div>
+</div>
+<div className="leap-feature-description">
+Base models not good enough? Optionally customize a LEAP base model even further to your use case using our suite of tools to help simplify the finetuning process.
+</div>
+</a>
+
+<a href="leap-bundle/quick-start" className="leap-feature-card" style={{textDecoration: 'none', color: 'inherit'}}>
+<div className="leap-feature-header">
+<span className="leap-feature-icon">📦</span>
+<div className="leap-feature-title">Model Bundling Service</div>
+</div>
+<div className="leap-feature-description">
+Bundle your finetuned checkpoints on-demand for usage with the Edge SDK (not required for LEAP base models).
+</div>
+</a>
+
+</div>

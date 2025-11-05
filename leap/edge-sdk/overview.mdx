@@ -10,6 +10,95 @@ generally accessible to only inference engineers or AI/ML programmers.
 Written for Android (Kotlin) and iOS (Swift), the goal of the Edge SDK is to make SLM deployment as easy as calling
 a cloud LLM API endpoint - for any app developer.
 
+## Get started
+
+Choose your platform to get started
+
+<style>{`
+.platform-grid {
+  display: grid;
+  gap: 1.5rem;
+  margin: 2rem 0;
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 768px) {
+  .platform-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.platform-card {
+  border: 1px solid var(--ifm-color-emphasis-300);
+  border-radius: 8px;
+  padding: 1.5rem;
+  background: var(--ifm-background-color);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  text-decoration: none;
+  color: inherit;
+}
+
+.platform-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border-color: var(--ifm-color-primary);
+  text-decoration: none;
+  color: inherit;
+}
+
+.platform-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.platform-icon {
+  font-size: 2rem;
+  display: block;
+}
+
+.platform-title {
+  font-size: 1.1rem;
+  font-weight: bold;
+  color: var(--ifm-heading-color);
+  margin: 0;
+}
+
+.platform-description {
+  color: var(--ifm-color-content-secondary);
+  line-height: 1.5;
+  flex-grow: 1;
+}
+`}</style>
+
+<div className="platform-grid">
+
+<a href="./android/android-quick-start-guide" className="platform-card">
+<div className="platform-header">
+<span className="platform-icon">🤖</span>
+<div className="platform-title">Android</div>
+</div>
+<div className="platform-description">
+Get started with the LEAP Edge SDK for Android using Kotlin. Deploy models directly in your Android app.
+</div>
+</a>
+
+<a href="./ios/ios-quick-start-guide" className="platform-card">
+<div className="platform-header">
+<span className="platform-icon">🍎</span>
+<div className="platform-title">iOS</div>
+</div>
+<div className="platform-description">
+Get started with the LEAP Edge SDK for iOS using Swift. Deploy models directly in your iOS app.
+</div>
+</a>
+
+</div>
+
 ## Features
 
 The current list of main features includes:
@@ -22,10 +111,3 @@ The current list of main features includes:
 - Image support (for LFM2-VL)
 
 We are consistently adding to this list - see our [changelog](/leap/changelog) for detailed updates.
-
-## Get started
-
-Choose your platform to get started
-
-- [Android](./android/android-quick-start-guide)
-- [iOS](./ios/ios-quick-start-guide)
