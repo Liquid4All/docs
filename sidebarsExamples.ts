@@ -15,8 +15,13 @@ const sidebars: SidebarsConfig = {
     },
     {
       type: 'category',
-      label: 'Customize Models',
-      items: ['customize-models/index', 'customize-models/cats-vs-dogs-identification-from-images'],
+      label: 'Model customization',
+      items: ['customize-models/index', 'customize-models/car-maker-identification'],
+    },
+    {
+      type: 'link',
+      label: 'Discord',
+      href: 'https://discord.gg/DFU3WQeaYD',
     },
   ],
 };
