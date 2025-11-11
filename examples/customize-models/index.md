@@ -1,6 +1,6 @@
 # Getting started
 
-<Card href="/examples/customize-models/cats-vs-dogs-identification-from-images" shadow="md" style={{maxWidth: '500px'}}>
+<Card href="/examples/customize-models/car-maker-identification" shadow="md" style={{maxWidth: '500px'}}>
   <CardHeader weight="bold">
     Cats vs dogs identification from images
   </CardHeader>
