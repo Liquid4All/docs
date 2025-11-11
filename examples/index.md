@@ -97,7 +97,7 @@
     Extract structured data from invoices using Liquid Nano models. Learn how to build a complete document processing pipeline.
   </div>
   <div className="example-tags">
-    <span className="example-tag">Laptops</span>
+    <span className="example-tag">Laptop</span>
     <span className="example-tag">End-to-End</span>
   </div>
 </a>
@@ -116,36 +116,28 @@
   </div>
 </a>
 
-<a href="/examples/deploy-models-on-android/chat-assistant-app" className="example-card" data-platform="android" data-type="deployment" data-search="chat assistant android app kotlin leap sdk intelligent responses">
+<a href="/examples/customize-models/car-maker-identification" className="example-card" data-platform="laptops" data-type="customization" data-search="car maker identification images classification fine-tuning customization computer vision lora">
   <div className="example-header">
-    <span className="example-icon">💬</span>
-    <div className="example-title">Chat Assistant App</div>
+    <span className="example-icon">🚗</span>
+    <div className="example-title">Car Maker Identification</div>
   </div>
   <div className="example-description">
-    Create an Android chat app with intelligent responses powered by Liquid AI models. Learn Kotlin integration with the LEAP SDK.
+    Fine-tune LFM2-VL to identify car makers from images. Learn structured generation with Outlines and parameter-efficient fine-tuning with LoRA.
   </div>
   <div className="example-tags">
-    <span className="example-tag">Android</span>
-    <span className="example-tag">Deployment</span>
-  </div>
-</a>
-
-<a href="/examples/customize-models/cars-vs-dogs-identification-from-images" className="example-card" data-platform="laptops" data-type="customization" data-search="cats dogs identification images classification fine-tuning customization computer vision">
-  <div className="example-header">
-    <span className="example-icon">🐱</span>
-    <div className="example-title">Cats vs Dogs Classification</div>
-  </div>
-  <div className="example-description">
-    Fine-tune a vision model to classify cats and dogs from images. Learn the complete customization workflow from data preparation to deployment.
-  </div>
-  <div className="example-tags">
-    <span className="example-tag">Laptops</span>
+    <span className="example-tag">Laptop</span>
     <span className="example-tag">Customization</span>
   </div>
 </a>
 
 </div>
 
+:::note[See also]
+**📚 [Liquid AI Cookbook](https://github.com/Liquid4All/cookbook)** - Explore examples, tutorials, and end-to-end applications built with LFM2 models and the LEAP SDK. Find fine-tuning notebooks, edge deployment examples, and community-built apps to get started quickly.
+:::
+
 ## Cannot find the example you need?
 
-Let us know -> [![Discord](https://img.shields.io/discord/1385439864920739850?color=7289da&label=Join%20Discord&logo=discord&logoColor=white)](https://discord.gg/DFU3WQeaYD)
+Join the Discord community and let us know
+
+[![Discord](https://img.shields.io/discord/1385439864920739850?color=7289da&label=Join%20Discord&logo=discord&logoColor=white)](https://discord.gg/DFU3WQeaYD)

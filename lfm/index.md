@@ -16,10 +16,6 @@ Built on a new hybrid architecture, LFM2 sets a new standard in terms of quality
 
 [Learn more about the architecture →](https://www.liquid.ai/blog/liquid-foundation-models-v2-our-second-series-of-generative-ai-models)
 
-:::note[See also]
-**📚 [Liquid AI Cookbook](https://github.com/Liquid4All/cookbook)** - Explore examples, tutorials, and end-to-end applications built with LFM2 models and the LEAP SDK. Find fine-tuning notebooks, edge deployment examples, and community-built apps to get started quickly.
-:::
-
 ## Model Families
 
 <style>{`

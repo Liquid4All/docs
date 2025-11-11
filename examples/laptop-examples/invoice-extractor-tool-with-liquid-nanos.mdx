@@ -155,20 +155,22 @@ which has not necessarily been trained on the task of invoice extraction. This i
 If you are interested in learning more about model customization for Vision Language Models,
 we recommend you to check out the following example:
 
-<Card href="/examples/customize-models/car-maker-identification" shadow="md" style={{maxWidth: '500px'}}>
-  <CardHeader weight="bold">
-    Cats vs dogs identification from images
-  </CardHeader>
-  <CardBody>
-    Learn how to fine-tune a Liquid Foundation Model to identify cats and dogs from images.
-    <div style={{marginTop: '1rem', display: 'flex', gap: '0.5rem', flexWrap: 'wrap'}}>
-      <span className="badge badge--secondary">Fine-tuning</span>
-      <span className="badge badge--secondary">VLM</span>
-    </div>
-  </CardBody>
-</Card>
+<a href="/examples/customize-models/car-maker-identification" className="example-card" data-platform="laptop" data-type="customization" data-search="car maker identification images classification fine-tuning customization computer vision lora" style={{maxWidth: '500px', display: 'flex', flexDirection: 'column', textDecoration: 'none', color: 'inherit', border: '1px solid var(--ifm-color-emphasis-300)', borderRadius: '8px', padding: '1.5rem', background: 'var(--ifm-background-color)', transition: 'transform 0.2s ease, box-shadow 0.2s ease'}} onMouseEnter={(e) => {e.target.style.transform = 'translateY(-2px)'; e.target.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.1)'; e.target.style.borderColor = 'var(--ifm-color-primary)'}} onMouseLeave={(e) => {e.target.style.transform = ''; e.target.style.boxShadow = ''; e.target.style.borderColor = 'var(--ifm-color-emphasis-300)'}}>
+  <div className="example-header" style={{display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem'}}>
+    <span className="example-icon" style={{width: '40px', height: '40px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', background: 'linear-gradient(135deg, var(--ifm-color-primary), var(--ifm-color-primary-dark))', color: 'white'}}>🚗</span>
+    <div className="example-title" style={{fontSize: '1.1rem', fontWeight: 'bold', color: 'var(--ifm-heading-color)', margin: 0}}>Car Maker Identification</div>
+  </div>
+  <div className="example-description" style={{color: 'var(--ifm-color-content-secondary)', lineHeight: 1.5, flexGrow: 1, marginBottom: '1rem'}}>
+    Fine-tune LFM2-VL to identify car makers from images. Learn structured generation with Outlines and parameter-efficient fine-tuning with LoRA.
+  </div>
+  <div className="example-tags" style={{display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginTop: 'auto'}}>
+    <span className="example-tag" style={{background: 'var(--ifm-color-emphasis-200)', color: 'var(--ifm-color-emphasis-700)', padding: '0.25rem 0.5rem', borderRadius: '4px', fontSize: '0.75rem', textTransform: 'uppercase', fontWeight: 500}}>Laptop</span>
+    <span className="example-tag" style={{background: 'var(--ifm-color-emphasis-200)', color: 'var(--ifm-color-emphasis-700)', padding: '0.25rem 0.5rem', borderRadius: '4px', fontSize: '0.75rem', textTransform: 'uppercase', fontWeight: 500}}>Customization</span>
+  </div>
+</a>
 
 ## Need help?
 
 Join the [Liquid AI Discord Community](https://discord.gg/DFU3WQeaYD) and ask.
+
 [![Discord](https://img.shields.io/discord/1385439864920739850?color=7289da&label=Join%20Discord&logo=discord&logoColor=white)](https://discord.gg/DFU3WQeaYD)
