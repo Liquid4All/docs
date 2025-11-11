@@ -15,9 +15,19 @@ LFM2 implements tool use through a conversational loop:
 3. **Execute Tool**: Your code executes the function with the model's arguments
 4. **Model Responds**: The model receives the tool result and generates a natural language response
 
+## Tool Use Format
+
+LFM2 uses special tokens to structure tool use in conversations:
+
+- **Tool Definitions**: Embedded between `<|tool_list_start|>` and `<|tool_list_end|>` tokens
+- **Tool Calls**: Model generates function calls between `<|tool_call_start|>` and `<|tool_call_end|>` tokens
+- **Tool Results**: Return tool execution results between `<|tool_response_start|>` and `<|tool_response_end|>` tokens in `tool` role messages
+
+When using [`apply_chat_template()`](https://huggingface.co/docs/transformers/v4.57.1/en/internal/tokenization_utils#transformers.PreTrainedTokenizerBase.apply_chat_template), these tokens are handled automatically. You can also manually format tools using these tokens directly.
+
 ## Defining Tools
 
-When using [`apply_chat_template()`](https://huggingface.co/docs/transformers/v4.57.1/en/internal/tokenization_utils#transformers.PreTrainedTokenizerBase.apply_chat_template), pass tools via the `tools` argument. You can use either Python functions or JSON schemas.
+When using `apply_chat_template()`, pass tools via the `tools` argument. You can use either Python functions or JSON schemas.
 
 ### Python Functions
 
@@ -67,107 +77,83 @@ tools = [{
 
 ## Complete Example
 
-Here's a complete example showing the full tool use workflow:
+The tool use workflow follows these steps:
+
+1. **Define tools** and include them in the conversation using `apply_chat_template()` with the `tools` argument
+2. **Generate with tools** - the model may generate tool calls between `<|tool_call_start|>` and `<|tool_call_end|>` tokens
+3. **Parse and execute** the tool call from the model's response
+4. **Append tool result** to messages with `role="tool"` and regenerate for the final response
 
 ```python
-import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
-# Load model and tokenizer
-checkpoint = "LiquidAI/LFM2-1.2B"
-tokenizer = AutoTokenizer.from_pretrained(checkpoint)
-model = AutoModelForCausalLM.from_pretrained(
-    checkpoint,
-    torch_dtype=torch.bfloat16,
-    device_map="auto"
-)
+model = AutoModelForCausalLM.from_pretrained("LiquidAI/LFM2-1.2B", torch_dtype="bfloat16", device_map="auto")
+tokenizer = AutoTokenizer.from_pretrained("LiquidAI/LFM2-1.2B")
 
-# Define a tool function
-def get_candidate_status(candidate_id: str):
-    """
-    Retrieves the current status of a candidate in the recruitment process.
-    
-    Args:
-        candidate_id: Unique identifier for the candidate
-    """
-    # Your actual implementation would query a database
-    return {
-        "candidate_id": candidate_id,
-        "status": "Interview Scheduled",
-        "position": "Clinical Research Associate",
-        "date": "2023-11-20"
-    }
+# Define tool
+def get_status(id: str):
+    """Get status for an ID."""
+    return {"status": "active"}
 
-tools = [get_candidate_status]
+messages = [{"role": "user", "content": "Get status for ID 123"}]
 
-# Step 1: Initial user message
-messages = [
-    {"role": "system", "content": "You are a helpful HR assistant."},
-    {"role": "user", "content": "What is the current status of candidate ID 12345?"}
-]
-
-# Step 2: Apply chat template with tools and generate
-inputs = tokenizer.apply_chat_template(
-    messages,
-    tools=tools,
-    add_generation_prompt=True,
-    return_dict=True,
-    return_tensors="pt"
-)
-
+# Generate with tools
+inputs = tokenizer.apply_chat_template(messages, tools=[get_status], add_generation_prompt=True, return_dict=True, return_tensors="pt")
 outputs = model.generate(**inputs.to(model.device), max_new_tokens=256)
 response = tokenizer.decode(outputs[0][len(inputs["input_ids"][0]):], skip_special_tokens=False)
-print("Model response (with tool call):", response)
 
-# Step 3: Parse and execute the tool call
-# In practice, you would parse the tool call from the model's response
-# For this example, we'll execute it directly
-result = get_candidate_status(candidate_id="12345")
-result_str = str(result)
+# Parse tool call, execute, and append result
+messages.append({"role": "assistant", "tool_calls": [...]})  # Parse from response
+messages.append({"role": "tool", "content": str(get_status("123"))})
 
-# Append tool execution result to conversation
-messages.append({
-    "role": "assistant",
-    "tool_calls": [{
-        "type": "function",
-        "function": {
-            "name": "get_candidate_status",
-            "arguments": '{"candidate_id": "12345"}'
-        }
-    }]
-})
-messages.append({
-    "role": "tool",
-    "content": result_str
-})
-
-# Step 4: Generate final response with tool result
-inputs = tokenizer.apply_chat_template(
-    messages,
-    tools=tools,
-    add_generation_prompt=True,
-    return_dict=True,
-    return_tensors="pt"
-)
-
+# Generate final response
+inputs = tokenizer.apply_chat_template(messages, tools=[get_status], add_generation_prompt=True, return_dict=True, return_tensors="pt")
 outputs = model.generate(**inputs.to(model.device), max_new_tokens=256)
-final_response = tokenizer.decode(outputs[0][len(inputs["input_ids"][0]):], skip_special_tokens=True)
-print("Final answer:", final_response)
+final = tokenizer.decode(outputs[0][len(inputs["input_ids"][0]):], skip_special_tokens=True)
 ```
 
-## Tool Use Format
+## Manual Tool Formatting
 
-LFM2 uses special tokens to structure tool use in conversations:
+You can manually format tools using special tokens instead of `apply_chat_template()`. Define tools as Python functions or JSON schemas, then list them between `<|tool_list_start|>` and `<|tool_list_end|>` tokens:
 
-- **Tool Definitions**: Embedded between `<|tool_list_start|>` and `<|tool_list_end|>` tokens
-- **Tool Calls**: Model generates function calls between `<|tool_call_start|>` and `<|tool_call_end|>` tokens
-- **Tool Results**: Return tool execution results between `<|tool_response_start|>` and `<|tool_response_end|>` tokens in `tool` role messages
+```python
+import json
+from transformers import AutoModelForCausalLM, AutoTokenizer
 
-The `apply_chat_template()` method handles these tokens automatically when you pass tools.
+model_id = "LiquidAI/LFM2-1.2B"
+model = AutoModelForCausalLM.from_pretrained(model_id, device_map="auto", torch_dtype="bfloat16")
+tokenizer = AutoTokenizer.from_pretrained(model_id)
+
+# Define tools (as JSON schema or Python functions)
+tools = [{
+    "type": "function",
+    "function": {
+        "name": "get_weather",
+        "description": "Get the current weather for a location",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "location": {"type": "string", "description": "The city and state"},
+                "unit": {"type": "string", "enum": ["celsius", "fahrenheit"]}
+            },
+            "required": ["location", "unit"]
+        }
+    }
+}]
+
+# Manually format prompt with tools
+tool_definitions = json.dumps(tools)
+prompt = f"<|tool_list_start|>{tool_definitions}<|tool_list_end|><|startoftext|><|im_start|>system\nYou are a helpful assistant.<|im_end|>\n<|im_start|>user\nWhat's the weather in San Francisco?<|im_end|>\n<|im_start|>assistant\n"
+
+# Generate
+input_ids = tokenizer.encode(prompt, return_tensors="pt").to(model.device)
+output = model.generate(input_ids, max_new_tokens=512)
+response = tokenizer.decode(output[0][len(input_ids[0]):], skip_special_tokens=False)
+print(response)
+```
 
 ## Managing Tool Lists
 
 - **Context usage**: Tool definitions are inserted as text in the prompt, consuming context tokens. Large tool lists (100+ tools) can use significant portions of your context window.
 - **Large tool lists**: Only include tools relevant to the current request. Consider tool selection or categorization strategies to reduce context usage.
 - **Best practices**: Provide clear, concise tool descriptions. Group related tools when possible. Remove unused tools from the list when they're not needed.
-Coming soon...

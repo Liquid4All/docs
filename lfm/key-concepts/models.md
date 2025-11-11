@@ -6,6 +6,174 @@ The LFM model collection includes general-purpose language models, vision-langua
 - All models support a **32k token text context length** for extended conversations and document processing.
 - Our models are compatible with various open-source deployment libraries including [Transformers](../inference/transformers.md), [llama.cpp](../inference/llama-cpp.md), [vLLM](../inference/vllm.md), [MLX](../inference/mlx.md), [Ollama](../inference/ollama.md), and our own edge deployment platform [LEAP](../frameworks/leap.md).
 
+<details>
+<summary>Complete Model Table</summary>
+
+<table className="model-matrix-table" style={{width: '100%', textAlign: 'center'}}>
+<thead>
+<tr style={{backgroundColor: 'rgba(124, 58, 237, 0.15)', borderTop: '2px solid #7C3AED', borderBottom: '3px solid #7C3AED'}}>
+<th style={{textAlign: 'left', fontWeight: 700, padding: '0.75rem', fontSize: '1.1em'}}>Model</th>
+<th style={{fontWeight: 700, padding: '0.75rem', fontSize: '1.1em'}}>HF</th>
+<th style={{fontWeight: 700, padding: '0.75rem', fontSize: '1.1em'}}>GGUF</th>
+<th style={{fontWeight: 700, padding: '0.75rem', fontSize: '1.1em'}}>MLX</th>
+<th style={{fontWeight: 700, padding: '0.75rem', fontSize: '1.1em'}}>ONNX</th>
+<th style={{fontWeight: 700, padding: '0.75rem', fontSize: '1.1em'}}>Trainable?</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td colSpan="6" style={{textAlign: 'left', fontWeight: 600, backgroundColor: 'var(--color-background-secondary)'}}><strong>LFM2 Text Models</strong></td>
+</tr>
+<tr>
+<td style={{textAlign: 'left'}}>LFM2-8B-A1B</td>
+<td><a href="https://huggingface.co/LiquidAI/LFM2-8B-A1B" style={{color: '#22c55e', textDecoration: 'none'}}>✓</a></td>
+<td><a href="https://huggingface.co/LiquidAI/LFM2-8B-A1B-GGUF" style={{color: '#22c55e', textDecoration: 'none'}}>✓</a></td>
+<td><a href="https://huggingface.co/mlx-community/LFM2-8B-A1B-8bit" style={{color: '#22c55e', textDecoration: 'none'}}>✓</a></td>
+<td style={{color: '#ef4444'}}>✗</td>
+<td>Yes (TRL)</td>
+</tr>
+<tr>
+<td style={{textAlign: 'left'}}>LFM2-2.6B</td>
+<td><a href="https://huggingface.co/LiquidAI/LFM2-2.6B" style={{color: '#22c55e', textDecoration: 'none'}}>✓</a></td>
+<td><a href="https://huggingface.co/LiquidAI/LFM2-2.6B-GGUF" style={{color: '#22c55e', textDecoration: 'none'}}>✓</a></td>
+<td><a href="https://huggingface.co/mlx-community/LFM2-2.6B-8bit" style={{color: '#22c55e', textDecoration: 'none'}}>✓</a></td>
+<td><a href="https://huggingface.co/onnx-community/LFM2-2.6B-ONNX" style={{color: '#22c55e', textDecoration: 'none'}}>✓</a></td>
+<td>Yes (TRL)</td>
+</tr>
+<tr>
+<td style={{textAlign: 'left'}}>LFM2-1.2B</td>
+<td><a href="https://huggingface.co/LiquidAI/LFM2-1.2B" style={{color: '#22c55e', textDecoration: 'none'}}>✓</a></td>
+<td><a href="https://huggingface.co/LiquidAI/LFM2-1.2B-GGUF" style={{color: '#22c55e', textDecoration: 'none'}}>✓</a></td>
+<td><a href="https://huggingface.co/mlx-community/LFM2-1.2B-8bit" style={{color: '#22c55e', textDecoration: 'none'}}>✓</a></td>
+<td><a href="https://huggingface.co/onnx-community/LFM2-1.2B-ONNX" style={{color: '#22c55e', textDecoration: 'none'}}>✓</a></td>
+<td>Yes (TRL)</td>
+</tr>
+<tr>
+<td style={{textAlign: 'left'}}>LFM2-700M</td>
+<td><a href="https://huggingface.co/LiquidAI/LFM2-700M" style={{color: '#22c55e', textDecoration: 'none'}}>✓</a></td>
+<td><a href="https://huggingface.co/LiquidAI/LFM2-700M-GGUF" style={{color: '#22c55e', textDecoration: 'none'}}>✓</a></td>
+<td><a href="https://huggingface.co/mlx-community/LFM2-700M-8bit" style={{color: '#22c55e', textDecoration: 'none'}}>✓</a></td>
+<td><a href="https://huggingface.co/onnx-community/LFM2-700M-ONNX" style={{color: '#22c55e', textDecoration: 'none'}}>✓</a></td>
+<td>Yes (TRL)</td>
+</tr>
+<tr>
+<td style={{textAlign: 'left'}}>LFM2-350M</td>
+<td><a href="https://huggingface.co/LiquidAI/LFM2-350M" style={{color: '#22c55e', textDecoration: 'none'}}>✓</a></td>
+<td><a href="https://huggingface.co/LiquidAI/LFM2-350M-GGUF" style={{color: '#22c55e', textDecoration: 'none'}}>✓</a></td>
+<td><a href="https://huggingface.co/mlx-community/LFM2-350M-8bit" style={{color: '#22c55e', textDecoration: 'none'}}>✓</a></td>
+<td><a href="https://huggingface.co/onnx-community/LFM2-350M-ONNX" style={{color: '#22c55e', textDecoration: 'none'}}>✓</a></td>
+<td>Yes (TRL)</td>
+</tr>
+<tr>
+<td colSpan="6" style={{textAlign: 'left', fontWeight: 'bold', backgroundColor: 'var(--color-background-secondary)'}}><strong>LFM2-VL Models</strong></td>
+</tr>
+<tr>
+<td style={{textAlign: 'left'}}>LFM2-VL-3B</td>
+<td><a href="https://huggingface.co/LiquidAI/LFM2-VL-3B" style={{color: '#22c55e', textDecoration: 'none'}}>✓</a></td>
+<td><a href="https://huggingface.co/LiquidAI/LFM2-VL-3B-GGUF" style={{color: '#22c55e', textDecoration: 'none'}}>✓</a></td>
+<td><a href="https://huggingface.co/mlx-community/LFM2-VL-3B-8bit" style={{color: '#22c55e', textDecoration: 'none'}}>✓</a></td>
+<td style={{color: '#ef4444'}}>✗</td>
+<td>Yes (TRL)</td>
+</tr>
+<tr>
+<td style={{textAlign: 'left'}}>LFM2-VL-1.6B</td>
+<td><a href="https://huggingface.co/LiquidAI/LFM2-VL-1.6B" style={{color: '#22c55e', textDecoration: 'none'}}>✓</a></td>
+<td><a href="https://huggingface.co/LiquidAI/LFM2-VL-1.6B-GGUF" style={{color: '#22c55e', textDecoration: 'none'}}>✓</a></td>
+<td><a href="https://huggingface.co/mlx-community/LFM2-VL-1.6B-8bit" style={{color: '#22c55e', textDecoration: 'none'}}>✓</a></td>
+<td style={{color: '#ef4444'}}>✗</td>
+<td>Yes (TRL)</td>
+</tr>
+<tr>
+<td style={{textAlign: 'left'}}>LFM2-VL-450M</td>
+<td><a href="https://huggingface.co/LiquidAI/LFM2-VL-450M" style={{color: '#22c55e', textDecoration: 'none'}}>✓</a></td>
+<td><a href="https://huggingface.co/LiquidAI/LFM2-VL-450M-GGUF" style={{color: '#22c55e', textDecoration: 'none'}}>✓</a></td>
+<td><a href="https://huggingface.co/mlx-community/LFM2-VL-450M-8bit" style={{color: '#22c55e', textDecoration: 'none'}}>✓</a></td>
+<td style={{color: '#ef4444'}}>✗</td>
+<td>Yes (TRL)</td>
+</tr>
+<tr>
+<td colSpan="6" style={{textAlign: 'left', fontWeight: 'bold', backgroundColor: 'var(--color-background-secondary)'}}><strong>LFM2-Audio</strong></td>
+</tr>
+<tr>
+<td style={{textAlign: 'left'}}>LFM2-Audio-1.5B</td>
+<td><a href="https://huggingface.co/LiquidAI/LFM2-Audio-1.5B" style={{color: '#22c55e', textDecoration: 'none'}}>✓</a></td>
+<td style={{color: '#ef4444'}}>✗</td>
+<td style={{color: '#ef4444'}}>✗</td>
+<td style={{color: '#ef4444'}}>✗</td>
+<td>No</td>
+</tr>
+<tr>
+<td colSpan="6" style={{textAlign: 'left', fontWeight: 'bold', backgroundColor: 'var(--color-background-secondary)'}}><strong>Liquid Nanos</strong></td>
+</tr>
+<tr>
+<td style={{textAlign: 'left'}}>LFM2-1.2B-Extract</td>
+<td><a href="https://huggingface.co/LiquidAI/LFM2-1.2B-Extract" style={{color: '#22c55e', textDecoration: 'none'}}>✓</a></td>
+<td><a href="https://huggingface.co/LiquidAI/LFM2-1.2B-Extract-GGUF" style={{color: '#22c55e', textDecoration: 'none'}}>✓</a></td>
+<td style={{color: '#ef4444'}}>✗</td>
+<td><a href="https://huggingface.co/onnx-community/LFM2-1.2B-Extract-ONNX" style={{color: '#22c55e', textDecoration: 'none'}}>✓</a></td>
+<td>Yes (TRL)</td>
+</tr>
+<tr>
+<td style={{textAlign: 'left'}}>LFM2-350M-Extract</td>
+<td><a href="https://huggingface.co/LiquidAI/LFM2-350M-Extract" style={{color: '#22c55e', textDecoration: 'none'}}>✓</a></td>
+<td><a href="https://huggingface.co/LiquidAI/LFM2-350M-Extract-GGUF" style={{color: '#22c55e', textDecoration: 'none'}}>✓</a></td>
+<td style={{color: '#ef4444'}}>✗</td>
+<td><a href="https://huggingface.co/onnx-community/LFM2-350M-Extract-ONNX" style={{color: '#22c55e', textDecoration: 'none'}}>✓</a></td>
+<td>Yes (TRL)</td>
+</tr>
+<tr>
+<td style={{textAlign: 'left'}}>LFM2-350M-ENJP-MT</td>
+<td><a href="https://huggingface.co/LiquidAI/LFM2-350M-ENJP-MT" style={{color: '#22c55e', textDecoration: 'none'}}>✓</a></td>
+<td><a href="https://huggingface.co/LiquidAI/LFM2-350M-ENJP-MT-GGUF" style={{color: '#22c55e', textDecoration: 'none'}}>✓</a></td>
+<td><a href="https://huggingface.co/mlx-community/LFM2-350M-ENJP-MT-8bit" style={{color: '#22c55e', textDecoration: 'none'}}>✓</a></td>
+<td><a href="https://huggingface.co/onnx-community/LFM2-350M-ENJP-MT-ONNX" style={{color: '#22c55e', textDecoration: 'none'}}>✓</a></td>
+<td>Yes (TRL)</td>
+</tr>
+<tr>
+<td style={{textAlign: 'left'}}>LFM2-1.2B-RAG</td>
+<td><a href="https://huggingface.co/LiquidAI/LFM2-1.2B-RAG" style={{color: '#22c55e', textDecoration: 'none'}}>✓</a></td>
+<td><a href="https://huggingface.co/LiquidAI/LFM2-1.2B-RAG-GGUF" style={{color: '#22c55e', textDecoration: 'none'}}>✓</a></td>
+<td style={{color: '#ef4444'}}>✗</td>
+<td><a href="https://huggingface.co/onnx-community/LFM2-1.2B-RAG-ONNX" style={{color: '#22c55e', textDecoration: 'none'}}>✓</a></td>
+<td>Yes (TRL)</td>
+</tr>
+<tr>
+<td style={{textAlign: 'left'}}>LFM2-1.2B-Tool</td>
+<td><a href="https://huggingface.co/LiquidAI/LFM2-1.2B-Tool" style={{color: '#22c55e', textDecoration: 'none'}}>✓</a></td>
+<td><a href="https://huggingface.co/LiquidAI/LFM2-1.2B-Tool-GGUF" style={{color: '#22c55e', textDecoration: 'none'}}>✓</a></td>
+<td style={{color: '#ef4444'}}>✗</td>
+<td><a href="https://huggingface.co/onnx-community/LFM2-1.2B-Tool-ONNX" style={{color: '#22c55e', textDecoration: 'none'}}>✓</a></td>
+<td>Yes (TRL)</td>
+</tr>
+<tr>
+<td style={{textAlign: 'left'}}>LFM2-350M-Math</td>
+<td><a href="https://huggingface.co/LiquidAI/LFM2-350M-Math" style={{color: '#22c55e', textDecoration: 'none'}}>✓</a></td>
+<td><a href="https://huggingface.co/LiquidAI/LFM2-350M-Math-GGUF" style={{color: '#22c55e', textDecoration: 'none'}}>✓</a></td>
+<td style={{color: '#ef4444'}}>✗</td>
+<td><a href="https://huggingface.co/onnx-community/LFM2-350M-Math-ONNX" style={{color: '#22c55e', textDecoration: 'none'}}>✓</a></td>
+<td>Yes (TRL)</td>
+</tr>
+<tr>
+<td style={{textAlign: 'left'}}>LFM2-350M-PII-Extract-JP</td>
+<td><a href="https://huggingface.co/LiquidAI/LFM2-350M-PII-Extract-JP" style={{color: '#22c55e', textDecoration: 'none'}}>✓</a></td>
+<td><a href="https://huggingface.co/LiquidAI/LFM2-350M-PII-Extract-JP-GGUF" style={{color: '#22c55e', textDecoration: 'none'}}>✓</a></td>
+<td style={{color: '#ef4444'}}>✗</td>
+<td style={{color: '#ef4444'}}>✗</td>
+<td>Yes (TRL)</td>
+</tr>
+<tr>
+<td style={{textAlign: 'left'}}>LFM2-ColBERT-350M</td>
+<td><a href="https://huggingface.co/LiquidAI/LFM2-ColBERT-350M" style={{color: '#22c55e', textDecoration: 'none'}}>✓</a></td>
+<td style={{color: '#ef4444'}}>✗</td>
+<td style={{color: '#ef4444'}}>✗</td>
+<td style={{color: '#ef4444'}}>✗</td>
+<td>Yes (PyLate)</td>
+</tr>
+</tbody>
+</table>
+
+</details>
+
 ## 💬 LFM2 {#lfm2}
 
 [LFM2](https://huggingface.co/collections/LiquidAI/lfm2-686d721927015b2ad73eaa38) is a family of general-purpose text-only language models optimized for edge AI and on-device deployment.
