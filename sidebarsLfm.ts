@@ -2,17 +2,17 @@ import type { SidebarsConfig } from '@docusaurus/plugin-content-docs';
 
 const sidebars: SidebarsConfig = {
   lfm: [
+    'getting-started/index',
     {
       type: 'category',
       label: 'Getting started',
       collapsed: false,
-      items: ['getting-started/index', 'getting-started/quickstart'],
-    },
-    {
-      type: 'category',
-      label: 'Key Concepts',
-      collapsed: false,
-      items: ['key-concepts/models', 'key-concepts/chat-template', 'key-concepts/tool-use'],
+      items: [
+        'getting-started/quickstart',
+        'key-concepts/models',
+        'key-concepts/chat-template',
+        'key-concepts/tool-use',
+      ],
     },
     {
       type: 'category',
