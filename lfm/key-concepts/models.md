@@ -7,7 +7,7 @@ The LFM model collection includes general-purpose language models, vision-langua
 - Our models are compatible with various open-source deployment libraries including [Transformers](../inference/transformers.md), [llama.cpp](../inference/llama-cpp.md), [vLLM](../inference/vllm.md), [MLX](../inference/mlx.md), [Ollama](../inference/ollama.md), and our own edge deployment platform [LEAP](../frameworks/leap.md).
 
 <details>
-<summary>Complete Model Table</summary>
+<summary><strong>Complete Model Table</strong></summary>
 
 <table className="model-matrix-table" style={{width: '100%', textAlign: 'center'}}>
 <thead>
