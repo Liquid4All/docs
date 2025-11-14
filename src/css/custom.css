@@ -256,3 +256,7 @@
 .monospace {
   font-family: "JetBrains Mono", monospace;
 }
+
+@utility gradient-corner-tr {
+  @apply bg-[url(/img/gradient-corner-tr.svg)] bg-no-repeat bg-top-right bg-auto bg-clip-border bg-origin-border;
+}
