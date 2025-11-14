@@ -1,8 +1,126 @@
 @layer theme, base, components, utilities;
 @import "tailwindcss/theme.css" layer(theme);
-@import "tailwindcss/utilities.css" layer(utilities);
 
 @custom-variant dark (&:is([data-theme="dark"] *));
+
+@theme {
+  /* Override orange color (to match Liquid branding) */
+  --color-orange-50: #fff1ec;
+  --color-orange-100: #ffd7c6;
+  --color-orange-200: #ffaf8e;
+  --color-orange-300: #ff9469;
+  --color-orange-400: #ff5f1e;
+  --color-orange-500: #e9571b;
+  --color-orange-600: #d44f19;
+  --color-orange-700: #bf4716;
+  --color-orange-800: #aa3f14;
+  --color-orange-900: #943711;
+  --color-orange-950: #3f1707;
+
+  /* Override lime color (to match Liquid branding) */
+  --color-lime-50: #f4fee0;
+  --color-lime-100: #ecfdc9;
+  --color-lime-200: #e1fcaa;
+  --color-lime-300: #c8fa64;
+  --color-lime-400: #abd655;
+  --color-lime-500: #8eb247;
+  --color-lime-600: #728e39;
+  --color-lime-700: #556b2a;
+  --color-lime-800: #39471c;
+  --color-lime-900: #1c230e;
+  --color-lime-950: #101408;
+
+  /* Override green color (to match Liquid branding) */
+  --color-green-50: #f3fbf9;
+  --color-green-100: #ddf5ed;
+  --color-green-200: #bbecdb;
+  --color-green-300: #78d9b7;
+  --color-green-400: #57d0a5;
+  --color-green-500: #35c793;
+  --color-green-600: #14be82;
+  --color-green-700: #0e875c;
+  --color-green-800: #0b6c4a;
+  --color-green-900: #085137;
+  --color-green-950: #053625;
+
+  /* Override emerald color (to match Liquid branding) */
+  --color-emerald-50: #edfef4;
+  --color-emerald-100: #e0fdec;
+  --color-emerald-200: #cdfce1;
+  --color-emerald-300: #a5fac8;
+  --color-emerald-400: #92deb1;
+  --color-emerald-500: #80c29b;
+  --color-emerald-600: #6ea685;
+  --color-emerald-700: #5b8a6f;
+  --color-emerald-800: #496f58;
+  --color-emerald-900: #375342;
+  --color-emerald-950: #121b16;
+
+  /* Override purple color (to match Liquid branding) */
+  --color-purple-50: #f2edf9;
+  --color-purple-100: #e6dbf3;
+  --color-purple-200: #b693db;
+  --color-purple-300: #864bc4;
+  --color-purple-400: #5603ad;
+  --color-purple-500: #490294;
+  --color-purple-600: #3d027b;
+  --color-purple-700: #310162;
+  --color-purple-800: #24014a;
+  --color-purple-900: #180031;
+  --color-purple-950: #06000d;
+
+  /* Override fuchsia color (to match Liquid branding) */
+  --color-fuchsia-50: #faf3ff;
+  --color-fuchsia-100: #f5e7ff;
+  --color-fuchsia-200: #eaceff;
+  --color-fuchsia-300: #dda7ff;
+  --color-fuchsia-400: #c364ff;
+  --color-fuchsia-500: #b03ef7;
+  --color-fuchsia-600: #961edb;
+  --color-fuchsia-700: #7f15b6;
+  --color-fuchsia-800: #6a1395;
+  --color-fuchsia-900: #5b1679;
+  --color-fuchsia-950: #390151;
+
+  /* Override sky color (to match Liquid branding) */
+  --color-sky-50: #ebfdff;
+  --color-sky-100: #cdf5ff;
+  --color-sky-200: #91e6ff;
+  --color-sky-300: #62d9fe;
+  --color-sky-400: #1bbdf5;
+  --color-sky-500: #00a0db;
+  --color-sky-600: #027eb8;
+  --color-sky-700: #0a6694;
+  --color-sky-800: #125378;
+  --color-sky-900: #134566;
+  --color-sky-950: #062c46;
+
+  /* Override indigo color (to match Liquid branding) */
+  --color-indigo-50: #efeffe;
+  --color-indigo-100: #e1e1fe;
+  --color-indigo-200: #cbc9fc;
+  --color-indigo-300: #aaa5f9;
+  --color-indigo-400: #9585f4;
+  --color-indigo-500: #8568ec;
+  --color-indigo-600: #774be0;
+  --color-indigo-700: #673dc5;
+  --color-indigo-800: #53349f;
+  --color-indigo-900: #45317e;
+  --color-indigo-950: #291d49;
+
+  /* Add opacity colors */
+  --color-white-5: rgba(255, 255, 255, 0.05);
+  --color-white-10: rgba(255, 255, 255, 0.1);
+  --color-white-12: rgba(255, 255, 255, 0.12);
+  --color-white-16: rgba(255, 255, 255, 0.16);
+  --color-white-50: rgba(255, 255, 255, 0.5);
+
+  --color-black-5: rgba(0, 0, 0, 0.05);
+  --color-black-8: rgba(0, 0, 0, 0.08);
+  --color-black-12: rgba(0, 0, 0, 0.12);
+}
+
+@import "tailwindcss/utilities.css" layer(utilities);
 
 /**
  * Any CSS included here will be global. The classic template
@@ -12,13 +130,13 @@
 
 /* LEAP Brand Colors - Purple theme */
 :root {
-  --ifm-color-primary: #5603ad;
-  --ifm-color-primary-dark: #490294;
-  --ifm-color-primary-darker: #3d027b;
-  --ifm-color-primary-darkest: #310162;
-  --ifm-color-primary-light: #864bc4;
-  --ifm-color-primary-lighter: #b693db;
-  --ifm-color-primary-lightest: #e6dbf3;
+  --ifm-color-primary-lightest: #a322e6;
+  --ifm-color-primary-lighter: #9218d1;
+  --ifm-color-primary-light: #8c17c8;
+  --ifm-color-primary: #7f15b6;
+  --ifm-color-primary-dark: #7213a4;
+  --ifm-color-primary-darker: #6c129b;
+  --ifm-color-primary-darkest: #590f7f;
   --ifm-code-font-size: 95%;
   --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.1);
 
@@ -26,18 +144,98 @@
   --leap-orange-500: #e9571b;
   --leap-purple-500: #5603ad;
   --leap-fuchsia-500: #af6ece;
+
+  --background: var(--color-neutral-100);
+  --muted: var(--color-white);
+  --card: var(--color-white);
+  --popover: var(--color-white-50);
+  --input: var(--color-black-5);
+
+  --primary: var(--color-fuchsia-400);
+  --secondary: var(--color-neutral-950);
+  --accent: var(--color-sky-200);
+  --destructive: var(--color-red-700);
+
+  --sidebar: var(--color-neutral-100);
+  --sidebar-primary: var(--color-neutral-950);
+  --sidebar-accent: var(--color-fuchsia-400);
+
+  --foreground: var(--color-neutral-950);
+  --muted-foreground: var(--color-neutral-500);
+  --card-foreground: var(--color-neutral-950);
+  --popover-foreground: var(--color-neutral-950);
+
+  --primary-foreground: var(--color-white);
+  --secondary-foreground: var(--color-white);
+  --accent-foreground: var(--color-neutral-950);
+  --destructive-foreground: var(--color-white);
+
+  --sidebar-foreground: var(--color-neutral-950);
+  --sidebar-primary-foreground: var(--color-white);
+  --sidebar-accent-foreground: var(--color-white);
+
+  --chart-1: var(--color-fuchsia-500);
+  --chart-2: var(--color-sky-200);
+  --chart-3: var(--color-indigo-400);
+  --chart-4: var(--color-fuchsia-300);
+  --chart-5: var(--color-sky-500);
+
+  --border: var(--color-black-8);
+  --ring: var(--color-sky-400);
+  --sidebar-border: var(--color-black-12);
+  --sidebar-ring: var(--color-neutral-400);
 }
 
 /* For readability concerns, you should choose a lighter palette in dark mode. */
 [data-theme='dark'] {
-  --ifm-color-primary: #b693db;
-  --ifm-color-primary-dark: #864bc4;
-  --ifm-color-primary-darker: #5603ad;
-  --ifm-color-primary-darkest: #490294;
-  --ifm-color-primary-light: #e6dbf3;
-  --ifm-color-primary-lighter: #f2edf9;
-  --ifm-color-primary-lightest: #f2edf9;
+  --ifm-color-primary-lightest: #f5e6ff;
+  --ifm-color-primary-lighter: #f1daff;
+  --ifm-color-primary-light: #edd1ff;
+  --ifm-color-primary: #dda7ff;
+  --ifm-color-primary-dark: #cd7dff;
+  --ifm-color-primary-darker: #c568ff;
+  --ifm-color-primary-darkest: #bc53ff;
   --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.3);
+
+  --background: var(--color-neutral-900);
+  --muted: var(--color-neutral-800);
+  --card: var(--color-neutral-800);
+  --popover: var(--color-white-5);
+  --input: var(--color-white-10);
+
+  --primary: var(--color-fuchsia-300);
+  --secondary: var(--color-white);
+  --accent: var(--color-sky-200);
+  --destructive: var(--color-red-400);
+
+  --sidebar: var(--color-neutral-700);
+  --sidebar-primary: var(--color-white);
+  --sidebar-accent: var(--color-fuchsia-300);
+
+  --foreground: var(--color-white);
+  --muted-foreground: var(--color-neutral-400);
+  --card-foreground: var(--color-white);
+  --popover-foreground: var(--color-white);
+
+  --primary-foreground: var(--color-neutral-950);
+  --secondary-foreground: var(--color-neutral-950);
+  --accent-foreground: var(--color-neutral-950);
+  --destructive-foreground: var(--color-white);
+
+  --sidebar-foreground: var(--color-white);
+  --sidebar-primary-foreground: var(--color-neutral-950);
+  --sidebar-accent-foreground: var(--color-neutral-950);
+
+  --chart-1: var(--color-fuchsia-500);
+  --chart-2: var(--color-sky-200);
+  --chart-3: var(--color-indigo-200);
+  --chart-4: var(--color-fuchsia-200);
+  --chart-5: var(--color-sky-400);
+
+  --border: var(--color-white-12);
+  --ring: var(--color-sky-400);
+  --sidebar-border: var(--color-white-16);
+  --sidebar-ring: var(--color-neutral-500);
 }
 
 .navbar__item.dropdown:not(:has(.navbar__link.active)) {
@@ -47,4 +245,14 @@
 /* Make sidebar category labels bold */
 .theme-doc-sidebar-item-category > .menu__list-item-collapsible > .menu__link {
   font-weight: bold;
+}
+
+.bg-bottom-gradient {
+  background-image: url("/img/gradient-bottom-up.png");
+  background-repeat: no-repeat;
+  background-position: bottom center;
+}
+
+.monospace {
+  font-family: "JetBrains Mono", monospace;
 }
