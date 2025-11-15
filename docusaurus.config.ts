@@ -66,16 +66,6 @@ const config: Config = {
     'vercel-analytics',
     './src/plugins/tailwind-config.ts',
     [
-      '@cmfcmf/docusaurus-search-local',
-      // https://github.com/cmfcmf/docusaurus-search-local?tab=readme-ov-file#usage
-      {
-        indexDocSidebarParentCategories: 5,
-        includeParentCategoriesInPageTitle: false,
-        maxSearchResults: 8,
-        indexBlog: false,
-      },
-    ],
-    [
       '@docusaurus/plugin-content-docs',
       {
         id: 'lfm',
@@ -212,6 +202,16 @@ const config: Config = {
     prism: {
       theme: prismThemes.github,
       darkTheme: prismThemes.dracula,
+    },
+    algolia: {
+      appId: 'NU3OWTAZ9V',
+      apiKey: 'b820a975003c366a585fb67b0b9ab89e',
+      indexName: 'liquid-docs',
+      contextualSearch: true,
+      // Optional: path for search page that enabled by default (`false` to disable it)
+      searchPagePath: 'search',
+      // Optional: whether the insights feature is enabled or not on Docsearch (`false` by default)
+      insights: false,
     },
   } satisfies Preset.ThemeConfig,
   customFields: {
