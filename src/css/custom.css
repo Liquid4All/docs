@@ -1,5 +1,5 @@
 @layer theme, base, components, utilities;
-@import "tailwindcss/theme.css" layer(theme);
+@import 'tailwindcss/theme.css' layer(theme);
 
 @custom-variant dark (&:is([data-theme="dark"] *));
 
@@ -120,7 +120,7 @@
   --color-black-12: rgba(0, 0, 0, 0.12);
 }
 
-@import "tailwindcss/utilities.css" layer(utilities);
+@import 'tailwindcss/utilities.css' layer(utilities);
 
 /**
  * Any CSS included here will be global. The classic template
@@ -184,6 +184,13 @@
   --ring: var(--color-sky-400);
   --sidebar-border: var(--color-black-12);
   --sidebar-ring: var(--color-neutral-400);
+
+  --aa-muted-color-rgb: 115, 115, 115 !important;
+  --aa-primary-color-rgb: 0, 0, 0 !important;
+  --aa-input-background-color-rgb: 245, 245, 245 !important;
+  --aa-input-border-color-rgb: 0, 0, 0 !important;
+  --aa-input-border-color-alpha: 0.1 !important;
+  --aa-text-color-rgb: 109, 109, 109 !important;
 }
 
 /* For readability concerns, you should choose a lighter palette in dark mode. */
@@ -236,10 +243,28 @@
   --ring: var(--color-sky-400);
   --sidebar-border: var(--color-white-16);
   --sidebar-ring: var(--color-neutral-500);
+
+  --aa-muted-color-rgb: 161, 161, 161 !important;
+  --aa-primary-color-rgb: 0, 0, 0 !important;
+  --aa-input-background-color-rgb: 245, 245, 245 !important;
+  --aa-input-border-color-rgb: 0, 0, 0 !important;
+  --aa-input-border-color-alpha: 0.1 !important;
+  --aa-text-color-rgb: 109, 109, 109 !important;
 }
 
 .navbar__item.dropdown:not(:has(.navbar__link.active)) {
   display: none;
+}
+
+.navbar__link {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.theme-layout-navbar-right > .navbar__link {
+  font-weight: normal !important;
 }
 
 /* Make sidebar category labels bold */
@@ -248,15 +273,61 @@
 }
 
 .bg-bottom-gradient {
-  background-image: url("/img/gradient-bottom-up.png");
+  background-image: url('/img/gradient-bottom-up.png');
   background-repeat: no-repeat;
   background-position: bottom center;
 }
 
 .monospace {
-  font-family: "JetBrains Mono", monospace;
+  font-family: 'JetBrains Mono', monospace;
 }
 
 @utility gradient-corner-tr {
   @apply bg-[url(/img/gradient-corner-tr.svg)] bg-no-repeat bg-top-right bg-auto bg-clip-border bg-origin-border;
+}
+
+.aa-DetachedSearchButton {
+  border-radius: 100px !important;
+  display: flex;
+  flex-direction: row-reverse;
+  justify-content: space-between;
+  padding: 12px 8px 12px 16px !important;
+}
+
+.aa-DetachedSearchButton:focus {
+  box-shadow: none !important;
+  border-color: var(--primary) !important;
+  outline: none !important;
+}
+
+.aa-DetachedSearchButton:focus-visible {
+  outline-color: var(--primary) !important;
+}
+
+.aa-DetachedSearchButtonPlaceholder {
+  font-size: 14px;
+  color: rgba(109, 109, 109, 1);
+}
+
+.dsla-search-wrapper {
+  width: 200px;
+}
+
+.aa-DetachedSearchButtonQuery:empty {
+  display: none;
+}
+
+.aa-Form {
+  box-shadow: none !important;
+  border-radius: 100px !important;
+  border-color: var(--border) !important;
+}
+
+.aa-Form:focus-within {
+  border-color: var(--primary) !important;
+}
+
+.aa-DetachedCancelButton {
+  border-radius: 100px !important;
+  padding: 8px 12px !important;
 }
