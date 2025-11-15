@@ -65,16 +65,6 @@ const config: Config = {
   plugins: [
     'vercel-analytics',
     './src/plugins/tailwind-config.ts',
-    // [
-    //   '@cmfcmf/docusaurus-search-local',
-    //   // https://github.com/cmfcmf/docusaurus-search-local?tab=readme-ov-file#usage
-    //   {
-    //     indexDocSidebarParentCategories: 5,
-    //     includeParentCategoriesInPageTitle: false,
-    //     maxSearchResults: 8,
-    //     indexBlog: false,
-    //   },
-    // ],
     [
       '@docusaurus/plugin-content-docs',
       {
