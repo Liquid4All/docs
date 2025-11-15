@@ -216,7 +216,7 @@ const config: Config = {
     algolia: {
       appId: 'NU3OWTAZ9V',
       apiKey: 'b820a975003c366a585fb67b0b9ab89e',
-      indexName: 'docs_liquid_ai_nu3owtaz9v_pages',
+      indexName: 'liquid-docs',
       contextualSearch: true,
       // Optional: path for search page that enabled by default (`false` to disable it)
       searchPagePath: 'search',
