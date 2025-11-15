@@ -40,10 +40,12 @@ function HomepageHeader() {
   return (
     <header className={clsx('hero', styles.heroBanner)}>
       <div className="container">
-        <Heading as="h1" className={clsx('hero__title', styles.heroTitle)}>
+        <Heading as="h1" className={clsx('text-5xl sm:text-6xl', styles.heroTitle)}>
           {siteConfig.title}
         </Heading>
-        <p className={clsx('hero__subtitle', styles.heroSubtitle)}>{siteConfig.tagline}</p>
+        <p className={clsx('text-xl sm:text-3xl text-balance', styles.heroSubtitle)}>
+          {siteConfig.tagline}
+        </p>
       </div>
     </header>
   );

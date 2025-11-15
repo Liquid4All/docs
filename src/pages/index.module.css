@@ -20,13 +20,11 @@
 .heroTitle {
   color: var(--foreground);
   font-weight: 400;
-  font-size: 3.75rem;
 }
 
 .heroSubtitle {
   color: var(--muted-foreground);
   font-weight: 400;
-  font-size: 1.75rem;
 }
 
 @media screen and (max-width: 996px) {

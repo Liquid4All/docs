@@ -110,14 +110,14 @@ const config: Config = {
           sidebarId: 'lfm',
           docsPluginId: 'lfm',
           position: 'left',
-          label: 'Liquid Foundation Model (LFM)',
+          label: 'Liquid (LFMs)',
         },
         {
           type: 'docSidebar',
           docsPluginId: 'default',
           sidebarId: 'leap',
           position: 'left',
-          label: 'Liquid Edge AI Platform (LEAP)',
+          label: 'LEAP',
         },
         {
           type: 'docSidebar',
