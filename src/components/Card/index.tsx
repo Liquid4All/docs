@@ -2,18 +2,21 @@ import Link from '@docusaurus/Link';
 import { clsx } from 'clsx';
 import React, { CSSProperties, ReactNode } from 'react';
 
+import styles from './card.module.css';
+
 interface CardProps {
   className?: string;
   style?: CSSProperties;
   children: ReactNode;
-  shadow?: 'lw' | 'md' | 'tl';
   href?: string;
   target?: string;
 }
 
-const Card: React.FC<CardProps> = ({ className, style, children, shadow, href, target }) => {
-  const cardShadow = shadow ? `item shadow--${shadow}` : '';
-  const classNames = clsx('card', className, cardShadow);
+const Card: React.FC<CardProps> = ({ className, style, children, href, target }) => {
+  const classNames = clsx(
+    'bg-(--card) px-6 py-7 border border-(--border) rounded-3xl box-border h-[218px] flex flex-col justify-between',
+    className
+  );
 
   if (href) {
     return (

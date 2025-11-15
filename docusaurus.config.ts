@@ -64,6 +64,7 @@ const config: Config = {
 
   plugins: [
     'vercel-analytics',
+    './src/plugins/tailwind-config.ts',
     [
       '@cmfcmf/docusaurus-search-local',
       // https://github.com/cmfcmf/docusaurus-search-local?tab=readme-ov-file#usage
@@ -98,11 +99,10 @@ const config: Config = {
     // Replace with your project's social card
     image: 'img/liquid-hero-black.png',
     navbar: {
-      title: 'Liquid Docs',
       logo: {
         alt: 'Logo',
-        src: 'img/liquid-black.png',
-        srcDark: 'img/liquid-white.png',
+        src: 'img/liquid-docs-logo-light.svg',
+        srcDark: 'img/liquid-docs-logo-dark.svg',
       },
       items: [
         {
@@ -110,14 +110,14 @@ const config: Config = {
           sidebarId: 'lfm',
           docsPluginId: 'lfm',
           position: 'left',
-          label: 'Liquid Foundation Model (LFM)',
+          label: 'Liquid (LFMs)',
         },
         {
           type: 'docSidebar',
           docsPluginId: 'default',
           sidebarId: 'leap',
           position: 'left',
-          label: 'Liquid Edge AI Platform (LEAP)',
+          label: 'LEAP',
         },
         {
           type: 'docSidebar',
@@ -140,6 +140,11 @@ const config: Config = {
       },
     },
     footer: {
+      logo: {
+        alt: 'Logo',
+        src: 'img/liquid-docs-logo-light.svg',
+        srcDark: 'img/liquid-docs-logo-dark.svg',
+      },
       style: 'light',
       links: [
         {
@@ -202,13 +207,16 @@ const config: Config = {
           ],
         },
       ],
-      copyright: `Copyright © ${new Date().getFullYear()} Liquid AI, Inc.`,
+      copyright: `© ${new Date().getFullYear()}, Liquid AI, Inc. All rights reserved.`,
     },
     prism: {
       theme: prismThemes.github,
       darkTheme: prismThemes.dracula,
     },
   } satisfies Preset.ThemeConfig,
+  customFields: {
+    address: '314 Main St, Cambridge, MA 02142',
+  },
 };
 
 export default config;

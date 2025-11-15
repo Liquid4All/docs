@@ -1,13 +1,30 @@
+@layer theme, base, components, utilities;
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities);
+
+@custom-variant dark (&:is([data-theme="dark"] *));
+
 /**
  * CSS files with the .module.css suffix will be treated as CSS modules
  * and scoped locally.
  */
 
 .heroBanner {
-  padding: 4rem 0;
+  padding: 200px 64px 64px;
   text-align: center;
   position: relative;
   overflow: hidden;
+  background-color: transparent;
+}
+
+.heroTitle {
+  color: var(--foreground);
+  font-weight: 400;
+}
+
+.heroSubtitle {
+  color: var(--muted-foreground);
+  font-weight: 400;
 }
 
 @media screen and (max-width: 996px) {
@@ -40,4 +57,12 @@
     flex: 1;
     min-width: 0;
   }
+}
+
+p {
+  margin-bottom: 0;
+}
+
+a {
+  color: unset;
 }
