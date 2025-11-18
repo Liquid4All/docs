@@ -7,7 +7,7 @@ import { themes as prismThemes } from 'prism-react-renderer';
 
 const config: Config = {
   title: 'Liquid Docs',
-  tagline: 'Redefining the possibility on the edge',
+  tagline: 'Redefining possibility on the edge',
   favicon: 'img/liquid-black.png',
 
   // Future flags, see https://docusaurus.io/docs/api/docusaurus-config#future
