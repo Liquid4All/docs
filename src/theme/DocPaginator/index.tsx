@@ -34,54 +34,35 @@ export default function DocPaginatorWrapper(props: Props): ReactNode {
     // @ts-expect-error - id property exists on DocContextValue but not in type definition
     const currentDocId = currentDoc?.id;
 
-    // Helper to get permalink from sidebar item
-    const getItemPermalink = (item: any): string | null => {
-      return item.permalink || item.href || null;
-    };
-
-    // Helper to check if item matches current page
-    const isCurrentPage = (item: any): boolean => {
-      const itemPath = getItemPermalink(item);
-      if (itemPath && normalizePath(itemPath) === normalizedCurrentPath) {
-        return true;
-      }
-      if (currentDocId && item.id === currentDocId) {
-        return true;
-      }
-      return false;
-    };
 
     // Flatten sidebar to get all items in order
     const flattenSidebar = (items: any[]): any[] => {
       const result: any[] = [];
-      const seenIds = new Set<string>();
+      const seenPermalinks = new Set<string>();
 
       const processItem = (item: any) => {
-        if (typeof item === 'string' || item.type === 'doc') {
-          const itemId = typeof item === 'string' ? item : item.id;
-          if (itemId && !seenIds.has(itemId)) {
-            seenIds.add(itemId);
-            result.push(typeof item === 'string' ? { id: item, type: 'doc' } : item);
+        if (item.type === 'link') {
+          // Skip external links
+          return;
+        }
+
+        if (item.type === 'doc' || item.type === 'ref') {
+          // Doc items should have permalink - add them if not seen
+          if (item.permalink && !seenPermalinks.has(item.permalink)) {
+            seenPermalinks.add(item.permalink);
+            result.push(item);
           }
         } else if (item.type === 'category') {
-          const categoryLinkId = item.link?.type === 'doc' ? item.link.id : null;
-          if (categoryLinkId && !seenIds.has(categoryLinkId)) {
-            seenIds.add(categoryLinkId);
-            result.push({ ...item.link, id: categoryLinkId, type: 'doc' });
+          // If category has a linked doc, add it first
+          if (item.link && item.link.type === 'doc' && item.link.permalink) {
+            if (!seenPermalinks.has(item.link.permalink)) {
+              seenPermalinks.add(item.link.permalink);
+              result.push(item.link);
+            }
           }
-          if (item.items) {
-            item.items.forEach((subItem: any) => {
-              // Always process nested categories
-              if (typeof subItem !== 'string' && subItem.type === 'category') {
-                processItem(subItem);
-              } else {
-                // For strings and doc items, check against categoryLinkId to avoid duplicates
-                const subItemId = typeof subItem === 'string' ? subItem : subItem.id;
-                if (subItemId && subItemId !== categoryLinkId && !seenIds.has(subItemId)) {
-                  processItem(subItem);
-                }
-              }
-            });
+          // Then process all items in the category
+          if (item.items && Array.isArray(item.items)) {
+            item.items.forEach((subItem: any) => processItem(subItem));
           }
         }
       };
@@ -91,29 +72,12 @@ export default function DocPaginatorWrapper(props: Props): ReactNode {
     };
 
     const flatItems = flattenSidebar(sidebar.items || []);
-    const pluginId = (sidebar as { pluginId?: string }).pluginId || 'lfm';
-    const basePath = `/${pluginId}`;
-
-    // Helper to get full permalink
-    const getFullPermalink = (item: any): string | null => {
-      if (item.permalink) return item.permalink;
-      if (item.href) return item.href;
-      if (item.id) {
-        const idPath = item.id.startsWith('/') ? item.id : `/${item.id}`;
-        return `${basePath}${idPath}`;
-      }
-      return null;
-    };
 
     // Find current page index
     let currentIndex = -1;
     for (let i = 0; i < flatItems.length; i++) {
-      const itemPath = getFullPermalink(flatItems[i]);
-      if (itemPath && normalizePath(itemPath) === normalizedCurrentPath) {
-        currentIndex = i;
-        break;
-      }
-      if (currentDocId && flatItems[i].id === currentDocId) {
+      const item = flatItems[i];
+      if (item.permalink && normalizePath(item.permalink) === normalizedCurrentPath) {
         currentIndex = i;
         break;
       }
@@ -143,31 +107,23 @@ export default function DocPaginatorWrapper(props: Props): ReactNode {
 
     // Find actual next/previous from flattened sidebar
     if (currentIndex !== -1) {
-      if (needsNextFix) {
-        for (let i = currentIndex + 1; i < flatItems.length; i++) {
-          const item = flatItems[i];
-          const itemPath = getFullPermalink(item);
-          if (itemPath && !isCurrentPage(item)) {
-            fixedNext = {
-              title: getItemTitle(item),
-              permalink: itemPath,
-            };
-            break;
-          }
+      if (needsNextFix && currentIndex + 1 < flatItems.length) {
+        const nextItem = flatItems[currentIndex + 1];
+        if (nextItem.permalink) {
+          fixedNext = {
+            title: getItemTitle(nextItem),
+            permalink: nextItem.permalink,
+          };
         }
       }
 
-      if (needsPreviousFix) {
-        for (let i = currentIndex - 1; i >= 0; i--) {
-          const item = flatItems[i];
-          const itemPath = getFullPermalink(item);
-          if (itemPath && !isCurrentPage(item)) {
-            fixedPrevious = {
-              title: getItemTitle(item),
-              permalink: itemPath,
-            };
-            break;
-          }
+      if (needsPreviousFix && currentIndex > 0) {
+        const prevItem = flatItems[currentIndex - 1];
+        if (prevItem.permalink) {
+          fixedPrevious = {
+            title: getItemTitle(prevItem),
+            permalink: prevItem.permalink,
+          };
         }
       }
     }
