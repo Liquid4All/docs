@@ -170,4 +170,3 @@ The `apply_chat_template()` method handles these tokens automatically when you p
 - **Context usage**: Tool definitions are inserted as text in the prompt, consuming context tokens. Large tool lists (100+ tools) can use significant portions of your context window.
 - **Large tool lists**: Only include tools relevant to the current request. Consider tool selection or categorization strategies to reduce context usage.
 - **Best practices**: Provide clear, concise tool descriptions. Group related tools when possible. Remove unused tools from the list when they're not needed.
-Coming soon...
