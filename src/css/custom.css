@@ -1406,6 +1406,51 @@ article {
   color: white;
 }
 
+/* Model Matrix Table Styles */
+.model-matrix-table {
+  width: 100%;
+  text-align: center;
+}
+
+.model-matrix-table thead tr {
+  background-color: rgba(124, 58, 237, 0.15);
+  border-top: 2px solid #7C3AED;
+  border-bottom: 3px solid #7C3AED;
+}
+
+.model-matrix-table th {
+  font-weight: 700;
+  padding: 0.75rem;
+  font-size: 1.1em;
+}
+
+.model-matrix-table th:first-child {
+  text-align: left;
+}
+
+.model-matrix-table td {
+  padding: 0.5rem;
+}
+
+.model-matrix-table td:first-child {
+  text-align: left;
+}
+
+.model-matrix-table tr td[colspan] {
+  text-align: left;
+  font-weight: 600;
+  background-color: var(--color-background-secondary);
+}
+
+.model-matrix-table a {
+  color: #22c55e;
+  text-decoration: none;
+}
+
+.model-matrix-table .text-red {
+  color: #ef4444;
+}
+
 /* Responsive */
 @media (max-width: 996px) {
   .table-of-contents {
