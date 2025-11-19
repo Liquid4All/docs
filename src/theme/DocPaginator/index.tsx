@@ -57,7 +57,7 @@ export default function DocPaginatorWrapper(props: Props): ReactNode {
       const seenIds = new Set<string>();
 
       const processItem = (item: any) => {
-        if (item.type === 'doc') {
+        if (typeof item === 'string' || item.type === 'doc') {
           const itemId = typeof item === 'string' ? item : item.id;
           if (itemId && !seenIds.has(itemId)) {
             seenIds.add(itemId);
@@ -73,7 +73,6 @@ export default function DocPaginatorWrapper(props: Props): ReactNode {
             item.items.forEach((subItem: any) => {
               const subItemId = typeof subItem === 'string' ? subItem : subItem.id;
               if (subItemId && subItemId !== categoryLinkId && !seenIds.has(subItemId)) {
-                seenIds.add(subItemId);
                 processItem(subItem);
               }
             });
