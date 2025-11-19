@@ -6,17 +6,38 @@ const sidebars: SidebarsConfig = {
     {
       type: 'category',
       label: 'Laptop examples',
-      items: ['laptop-examples/invoice-extractor-tool-with-liquid-nanos'],
+      collapsed: true,
+      link: {
+        type: 'doc',
+        id: 'laptop-examples/invoice-extractor-tool-with-liquid-nanos',
+      },
+      items: [
+        // Removed duplicate since it's already the category link
+      ],
     },
     {
       type: 'category',
       label: 'iOS examples',
-      items: ['deploy-models-on-ios/slogan-generator-app'],
+      collapsed: true,
+      link: {
+        type: 'doc',
+        id: 'deploy-models-on-ios/slogan-generator-app',
+      },
+      items: [
+        // Removed duplicate since it's already the category link
+      ],
     },
     {
       type: 'category',
       label: 'Model customization',
-      items: ['customize-models/car-maker-identification'],
+      collapsed: true,
+      link: {
+        type: 'doc',
+        id: 'customize-models/car-maker-identification',
+      },
+      items: [
+        // Removed duplicate since it's already the category link
+      ],
     },
     {
       type: 'link',
