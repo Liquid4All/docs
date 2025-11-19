@@ -52,5 +52,3 @@ print(prompt)
 ```
 
 The complete chat template definition can be found in the `chat_template.jinja` file in each model's Hugging Face repository.
-
-Coming soon...

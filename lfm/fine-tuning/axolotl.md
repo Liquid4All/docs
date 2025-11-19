@@ -2,14 +2,13 @@
 
 [Axolotl](https://github.com/axolotl-ai-cloud/axolotl) is a YAML-driven fine-tuning toolkit that simplifies training with support for SFT, LoRA, QLoRA, DPO, and multi-GPU training.
 
-:::tip
-**Use Axolotl for:**
+:::tip[**Use Axolotl for:**]
 - YAML-based configuration for reproducible training
 - Multi-GPU training with DeepSpeed or FSDP
 - Production-ready training pipelines
 :::
 
-## Quick Start
+**Quick Start:**
 1. Install Axolotl
 2. Create a YAML config file
 3. Run `axolotl train config.yml`
@@ -25,12 +24,14 @@
 - Python ≥ 3.10
 - PyTorch compatible with your CUDA/ROCm version
 
-### Install from PyPI
+### Install via Pip
+
 ```
 pip install --no-build-isolation "axolotl[flash-attn,deepspeed]"
 ```
 
 ### Install from Source
+
 ```
 git clone https://github.com/axolotl-ai-cloud/axolotl
 cd axolotl
@@ -82,11 +83,16 @@ train_on_inputs: false   # mask inputs when computing loss
 
 ## Training Configurations
 
-Below are example YAML configurations for different training scenarios.
+### LoRA Fine-Tuning (Recommended)
 
-### LoRA Fine-Tuning
+LoRA (Low-Rank Adaptation) is the recommended approach for fine-tuning LFM2 models. It offers several key advantages:
 
-`configs/lfm2-2.6b-lora.yml`:
+- **Memory efficient**: Trains only small adapter weights (~1-2% of model size) instead of full model parameters
+- **Data efficient**: Achieves strong task performance improvements with less training data than full fine-tuning
+- **Fast training**: Reduced parameter count enables faster iteration and larger effective batch sizes
+- **Flexible**: Easy to switch between different task adapters without retraining the base model
+
+Create `configs/lfm2-2.6b-lora.yml`:
 
 ```yaml
 # ---- Model ----
@@ -133,7 +139,10 @@ lora_dropout: 0.05
 # wandb_run_name: lfm2-2.6b-lora
 ```
 
-### QLoRA (4-Bit Quantization)
+<details>
+<summary>QLoRA (4-Bit Quantization)</summary>
+
+For maximum memory efficiency on resource-constrained hardware, use QLoRA with 4-bit quantization. This reduces memory usage by ~4x while maintaining strong performance.
 
 `configs/lfm2-2.6b-qlora.yml`:
 
@@ -165,7 +174,12 @@ micro_batch_size: 2
 gradient_accumulation_steps: 16
 ```
 
-### Full Fine-Tuning
+</details>
+
+<details>
+<summary>Full Fine-Tuning</summary>
+
+Full fine-tuning updates all model parameters. Use this only when you have sufficient GPU memory and need maximum adaptation for your task. Requires significantly more memory and training time than LoRA.
 
 `configs/lfm2-2.6b-full.yml`:
 
@@ -192,6 +206,8 @@ gradient_accumulation_steps: 32
 >
 > - Tune `sequence_len`, `micro_batch_size`, and `gradient_accumulation_steps` to your GPU budget.
 > - If you hit OOM with long contexts, consider **sequence parallelism** (multi‑GPU) and keep `flash_attention: true`.
+
+</details>
 
 ## Training
 

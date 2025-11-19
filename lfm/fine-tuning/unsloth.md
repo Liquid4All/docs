@@ -2,8 +2,7 @@
 
 [Unsloth](https://github.com/unslothai/unsloth) is a library that makes fine-tuning LLMs 2-5x faster and uses 70% less memory through optimized kernels and efficient memory management.
 
-:::tip
-**Use Unsloth for:**
+:::tip[**Use Unsloth for:**]
 - 2-5x faster training with optimized kernels
 - 70% less memory usage through efficient management
 - Utilities for quantization and quick inference
@@ -31,49 +30,14 @@ Optional: Install `xformers` for additional memory optimizations.
 
 Unsloth provides the `FastLanguageModel` wrapper that automatically applies optimizations to your model and integrates seamlessly with TRL's `SFTTrainer`.
 
-### Full Fine-Tuning
+### LoRA Fine-Tuning (Recommended)
 
-```python
-from unsloth import FastLanguageModel
-from trl import SFTTrainer, SFTConfig
-from datasets import load_dataset
+LoRA (Low-Rank Adaptation) is the recommended approach for fine-tuning LFM2 models with Unsloth. Combined with Unsloth's optimizations, LoRA offers:
 
-# Load model with Unsloth optimizations
-model, tokenizer = FastLanguageModel.from_pretrained(
-    model_name="LiquidAI/LFM2-1.2B",
-    max_seq_length=2048,
-    dtype=None,  # Auto-detect
-    load_in_4bit=False,
-)
-
-# Load your dataset
-dataset = load_dataset("your-dataset")
-
-# Configure training
-training_args = SFTConfig(
-    output_dir="./lfm2-unsloth-sft",
-    num_train_epochs=3,
-    per_device_train_batch_size=4,
-    gradient_accumulation_steps=4,
-    learning_rate=2e-5,
-    logging_steps=10,
-    save_strategy="epoch",
-    bf16=True,
-)
-
-# Create trainer
-trainer = SFTTrainer(
-    model=model,
-    args=training_args,
-    train_dataset=dataset["train"],
-    tokenizer=tokenizer,
-)
-
-# Train
-trainer.train()
-```
-
-### LoRA Fine-Tuning
+- **Memory efficient**: Trains only small adapter weights (~1-2% of model size) instead of full model parameters
+- **Data efficient**: Achieves strong task performance improvements with less training data than full fine-tuning
+- **Fast training**: Unsloth's optimized kernels combined with reduced parameters enable 2-5x faster training
+- **Flexible**: Easy to switch between different task adapters without retraining the base model
 
 Unsloth provides optimized LoRA support through `FastLanguageModel.get_peft_model()`:
 
@@ -124,9 +88,10 @@ trainer = SFTTrainer(
 trainer.train()
 ```
 
-### QLoRA (4-Bit Quantization)
+<details>
+<summary>QLoRA (4-Bit Quantization)</summary>
 
-For maximum memory efficiency, use 4-bit quantized training:
+For maximum memory efficiency on resource-constrained hardware, use QLoRA with 4-bit quantization. This reduces memory usage by ~4x while maintaining strong performance.
 
 ```python
 from unsloth import FastLanguageModel
@@ -174,6 +139,55 @@ trainer = SFTTrainer(
 
 trainer.train()
 ```
+
+</details>
+
+<details>
+<summary>Full Fine-Tuning</summary>
+
+Full fine-tuning updates all model parameters. Use this only when you have sufficient GPU memory and need maximum adaptation for your task.
+
+```python
+from unsloth import FastLanguageModel
+from trl import SFTTrainer, SFTConfig
+from datasets import load_dataset
+
+# Load model with Unsloth optimizations
+model, tokenizer = FastLanguageModel.from_pretrained(
+    model_name="LiquidAI/LFM2-1.2B",
+    max_seq_length=2048,
+    dtype=None,  # Auto-detect
+    load_in_4bit=False,
+)
+
+# Load your dataset
+dataset = load_dataset("your-dataset")
+
+# Configure training
+training_args = SFTConfig(
+    output_dir="./lfm2-unsloth-sft",
+    num_train_epochs=3,
+    per_device_train_batch_size=4,
+    gradient_accumulation_steps=4,
+    learning_rate=2e-5,
+    logging_steps=10,
+    save_strategy="epoch",
+    bf16=True,
+)
+
+# Create trainer
+trainer = SFTTrainer(
+    model=model,
+    args=training_args,
+    train_dataset=dataset["train"],
+    tokenizer=tokenizer,
+)
+
+# Train
+trainer.train()
+```
+
+</details>
 
 ## Saving Models
 

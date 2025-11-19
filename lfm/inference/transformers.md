@@ -2,8 +2,7 @@
 
 [Transformers](https://github.com/huggingface/transformers) is a library for inference and training of pretrained models.
 
-:::tip
-**Use Transformers for:**
+:::tip[**Use Transformers for:**]
 - Simple inference without additional dependencies
 - Research and experimentation with LFMs
 - Integration with the Hugging Face ecosystem

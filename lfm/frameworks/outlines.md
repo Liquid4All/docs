@@ -2,8 +2,7 @@
 
 [Outlines](https://github.com/dottxt-ai/outlines) is a library for constrained text generation with LLMs. It provides two powerful approaches: **JSON Schema** for structured data extraction and **context-free grammars (CFGs)** for custom formats like function calling.
 
-:::tip
-**Use Outlines for:**
+:::tip[**Use Outlines for:**]
 - Guaranteed valid function calls and structured outputs
 - JSON schema validation and data extraction
 - Applications requiring pre-defined output formats

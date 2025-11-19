@@ -2,8 +2,7 @@
 
 [TRL](https://github.com/huggingface/trl) (Transformer Reinforcement Learning) is a library for fine-tuning and aligning language models using methods like Supervised Fine-Tuning (SFT), Reward Modeling, and Direct Preference Optimization (DPO).
 
-:::tip
-**Use TRL for:**
+:::tip[**Use TRL for:**]
 - Native integration in the Hugging Face ecosystem
 - Many trained with SFT, DPO, PPO, GRPO
 - Most recent training algorithms and techniques
@@ -29,49 +28,14 @@ pip install trl>=0.9.0 transformers>=4.55.0 torch>=2.6 peft accelerate
 
 The `SFTTrainer` makes it easy to fine-tune LFM models on instruction-following or conversational datasets. It handles chat templates, packing, and dataset formatting automatically.
 
-### Full Fine-Tuning
+### LoRA Fine-Tuning (Recommended)
 
-```python
-from transformers import AutoModelForCausalLM, AutoTokenizer
-from trl import SFTTrainer, SFTConfig
-from datasets import load_dataset
+LoRA (Low-Rank Adaptation) is the recommended approach for fine-tuning LFM2 models with TRL. It offers several key advantages:
 
-# Load model and tokenizer
-model = AutoModelForCausalLM.from_pretrained(
-    "LiquidAI/LFM2-1.2B",
-    torch_dtype="auto",
-    device_map="auto"
-)
-tokenizer = AutoTokenizer.from_pretrained("LiquidAI/LFM2-1.2B")
-
-# Load your dataset
-dataset = load_dataset("your-dataset")
-
-# Configure training
-training_args = SFTConfig(
-    output_dir="./lfm2-sft",
-    num_train_epochs=3,
-    per_device_train_batch_size=4,
-    gradient_accumulation_steps=4,
-    learning_rate=2e-5,
-    logging_steps=10,
-    save_strategy="epoch",
-    bf16=True,
-)
-
-# Create trainer
-trainer = SFTTrainer(
-    model=model,
-    args=training_args,
-    train_dataset=dataset["train"],
-    tokenizer=tokenizer,
-)
-
-# Train
-trainer.train()
-```
-
-### LoRA Fine-Tuning
+- **Memory efficient**: Trains only small adapter weights (~1-2% of model size) instead of full model parameters
+- **Data efficient**: Achieves strong task performance improvements with less training data than full fine-tuning
+- **Fast training**: Reduced parameter count enables faster iteration and larger effective batch sizes
+- **Flexible**: Easy to switch between different task adapters without retraining the base model
 
 For memory-efficient fine-tuning, use LoRA with the `SFTTrainer`:
 
@@ -119,17 +83,14 @@ trainer = SFTTrainer(
 trainer.train()
 ```
 
-## Direct Preference Optimization (DPO)
+<details>
+<summary>Full Fine-Tuning</summary>
 
-<a href="https://colab.research.google.com/drive/1MQdsPxFHeZweGsNx4RH7Ia8lG8PiGE1t?usp=sharing"><img src="https://cdn-uploads.huggingface.co/production/uploads/61b8e2ba285851687028d395/vlOyMEjwHa_b_LXysEu2E.png" width="120" alt="Colab link" /></a>
-
-The `DPOTrainer` implements Direct Preference Optimization, a method to align models with human preferences without requiring a separate reward model. DPO works with preference pairs (chosen vs. rejected responses).
-
-### Full DPO Training
+Full fine-tuning updates all model parameters. Use this only when you have sufficient GPU memory and need maximum adaptation for your task.
 
 ```python
 from transformers import AutoModelForCausalLM, AutoTokenizer
-from trl import DPOTrainer, DPOConfig
+from trl import SFTTrainer, SFTConfig
 from datasets import load_dataset
 
 # Load model and tokenizer
@@ -140,24 +101,23 @@ model = AutoModelForCausalLM.from_pretrained(
 )
 tokenizer = AutoTokenizer.from_pretrained("LiquidAI/LFM2-1.2B")
 
-# Load preference dataset
-# Dataset should have "prompt", "chosen", and "rejected" columns
-dataset = load_dataset("your-preference-dataset")
+# Load your dataset
+dataset = load_dataset("your-dataset")
 
-# Configure DPO training
-training_args = DPOConfig(
-    output_dir="./lfm2-dpo",
+# Configure training
+training_args = SFTConfig(
+    output_dir="./lfm2-sft",
     num_train_epochs=3,
-    per_device_train_batch_size=2,
-    gradient_accumulation_steps=8,
-    learning_rate=5e-7,
-    beta=0.1,  # DPO temperature parameter
+    per_device_train_batch_size=4,
+    gradient_accumulation_steps=4,
+    learning_rate=2e-5,
     logging_steps=10,
+    save_strategy="epoch",
     bf16=True,
 )
 
 # Create trainer
-trainer = DPOTrainer(
+trainer = SFTTrainer(
     model=model,
     args=training_args,
     train_dataset=dataset["train"],
@@ -168,9 +128,17 @@ trainer = DPOTrainer(
 trainer.train()
 ```
 
-### DPO with LoRA
+</details>
 
-For memory-efficient DPO training:
+## Direct Preference Optimization (DPO)
+
+<a href="https://colab.research.google.com/drive/1MQdsPxFHeZweGsNx4RH7Ia8lG8PiGE1t?usp=sharing"><img src="https://cdn-uploads.huggingface.co/production/uploads/61b8e2ba285851687028d395/vlOyMEjwHa_b_LXysEu2E.png" width="120" alt="Colab link" /></a>
+
+The `DPOTrainer` implements Direct Preference Optimization, a method to align models with human preferences without requiring a separate reward model. DPO works with preference pairs (chosen vs. rejected responses).
+
+### DPO with LoRA (Recommended)
+
+LoRA is highly recommended for DPO training, as it significantly reduces memory requirements while maintaining strong alignment performance.
 
 ```python
 from transformers import AutoModelForCausalLM, AutoTokenizer
@@ -215,6 +183,54 @@ trainer = DPOTrainer(
 
 trainer.train()
 ```
+
+<details>
+<summary>Full DPO Training</summary>
+
+Full DPO training updates all model parameters. Use this only when you have sufficient GPU memory.
+
+```python
+from transformers import AutoModelForCausalLM, AutoTokenizer
+from trl import DPOTrainer, DPOConfig
+from datasets import load_dataset
+
+# Load model and tokenizer
+model = AutoModelForCausalLM.from_pretrained(
+    "LiquidAI/LFM2-1.2B",
+    torch_dtype="auto",
+    device_map="auto"
+)
+tokenizer = AutoTokenizer.from_pretrained("LiquidAI/LFM2-1.2B")
+
+# Load preference dataset
+# Dataset should have "prompt", "chosen", and "rejected" columns
+dataset = load_dataset("your-preference-dataset")
+
+# Configure DPO training
+training_args = DPOConfig(
+    output_dir="./lfm2-dpo",
+    num_train_epochs=3,
+    per_device_train_batch_size=2,
+    gradient_accumulation_steps=8,
+    learning_rate=5e-7,
+    beta=0.1,  # DPO temperature parameter
+    logging_steps=10,
+    bf16=True,
+)
+
+# Create trainer
+trainer = DPOTrainer(
+    model=model,
+    args=training_args,
+    train_dataset=dataset["train"],
+    tokenizer=tokenizer,
+)
+
+# Train
+trainer.train()
+```
+
+</details>
 
 ## Other Training Methods
 
