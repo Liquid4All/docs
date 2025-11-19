@@ -71,9 +71,15 @@ export default function DocPaginatorWrapper(props: Props): ReactNode {
           }
           if (item.items) {
             item.items.forEach((subItem: any) => {
-              const subItemId = typeof subItem === 'string' ? subItem : subItem.id;
-              if (subItemId && subItemId !== categoryLinkId && !seenIds.has(subItemId)) {
+              // Always process nested categories
+              if (typeof subItem !== 'string' && subItem.type === 'category') {
                 processItem(subItem);
+              } else {
+                // For strings and doc items, check against categoryLinkId to avoid duplicates
+                const subItemId = typeof subItem === 'string' ? subItem : subItem.id;
+                if (subItemId && subItemId !== categoryLinkId && !seenIds.has(subItemId)) {
+                  processItem(subItem);
+                }
               }
             });
           }
