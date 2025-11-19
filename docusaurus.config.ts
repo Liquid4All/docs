@@ -131,11 +131,16 @@ const config: Config = {
           label: 'GitHub',
           position: 'right',
         },
+        {
+          href: 'https://discord.gg/DFU3WQeaYD',
+          label: 'Discord',
+          position: 'right',
+        },
       ],
     },
     docs: {
       sidebar: {
-        hideable: true,
+        hideable: false,
         autoCollapseCategories: true,
       },
     },
