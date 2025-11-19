@@ -13,6 +13,7 @@ export default function DocPaginatorWrapper(props: Props): ReactNode {
   const currentDoc = useDoc();
   const sidebarSiblings = useCurrentSidebarSiblings();
 
+  // @ts-expect-error - previous and next are provided by Docusaurus but not in type definition
   const { previous, next, ...restProps } = props;
 
   // Simple fix: if next/previous point to current page, find the actual next/previous from siblings
@@ -22,6 +23,7 @@ export default function DocPaginatorWrapper(props: Props): ReactNode {
     };
 
     const normalizedCurrentPath = normalizePath(currentPath);
+    // @ts-expect-error - id property exists on DocContextValue but not in type definition
     const currentDocId = currentDoc?.id;
 
     // Helper to get permalink from sidebar item
@@ -59,6 +61,7 @@ export default function DocPaginatorWrapper(props: Props): ReactNode {
             const siblingPath = getItemPermalink(sibling);
             if (siblingPath) {
               fixedNext = {
+                // @ts-expect-error - label and title exist on sidebar items but not in type definition
                 title: sibling.label || sibling.title || 'Next',
                 permalink: siblingPath,
               };
@@ -88,6 +91,7 @@ export default function DocPaginatorWrapper(props: Props): ReactNode {
             const siblingPath = getItemPermalink(sibling);
             if (siblingPath) {
               fixedPrevious = {
+                // @ts-expect-error - label and title exist on sidebar items but not in type definition
                 title: sibling.label || sibling.title || 'Previous',
                 permalink: siblingPath,
               };
