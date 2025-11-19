@@ -73,10 +73,6 @@ export default function Home(): ReactNode {
                 <p className="text-(--foreground) text-2xl">{card.title}</p>
                 <p className="text-(--muted-foreground) leading-[130%]">{card.description}</p>
               </div>
-              <div className="border-b border-(--border) self-start monospace flex flex-row items-center gap-1 text-(--muted-foreground)">
-                Learn more
-                <IconArrowRight className="w-4.5 h-4.5" />
-              </div>
             </Card>
           ))}
         </div>
