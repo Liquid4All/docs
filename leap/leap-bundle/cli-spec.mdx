@@ -6,7 +6,10 @@ sidebar_position: 2
 
 ## Overview
 
-The Model Bundling Service provides a command-line interface for the LEAP (Liquid Edge AI Platform) bundling service. It allows you to upload model directories, create bundle requests, monitor processing status, and download completed bundles.
+The Model Bundling Service provides a command-line interface with two main features:
+
+1. **LEAP Bundle Requests**: Upload model directories, create bundle requests, monitor processing status, and download completed bundles for the LEAP (Liquid Edge AI Platform)
+2. **Manifest Downloads**: Download pre-packaged GGUF models from JSON manifest URLs without authentication
 
 ## Requirements
 
@@ -23,18 +26,18 @@ services and that DNS resolution is working properly.
 
 ## All Commands
 
-| Command                | Description                                     |
-| ---------------------- | ----------------------------------------------- |
-| `leap-bundle login`    | Authenticate with LEAP using API token          |
-| `leap-bundle whoami`   | Show current authenticated user                 |
-| `leap-bundle logout`   | Logout from LEAP                                |
-| `leap-bundle config`   | Show current configuration                      |
-| `leap-bundle validate` | Validate directory for bundle creation          |
-| `leap-bundle create`   | Submit new bundle request                       |
-| `leap-bundle resume`   | Resume an interrupted bundle request creation   |
-| `leap-bundle list`     | List all bundle requests or a specific request  |
-| `leap-bundle cancel`   | Cancel a bundle request                         |
-| `leap-bundle download` | Download the bundle file for a specific request |
+| Command                | Description                                                                   |
+| ---------------------- | ----------------------------------------------------------------------------- |
+| `leap-bundle login`    | Authenticate with LEAP using API token                                        |
+| `leap-bundle whoami`   | Show current authenticated user                                               |
+| `leap-bundle logout`   | Logout from LEAP                                                              |
+| `leap-bundle config`   | Show current configuration                                                    |
+| `leap-bundle validate` | Validate directory for bundle creation                                        |
+| `leap-bundle create`   | Submit new bundle request                                                     |
+| `leap-bundle resume`   | Resume an interrupted bundle request creation                                 |
+| `leap-bundle list`     | List all bundle requests or a specific request                                |
+| `leap-bundle cancel`   | Cancel a bundle request                                                       |
+| `leap-bundle download` | Download bundle request output OR download GGUF models from a manifest URL    |
 
 ## Global Options
 
@@ -578,6 +581,15 @@ leap-bundle list --last --json
 
 ### `download`
 
+Download bundle request output or JSON manifest with referenced files.
+
+This command supports two modes of operation:
+
+1. **Bundle Request Download**: Download a generated model bundle file from a completed request
+2. **Manifest Download**: Download GGUF model files from a JSON manifest URL
+
+#### Mode 1: Bundle Request Download
+
 Download the bundle file for a completed request.
 
 ```sh
@@ -597,11 +609,12 @@ leap-bundle download <request-id> [--output-path <path>]
 - Requests a signed download URL from the LEAP platform
 - Downloads the bundle file using the signed URL
 - Saves the file with a default name or to the specified output path
+- **Requires authentication** via `leap-bundle login`
 
 **Examples**
 
 ```sh
-# Download to current directory
+# Download bundle request to current directory
 leap-bundle download 18734
 
 # Example output
@@ -637,6 +650,98 @@ Only requests with "completed" status can be downloaded. Check the request statu
 :::warning
 A completed request will be automatically archived 5 days after completion. You will not be able
 to download it afterwards.
+:::
+
+#### Mode 2: Manifest Download
+
+Download GGUF model files from a JSON manifest URL.
+
+```sh
+leap-bundle download <manifest-url> [--output-path <path>]
+```
+
+**Arguments**
+
+- `manifest-url` (required): URL to a JSON manifest file containing model file references
+
+**Options**
+
+- `--output-path <path>`: Directory to save the downloaded files. If not specified, auto-generates a directory name based on the manifest URL.
+
+**Behavior**
+
+- Downloads the JSON manifest file from the provided URL
+- Parses the manifest to find all model files referenced in `load_time_parameters`
+- Downloads all referenced model files
+- Updates the manifest to use relative paths to the downloaded files
+- Saves the updated manifest and all model files to the output directory
+- **Does not require authentication** - works immediately after installation
+
+**Examples**
+
+```sh
+# Download from manifest URL (auto-generates directory name)
+leap-bundle download https://huggingface.co/LiquidAI/LeapBundles/blob/main/LFM2-Audio-1.5B-GGUF/F16.json
+
+# Example output
+ℹ Downloading manifest from URL...
+✓ Manifest downloaded successfully
+ℹ Downloading model files...
+Downloading model file 1/3... ✓
+Downloading model file 2/3... ✓
+Downloading model file 3/3... ✓
+✓ All files downloaded successfully
+ℹ Updating manifest with relative paths...
+✓ Download completed successfully! Files saved to: LFM2-Audio-1.5B-GGUF-F16/
+
+# Download from manifest URL with custom output path
+leap-bundle download https://example.com/manifest.json --output-path ./my-models
+
+# Example output
+ℹ Downloading manifest from URL...
+✓ Manifest downloaded successfully
+ℹ Downloading model files...
+Downloading model files... ✓
+✓ All files downloaded successfully
+ℹ Updating manifest with relative paths...
+✓ Download completed successfully! Files saved to: my-models/
+```
+
+**Manifest Format**
+
+The JSON manifest should contain a `load_time_parameters` section with URLs to model files:
+
+```json
+{
+  "load_time_parameters": {
+    "model_path": "https://example.com/model.gguf",
+    "vocab_path": "https://example.com/vocab.gguf"
+  }
+}
+```
+
+After download, the manifest is updated to use relative paths:
+
+```json
+{
+  "load_time_parameters": {
+    "model_path": "./model.gguf",
+    "vocab_path": "./vocab.gguf"
+  }
+}
+```
+
+**Error Cases**
+
+- Invalid URL: Shows URL validation error
+- Manifest not found: Shows HTTP 404 error
+- Invalid JSON: Shows JSON parsing error
+- Model file download failure: Shows download error
+- Output directory creation failure: Shows file system error
+- Network issues: Shows connection error
+
+:::tip
+Manifest downloads are perfect for quickly getting started with pre-packaged GGUF models without needing to create custom bundles or authenticate.
 :::
 
 ### `cancel`

@@ -4,18 +4,12 @@ sidebar_position: 1
 
 # Quick Start
 
-Model Bundling Service is a command-line interface (CLI) for creating and managing model bundles for Liquid Edge AI Platform (LEAP). This guide will help you quickly get started with the tool.
+Model Bundling Service is a command-line interface (CLI) that provides two main features:
 
-Here is a typical user workflow:
+1. **Model Bundle Requests**: Create and manage custom model bundles for Liquid Edge AI Platform (LEAP)
+2. **Manifest Downloads**: Download pre-packaged GGUF models from JSON manifests
 
-- Download an open source base model.
-- Customize the base model with your own dataset e.g. by finetuning.
-- Create a model bundle using the `leap-bundle` CLI for LEAP SDK.
-
-:::info
-**Compatability Note:** The Model Bundling Service will work with any finetuned model, as long as
-the model architecture comes from a base model that is part of the LEAP model library.
-:::
+This guide will help you quickly get started with both features.
 
 ## Install
 
@@ -23,7 +17,54 @@ the model architecture comes from a base model that is part of the LEAP model li
 pip install leap-bundle
 ```
 
-## Authenticate
+---
+
+## Feature 1: Download Pre-packaged Models from Manifests
+
+If you want to quickly download pre-packaged GGUF models without creating custom bundles, you can use the manifest download feature. This doesn't require authentication.
+
+### Quick Start: Manifest Download
+
+Download a pre-packaged model from a JSON manifest URL:
+
+```sh
+leap-bundle download https://huggingface.co/LiquidAI/LeapBundles/blob/main/LFM2-Audio-1.5B-GGUF/F16.json
+```
+
+This will:
+- Download the JSON manifest file
+- Download all GGUF model files referenced in the manifest
+- Create a directory with the downloaded files
+- Update the manifest to use relative paths to the downloaded files
+
+You can also specify a custom output directory:
+
+```sh
+leap-bundle download https://huggingface.co/LiquidAI/LeapBundles/blob/main/LFM2-Audio-1.5B-GGUF/F16.json --output-path ./my-models
+```
+
+:::tip
+Manifest downloads don't require authentication with `leap-bundle login`. They work immediately after installation.
+:::
+
+---
+
+## Feature 2: Create Custom Model Bundles
+
+:::info
+**Compatability Note:** The Model Bundling Service will work with any finetuned model, as long as
+the model architecture comes from a base model that is part of the LEAP model library.
+:::
+
+If you have a custom-trained or fine-tuned model, you can create a model bundle for use with LEAP SDK.
+
+Here is a typical user workflow:
+
+- Download an open source base model.
+- Customize the base model with your own dataset e.g. by finetuning.
+- Create a model bundle using the `leap-bundle` CLI for LEAP SDK.
+
+### Authenticate
 
 1. Sign in on the [LEAP website](https://leap.liquid.ai/sign-in)
 
@@ -46,7 +87,7 @@ Example output:
 ✓ Successfully logged in to LEAP platform!
 ```
 
-## Create model bundle
+### Create model bundle
 
 1. Prepare your model checkpoint.
 2. Create a bundle request:
@@ -119,7 +160,7 @@ Downloading bundle output... ✓
 
 The model bundle file will be saved in the current directory with a `.bundle` extension.
 
-## Complete Example
+### Complete Example
 
 Here's a complete example showing the full workflow:
 
@@ -142,9 +183,9 @@ leap-bundle download <request-id>
 ls -la <downloaded-bundle-file>
 ```
 
-## Managing Requests
+### Managing Requests
 
-### Cancel a Request
+#### Cancel a Request
 
 If you need to cancel a request that's still processing:
 
@@ -159,7 +200,7 @@ Example output:
 ✓ Request cancelled successfully.
 ```
 
-## Log out
+### Log out
 
 You can log out to clear your stored credentials:
 
