@@ -4,8 +4,6 @@
 
 A simple iOS app that generates creative slogans using local AI models, with no internet connection required.
 
-<br />
-
 ## This is what you will learn
 
 By the end of this guide, you'll understand:
@@ -13,8 +11,6 @@ By the end of this guide, you'll understand:
 - How to integrate the LeapSDK into your iOS project
 - How to load and run AI models locally on an iPhone or iPad
 - How to implement real-time streaming text generation
-
-<br />
 
 ## Understanding the Architecture
 
@@ -64,8 +60,6 @@ Let's trace what happens when a user generates a slogan:
 
 Let's start building the app!
 
-<br />
-
 ## Environment setup
 
 You will need:
@@ -76,15 +70,12 @@ You will need:
   - *The iOS Simulator works but will be significantly slower*
 - Basic familiarity with **SwiftUI** and Swift's async/await syntax
 
-<br />
-
 ## Step 1: Create a New Xcode Project
 
 1. Open Xcode and create a new iOS App
 2. Choose **SwiftUI** for the interface
 3. Set minimum deployment target to **iOS 15.0**
 
-<br />
 ## Step 2: Add LeapSDK via Swift Package Manager
 
 LeapSDK is distributed as a Swift Package, making integration straightforward:
@@ -100,8 +91,6 @@ LeapSDK is distributed as a Swift Package, making integration straightforward:
    - ✅ `LeapSDKTypes`
 
 > **Important**: Starting with version 0.5.0, you must add both `LeapSDK` and `LeapSDKTypes` for proper runtime linking.
-
-<br />
 
 ## Step 3: Download a Model Bundle
 
@@ -122,8 +111,6 @@ YourApp/
 │   └── LFM2-350M-8da4w_output_8da8w-seq_4096.bundle  ← Your model
 └── Assets.xcassets
 ```
-
-<br />
 
 ## Step 4: Building the ViewModel
 
@@ -288,8 +275,6 @@ The `generateResponse()` method returns an **AsyncStream** that emits three type
 3. **`.complete(usage, info)`**: The final event when generation finishes
    - Contains token usage statistics
    - Includes performance metrics (tokens/second)
-
-<br />
 
 ## Step 5: Building the User Interface
 
@@ -489,8 +474,6 @@ struct ContentView: View {
 4. **Polished details**: Gradient background, shadows, rounded corners
 5. **Copy functionality**: Users can easily copy the generated slogan
 
-<br />
-
 ## Troubleshooting Common Issues
 
 <details>
@@ -536,8 +519,6 @@ struct ContentView: View {
 
 </details>
 
-<br />
-
 ## Next Steps
 
 Congratulations! 🎉 You've built a fully functional on-device AI app. Here are some ideas to expand your skills:
@@ -554,8 +535,6 @@ Congratulations! 🎉 You've built a fully functional on-device AI app. Here are
 3. **Implement Function Calling**: Let AI call your functions
    - Weather lookup, calculations, database queries
    - See [Function Calling Guide](https://leap.liquid.ai/docs/edge-sdk/ios/function-calling)
-
-<br />
 
 ## Need help?
 
