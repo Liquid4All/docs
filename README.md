@@ -54,4 +54,4 @@ To promote the `main` branch to `production`, run the [`deploy-main.yaml`](https
 
 ## LICENSE
 
-[LFM Open License v1.0](./LICENSE)
+[Attribution-ShareAlike 4.0 International](./LICENSE)
