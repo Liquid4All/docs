@@ -69,6 +69,7 @@ const config: Config = {
         path: 'lfm',
         routeBasePath: 'lfm',
         sidebarPath: require.resolve('./sidebarsLfm.ts'),
+        editUrl: 'https://github.com/Liquid4All/docs/tree/main',
       } satisfies Partial<PluginOptions>,
     ],
     [
@@ -78,6 +79,7 @@ const config: Config = {
         path: 'examples',
         routeBasePath: 'examples',
         sidebarPath: require.resolve('./sidebarsExamples.ts'),
+        editUrl: 'https://github.com/Liquid4All/docs/tree/main',
       } satisfies Partial<PluginOptions>,
     ],
   ],
