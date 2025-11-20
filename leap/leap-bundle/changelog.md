@@ -4,6 +4,19 @@ sidebar_position: 4
 
 # Changelog
 
+## `v0.7.0` - 2025-11-19
+
+**New features**
+
+- Download GGUF model files from JSON manifest
+  - `leap-bundle download <json-manifest-url> [--output-path <output-path>] [--overwrite]`
+- Bundle request download will throw error if the file already exists in the output path.
+  - Use `--overwrite` option to allow overwriting the existing file.
+
+**Bug fixes**
+
+- Show correct filenames when uploading files for bundle creation
+
 ## `v0.6.0` - 2025-11-05
 
 **New features**
