@@ -49,10 +49,7 @@ const config: Config = {
           path: 'leap',
           routeBasePath: 'leap',
           sidebarPath: './sidebarsLeap.ts',
-          // Please change this to your repo.
-          // Remove this to remove the "edit this page" links.
-          // editUrl:
-          //     'https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/',
+          editUrl: 'https://github.com/Liquid4All/docs/tree/main',
         },
         blog: false,
         theme: {
@@ -117,7 +114,7 @@ const config: Config = {
           label: 'Examples',
         },
         {
-          href: 'https://github.com/Liquid4All',
+          href: 'https://github.com/Liquid4All/docs',
           label: 'GitHub',
           position: 'right',
         },
@@ -168,7 +165,7 @@ const config: Config = {
             },
             {
               label: 'GitHub',
-              href: 'https://github.com/Liquid4All',
+              href: 'https://github.com/Liquid4All/docs',
             },
             {
               label: 'Liquid AI',
