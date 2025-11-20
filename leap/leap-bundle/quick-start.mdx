@@ -4,10 +4,15 @@ sidebar_position: 1
 
 # Quick Start
 
-Model Bundling Service is a command-line interface (CLI) that provides two main features:
+The Bundling Service helps users create and manage model bundles for Liquid Edge AI Platform (LEAP). Currently users interact with it through `leap-bundle`, a command-line interface (CLI).
 
-1. **Model Bundle Requests**: Create and manage custom model bundles for Liquid Edge AI Platform (LEAP)
-2. **Manifest Downloads**: Download pre-packaged GGUF models from JSON manifests
+Here is a typical user workflow:
+
+- Download an open source base model.
+- Customize the base model with your own dataset e.g. by finetuning.
+- Create a model bundle using the `leap-bundle` CLI for LEAP SDK.
+
+The CLI also supports downloading GGUF models directly from JSON manifest files.
 
 This guide will help you quickly get started with both features.
 
@@ -17,42 +22,32 @@ This guide will help you quickly get started with both features.
 pip install leap-bundle
 ```
 
----
+## Quick Start for GGUF Model Download
 
-## Feature 1: Download Pre-packaged Models from Manifests
+```sh
+leap-bundle download <manifest-url>
+```
 
-If you want to quickly download pre-packaged GGUF models without creating custom bundles, you can use the manifest download feature. This doesn't require authentication.
-
-### Quick Start: Manifest Download
-
-Download a pre-packaged model from a JSON manifest URL:
+Example with a HuggingFace URL:
 
 ```sh
 leap-bundle download https://huggingface.co/LiquidAI/LeapBundles/blob/main/LFM2-Audio-1.5B-GGUF/F16.json
 ```
 
-This will:
-- Download the JSON manifest file
-- Download all GGUF model files referenced in the manifest
-- Create a directory with the downloaded files
-- Update the manifest to use relative paths to the downloaded files
-
-You can also specify a custom output directory:
-
-```sh
-leap-bundle download https://huggingface.co/LiquidAI/LeapBundles/blob/main/LFM2-Audio-1.5B-GGUF/F16.json --output-path ./my-models
-```
+The command will:
+1. Create an output directory based on the URL or according to `--output-path` if specified.
+2. Download the JSON manifest file.
+3. Download all model files referenced in the manifest.
+4. Update the manifest to use relative paths to the downloaded files.
 
 :::tip
 Manifest downloads don't require authentication with `leap-bundle login`. They work immediately after installation.
 :::
 
----
-
-## Feature 2: Create Custom Model Bundles
+## Quick Start for Model Bundling
 
 :::info
-**Compatability Note:** The Model Bundling Service will work with any finetuned model, as long as
+**Compatability Note:** The Model Bundling Service will work with any fine-tuned model, as long as
 the model architecture comes from a base model that is part of the LEAP model library.
 :::
 

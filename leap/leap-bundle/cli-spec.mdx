@@ -6,7 +6,7 @@ sidebar_position: 2
 
 ## Overview
 
-The Model Bundling Service provides a command-line interface with two main features:
+The Model Bundling Service provides a command-line interface (CLI) with two main features:
 
 1. **LEAP Bundle Requests**: Upload model directories, create bundle requests, monitor processing status, and download completed bundles for the LEAP (Liquid Edge AI Platform)
 2. **Manifest Downloads**: Download pre-packaged GGUF models from JSON manifest URLs without authentication
@@ -581,8 +581,6 @@ leap-bundle list --last --json
 
 ### `download`
 
-Download bundle request output or JSON manifest with referenced files.
-
 This command supports two modes of operation:
 
 1. **Bundle Request Download**: Download a generated model bundle file from a completed request
@@ -657,7 +655,7 @@ to download it afterwards.
 Download GGUF model files from a JSON manifest URL.
 
 ```sh
-leap-bundle download <manifest-url> [--output-path <path>]
+leap-bundle download <manifest-url> [--output-path <path>] [--overwrite]
 ```
 
 **Arguments**
@@ -667,14 +665,14 @@ leap-bundle download <manifest-url> [--output-path <path>]
 **Options**
 
 - `--output-path <path>`: Directory to save the downloaded files. If not specified, auto-generates a directory name based on the manifest URL.
+- `--overwrite`: By default, if the JSON file already exists in the ouptut path, the command will throw an error. With this flag, the existing file will be overwritten.
 
 **Behavior**
 
-- Downloads the JSON manifest file from the provided URL
-- Parses the manifest to find all model files referenced in `load_time_parameters`
-- Downloads all referenced model files
-- Updates the manifest to use relative paths to the downloaded files
-- Saves the updated manifest and all model files to the output directory
+- Create an output directory based on the URL or according to `--output-path` if specified.
+- Download the JSON manifest file.
+- Download all model files referenced in `load_time_parameters` in the manifest
+- Update the manifest to use relative paths to the downloaded files.
 - **Does not require authentication** - works immediately after installation
 
 **Examples**
@@ -684,6 +682,8 @@ leap-bundle download <manifest-url> [--output-path <path>]
 leap-bundle download https://huggingface.co/LiquidAI/LeapBundles/blob/main/LFM2-Audio-1.5B-GGUF/F16.json
 
 # Example output
+
+```
 ℹ Downloading manifest from URL...
 ✓ Manifest downloaded successfully
 ℹ Downloading model files...
@@ -693,18 +693,6 @@ Downloading model file 3/3... ✓
 ✓ All files downloaded successfully
 ℹ Updating manifest with relative paths...
 ✓ Download completed successfully! Files saved to: LFM2-Audio-1.5B-GGUF-F16/
-
-# Download from manifest URL with custom output path
-leap-bundle download https://example.com/manifest.json --output-path ./my-models
-
-# Example output
-ℹ Downloading manifest from URL...
-✓ Manifest downloaded successfully
-ℹ Downloading model files...
-Downloading model files... ✓
-✓ All files downloaded successfully
-ℹ Updating manifest with relative paths...
-✓ Download completed successfully! Files saved to: my-models/
 ```
 
 **Manifest Format**
@@ -739,10 +727,6 @@ After download, the manifest is updated to use relative paths:
 - Model file download failure: Shows download error
 - Output directory creation failure: Shows file system error
 - Network issues: Shows connection error
-
-:::tip
-Manifest downloads are perfect for quickly getting started with pre-packaged GGUF models without needing to create custom bundles or authenticate.
-:::
 
 ### `cancel`
 
