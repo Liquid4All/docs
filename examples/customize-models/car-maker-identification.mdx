@@ -6,22 +6,6 @@ A step by step guide on fine tuning a Vision Language Model for image identifica
 
 ![](/img/examples/car-maker-identification/task.png)
 
-## Table of Contents
-
-- [This is what you will learn](#this-is-what-you-will-learn)
-- [Quickstart](#quickstart)
-- [Environment setup](#environment-setup)
-  - [Install UV](#install-uv)
-  - [Modal setup](#modal-setup)
-  - [Weights & Biases setup](#weights--biases-setup)
-  - [Install make](#install-make)
-- [Steps](#steps-to-fine-tune-lfm2-vl-for-this-task)
-- [Step 1. Dataset preparation](#step-1-dataset-preparation)
-- [Step 2. Baseline performance of LFM2-VL models](#step-2-baseline-performance-of-lfm2-vl-models)
-- [Step 3. Structured generation to increase model robustness](#step-3-structured-generation-to-increase-model-robustness)
-- [Step 4. Fine tuning with LoRA](#step-4-fine-tuning-with-lora)
-- [What's next?](#whats-next)
-
 ## This is what you will learn
 
 In this example, you will learn how to:
@@ -29,6 +13,8 @@ In this example, you will learn how to:
 - Build a model-agnostic **evaluation pipeline** for vision classification tasks
 - **Use structured output generation** with Outlines to ensure consistent and reliable model responses and increase model accuracy.
 - **Fine-tune a Vision Language Model** with LoRA to further improve model accuracy.
+
+<br />
 
 ## Quickstart
 
@@ -58,6 +44,8 @@ make fine-tune config=finetune_lfm_450M.yaml
 make fine-tune config=finetune_lfm_1.6B.yaml
 make fine-tune config=finetune_lfm_3B.yaml
 ```
+
+<br />
 
 ## Environment setup
 
@@ -146,6 +134,8 @@ cd cookbook/examples/car-maker-identification
 uv sync
 ```
 
+<br />
+
 ## Steps to fine-tune LFM2-VL for this task
 
 Here's the systematic approach we follow to fine-tune LFM2-VL models for car maker identification:
@@ -159,6 +149,8 @@ Here's the systematic approach we follow to fine-tune LFM2-VL models for car mak
 4. **Evaluate improvements**. Compare fine-tuned model performance against baselines to measure the effectiveness of our customization. If you are happy with th results, you are done. Otherwise, you need to dig deeper into model failures and improve the dataset you started with, or the fine-tuning process.
 
 Let's go one by one.
+
+<br />
 
 ## Step 1. Dataset preparation
 
@@ -184,9 +176,9 @@ The dataset contains:
 - **Classes**: 49 unique car manufacturers.
 - **Splits**: Train (6,860 images) and test (6,750 images) splits.
 
-[TODO add barchart with class distribution]
-
 The dataset includes additional splits with various image corruptions (gaussian noise, motion blur, etc.) for robustness testing, making it ideal for evaluating model performance under different conditions. In this tutorial we will only use the train and test splits.
+
+<br />
 
 ## Step 2. Baseline performance of LFM2-VL models
 
@@ -311,6 +303,8 @@ So, at this point we face the first challenge: how we "force" the model to gener
 
 This is what we will address in the next step.
 
+<br />
+
 ## Step 3. Structured generation to increase model robustness
 
 Structured generation is a technique that allows us to “force” the Language Model to output a specific format, like JSON, or, in our case, a valid entry from a list of car makers.
@@ -378,6 +372,8 @@ If you inspect the confusion matrix of the 3B model, you will see that the model
 ![](/img/examples/car-maker-identification/confusion_matrix_lfm2_3b_structured_generation.png)
 
 At this point you need to decide if the performance is good enough for your use case. If it is, you are done. Otherwis, it is time to fine-tune the model.
+
+<br />
 
 ## Step 4. Fine tuning with LoRA
 

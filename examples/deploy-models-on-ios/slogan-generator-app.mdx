@@ -1,8 +1,10 @@
 # A Slogan Generator iOS app
 
-[![GitHub](https://img.shields.io/badge/GitHub-Repository-blue?style=for-the-badge&logo=github)](https://github.com/Liquid4All/LeapSDK-Examples/tree/main/iOS/LeapSloganExample)
+[![GitHub](https://img.shields.io/badge/GitHub-Repository-purple?style=for-the-badge&logo=github)](https://github.com/Liquid4All/LeapSDK-Examples/tree/main/iOS/LeapSloganExample)
 
 A simple iOS app that generates creative slogans using local AI models, with no internet connection required.
+
+<br />
 
 ## This is what you will learn
 
@@ -11,6 +13,8 @@ By the end of this guide, you'll understand:
 - How to integrate the LeapSDK into your iOS project
 - How to load and run AI models locally on an iPhone or iPad
 - How to implement real-time streaming text generation
+
+<br />
 
 ## Understanding the Architecture
 
@@ -60,6 +64,8 @@ Let's trace what happens when a user generates a slogan:
 
 Let's start building the app!
 
+<br />
+
 ## Environment setup
 
 You will need:
@@ -70,12 +76,15 @@ You will need:
   - *The iOS Simulator works but will be significantly slower*
 - Basic familiarity with **SwiftUI** and Swift's async/await syntax
 
+<br />
+
 ## Step 1: Create a New Xcode Project
 
 1. Open Xcode and create a new iOS App
 2. Choose **SwiftUI** for the interface
 3. Set minimum deployment target to **iOS 15.0**
 
+<br />
 ## Step 2: Add LeapSDK via Swift Package Manager
 
 LeapSDK is distributed as a Swift Package, making integration straightforward:
@@ -91,6 +100,8 @@ LeapSDK is distributed as a Swift Package, making integration straightforward:
    - ✅ `LeapSDKTypes`
 
 > **Important**: Starting with version 0.5.0, you must add both `LeapSDK` and `LeapSDKTypes` for proper runtime linking.
+
+<br />
 
 ## Step 3: Download a Model Bundle
 
@@ -111,6 +122,8 @@ YourApp/
 │   └── LFM2-350M-8da4w_output_8da8w-seq_4096.bundle  ← Your model
 └── Assets.xcassets
 ```
+
+<br />
 
 ## Step 4: Building the ViewModel
 
@@ -275,6 +288,8 @@ The `generateResponse()` method returns an **AsyncStream** that emits three type
 3. **`.complete(usage, info)`**: The final event when generation finishes
    - Contains token usage statistics
    - Includes performance metrics (tokens/second)
+
+<br />
 
 ## Step 5: Building the User Interface
 
@@ -474,16 +489,22 @@ struct ContentView: View {
 4. **Polished details**: Gradient background, shadows, rounded corners
 5. **Copy functionality**: Users can easily copy the generated slogan
 
+<br />
+
 ## Troubleshooting Common Issues
 
-### Issue 1: "Model bundle not found"
+<details>
+<summary><strong>Issue 1: "Model bundle not found"</strong></summary>
 
 **Solution**:
 - Check that `.bundle` file is in Xcode project
 - Verify "Target Membership" is checked
 - Ensure bundle name in code matches actual filename
 
-### Issue 2: "Failed to load model"
+</details>
+
+<details>
+<summary><strong>Issue 2: "Failed to load model"</strong></summary>
 
 **Solution**:
 - Test on a physical device (Simulator is unreliable)
@@ -491,7 +512,10 @@ struct ContentView: View {
 - Check device has enough free storage (~2-3x model size)
 - Try a smaller model first
 
-### Issue 3: Slow generation speed
+</details>
+
+<details>
+<summary><strong>Issue 3: Slow generation speed</strong></summary>
 
 **Solution**:
 - Use a physical device (10-100x faster than Simulator)
@@ -499,13 +523,20 @@ struct ContentView: View {
 - Lower `maxTokens` in GenerationOptions
 - Reduce temperature for faster but less creative output
 
-### Issue 4: App crashes on launch
+</details>
+
+<details>
+<summary><strong>Issue 4: App crashes on launch</strong></summary>
 
 **Solution**:
 - Ensure both `LeapSDK` and `LeapSDKTypes` are added
 - Check frameworks are set to "Embed & Sign"
 - Clean build folder (Cmd+Shift+K)
 - Restart Xcode
+
+</details>
+
+<br />
 
 ## Next Steps
 
@@ -524,7 +555,10 @@ Congratulations! 🎉 You've built a fully functional on-device AI app. Here are
    - Weather lookup, calculations, database queries
    - See [Function Calling Guide](https://leap.liquid.ai/docs/edge-sdk/ios/function-calling)
 
+<br />
+
 ## Need help?
 
 Join the [Liquid AI Discord Community](https://discord.gg/DFU3WQeaYD) and ask.
+
 [![Discord](https://img.shields.io/discord/1385439864920739850?color=7289da&label=Join%20Discord&logo=discord&logoColor=white)](https://discord.gg/DFU3WQeaYD)
