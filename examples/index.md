@@ -102,6 +102,20 @@
   </div>
 </a>
 
+<a href="/examples/laptop-examples/audio-to-text-in-real-time" className="example-card" data-platform="laptops" data-type="end-to-end" data-search="audio transcription real-time speech recognition lfm2 audio llama.cpp local offline">
+  <div className="example-header">
+    <span className="example-icon">🎙️</span>
+    <div className="example-title">Audio-to-Text CLI</div>
+  </div>
+  <div className="example-description">
+    Build a real-time audio transcription CLI using LFM2-Audio-1.5B with llama.cpp. 100% local processing without internet connection.
+  </div>
+  <div className="example-tags">
+    <span className="example-tag">Laptop</span>
+    <span className="example-tag">End-to-End</span>
+  </div>
+</a>
+
 <a href="/examples/deploy-models-on-ios/slogan-generator-app" className="example-card" data-platform="ios" data-type="deployment" data-search="slogan generator ios app swift leap sdk on-device ai">
   <div className="example-header">
     <span className="example-icon">✨</span>

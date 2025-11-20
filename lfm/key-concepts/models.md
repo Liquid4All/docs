@@ -97,7 +97,7 @@ The LFM model collection includes general-purpose language models, vision-langua
 <tr>
 <td style={{textAlign: 'left'}}>LFM2-Audio-1.5B</td>
 <td><a href="https://huggingface.co/LiquidAI/LFM2-Audio-1.5B" style={{color: '#22c55e', textDecoration: 'none'}}>✓</a></td>
-<td style={{color: '#ef4444'}}>✗</td>
+<td><a href="https://huggingface.co/LiquidAI/LFM2-Audio-1.5B-GGUF" style={{color: '#22c55e', textDecoration: 'none'}}>✓</a></td>
 <td style={{color: '#ef4444'}}>✗</td>
 <td style={{color: '#ef4444'}}>✗</td>
 <td>No</td>
@@ -210,11 +210,11 @@ The LFM model collection includes general-purpose language models, vision-langua
 
 | Model | Description |
 |-------|-------------|
-| [`LiquidAI/LFM2-1.2B-Extract`](https://huggingface.co/LiquidAI/LFM2-1.2B-Extract) | Extract important information from a wide variety of unstructured documents into structured outputs like JSON. |
-| [`LiquidAI/LFM2-350M-Extract`](https://huggingface.co/LiquidAI/LFM2-350M-Extract) | Smaller version of the extraction model. |
-| [`LiquidAI/LFM2-350M-ENJP-MT`](https://huggingface.co/LiquidAI/LFM2-350M-ENJP-MT) | Near real-time bi-directional Japanese/English translation of short-to-medium inputs. |
-| [`LiquidAI/LFM2-1.2B-RAG`](https://huggingface.co/LiquidAI/LFM2-1.2B-RAG) | Answer questions based on provided contextual documents, for use in RAG systems. |
-| [`LiquidAI/LFM2-1.2B-Tool`](https://huggingface.co/LiquidAI/LFM2-1.2B-Tool) | Efficient model optimized for concise and precise tool calling. See the [Tool Use guide](tool-use.md) for details. |
+| [`LiquidAI/LFM2-1.2B-Extract`](https://huggingface.co/LiquidAI/LFM2-1.2B-Extract) | Extract important information from a wide variety of unstructured documents into structured outputs like JSON. [See prompting guidelines](/lfm/getting-started/text-generation-and-prompting#lfm2-extract) |
+| [`LiquidAI/LFM2-350M-Extract`](https://huggingface.co/LiquidAI/LFM2-350M-Extract) | Smaller version of the extraction model. [See prompting guidelines](/lfm/getting-started/text-generation-and-prompting#lfm2-extract) |
+| [`LiquidAI/LFM2-350M-ENJP-MT`](https://huggingface.co/LiquidAI/LFM2-350M-ENJP-MT) | Near real-time bi-directional Japanese/English translation of short-to-medium inputs. > [See prompting guidelines](/lfm/getting-started/text-generation-and-prompting#lfm2-350m-enjp-mt) |
+| [`LiquidAI/LFM2-1.2B-RAG`](https://huggingface.co/LiquidAI/LFM2-1.2B-RAG) | Answer questions based on provided contextual documents, for use in RAG systems. > [See prompting guidelines](/lfm/getting-started/text-generation-and-prompting#lfm2-rag) |
+| [`LiquidAI/LFM2-1.2B-Tool`](https://huggingface.co/LiquidAI/LFM2-1.2B-Tool) | Efficient model optimized for concise and precise tool calling. [See tool use guidelines](tool-use.md) |
 | [`LiquidAI/LFM2-350M-Math`](https://huggingface.co/LiquidAI/LFM2-350M-Math) | Tiny reasoning model designed for tackling tricky math problems. |
 | [`LiquidAI/LFM2-350M-PII-Extract-JP`](https://huggingface.co/LiquidAI/LFM2-350M-PII-Extract-JP) | Extract personally identifiable information (PII) from Japanese text and output it in JSON format. |
 | [`LiquidAI/LFM2-ColBERT-350M`](https://huggingface.co/LiquidAI/LFM2-ColBERT-350M) | Embed documents and queries for fast retrieval and reranking across many languages. |

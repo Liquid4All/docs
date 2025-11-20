@@ -6,22 +6,6 @@ A step by step guide on fine tuning a Vision Language Model for image identifica
 
 ![](/img/examples/car-maker-identification/task.png)
 
-## Table of Contents
-
-- [This is what you will learn](#this-is-what-you-will-learn)
-- [Quickstart](#quickstart)
-- [Environment setup](#environment-setup)
-  - [Install UV](#install-uv)
-  - [Modal setup](#modal-setup)
-  - [Weights & Biases setup](#weights--biases-setup)
-  - [Install make](#install-make)
-- [Steps](#steps-to-fine-tune-lfm2-vl-for-this-task)
-- [Step 1. Dataset preparation](#step-1-dataset-preparation)
-- [Step 2. Baseline performance of LFM2-VL models](#step-2-baseline-performance-of-lfm2-vl-models)
-- [Step 3. Structured generation to increase model robustness](#step-3-structured-generation-to-increase-model-robustness)
-- [Step 4. Fine tuning with LoRA](#step-4-fine-tuning-with-lora)
-- [What's next?](#whats-next)
-
 ## This is what you will learn
 
 In this example, you will learn how to:
@@ -183,8 +167,6 @@ The dataset contains:
 
 - **Classes**: 49 unique car manufacturers.
 - **Splits**: Train (6,860 images) and test (6,750 images) splits.
-
-[TODO add barchart with class distribution]
 
 The dataset includes additional splits with various image corruptions (gaussian noise, motion blur, etc.) for robustness testing, making it ideal for evaluating model performance under different conditions. In this tutorial we will only use the train and test splits.
 
@@ -419,8 +401,6 @@ The following table shows the evaluation loss at different checkpoints during fi
 | 300        | 0.07       | 0.10      |
 | 500        | 0.03       | 0.03      |
 | 1000        | 0.008       | 0.005      |
-
-<br />
 
 :::tip[**What is overfitting?**]
 

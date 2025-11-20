@@ -7,12 +7,9 @@ const sidebars: SidebarsConfig = {
       type: 'category',
       label: 'Laptop examples',
       collapsed: true,
-      link: {
-        type: 'doc',
-        id: 'laptop-examples/invoice-extractor-tool-with-liquid-nanos',
-      },
       items: [
-        // Removed duplicate since it's already the category link
+        'laptop-examples/invoice-extractor-tool-with-liquid-nanos',
+        'laptop-examples/audio-to-text-in-real-time',
       ],
     },
     {

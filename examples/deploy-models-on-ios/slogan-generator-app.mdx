@@ -1,6 +1,6 @@
 # A Slogan Generator iOS app
 
-[![GitHub](https://img.shields.io/badge/GitHub-Repository-blue?style=for-the-badge&logo=github)](https://github.com/Liquid4All/LeapSDK-Examples/tree/main/iOS/LeapSloganExample)
+[![GitHub](https://img.shields.io/badge/GitHub-Repository-purple?style=for-the-badge&logo=github)](https://github.com/Liquid4All/LeapSDK-Examples/tree/main/iOS/LeapSloganExample)
 
 A simple iOS app that generates creative slogans using local AI models, with no internet connection required.
 
@@ -476,14 +476,18 @@ struct ContentView: View {
 
 ## Troubleshooting Common Issues
 
-### Issue 1: "Model bundle not found"
+<details>
+<summary><strong>Issue 1: "Model bundle not found"</strong></summary>
 
 **Solution**:
 - Check that `.bundle` file is in Xcode project
 - Verify "Target Membership" is checked
 - Ensure bundle name in code matches actual filename
 
-### Issue 2: "Failed to load model"
+</details>
+
+<details>
+<summary><strong>Issue 2: "Failed to load model"</strong></summary>
 
 **Solution**:
 - Test on a physical device (Simulator is unreliable)
@@ -491,7 +495,10 @@ struct ContentView: View {
 - Check device has enough free storage (~2-3x model size)
 - Try a smaller model first
 
-### Issue 3: Slow generation speed
+</details>
+
+<details>
+<summary><strong>Issue 3: Slow generation speed</strong></summary>
 
 **Solution**:
 - Use a physical device (10-100x faster than Simulator)
@@ -499,13 +506,18 @@ struct ContentView: View {
 - Lower `maxTokens` in GenerationOptions
 - Reduce temperature for faster but less creative output
 
-### Issue 4: App crashes on launch
+</details>
+
+<details>
+<summary><strong>Issue 4: App crashes on launch</strong></summary>
 
 **Solution**:
 - Ensure both `LeapSDK` and `LeapSDKTypes` are added
 - Check frameworks are set to "Embed & Sign"
 - Clean build folder (Cmd+Shift+K)
 - Restart Xcode
+
+</details>
 
 ## Next Steps
 
@@ -527,4 +539,5 @@ Congratulations! 🎉 You've built a fully functional on-device AI app. Here are
 ## Need help?
 
 Join the [Liquid AI Discord Community](https://discord.gg/DFU3WQeaYD) and ask.
+
 [![Discord](https://img.shields.io/discord/1385439864920739850?color=7289da&label=Join%20Discord&logo=discord&logoColor=white)](https://discord.gg/DFU3WQeaYD)
