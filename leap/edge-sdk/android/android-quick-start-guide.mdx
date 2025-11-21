@@ -2,6 +2,9 @@
 sidebar_position: 1
 ---
 
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
 # Quick Start Guide
 
 ## Prerequisites
@@ -47,49 +50,16 @@ dependencies {
 
 Then perform a project sync in Android Studio to fetch the LeapSDK artifacts.
 
-## Download model bundles
+## Getting and Loading Models
 
-With LeapSDK v0.7.0, you have two options for obtaining and using models:
+<Tabs>
+<TabItem value="automatic" label="Automatic pull with manifests (recommended)" default>
 
-### Option 1: Manual download and device transfer
+The LeapSDK supports direct downloads of GGUF files from the [LeapBundles repository](https://huggingface.co/LiquidAI/LeapBundles/tree/main). You can point directly to a remote JSON manifest, and the SDK will automatically download the necessary GGUF files along with generation parameters.
 
-Browse the [Leap Model Library](https://leap.liquid.ai/models) to find and download a model bundle that matches your needs.
-
-Push the bundle file to the device using `adb push`. Assuming the downloaded model file is located at `~/Downloads/model.bundle`, run the following commands:
-
-```shell
-adb shell mkdir -p /data/local/tmp/leap/
-adb push ~/Downloads/model.bundle /data/local/tmp/leap/model.bundle
-```
-
-### Option 2: Direct GGUF download from LeapBundles repo
-
-The LeapSDK now supports direct downloads of GGUF files from the [LeapBundles repository](https://huggingface.co/LiquidAI/LeapBundles/tree/main). You can point directly to a remote JSON manifest, and the SDK will automatically download the necessary GGUF files along with generation parameters.
-
-No manual download or `adb push` is required with this approach - the SDK handles everything automatically.
-
-## Load Model in Code
+### Loading from remote GGUF manifest (recommended)
 
 The `LeapClient.loadModel` suspend function loads a model and returns a model runner instance for invoking the model. This function takes some time to finish as loading the model is a heavy I/O operation, but it is safe to call on the main thread. The function should be executed in a coroutine scope.
-
-### Loading from local bundle file (Option 1)
-
-If you downloaded and pushed a bundle file to your device:
-
-```kotlin
-lifecycleScope.launch {
-  try {
-    modelRunner = LeapClient.loadModel("/data/local/tmp/leap/model.bundle")
-   }
-   catch (e: LeapModelLoadingException) {
-     Log.e(TAG, "Failed to load the model. Error message: ${e.message}")
-   }
- }
-```
-
-### Loading from remote GGUF manifest (Option 2)
-
-To load a model directly from the LeapBundles repository using a remote JSON manifest:
 
 ```kotlin
 lifecycleScope.launch {
@@ -105,6 +75,40 @@ lifecycleScope.launch {
 ```
 
 The SDK will automatically download the required GGUF files to the device's cache and load the model with the appropriate generation parameters specified in the manifest.
+
+</TabItem>
+<TabItem value="manual" label="Manual load with bundles (legacy)">
+
+Browse the [Leap Model Library](https://leap.liquid.ai/models) to find and download a model bundle that matches your needs.
+
+### Download and transfer bundle (legacy)
+
+Push the bundle file to the device using `adb push`. Assuming the downloaded model file is located at `~/Downloads/model.bundle`, run the following commands:
+
+```shell
+adb shell mkdir -p /data/local/tmp/leap/
+adb push ~/Downloads/model.bundle /data/local/tmp/leap/model.bundle
+```
+
+### Loading from local bundle file (legacy)
+
+The `LeapClient.loadModel` suspend function loads a model bundle file and returns a model runner instance for invoking the model. This function takes some time to finish as loading the model is a heavy I/O operation, but it is safe to call on the main thread. The function should be executed in a coroutine scope.
+
+```kotlin
+lifecycleScope.launch {
+  try {
+    modelRunner = LeapClient.loadModel("/data/local/tmp/leap/model.bundle")
+   }
+   catch (e: LeapModelLoadingException) {
+     Log.e(TAG, "Failed to load the model. Error message: ${e.message}")
+   }
+ }
+```
+
+</TabItem>
+</Tabs>
+
+---
 
 ## Generate content with the model
 
