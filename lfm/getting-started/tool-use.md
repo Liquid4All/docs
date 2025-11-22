@@ -3,7 +3,7 @@
 LFM2 models support tool use (also called "function calling"), allowing models to request external functions as part of their responses. This enables models to interact with APIs, databases, calculators, and other tools to provide more accurate and up-to-date information.
 
 :::note[See also]
-For improved tool calling performance, see [`LFM2-1.2B-Tool`](models.md#liquid-nanos), a Liquid Nano model specifically optimized for tool calling tasks.
+While all of our models support tool use, [`LFM2-1.2B-Tool`](models.md#liquid-nanos) is specifically optimized for tool calling tasks. Use this as a prompting guide for this model.
 :::
 
 ## How Tool Use Works
