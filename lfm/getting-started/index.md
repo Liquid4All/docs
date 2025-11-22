@@ -1,6 +1,6 @@
 # Welcome to LFM Docs! 👋
 
-**LFM2** is a new generation of hybrid models developed by [Liquid AI](https://www.liquid.ai/), specifically designed for **edge AI and on-device deployment**.
+Liquid Foundation Models (LFMs) are efficient, scalable, open-source AI models designed for edge deployment. **LFM2** is our latest generation of hybrid open-source models developed by [Liquid AI](https://www.liquid.ai/), specifically designed for **edge AI and on-device deployment**.
 
 ## Why LFM2?
 

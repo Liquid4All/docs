@@ -99,7 +99,7 @@ const config: Config = {
           sidebarId: 'lfm',
           docsPluginId: 'lfm',
           position: 'left',
-          label: 'Liquid (LFMs)',
+          label: 'LFM',
         },
         {
           type: 'docSidebar',

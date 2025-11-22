@@ -92,34 +92,16 @@ Sampling parameters control how the model generates text, balancing creativity, 
 
 **Max Tokens** (`max_tokens`, `max_new_tokens`) - Maximum number of tokens to generate, preventing infinite generation.
 
+Each inference platform has slightly different implementations for sampling parameters. Check the specific inference platform documentation (e.g., [Transformers](../inference/transformers.md), [vLLM](../inference/vllm.md), [llama.cpp](../inference/llama-cpp.md)) for exact parameter names and syntax.
+
 ### Recommended Settings
 
-<details>
-<summary>View Recommended Settings</summary>
+**Recommended configuration for all text models:**
+- `temperature=0.3`
+- `min_p=0.15`
+- `repetition_penalty=1.05`
 
-**Factual/Technical Tasks:**
-- Temperature: 0.1-0.3
-- Top-p: 0.9-0.95
-- Top-k: 40-50
-
-**Creative Writing:**
-- Temperature: 0.8-1.2
-- Top-p: 0.9-0.95
-- Top-k: 50-100
-
-**Code Generation:**
-- Temperature: 0.2-0.5
-- Top-p: 0.9-0.95
-- Top-k: 40-50
-
-**Structured Extraction:**
-- Temperature: 0.0-0.1
-- Top-p: 0.9-0.95
-- Top-k: 10-20
-
-</details>
-
-Note: Each inference platform has slightly different implementations for sampling parameters. Check the specific inference platform documentation (e.g., [Transformers](../inference/transformers.md), [vLLM](../inference/vllm.md), [llama.cpp](../inference/llama-cpp.md)) for exact parameter names and syntax.
+Liquid-Nanos models may have [special prompting recipes](#special-prompting-recipes) with different recommended parameters. See the Special Prompting Recipes section below for model-specific guidance.
 
 ## Special Prompting Recipes
 
@@ -128,6 +110,12 @@ Certain LFM2 models have specialized prompting requirements for optimal performa
 ### LFM2-Extract
 
 LFM2-Extract models are designed for structured information extraction. They require a specific system prompt format that defines the extraction schema.
+
+**Generation Parameters:**
+We strongly recommend using greedy decoding with `temperature=0`.
+
+**System Prompt:**
+If no system prompt is provided, the model will default to JSON outputs. We recommend providing a system prompt with a specific format (JSON, XML, or YAML) and a given schema to improve accuracy (see the following example).
 
 **System Prompt Format:**
 ```
@@ -139,7 +127,8 @@ Schema:
   - nested_field: "Description"
 ```
 
-**Example:**
+<details>
+<summary>Example</summary>
 
 **System Prompt:**
 ```
@@ -190,9 +179,18 @@ We have secured a lease for a facility located at 345 Ocean View Drive, Seward, 
 }
 ```
 
+</details>
+
+⚠️ **The model is intended for single turn conversations.**
+
+---
+
 ### LFM2-RAG
 
 LFM2-RAG models are optimized for Retrieval-Augmented Generation tasks. They work best when provided with relevant documents in the system prompt.
+
+**Generation Parameters:**
+We recommend using greedy decoding with `temperature=0`.
 
 **System Prompt Format:**
 ```
@@ -207,7 +205,8 @@ The following documents may provide you additional information to answer questio
 </document2>
 ```
 
-**Example:**
+<details>
+<summary>Example</summary>
 
 **System Prompt:**
 ```
@@ -228,24 +227,38 @@ How many individuals were reported to be served by the library at the Agricultur
 The library at the Agriculture Canada research centre in Lethbridge was reported to serve 48 scientists and 85 technicians, along with many visiting staff and students.
 ```
 
+</details>
+
+---
+
+### LFM2-Tool
+
+LFM2-Tool models are optimized for efficient and precise tool calling.
+
+**Generation Parameters:**
+We recommend using greedy decoding with `temperature=0`.
+
+For detailed information on tool use, including how to define tools, format tool calls, and handle tool responses, see the [Tool Use](../key-concepts/tool-use.md) guide.
+
+---
+
 ### LFM2-350M-ENJP-MT
 
 LFM2-350M-ENJP-MT is a specialized English-Japanese translation model that requires a specific system prompt to specify translation direction.
 
 **System Prompts:**
 
-LFM2-350M-ENJP-MT requires one of the two following system prompts:
+LFM2-350M-ENJP-MT will not work without one of the two following system prompts:
 
 - **`"Translate to Japanese."`** for English to Japanese translation
 - **`"Translate to English."`** for Japanese to English translation
-
-⚠️ **The model cannot work as intended without one of these two system prompts.**
 
 **Chat Template:**
 
 The chat template can be applied using the dedicated `.apply_chat_template()` function from Hugging Face transformers. However, you must supply the system prompt that specifies the translation directionality.
 
-**Example:**
+<details>
+<summary>Example</summary>
 
 ```python
 from transformers import AutoTokenizer
@@ -271,10 +284,51 @@ What is C. elegans?<|im_end|>
 C. elegansとは何ですか？<|im_end|>
 ```
 
+</details>
+
 ⚠️ **The model is intended for single turn conversations.**
 
-**How to run LFM2-350M-ENJP-MT:**
+---
 
-- **Hugging Face**: [LFM2-350M-ENJP-MT](https://huggingface.co/LiquidAI/LFM2-350M-ENJP-MT)
-- **llama.cpp**: [LFM2-350M-ENJP-MT-GGUF](https://huggingface.co/LiquidAI/LFM2-350M-ENJP-MT-GGUF)
-- **LEAP**: Available in the [LEAP model library](https://leap.liquid.ai)
+### LFM2-350M-PII-Extract-JP
+
+LFM2-350M-PII-Extract-JP is designed to extract personally identifiable information (PII) from Japanese text and output it in JSON format. The output can be used to mask sensitive information in contracts, emails, personal medical reports, insurance bills, etc. directly on-device.
+
+**Generation Parameters:**
+We strongly recommend using greedy decoding with `temperature=0`.
+
+**System Prompt:**
+This checkpoint requires the following system prompt format:
+
+```
+Extract <address>, <company_name>, <email_address>, <human_name>, <phone_number>
+```
+
+The model can be configured to extract only specific entities. For example, `Extract <human_name>` will output only human names. For optimal performance, entity categories should be listed in alphabetical order as shown above.
+
+**Output Format:**
+The model outputs JSON format with lists for each category. If no entities are found for a category, an empty list is returned. If entities exist, a list of extracted strings is returned for that category.
+
+The model is trained to output entities exactly as they appear in the text. If the same entity appears multiple times with different notation variations, all variations are output to enable exact-match masking.
+
+<details>
+<summary>Example</summary>
+
+**System Prompt:**
+```
+Extract <address>, <company_name>, <email_address>, <human_name>, <phone_number>
+```
+
+**User Prompt:**
+```
+こんにちは、ラミンさんに B200 GPU を 10000 台 至急請求してください。連絡先は celegans@liquid.ai (電話番号010-000-0000) で、これは C. elegans 線虫に着想を得たニューラルネットワークアーキテクチャを 今すぐ構築するために不可欠です。
+```
+
+**Assistant Response:**
+```json
+{"address": [], "company_name": [], "email_address": ["celegans@liquid.ai"], "human_name": ["ラミン"], "phone_number": ["010-000-0000"]}
+```
+
+</details>
+
+⚠️ **The model is intended for single turn conversations.**

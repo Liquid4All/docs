@@ -16,8 +16,8 @@ import styles from './index.module.css';
 
 const CARDS: { title: string; description: string; icon: TablerIcon; href: string }[] = [
   {
-    title: 'Liquid',
-    description: 'Liquid Foundation Models (LFMs) - efficient, scalable, open-source AI',
+    title: 'Liquid Foundation Models',
+    description: 'Liquid Foundation Models (LFM) - efficient, scalable, open-source AI',
     icon: IconFileDescription,
     href: '/lfm/getting-started',
   },

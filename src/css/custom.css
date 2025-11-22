@@ -294,6 +294,8 @@
 
 .monospace {
   font-family: 'JetBrains Mono', monospace;
+  font-variant-ligatures: none;
+  font-feature-settings: "liga" 0, "calt" 0;
 }
 
 @utility gradient-corner-tr {
@@ -373,6 +375,8 @@ pre,
 .theme-doc-markdown pre {
   font-family: 'JetBrains Mono', 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono',
     Consolas, 'Courier New', monospace !important;
+  font-variant-ligatures: none !important;
+  font-feature-settings: "liga" 0, "calt" 0 !important;
 }
 
 /* Typography - Match homepage font */
@@ -406,6 +410,11 @@ pre,
   font-weight: normal;
   margin: 1em 0 0.5em 0;
   color: var(--foreground);
+}
+
+/* Add extra spacing for h3 headings that follow horizontal rules (model sections) */
+.theme-doc-markdown hr + h3 {
+  margin-top: 2em;
 }
 
 .theme-doc-markdown h4 {
@@ -574,6 +583,8 @@ div:has(> pre[class*="language-"]) {
   font-size: 0.9em;
   font-family: 'JetBrains Mono', 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono',
     Consolas, 'Courier New', monospace;
+  font-variant-ligatures: none;
+  font-feature-settings: "liga" 0, "calt" 0;
 }
 
 [data-theme='dark'] .theme-doc-markdown code {
@@ -1195,6 +1206,8 @@ a.bg-\(--card\):hover * {
 .token {
   font-family: 'JetBrains Mono', 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono',
     Consolas, 'Courier New', monospace;
+  font-variant-ligatures: none;
+  font-feature-settings: "liga" 0, "calt" 0;
 }
 
 /* Ensure no cutoff/overflow issues */
