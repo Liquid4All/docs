@@ -2,9 +2,12 @@
 sidebar_position: 1
 ---
 
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
 # Quick Start Guide
 
-## Prerequisites
+## 1. Prerequisites
 
 You should already have:
 
@@ -33,7 +36,7 @@ The SDK may crash on loading model bundles on simulators. A physical Android dev
 recommended.
 :::
 
-## Import the LeapSDK
+## 2. Import the LeapSDK
 
 Add the following dependencies into `$PROJECT_ROOT/app/build.gradle.kts`:
 
@@ -41,26 +44,63 @@ Add the following dependencies into `$PROJECT_ROOT/app/build.gradle.kts`:
 dependencies {
   ...
 
-  implementation("ai.liquid.leap:leap-sdk:0.6.0")
+  implementation("ai.liquid.leap:leap-sdk:0.7.4")
 }
 ```
 
 Then perform a project sync in Android Studio to fetch the LeapSDK artifacts.
 
-## Download model bundles
+## 3. Getting and Loading Models  
+
+The SDK supports two methods for loading models.
+
+- GGUF manifests. This is the recommended for new projects because of superior inference performance and good default generation parameters.
+- Executorch bundles (legacy)
+
+<Tabs>
+<TabItem value="automatic" label="GGUF manifests (recommended)" default>
+
+The LeapSDK supports direct downloads of GGUF files from the [LeapBundles repository](https://huggingface.co/LiquidAI/LeapBundles/tree/main). You can point directly to a remote JSON manifest, and the SDK will automatically download the necessary GGUF files along with generation parameters for optimal performance.
+
+### Loading from remote GGUF manifest (recommended)
+
+The `LeapManifestProcessor.loadModel` suspend function loads a model and returns a model runner instance for invoking the model. This function takes some time to finish as loading the model is a heavy I/O operation, but it is safe to call on the main thread. The function should be executed in a coroutine scope.
+
+```kotlin
+lifecycleScope.launch {
+  try {
+    // Point to the JSON manifest URL in the LeapBundles repo
+    val manifestUrl = "https://huggingface.co/LiquidAI/LeapBundles/resolve/main/LFM2-350M-PII-Extract-JP-GGUF/Q5_K_M.json"
+    val baseDir = File(context.filesDir, "model_files").absolutePath
+    val config = LeapManifestProcessorConfig(targetDir = baseDir, validateSha256 = true)
+    val processor = LeapManifestProcessor(config = config)
+    val modelRunner = processor.loadModel(manifestUrl)
+   }
+   catch (e: LeapModelLoadingException) {
+     Log.e(TAG, "Failed to load the model. Error message: ${e.message}")
+   }
+ }
+```
+
+The SDK will automatically download the required GGUF files to the device's cache and load the model with the appropriate generation parameters specified in the manifest.
+
+</TabItem>
+<TabItem value="manual" label="Executorch bundles (legacy)">
 
 Browse the [Leap Model Library](https://leap.liquid.ai/models) to find and download a model bundle that matches your needs.
 
-In order to easily load the model on device, push the bundle file to the device using `adb push`. Assuming the downloaded model file is located at `~/Downloads/model.bundle`, run the following commands to push the model file to the device:
+### Download and transfer bundle (legacy)
+
+Push the bundle file to the device using `adb push`. Assuming the downloaded model file is located at `~/Downloads/model.bundle`, run the following commands:
 
 ```shell
 adb shell mkdir -p /data/local/tmp/leap/
 adb push ~/Downloads/model.bundle /data/local/tmp/leap/model.bundle
 ```
 
-## Load Model in Code
+### Loading from local bundle file (legacy)
 
-`LeapClient.loadModel` suspend function loads a model bundle file and returns a model runner instance for invoking the model. This function takes some time to finish as loading the model is a heavy I/O operation, but it is safe to call on the main thread. The function should be executed in a coroutine scope.
+The `LeapClient.loadModel` suspend function loads a model bundle file and returns a model runner instance for invoking the model. This function takes some time to finish as loading the model is a heavy I/O operation, but it is safe to call on the main thread. The function should be executed in a coroutine scope.
 
 ```kotlin
 lifecycleScope.launch {
@@ -73,7 +113,12 @@ lifecycleScope.launch {
  }
 ```
 
-## Generate content with the model
+</TabItem>
+</Tabs>
+
+---
+
+## 4. Generate content with the model
 
 In order to generate contents, a conversation object should be created from the model runner.
 
@@ -121,6 +166,6 @@ To interrupt the generation, simply cancel the generation job returned from the 
 generationJob.cancel()
 ```
 
-## Examples
+## 5. Examples
 
 See [LeapSDK-Examples](https://github.com/Liquid4All/LeapSDK-Examples) for complete example apps using LeapSDK.

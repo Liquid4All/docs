@@ -472,7 +472,7 @@ pre,
   padding: 0.05em 0.5em;
   margin: 1em 0;
   overflow-x: auto;
-  font-size: 0.9em;
+  font-size: 1em;
   line-height: 1.4;
   box-shadow: none;
   outline: none;
@@ -580,7 +580,7 @@ div:has(> pre[class*="language-"]) {
 .theme-doc-markdown code {
   background-color: #f5f5f5;
   padding: 0.1em 0.3em;
-  font-size: 0.9em;
+  font-size: 1em;
   font-family: 'JetBrains Mono', 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono',
     Consolas, 'Courier New', monospace;
   font-variant-ligatures: none;
@@ -1474,5 +1474,40 @@ article {
     width: 100%;
     height: auto;
     min-height: auto;
+  }
+}
+
+/* Fix for vertical scrollbar appearing in tabs header
+   This prevents the tabs container from having a fixed height that causes overflow
+   Issue: Docusaurus tabs were showing vertical scrollbar in tab header area */
+.tabs {
+  overflow: visible !important;
+  height: auto !important;
+  min-height: auto !important;
+}
+
+.tabs__item {
+  white-space: nowrap !important;
+  flex-shrink: 0 !important;
+}
+
+/* Mobile-friendly tabs - prevent horizontal scrolling on small screens */
+@media (max-width: 768px) {
+  .tabs {
+    flex-wrap: wrap !important;
+    overflow-x: visible !important;
+    gap: 0.25rem !important;
+  }
+  
+  .tabs__item {
+    white-space: normal !important;
+    flex-shrink: 1 !important;
+    flex-basis: auto !important;
+    min-width: 0 !important;
+    font-size: 0.75rem !important;
+    padding: 0.5em 0.5em !important;
+    text-align: center !important;
+    line-height: 1.2 !important;
+    max-width: 45% !important;
   }
 }
