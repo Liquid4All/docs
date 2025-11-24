@@ -52,12 +52,13 @@ Then perform a project sync in Android Studio to fetch the LeapSDK artifacts.
 
 ## 3. Getting and Loading Models  
 
-:::info Choose your approach
-The SDK supports two methods for loading models. The automatic approach is recommended for new projects because of superior inference performance and good default generation parameters.
-:::
+The SDK supports two methods for loading models.
+
+- GGUF manifests. This is the recommended for new projects because of superior inference performance and good default generation parameters.
+- Executorch bundles (legacy)
 
 <Tabs>
-<TabItem value="automatic" label="Automatic pull with manifests (recommended)" default>
+<TabItem value="automatic" label="GGUF manifests (recommended)" default>
 
 The LeapSDK supports direct downloads of GGUF files from the [LeapBundles repository](https://huggingface.co/LiquidAI/LeapBundles/tree/main). You can point directly to a remote JSON manifest, and the SDK will automatically download the necessary GGUF files along with generation parameters for optimal performance.
 
@@ -84,7 +85,7 @@ lifecycleScope.launch {
 The SDK will automatically download the required GGUF files to the device's cache and load the model with the appropriate generation parameters specified in the manifest.
 
 </TabItem>
-<TabItem value="manual" label="Manual load with bundles (legacy)">
+<TabItem value="manual" label="Executorch bundles (legacy)">
 
 Browse the [Leap Model Library](https://leap.liquid.ai/models) to find and download a model bundle that matches your needs.
 
