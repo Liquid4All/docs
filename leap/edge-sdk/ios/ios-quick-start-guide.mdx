@@ -2,6 +2,9 @@
 sidebar_position: 1
 ---
 
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
 # Quick Start Guide
 
 ## Prerequisites
@@ -24,7 +27,10 @@ production behaviour.
 
 ## Install the SDK
 
-### Swift Package Manager (recommended)
+Choose your preferred installation method:
+
+<Tabs>
+<TabItem value="spm" label="Swift Package Manager (recommended)" default>
 
 1. In Xcode choose **File -> Add Package Dependencies**.
 2. Enter `https://github.com/Liquid4All/leap-ios.git`.
@@ -33,26 +39,30 @@ production behaviour.
 5. (Optional) Add **`LeapModelDownloader`** if you plan to download model bundles at runtime.
 
 :::info
-The constrained-generation macros (`@Generatable`, `@Guide`) ship inside the `LeapSDK` product. No
-additional package is required.
+The constrained-generation macros (`@Generatable`, `@Guide`) ship inside the `LeapSDK` product. No additional package is required.
 :::
 
-### CocoaPods
+</TabItem>
+<TabItem value="cocoapods" label="CocoaPods">
 
-Add the pod to your `Podfile`:
+1. Add the pod to your `Podfile`:
+  ```ruby
+  pod 'Leap-SDK', '~> 0.7.0'
+  # Optional: pod 'Leap-Model-Downloader', '~> 0.7.0'
+  ```
 
-```ruby
-pod 'Leap-SDK', '~> 0.7.0'
-# Optional: pod 'Leap-Model-Downloader', '~> 0.7.0'
-```
+2. Run `pod install`
+3. Reopen the `.xcworkspace`.
 
-Then run `pod install` and reopen the `.xcworkspace`.
-
-### Manual installation
+</TabItem>
+<TabItem value="manual" label="Manual installation">
 
 1. Download `LeapSDK.xcframework.zip` (and optionally `LeapModelDownloader.xcframework.zip`) from the [GitHub releases](https://github.com/Liquid4All/leap-ios/releases).
 2. Unzip and drag the XCFramework(s) into Xcode.
 3. Set the Embed setting to **Embed & Sign** for each framework.
+
+</TabItem>
+</Tabs>
 
 ## Get a model bundle
 

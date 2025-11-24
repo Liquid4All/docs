@@ -1463,3 +1463,17 @@ article {
     min-height: auto;
   }
 }
+
+/* Fix for vertical scrollbar appearing in tabs header
+   This prevents the tabs container from having a fixed height that causes overflow
+   Issue: Docusaurus tabs were showing vertical scrollbar in tab header area */
+.tabs {
+  overflow: visible !important;
+  height: auto !important;
+  min-height: auto !important;
+}
+
+.tabs__item {
+  white-space: nowrap !important;
+  flex-shrink: 0 !important;
+}
