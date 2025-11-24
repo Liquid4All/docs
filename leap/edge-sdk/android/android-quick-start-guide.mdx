@@ -44,13 +44,13 @@ Add the following dependencies into `$PROJECT_ROOT/app/build.gradle.kts`:
 dependencies {
   ...
 
-  implementation("ai.liquid.leap:leap-sdk:0.7.0")
+  implementation("ai.liquid.leap:leap-sdk:0.7.4")
 }
 ```
 
 Then perform a project sync in Android Studio to fetch the LeapSDK artifacts.
 
-## 3. Getting and Loading Models
+## 3. Getting and Loading Models  
 
 :::info Choose your approach
 The SDK supports two methods for loading models. The automatic approach is recommended for new projects because of superior inference performance and good default generation parameters.
@@ -59,18 +59,21 @@ The SDK supports two methods for loading models. The automatic approach is recom
 <Tabs>
 <TabItem value="automatic" label="Automatic pull with manifests (recommended)" default>
 
-The LeapSDK supports direct downloads of GGUF files from the [LeapBundles repository](https://huggingface.co/LiquidAI/LeapBundles/tree/main). You can point directly to a remote JSON manifest, and the SDK will automatically download the necessary GGUF files along with generation parameters.
+The LeapSDK supports direct downloads of GGUF files from the [LeapBundles repository](https://huggingface.co/LiquidAI/LeapBundles/tree/main). You can point directly to a remote JSON manifest, and the SDK will automatically download the necessary GGUF files along with generation parameters for optimal performance.
 
 ### Loading from remote GGUF manifest (recommended)
 
-The `LeapClient.loadModel` suspend function loads a model and returns a model runner instance for invoking the model. This function takes some time to finish as loading the model is a heavy I/O operation, but it is safe to call on the main thread. The function should be executed in a coroutine scope.
+The `LeapManifestProcessor.loadModel` suspend function loads a model and returns a model runner instance for invoking the model. This function takes some time to finish as loading the model is a heavy I/O operation, but it is safe to call on the main thread. The function should be executed in a coroutine scope.
 
 ```kotlin
 lifecycleScope.launch {
   try {
     // Point to the JSON manifest URL in the LeapBundles repo
-    val manifestUrl = "https://huggingface.co/LiquidAI/LeapBundles/raw/main/models/lfm2-1.2b/lfm2-1.2b-20250710-8da4w.json"
-    modelRunner = LeapClient.loadModel(manifestUrl)
+    val manifestUrl = "https://huggingface.co/LiquidAI/LeapBundles/resolve/main/LFM2-350M-PII-Extract-JP-GGUF/Q5_K_M.json"
+    val baseDir = File(context.filesDir, "model_files").absolutePath
+    val config = LeapManifestProcessorConfig(targetDir = baseDir, validateSha256 = true)
+    val processor = LeapManifestProcessor(config = config)
+    val modelRunner = processor.loadModel(manifestUrl)
    }
    catch (e: LeapModelLoadingException) {
      Log.e(TAG, "Failed to load the model. Error message: ${e.message}")
