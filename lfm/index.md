@@ -79,25 +79,25 @@ Built on a new hybrid architecture, LFM2 sets a new standard in terms of quality
 
 <div className="model-grid-1122">
 
-<a href="getting-started/models#lfm2" className="model-card">
+<a href="/lfm/key-concepts/models#lfm2" className="model-card">
 <h3>💬 Text Models</h3>
 <p>General-purpose language models from 350M to 8B parameters</p>
 <span className="learn-more">Learn more →</span>
 </a>
 
-<a href="getting-started/models#lfm2-vl" className="model-card">
+<a href="/lfm/key-concepts/models#lfm2-vl" className="model-card">
 <h3>👁️ Vision-Language</h3>
 <p>Multimodal models for image understanding and scene analysis</p>
 <span className="learn-more">Learn more →</span>
 </a>
 
-<a href="getting-started/models#lfm2-audio" className="model-card">
+<a href="/lfm/key-concepts/models#lfm2-audio" className="model-card">
 <h3>🎵 Audio</h3>
 <p>Speech and audio processing models for ASR, TTS, and chat</p>
 <span className="learn-more">Learn more →</span>
 </a>
 
-<a href="getting-started/models#liquid-nanos" className="model-card">
+<a href="/lfm/key-concepts/models#liquid-nanos" className="model-card">
 <h3>🎯 Task-Specific</h3>
 <p>Specialized models for extraction, translation, RAG, and tool use</p>
 <span className="learn-more">Learn more →</span>
