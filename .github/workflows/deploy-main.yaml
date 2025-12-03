@@ -31,6 +31,6 @@ jobs:
             exit 1
           fi
       - name: Trigger Algolia indexing workflow
-        uses: peter-evans/repository-dispatch@v3
+        uses: peter-evans/repository-dispatch@v4
         with:
           event-type: algolia-index
