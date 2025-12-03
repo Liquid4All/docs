@@ -23,9 +23,9 @@ jobs:
       - name: Trigger Algolia DocSearch crawl
         env:
           ALGOLIA_APP_ID: NU3OWTAZ9V
-          # This is the "Write API key" in the API Keys page:
-          # https://dashboard.algolia.com/account/api-keys/all?applicationId=NU3OWTAZ9V
-          ALGOLIA_API_KEY: ${{ secrets.ALGOLIA_WRITE_API_KEY }}
+          # This is the crawler API key, not the general account admin or write API key.
+          # https://crawler.algolia.com/admin/crawlers/2ca8b19c-a31c-4332-b90c-025d21680eae/settings
+          ALGOLIA_API_KEY: ${{ secrets.ALGOLIA_CRAWLER_API_KEY }}
           ALGOLIA_CRAWLER_ID: 2ca8b19c-a31c-4332-b90c-025d21680eae
         run: |
           response=$(curl -s -w "\n%{http_code}" -X POST \
