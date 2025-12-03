@@ -2,6 +2,8 @@ name: Algolia Indexing
 
 on:
   workflow_dispatch:
+  repository_dispatch:
+    types: [algolia-index]
   push:
     branches:
       - production
