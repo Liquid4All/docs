@@ -4,6 +4,7 @@ on: workflow_dispatch
 
 permissions:
   contents: write
+  actions: write
 
 jobs:
   deploy_to_prod:
@@ -29,3 +30,11 @@ jobs:
             echo "Cannot fast-forward merge main into production. Production might have diverged from main."
             exit 1
           fi
+      - name: Trigger Algolia indexing workflow
+        run: |
+          curl -X POST \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            https://api.github.com/repos/${{ github.repository }}/actions/workflows/algolia-index.yaml/dispatches \
+            -d '{"ref":"production"}'

@@ -1,0 +1,43 @@
+name: Algolia Indexing
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - production
+    paths:
+      - 'lfm/**'
+      - 'leap/**'
+      - 'examples/**'
+      - 'src/**'
+      - 'static/**'
+      - 'docusaurus.config.ts'
+      - 'sidebars*.ts'
+
+jobs:
+  trigger-algolia-crawl:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Algolia DocSearch crawl
+        env:
+          ALGOLIA_APP_ID: ${{ secrets.ALGOLIA_APP_ID }}
+          ALGOLIA_API_KEY: ${{ secrets.ALGOLIA_ADMIN_API_KEY }}
+          ALGOLIA_CRAWLER_ID: ${{ secrets.ALGOLIA_CRAWLER_ID }}
+        run: |
+          response=$(curl -s -w "\n%{http_code}" -X POST \
+            "https://crawler.algolia.com/api/1/crawlers/${ALGOLIA_CRAWLER_ID}/reindex" \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Basic $(echo -n "${ALGOLIA_APP_ID}:${ALGOLIA_API_KEY}" | base64)")
+          
+          http_code=$(echo "$response" | tail -n1)
+          body=$(echo "$response" | sed '$d')
+          
+          echo "Response: $body"
+          echo "HTTP Status: $http_code"
+          
+          if [ "$http_code" -ge 200 ] && [ "$http_code" -lt 300 ]; then
+            echo "Successfully triggered Algolia crawl"
+          else
+            echo "Failed to trigger Algolia crawl"
+            exit 1
+          fi
