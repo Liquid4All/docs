@@ -22,8 +22,10 @@ jobs:
     steps:
     - uses: cssnr/algolia-crawler-action@v2
       with:
-        # https://crawler.algolia.com/admin/crawlers
+        # Find crawler ID by clicking into the crawler this page:
+        # https://dashboard.algolia.com/apps/NU3OWTAZ9V/crawler/crawlers
         crawler_id: ${{ secrets.ALGOLIA_CRAWLER_ID }}
-        # https://crawler.algolia.com/admin/user/settings
+        # Get crawler user ID and API key from this page:
+        # https://dashboard.algolia.com/apps/NU3OWTAZ9V/crawler/settings
         crawler_user_id: ${{ secrets.ALGOLIA_CRAWLER_USER_ID }}
         crawler_api_key: ${{ secrets.ALGOLIA_CRAWLER_API_KEY }}
