@@ -20,28 +20,10 @@ jobs:
   trigger-algolia-crawl:
     runs-on: ubuntu-latest
     steps:
-      - name: Trigger Algolia DocSearch crawl
-        env:
-          ALGOLIA_APP_ID: NU3OWTAZ9V
-          # This is the crawler API key, not the general account admin or write API key.
-          # https://crawler.algolia.com/admin/crawlers/2ca8b19c-a31c-4332-b90c-025d21680eae/settings
-          ALGOLIA_API_KEY: ${{ secrets.ALGOLIA_CRAWLER_API_KEY }}
-          ALGOLIA_CRAWLER_ID: 2ca8b19c-a31c-4332-b90c-025d21680eae
-        run: |
-          response=$(curl -s -w "\n%{http_code}" -X POST \
-            "https://crawler.algolia.com/api/1/crawlers/${ALGOLIA_CRAWLER_ID}/reindex" \
-            -H "Content-Type: application/json" \
-            -H "Authorization: Basic $(echo -n "${ALGOLIA_APP_ID}:${ALGOLIA_API_KEY}" | base64)")
-
-          http_code=$(echo "$response" | tail -n1)
-          body=$(echo "$response" | sed '$d')
-
-          echo "Response: $body"
-          echo "HTTP Status: $http_code"
-
-          if [ "$http_code" -ge 200 ] && [ "$http_code" -lt 300 ]; then
-            echo "Successfully triggered Algolia crawl"
-          else
-            echo "Failed to trigger Algolia crawl"
-            exit 1
-          fi
+    - uses: cssnr/algolia-crawler-action@v2
+      with:
+        # https://crawler.algolia.com/admin/crawlers
+        crawler_id: ${{ secrets.ALGOLIA_CRAWLER_ID }}
+        # https://crawler.algolia.com/admin/user/settings
+        crawler_user_id: ${{ secrets.ALGOLIA_CRAWLER_USER_ID }}
+        crawler_api_key: ${{ secrets.ALGOLIA_CRAWLER_API_KEY }}
