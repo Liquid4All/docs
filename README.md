@@ -24,15 +24,14 @@ npm run build
 npm run serve
 ```
 
-The `npm run serve` script does not support hot loading. It is only useful to test the local search function.
+The `npm run serve` script does not support hot loading.
 
 ## Search
 
-Currently, the search function is powered by `@cmfcmf/docusaurus-search-local`.
+Search is enabled by Algolia:
 
-> [!NOTE]
-> Search only works for the statically built documentation (i.e., after running `npm run build` under the repo root).
-> It does not work in development (i.e., when running `npm run dev`). To test search locally, first build the documentation with `npm run build build`, and then serve it with `npm run serve`.
+- Algolia crawler runs regularly on certain days within a week configured in the [crawler](https://dashboard.algolia.com/apps/NU3OWTAZ9V/crawler/crawlers).
+- It also runs periodically through the [`algolia-index.yaml`](./.github/workflows/algolia-index.yaml) GitHub action, when there are changes in the `production` branch.
 
 ## Link check
 
