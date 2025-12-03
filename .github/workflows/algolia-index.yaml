@@ -2,30 +2,51 @@ name: Algolia Indexing
 
 on:
   workflow_dispatch:
-  repository_dispatch:
-    types: [algolia-index]
-  push:
-    branches:
-      - production
-    paths:
-      - 'lfm/**'
-      - 'leap/**'
-      - 'examples/**'
-      - 'src/**'
-      - 'static/**'
-      - 'docusaurus.config.ts'
-      - 'sidebars*.ts'
+  # This workflow cannot be chained from the deploy-main.yaml workflow,
+  # because it will trigger the indexing immediately after the production branch
+  # is updated, which is before the Vercel production deployment is finished.
+  # So the current approach is to run this workflow regularly, and trigger
+  # indexing if there is any recent commits in the production branch.
+  schedule:
+    - cron: "3 */6 * * *"
 
 jobs:
   trigger-algolia-crawl:
     runs-on: ubuntu-latest
     steps:
-    - uses: cssnr/algolia-crawler-action@v2
-      with:
-        # Find crawler ID by clicking into the crawler this page:
-        # https://dashboard.algolia.com/apps/NU3OWTAZ9V/crawler/crawlers
-        crawler_id: ${{ secrets.ALGOLIA_CRAWLER_ID }}
-        # Get crawler user ID and API key from this page:
-        # https://dashboard.algolia.com/apps/NU3OWTAZ9V/crawler/settings
-        crawler_user_id: ${{ secrets.ALGOLIA_CRAWLER_USER_ID }}
-        crawler_api_key: ${{ secrets.ALGOLIA_CRAWLER_API_KEY }}
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: production
+          fetch-depth: 0
+
+      - name: Check for recent commits
+        if: github.event_name == 'schedule'
+        id: check_commits
+        run: |
+          # Get timestamp from 6 hours ago
+          six_hours_ago=$(date -u -d '6 hours ago' +%s)
+
+          # Get the timestamp of the last commit
+          last_commit_time=$(git log -1 --format=%ct)
+
+          # Compare timestamps
+          if [ $last_commit_time -gt $six_hours_ago ]; then
+            echo "has_recent_commits=true" >> $GITHUB_OUTPUT
+            echo "Found commits in the last 6 hours"
+          else
+            echo "has_recent_commits=false" >> $GITHUB_OUTPUT
+            echo "No commits in the last 6 hours"
+          fi
+
+      - name: Trigger Algolia crawler
+        if: github.event_name == 'workflow_dispatch' || steps.check_commits.outputs.has_recent_commits == 'true'
+        uses: cssnr/algolia-crawler-action@v2
+        with:
+          # Find crawler ID by clicking into the crawler this page:
+          # https://dashboard.algolia.com/apps/NU3OWTAZ9V/crawler/crawlers
+          crawler_id: ${{ secrets.ALGOLIA_CRAWLER_ID }}
+          # Get crawler user ID and API key from this page:
+          # https://dashboard.algolia.com/apps/NU3OWTAZ9V/crawler/settings
+          crawler_user_id: ${{ secrets.ALGOLIA_CRAWLER_USER_ID }}
+          crawler_api_key: ${{ secrets.ALGOLIA_CRAWLER_API_KEY }}
