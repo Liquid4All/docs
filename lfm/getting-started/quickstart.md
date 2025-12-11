@@ -1,6 +1,9 @@
-# Quickstart
+---
+hide_title: true
+sidebar_label: Quickstart
+---
 
-Get personalized code snippets for your specific model and deployment platform.
+<!-- # Quickstart -->
 
 import InteractiveQuickstart from '@site/src/components/InteractiveQuickstart';
 

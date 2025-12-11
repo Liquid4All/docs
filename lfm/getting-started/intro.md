@@ -2,7 +2,7 @@
 sidebar_label: "Introduction"
 ---
 
-# Getting started with Liquid Foundational Model (LFMs)
+# Welcome to the LFM docs
 
 Liquid Foundational Models (LFMs) are a family of [open-source](https://huggingface.co/LiquidAI/collections) models built by Liquid AI from the ground up with
 - **state-of-the-art quality**, outpeforming similar-sizeed models on benchmarks.
@@ -11,32 +11,30 @@ Liquid Foundational Models (LFMs) are a family of [open-source](https://huggingf
 
 We give you the models. You run them <span style={{color: 'var(--ifm-color-primary)'}}>**wherever**</span> you want.
 
-## Deploy your first LFM model
-
 <div className="deployment-grid">
 
 <div className="deployment-card">
-<div className="deployment-icon">💻</div>
-<h4>Laptops</h4>
-<p>Run models locally on your laptop or desktop</p>
+<div className="deployment-icon">🚀</div>
+<h4>Deploy your first LFM in minutes</h4>
+<p>Get started quickly with step-by-step deployment guides</p>
 </div>
 
 <div className="deployment-card">
-<div className="deployment-icon">📱</div>
-<h4>Mobile</h4>
-<p>On-device inference for iOS and Android applications</p>
+<div className="deployment-icon">🔍</div>
+<h4>Explore models</h4>
+<p>Browse our collection of models and their capabilities</p>
 </div>
 
 <div className="deployment-card">
-<div className="deployment-icon">☁️</div>
-<h4>Cloud</h4>
-<p>Deploy on AWS, Google Cloud, Azure, and other cloud platforms</p>
+<div className="deployment-icon">📖</div>
+<h4>Inference guides</h4>
+<p>Learn how to run models for different use cases and platforms</p>
 </div>
 
 <div className="deployment-card">
-<div className="deployment-icon">🌐</div>
-<h4>Browser</h4>
-<p>Client-side inference directly in web browsers using Transformers.js</p>
+<div className="deployment-icon">🛠️</div>
+<h4>Fine tuning guides</h4>
+<p>Customize models for your specific requirements and datasets</p>
 </div>
 </div>
 

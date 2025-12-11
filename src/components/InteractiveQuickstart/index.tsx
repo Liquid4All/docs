@@ -2,63 +2,130 @@ import React, { useState } from 'react';
 
 import styles from './styles.module.css';
 
-// Model definitions grouped by category
-const modelCategories = {
-  'Text-Only Models': [
-    {
-      id: 'LFM2-8B',
-      name: 'LFM2-8B',
-      description: 'Large model for complex tasks',
-      size: '8B',
-      type: 'text',
-      icon: '🔥',
-      huggingfaceId: 'LiquidAI/LFM2-8B',
-    },
-    {
-      id: 'LFM2-1.2B',
-      name: 'LFM2-1.2B',
-      description: 'Compact model for general use',
-      size: '1.2B',
-      type: 'text',
-      icon: '💬',
-      huggingfaceId: 'LiquidAI/LFM2-1.2B',
-    },
-    {
-      id: 'LFM2-350M',
-      name: 'LFM2-350M',
-      description: 'Ultra-lightweight for edge devices',
-      size: '350M',
-      type: 'text',
-      icon: '🎯',
-      huggingfaceId: 'LiquidAI/LFM2-350M',
-    },
-  ],
-  'Text + Vision Models': [
-    {
-      id: 'LFM2-VL-1.6B',
-      name: 'LFM2-VL-1.6B',
-      description: 'Vision-language multimodal model',
-      size: '1.6B',
-      type: 'vision',
-      icon: '👁️',
-      huggingfaceId: 'LiquidAI/LFM2-VL-1.6B',
-    },
-  ],
-  'Audio Models': [
-    {
-      id: 'LFM2-Audio-Chat',
-      name: 'LFM2-Audio-Chat',
-      description: 'Audio processing and conversation',
-      size: '1.2B',
-      type: 'audio',
-      icon: '🎵',
-      huggingfaceId: 'LiquidAI/LFM2-Audio-Chat',
-    },
-  ],
-};
+// Model definitions with use case and platform support
+const models = [
+  {
+    id: 'LFM2-8B-A1B',
+    name: 'LiquidAI/LFM2-8B-A1B',
+    description:
+      'Best on-device MoE model, comparable to 3-4B dense models with improved code and knowledge capabilities',
+    size: '8B',
+    useCases: ['chat-completions', 'coding', 'function-calling'],
+    platforms: ['transformers', 'ollama', 'llamacpp', 'mlx', 'ios', 'android', 'vllm'],
+  },
+  {
+    id: 'LFM2-2.6B',
+    name: 'LiquidAI/LFM2-2.6B',
+    description: 'Mid-size model for balanced performance',
+    size: '2.6B',
+    useCases: ['chat-completions', 'coding', 'function-calling'],
+    platforms: ['transformers', 'ollama', 'llamacpp', 'mlx', 'ios', 'android', 'vllm'],
+  },
+  {
+    id: 'LFM2-1.2B',
+    name: 'LiquidAI/LFM2-1.2B',
+    description: 'Compact model for general use',
+    size: '1.2B',
+    useCases: ['chat-completions', 'coding', 'function-calling'],
+    platforms: ['transformers', 'ollama', 'llamacpp', 'mlx', 'ios', 'android', 'vllm'],
+  },
+  {
+    id: 'LFM2-700M',
+    name: 'LiquidAI/LFM2-700M',
+    description: 'Smaller efficient model',
+    size: '700M',
+    useCases: ['chat-completions', 'coding', 'function-calling'],
+    platforms: ['transformers', 'ollama', 'llamacpp', 'mlx', 'ios', 'android', 'vllm'],
+  },
+  {
+    id: 'LFM2-350M',
+    name: 'LiquidAI/LFM2-350M',
+    description: 'Ultra-lightweight for edge devices',
+    size: '350M',
+    useCases: ['chat-completions', 'coding', 'function-calling'],
+    platforms: ['transformers', 'ollama', 'llamacpp', 'mlx', 'ios', 'android', 'vllm'],
+  },
+  {
+    id: 'LFM2-VL-3B',
+    name: 'LiquidAI/LFM2-VL-3B',
+    description: 'Large vision-language model',
+    size: '3B',
+    useCases: ['vision'],
+    platforms: ['transformers'],
+  },
+  {
+    id: 'LFM2-VL-1.6B',
+    name: 'LiquidAI/LFM2-VL-1.6B',
+    description: 'Compact vision-language model',
+    size: '1.6B',
+    useCases: ['vision'],
+    platforms: ['transformers'],
+  },
+  {
+    id: 'LFM2-VL-450M',
+    name: 'LiquidAI/LFM2-VL-450M',
+    description: 'Lightweight vision-language model',
+    size: '450M',
+    useCases: ['vision'],
+    platforms: ['transformers'],
+  },
+  {
+    id: 'LFM2-Audio-1.5B',
+    name: 'LiquidAI/LFM2-Audio-1.5B',
+    description: 'Audio processing and conversation model',
+    size: '1.5B',
+    useCases: ['audio'],
+    platforms: ['transformers'],
+  },
+  {
+    id: 'LFM2-ColBERT-350M',
+    name: 'LiquidAI/LFM2-ColBERT-350M',
+    description: 'Late interaction retriever with excellent multilingual performance',
+    size: '350M',
+    useCases: ['embeddings'],
+    platforms: ['transformers'],
+  },
+];
 
-// Flatten models for easier access
-const models = Object.values(modelCategories).flat();
+// Use cases definition
+const useCases = [
+  {
+    id: 'chat-completions',
+    name: 'Chat Completions',
+    description: 'Conversational AI and text generation for chatbots and assistants',
+    icon: '💬',
+  },
+  {
+    id: 'vision',
+    name: 'Vision Understanding',
+    description: 'Analyze images, describe visual content, and answer questions about pictures',
+    icon: '👁️',
+  },
+  {
+    id: 'audio',
+    name: 'Audio & Transcription',
+    description: 'Process audio, transcribe speech, and audio-based conversations',
+    icon: '🎵',
+  },
+  {
+    id: 'coding',
+    name: 'Code Generation',
+    description: 'Generate, debug, and explain code across multiple programming languages',
+    icon: '💻',
+  },
+  {
+    id: 'embeddings',
+    name: 'Text Embeddings',
+    description: 'Generate vector representations of text for search and similarity tasks',
+    icon: '🔍',
+  },
+  {
+    id: 'function-calling',
+    name: 'Function Calling & Agents',
+    description: 'Build agentic workflows with structured outputs and tool integration',
+    icon: '🛠️',
+  },
+];
 
 // Platform definitions
 const platforms = [
@@ -338,6 +405,49 @@ models.forEach((model) => {
   });
 });
 
+// Modality definitions
+const modalityIcons = {
+  text: '📝',
+  vision: '👁️',
+  audio: '🎵',
+};
+
+interface UseCaseCardProps {
+  useCase: (typeof useCases)[0];
+  isSelected: boolean;
+  onClick: () => void;
+}
+
+const UseCaseCard: React.FC<UseCaseCardProps> = ({ useCase, isSelected, onClick }) => (
+  <div className={`${styles.useCaseCard} ${isSelected ? styles.selected : ''}`} onClick={onClick}>
+    <div className={styles.useCaseIcon}>{useCase.icon}</div>
+    <div className={styles.useCaseInfo}>
+      <h3>{useCase.name}</h3>
+      <p className={styles.useCaseDescription}>{useCase.description}</p>
+    </div>
+  </div>
+);
+
+interface ModalityIconsProps {
+  supportedModalities: string[];
+}
+
+const ModalityIcons: React.FC<ModalityIconsProps> = ({ supportedModalities }) => (
+  <div className={styles.modalityIcons}>
+    {Object.entries(modalityIcons).map(([modality, icon]) => (
+      <span
+        key={modality}
+        className={`${styles.modalityIcon} ${
+          supportedModalities.includes(modality) ? styles.modalityActive : styles.modalityInactive
+        }`}
+        title={modality}
+      >
+        {icon}
+      </span>
+    ))}
+  </div>
+);
+
 interface ModelCardProps {
   model: (typeof models)[0];
   isSelected: boolean;
@@ -346,11 +456,32 @@ interface ModelCardProps {
 
 const ModelCard: React.FC<ModelCardProps> = ({ model, isSelected, onClick }) => (
   <div className={`${styles.modelCard} ${isSelected ? styles.selected : ''}`} onClick={onClick}>
-    <div className={styles.modelIcon}>{model.icon}</div>
-    <h3>{model.name}</h3>
-    <p className={styles.modelSize}>{model.size}</p>
-    <p className={styles.modelDescription}>{model.description}</p>
-    {model.type === 'vision' && <span className={styles.visionBadge}>Vision</span>}
+    <div className={styles.modelInfo}>
+      <h3>{model.name}</h3>
+      <p className={styles.modelDescription}>{model.description}</p>
+      <div className={styles.modelLinks}>
+        <a
+          href={`https://huggingface.co/${model.name}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={styles.modelLink}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <span className={styles.hfIcon}>🤗</span>
+          Model weights
+        </a>
+        <a
+          href={`https://huggingface.co/${model.name}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={styles.modelLink}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <span className={styles.docIcon}>📄</span>
+          Model card
+        </a>
+      </div>
+    </div>
   </div>
 );
 
@@ -369,21 +500,32 @@ const PlatformCard: React.FC<PlatformCardProps> = ({ platform, isSelected, onCli
 );
 
 const InteractiveQuickstart: React.FC = () => {
+  const [selectedUseCase, setSelectedUseCase] = useState<(typeof useCases)[0] | null>(null);
   const [selectedModel, setSelectedModel] = useState<(typeof models)[0] | null>(null);
   const [selectedPlatform, setSelectedPlatform] = useState<(typeof platforms)[0] | null>(null);
 
   const reset = () => {
+    setSelectedUseCase(null);
+    setSelectedModel(null);
+    setSelectedPlatform(null);
+  };
+
+  const goBackToUseCases = () => {
+    setSelectedUseCase(null);
     setSelectedModel(null);
     setSelectedPlatform(null);
   };
 
   const goBackToModels = () => {
     setSelectedModel(null);
-    setSelectedPlatform(null);
   };
 
   const goBackToPlatforms = () => {
     setSelectedPlatform(null);
+  };
+
+  const handleUseCaseSelection = (useCase: (typeof useCases)[0]) => {
+    setSelectedUseCase(useCase);
   };
 
   const getTutorial = () => {
@@ -399,30 +541,36 @@ const InteractiveQuickstart: React.FC = () => {
   };
 
   const getHeaderContent = () => {
-    if (!selectedModel) {
+    if (!selectedUseCase) {
       return {
-        title: 'Choose your model',
-        subtitle: 'Select an LFM model to get started',
-        icon: '🚀',
+        title: 'Choose your use case',
+        subtitle: 'Get personalized code snippets for your specific model and deployment platform.',
+        // icon: '🚀',
       };
     } else if (!selectedPlatform) {
       return {
-        title: 'Choose your platform',
-        subtitle: `Deploy ${selectedModel.name} on your preferred platform`,
-        icon: '🚀',
+        title: 'Choose your inference engine',
+        subtitle: `Deploy your ${selectedUseCase.name.toLowerCase()} solution on your preferred inference engine`,
+        // icon: '🚀',
+      };
+    } else if (!selectedModel) {
+      return {
+        title: 'Choose model size',
+        subtitle: `Select the best LFM model for your ${selectedUseCase.name.toLowerCase()} use case`,
+        // icon: '🚀',
       };
     } else {
       return {
-        title: 'Your tutorial is ready!',
-        subtitle: `Step-by-step guide for ${selectedModel.name} on ${selectedPlatform.name}`,
-        icon: '📚',
+        title: '',
+        subtitle: `Step-by-step guide for ${selectedUseCase.name.toLowerCase()} with ${selectedModel.name} on ${selectedPlatform.name}`,
+        // icon: '📚',
       };
     }
   };
 
   const headerContent = getHeaderContent();
 
-  if (!selectedModel) {
+  if (!selectedUseCase) {
     return (
       <div className={styles.quickstartContainer}>
         <div className={styles.header}>
@@ -432,21 +580,14 @@ const InteractiveQuickstart: React.FC = () => {
           <p>{headerContent.subtitle}</p>
         </div>
 
-        <div className={styles.modelCategoriesContainer}>
-          {Object.entries(modelCategories).map(([categoryName, categoryModels]) => (
-            <div key={categoryName} className={styles.modelCategory}>
-              <h3 className={styles.categoryTitle}>{categoryName}</h3>
-              <div className={styles.categoryModelsGrid}>
-                {categoryModels.map((model) => (
-                  <ModelCard
-                    key={model.id}
-                    model={model}
-                    isSelected={false}
-                    onClick={() => setSelectedModel(model)}
-                  />
-                ))}
-              </div>
-            </div>
+        <div className={styles.useCasesContainer}>
+          {useCases.map((useCase) => (
+            <UseCaseCard
+              key={useCase.id}
+              useCase={useCase}
+              isSelected={false}
+              onClick={() => handleUseCaseSelection(useCase)}
+            />
           ))}
         </div>
       </div>
@@ -462,10 +603,10 @@ const InteractiveQuickstart: React.FC = () => {
           </h2>
           <div className={styles.breadcrumb}>
             <span className={styles.selectedItem}>
-              {selectedModel.icon} {selectedModel.name}
+              {selectedUseCase.icon} {selectedUseCase.name}
             </span>
-            <button className={styles.changeButton} onClick={goBackToModels}>
-              Change model
+            <button className={styles.changeButton} onClick={goBackToUseCases}>
+              Change use case
             </button>
           </div>
           <p>{headerContent.subtitle}</p>
@@ -485,6 +626,54 @@ const InteractiveQuickstart: React.FC = () => {
     );
   }
 
+  if (!selectedModel) {
+    return (
+      <div className={styles.quickstartContainer}>
+        <div className={styles.header}>
+          <h2>
+            {headerContent.icon} {headerContent.title}
+          </h2>
+          <div className={styles.breadcrumb}>
+            <span className={styles.selectedItem}>
+              {selectedUseCase.icon} {selectedUseCase.name}
+            </span>
+            <span className={styles.separator}>→</span>
+            <span className={styles.selectedItem}>
+              {selectedPlatform.icon} {selectedPlatform.name}
+            </span>
+            <div className={styles.buttonGroup}>
+              <button className={styles.changeButton} onClick={goBackToPlatforms}>
+                Change platform
+              </button>
+              <button className={styles.changeButton} onClick={goBackToUseCases}>
+                Change use case
+              </button>
+            </div>
+          </div>
+          <p>{headerContent.subtitle}</p>
+        </div>
+
+        <div className={styles.modelsContainer}>
+          {models
+            .filter((model) => {
+              // Filter models based on use case and platform support
+              const supportsUseCase = model.useCases.includes(selectedUseCase.id);
+              const supportsPlatform = model.platforms.includes(selectedPlatform.id);
+              return supportsUseCase && supportsPlatform;
+            })
+            .map((model) => (
+              <ModelCard
+                key={model.id}
+                model={model}
+                isSelected={false}
+                onClick={() => setSelectedModel(model)}
+              />
+            ))}
+        </div>
+      </div>
+    );
+  }
+
   const tutorial = getTutorial();
   if (!tutorial) return null;
 
@@ -496,18 +685,23 @@ const InteractiveQuickstart: React.FC = () => {
         </h2>
         <div className={styles.breadcrumb}>
           <span className={styles.selectedItem}>
-            {selectedModel.icon} {selectedModel.name}
+            {selectedUseCase.icon} {selectedUseCase.name}
           </span>
           <span className={styles.separator}>→</span>
           <span className={styles.selectedItem}>
             {selectedPlatform.icon} {selectedPlatform.name}
           </span>
+          <span className={styles.separator}>→</span>
+          <span className={styles.selectedItem}>{selectedModel.name}</span>
           <div className={styles.buttonGroup}>
+            <button className={styles.changeButton} onClick={goBackToModels}>
+              Change model
+            </button>
             <button className={styles.changeButton} onClick={goBackToPlatforms}>
               Change platform
             </button>
-            <button className={styles.changeButton} onClick={goBackToModels}>
-              Change model
+            <button className={styles.changeButton} onClick={goBackToUseCases}>
+              Change use case
             </button>
           </div>
         </div>
