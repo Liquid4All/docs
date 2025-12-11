@@ -1,16 +1,16 @@
 # Interactive Quickstart Widget
 
-List of Inference engines:
-- Transformers
-- Ollama
-- llama.cpp
-- MLX
-- iOS
-- Android
-- vLLM
-- Transformers.js
+Complete list of Deployment platforms:
+- Laptop with Transformers
+- Laptop with Ollama
+- Laptop with llama.cpp
+- Macbook with MLX
+- iOS with LEAP SDK
+- Android with LEAP SDK
+- Cloud with vLLM
+- Browser with Transformers.js
 
-List of use cases:
+Complete list of use cases:
 - Chat completions
 - Vision understanding
 - Audio & Transcription
@@ -23,7 +23,7 @@ List of models with descriptions and supported deployment platforms:
 - LFM2 models
   - Models:
     - LiquidAI/LFM2-8B-A1B
-      - Description: LFM2-8B-A1B is the best on-device MoE in terms of both quality (comparable to 3-4B dense models) and speed (faster than Qwen3-1.7B). Code and knowledge capabilities are significantly improved compared to LFM2-2.6B. Quantized variants fit comfortably on high-end phones, tablets, and laptops.
+      - Description: On-device MoE with 8B parameters, 1B active, comparable to 3-4B dense models and faster than Qwen3-1.7B. Code and knowledge capabilities are significantly improved compared to LFM2-2.6B.
 
     - LiquidAI/LFM2-2.6B
       - Description: Mid-size model for balanced performance
@@ -41,7 +41,7 @@ List of models with descriptions and supported deployment platforms:
     - Text completions
     - Code generation
     - Function calling and Agents
-  - Inference engines:
+  - Deployment platforms:
     - Transformers
     - Ollama
     - llama.cpp
@@ -61,7 +61,7 @@ List of models with descriptions and supported deployment platforms:
   - Use cases:
     - Vision understanding
 
-  - Inference engines:
+  - Deployment platforms:
     - Transformers
     - Ollama
     - llama.cpp
@@ -74,12 +74,15 @@ List of models with descriptions and supported deployment platforms:
       - Description:
   - Use cases:
     - Audio & Transcription
+  - Deployment platforms:
+    - liquid-audio library
+    - llama.cpp
 
 - LiquidAI/LFM2-ColBERT-350M
   - Description: late interaction retriever with excellent multilingual performance. It allows you to store documents in one language (for example, a product description in English) and retrieve them in many languages with high accuracy.
   - Use cases:
     - Text Embeddings
-  - Inference engines:
+  - Deployment platforms:
     - Transformers
 
 - Models to exclude

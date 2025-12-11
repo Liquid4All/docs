@@ -8,7 +8,7 @@ const models = [
     id: 'LFM2-8B-A1B',
     name: 'LiquidAI/LFM2-8B-A1B',
     description:
-      'Best on-device MoE model, comparable to 3-4B dense models with improved code and knowledge capabilities',
+      'Mixture of experts with 8B parameters, 1B active per token, comparable to 3-4B dense models and faster than 2B parameter models.',
     size: '8B',
     useCases: ['chat-completions', 'coding', 'function-calling'],
     platforms: ['transformers', 'ollama', 'llamacpp', 'mlx', 'ios', 'android', 'vllm'],
@@ -48,31 +48,34 @@ const models = [
   {
     id: 'LFM2-VL-3B',
     name: 'LiquidAI/LFM2-VL-3B',
-    description: 'Large vision-language model',
+    description:
+      'Lightweight 3B vision-language model with enhanced visual reasoning and fine-grained perception, built on the LFM2 backbone for efficient multimodal understanding at variable resolutions.',
     size: '3B',
     useCases: ['vision'],
-    platforms: ['transformers'],
+    platforms: ['transformers', 'ollama', 'llamacpp', 'ios', 'android'],
   },
   {
     id: 'LFM2-VL-1.6B',
     name: 'LiquidAI/LFM2-VL-1.6B',
-    description: 'Compact vision-language model',
+    description:
+      'Compact 1.6B vision-language model balancing strong multimodal capabilities with efficient inference, built on the LFM2 backbone for practical visual understanding at variable resolutions.',
     size: '1.6B',
     useCases: ['vision'],
-    platforms: ['transformers'],
+    platforms: ['transformers', 'ollama', 'llamacpp', 'ios', 'android'],
   },
   {
     id: 'LFM2-VL-450M',
     name: 'LiquidAI/LFM2-VL-450M',
-    description: 'Lightweight vision-language model',
+    description:
+      'Ultra-lightweight 450M vision-language model optimized for resource-constrained deployments, delivering essential multimodal understanding with minimal compute requirements and efficient on-device inference',
     size: '450M',
     useCases: ['vision'],
-    platforms: ['transformers'],
+    platforms: ['transformers', 'ollama', 'llamacpp', 'ios', 'android'],
   },
   {
     id: 'LFM2-Audio-1.5B',
     name: 'LiquidAI/LFM2-Audio-1.5B',
-    description: 'Audio processing and conversation model',
+    description: 'Audio processing and conversation model for speech and audio understanding tasks',
     size: '1.5B',
     useCases: ['audio'],
     platforms: ['transformers'],
@@ -80,7 +83,8 @@ const models = [
   {
     id: 'LFM2-ColBERT-350M',
     name: 'LiquidAI/LFM2-ColBERT-350M',
-    description: 'Late interaction retriever with excellent multilingual performance',
+    description:
+      'Late interaction retriever with excellent multilingual performance. It allows you to store documents in one language (for example, a product description in English) and retrieve them in many languages with high accuracy.',
     size: '350M',
     useCases: ['embeddings'],
     platforms: ['transformers'],
@@ -528,6 +532,21 @@ const InteractiveQuickstart: React.FC = () => {
     setSelectedUseCase(useCase);
   };
 
+  const getAvailablePlatforms = (useCase: (typeof useCases)[0]) => {
+    // Define platform availability by use case based on documentation
+    const useCasePlatformMap = {
+      'chat-completions': ['transformers', 'ollama', 'llamacpp', 'mlx', 'ios', 'android', 'vllm'],
+      coding: ['transformers', 'ollama', 'llamacpp', 'mlx', 'ios', 'android', 'vllm'],
+      'function-calling': ['transformers', 'ollama', 'llamacpp', 'mlx', 'ios', 'android', 'vllm'],
+      vision: ['transformers', 'ollama', 'llamacpp', 'ios', 'android'],
+      audio: ['transformers'], // Based on LFM2-Audio being transformers only
+      embeddings: ['transformers'],
+    };
+
+    const availablePlatformIds = useCasePlatformMap[useCase.id] || [];
+    return platforms.filter((platform) => availablePlatformIds.includes(platform.id));
+  };
+
   const getTutorial = () => {
     if (!selectedModel || !selectedPlatform) return null;
     return (
@@ -613,7 +632,7 @@ const InteractiveQuickstart: React.FC = () => {
         </div>
 
         <div className={styles.platformsGrid}>
-          {platforms.map((platform) => (
+          {getAvailablePlatforms(selectedUseCase).map((platform) => (
             <PlatformCard
               key={platform.id}
               platform={platform}
