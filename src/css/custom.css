@@ -388,7 +388,7 @@ pre,
 }
 
 .theme-doc-markdown h1 {
-  font-size: 2em;
+  font-size: 2.5em;
   font-weight: normal;
   margin: 0.67em 0 0.5em 0;
   color: var(--foreground);
@@ -397,7 +397,7 @@ pre,
 }
 
 .theme-doc-markdown h2 {
-  font-size: 1.5em;
+  font-size: 2em;
   font-weight: normal;
   margin: 0.83em 0 0.5em 0;
   color: var(--foreground);
@@ -406,7 +406,7 @@ pre,
 }
 
 .theme-doc-markdown h3 {
-  font-size: 1.25em;
+  font-size: 1.5em;
   font-weight: normal;
   margin: 1em 0 0.5em 0;
   color: var(--foreground);

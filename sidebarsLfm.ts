@@ -2,7 +2,7 @@ import type { SidebarsConfig } from '@docusaurus/plugin-content-docs';
 
 const sidebars: SidebarsConfig = {
   lfm: [
-    'getting-started/index',
+    // 'getting-started/index',
     {
       type: 'category',
       label: 'Getting started',
@@ -12,11 +12,19 @@ const sidebars: SidebarsConfig = {
         id: 'getting-started/quickstart',
       },
       items: [
+        'getting-started/intro',
         'getting-started/quickstart', // Keep in nav, but pagination will skip it
         'key-concepts/models',
+        'getting-started/vision',
+      ],
+    },
+    {
+      type: 'category',
+      label: 'Key concepts',
+      collapsed: true,
+      items: [
         'key-concepts/chat-template',
         'getting-started/text-generation-and-prompting',
-        'getting-started/vision',
         'key-concepts/tool-use',
       ],
     },
