@@ -549,8 +549,8 @@ const InteractiveQuickstart: React.FC = () => {
       };
     } else if (!selectedPlatform) {
       return {
-        title: 'Choose your inference engine',
-        subtitle: `Deploy your ${selectedUseCase.name.toLowerCase()} solution on your preferred inference engine`,
+        title: 'Choose your deployment platform',
+        subtitle: `Deploy your ${selectedUseCase.name.toLowerCase()} solution on your preferred deployment platform`,
         // icon: '🚀',
       };
     } else if (!selectedModel) {
@@ -642,11 +642,11 @@ const InteractiveQuickstart: React.FC = () => {
               {selectedPlatform.icon} {selectedPlatform.name}
             </span>
             <div className={styles.buttonGroup}>
-              <button className={styles.changeButton} onClick={goBackToPlatforms}>
-                Change platform
-              </button>
               <button className={styles.changeButton} onClick={goBackToUseCases}>
                 Change use case
+              </button>
+              <button className={styles.changeButton} onClick={goBackToPlatforms}>
+                Change deployment platform
               </button>
             </div>
           </div>
@@ -694,14 +694,14 @@ const InteractiveQuickstart: React.FC = () => {
           <span className={styles.separator}>→</span>
           <span className={styles.selectedItem}>{selectedModel.name}</span>
           <div className={styles.buttonGroup}>
-            <button className={styles.changeButton} onClick={goBackToModels}>
-              Change model
-            </button>
-            <button className={styles.changeButton} onClick={goBackToPlatforms}>
-              Change platform
-            </button>
             <button className={styles.changeButton} onClick={goBackToUseCases}>
               Change use case
+            </button>
+            <button className={styles.changeButton} onClick={goBackToPlatforms}>
+              Change deployment platform
+            </button>
+            <button className={styles.changeButton} onClick={goBackToModels}>
+              Change model
             </button>
           </div>
         </div>

@@ -92,6 +92,10 @@
   border-color: var(--ifm-color-primary);
 }
 
+.useCaseCard:hover h3 {
+  color: var(--ifm-color-primary);
+}
+
 .useCaseCard.selected {
   border-color: var(--ifm-color-primary);
   background: var(--ifm-color-primary-lightest);
@@ -147,6 +151,10 @@
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.12);
   border-color: var(--ifm-color-primary);
   background: linear-gradient(135deg, var(--ifm-background-surface-color) 0%, rgba(86, 3, 173, 0.02) 100%);
+}
+
+.modelCard:hover h3 {
+  color: var(--ifm-color-primary);
 }
 
 .modelCard.selected {
@@ -276,6 +284,10 @@
   transform: translateY(-2px);
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
   border-color: var(--ifm-color-primary);
+}
+
+.platformCard:hover h4 {
+  color: var(--ifm-color-primary);
 }
 
 .platformCard.selected {
