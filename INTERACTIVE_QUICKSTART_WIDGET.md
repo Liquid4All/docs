@@ -1,6 +1,6 @@
 # Interactive Quickstart Widget
 
-Complete list of Deployment platforms:
+## Complete list of Deployment platforms:
 - Laptop with Transformers
 - Laptop with Ollama
 - Laptop with llama.cpp
@@ -10,7 +10,7 @@ Complete list of Deployment platforms:
 - Cloud with vLLM
 - Browser with Transformers.js
 
-Complete list of use cases:
+## Complete list of use cases:
 - Chat completions
 - Vision understanding
 - Audio & Transcription
@@ -18,8 +18,19 @@ Complete list of use cases:
 - Text embeddings
 - Function Calling & Agents
 
-List of models with descriptions and supported deployment platforms:
+## Complete list of models:
+- LiquidAI/LFM2-8B-A1B
+- LiquidAI/LFM2-2.6B
+- LiquidAI/LFM2-1.2B
+- LiquidAI/LFM2-700M
+- LiquidAI/LFM2-350M
+- LiquidAI/LFM2-VL-3B
+- LiquidAI/LFM2-VL-1.6B
+- LiquidAI/LFM2-VL-450M
+- LiquidAI/LFM2-Audio-1.5B
+- LiquidAI/LFM2-ColBERT-350M
 
+## Compatibility matrix between use cases, deployment platforms and models
 - LFM2 models
   - Models:
     - LiquidAI/LFM2-8B-A1B
@@ -41,6 +52,7 @@ List of models with descriptions and supported deployment platforms:
     - Text completions
     - Code generation
     - Function calling and Agents
+
   - Deployment platforms:
     - Transformers
     - Ollama
@@ -93,3 +105,42 @@ List of models with descriptions and supported deployment platforms:
   - LiquidAI/LFM2-1.2B-Tool
   - LiquidAI/LFM2-350M-Math
   - LiquidAI/LFM2-350M-PII-Extract-JP
+
+## Tutorial templates
+
+- Use case: Chat completions
+- Deployment platform: Laptop with Transformers
+- Model: {MODEL}
+- Models:
+  - LiquidAI/LFM2-8B-A1B
+  - LiquidAI/LFM2-2.6B
+  - LiquidAI/LFM2-1.2B
+  - LiquidAI/LFM2-700M
+  - LiquidAI/LFM2-350M
+  - LiquidAI/LFM2-VL-3B
+  - LiquidAI/LFM2-VL-1.6B
+  - LiquidAI/LFM2-VL-450M
+  - LiquidAI/LFM2-Audio-1.5B
+  - LiquidAI/LFM2-ColBERT-350M
+
+## Steps
+
+## Step 1. Install Python dependencies
+
+```
+pip install transformers torch
+```
+
+## Step 2. Run inference with the `pipeline()` interface
+
+```
+from transformers import pipeline
+
+# Load model
+generator = pipeline("text-generation", "LiquidAI/LFM2-1.2B", device_map="auto")
+
+# Generate
+messages = [{"role": "user", "content": "What is machine learning?"}]
+response = generator(messages, max_new_tokens=256)
+print(response[0]["generated_text"][-1]["content"])
+```

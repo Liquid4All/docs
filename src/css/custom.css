@@ -394,7 +394,7 @@ pre,
   font-weight: normal;
   margin: 0.67em 0 0.5em 0;
   color: var(--foreground);
-  border-bottom: 1px solid var(--border);
+  border-bottom: none;
   padding-bottom: 0.3em;
 }
 
@@ -403,7 +403,7 @@ pre,
   font-weight: normal;
   margin: 0.83em 0 0.5em 0;
   color: var(--foreground);
-  border-bottom: 1px solid var(--border);
+  border-bottom: none;
   padding-bottom: 0.3em;
 }
 
@@ -916,11 +916,17 @@ article .tabs-container {
 .tabs__item:hover {
   color: var(--color-purple-500);
   background-color: rgba(73, 2, 148, 0.05);
+  border: 1px solid var(--color-purple-500);
+  border-radius: 4px 4px 0 0;
+  border-bottom: 2px solid transparent;
 }
 
 [data-theme='dark'] .tabs__item:hover {
   color: var(--color-purple-400);
   background-color: rgba(86, 3, 173, 0.08);
+  border: 1px solid var(--color-purple-400);
+  border-radius: 4px 4px 0 0;
+  border-bottom: 2px solid transparent;
 }
 
 .tabs__item--active {
@@ -1038,15 +1044,21 @@ article {
   color: var(--muted-foreground);
   text-decoration: none;
   display: block;
-  padding: 0.25em 0;
+  padding: 4px 8px;
+  border: 1px solid transparent;
+  border-radius: 4px;
 }
 
 .table-of-contents__link:hover {
   color: var(--color-purple-500);
+  border: 1px solid var(--color-purple-500);
+  background-color: rgba(73, 2, 148, 0.05);
 }
 
 [data-theme='dark'] .table-of-contents__link:hover {
   color: var(--color-purple-400);
+  border: 1px solid var(--color-purple-400);
+  background-color: rgba(86, 3, 173, 0.08);
 }
 
 .table-of-contents__link--active {
@@ -1105,14 +1117,21 @@ article {
   color: var(--foreground);
   font-weight: normal;
   font-family: inherit;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  padding: 4px 8px;
 }
 
 .navbar__link:hover {
   color: var(--color-purple-500);
+  border: 1px solid var(--color-purple-500);
+  background-color: rgba(73, 2, 148, 0.05);
 }
 
 [data-theme='dark'] .navbar__link:hover {
   color: var(--color-purple-400);
+  border: 1px solid var(--color-purple-400);
+  background-color: rgba(86, 3, 173, 0.08);
 }
 
 .navbar__link--active {
@@ -1202,6 +1221,48 @@ a.bg-\(--card\):hover * {
 .padding-horiz--md a,
 .cardContainer a {
   border-bottom: none !important;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+/* Card hover borders */
+.cardContainer a:hover {
+  border: 2px solid var(--color-purple-500) !important;
+  background-color: rgba(73, 2, 148, 0.03);
+}
+
+[data-theme='dark'] .cardContainer a:hover {
+  border: 2px solid var(--color-purple-400) !important;
+  background-color: rgba(86, 3, 173, 0.06);
+}
+
+/* Button hover borders */
+button:hover,
+.button:hover,
+[role="button"]:hover {
+  border: 1px solid var(--color-purple-500) !important;
+  border-radius: 4px;
+  background-color: rgba(73, 2, 148, 0.05);
+}
+
+[data-theme='dark'] button:hover,
+[data-theme='dark'] .button:hover,
+[data-theme='dark'] [role="button"]:hover {
+  border: 1px solid var(--color-purple-400) !important;
+  background-color: rgba(86, 3, 173, 0.08);
+}
+
+/* Details summary hover borders */
+.theme-doc-markdown details summary:hover {
+  border: 1px solid var(--color-purple-500);
+  border-radius: 4px;
+  background-color: rgba(73, 2, 148, 0.05);
+}
+
+[data-theme='dark'] .theme-doc-markdown details summary:hover {
+  border: 1px solid var(--color-purple-400);
+  background-color: rgba(86, 3, 173, 0.08);
 }
 
 /* Code token styling */
@@ -1245,14 +1306,21 @@ article {
   font-weight: 600;
   font-size: 0.95em;
   color: var(--foreground);
+  border: 1px solid transparent;
+  border-radius: 4px;
 }
 
 .theme-doc-sidebar-container .menu__list-item-collapsible > .menu__link:hover {
   color: var(--color-purple-500);
+  border: 1px solid var(--color-purple-500);
+  border-radius: 4px;
+  background-color: rgba(73, 2, 148, 0.05);
 }
 
 [data-theme='dark'] .theme-doc-sidebar-container .menu__list-item-collapsible > .menu__link:hover {
   color: var(--color-purple-400);
+  border: 1px solid var(--color-purple-400);
+  background-color: rgba(86, 3, 173, 0.08);
 }
 
 /* Regular doc links (child pages) - normal weight */
@@ -1260,14 +1328,21 @@ article {
   font-weight: normal;
   font-size: 0.9em;
   color: var(--muted-foreground);
+  border: 1px solid transparent;
+  border-radius: 4px;
 }
 
 .theme-doc-sidebar-container .menu__list-item:not(.menu__list-item-collapsible) .menu__link:hover {
   color: var(--color-purple-500);
+  border: 1px solid var(--color-purple-500);
+  border-radius: 4px;
+  background-color: rgba(73, 2, 148, 0.05);
 }
 
 [data-theme='dark'] .theme-doc-sidebar-container .menu__list-item:not(.menu__list-item-collapsible) .menu__link:hover {
   color: var(--color-purple-400);
+  border: 1px solid var(--color-purple-400);
+  background-color: rgba(86, 3, 173, 0.08);
 }
 
 /* Active page - left border and background highlight */
@@ -1335,6 +1410,18 @@ article {
   background-color: transparent;
   display: block;
   text-align: center; /* Center text in button */
+}
+
+.pagination-nav__link:hover {
+  border: 2px solid var(--color-purple-500);
+  background-color: rgba(73, 2, 148, 0.05);
+  color: var(--color-purple-500);
+}
+
+[data-theme='dark'] .pagination-nav__link:hover {
+  border: 2px solid var(--color-purple-400);
+  background-color: rgba(86, 3, 173, 0.08);
+  color: var(--color-purple-400);
 }
 
 /* Previous button - left aligned */

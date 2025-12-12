@@ -1,3 +1,4 @@
+import CodeBlock from '@theme/CodeBlock';
 import React, { useState } from 'react';
 
 import styles from './styles.module.css';
@@ -11,7 +12,16 @@ const models = [
       'Mixture of experts with 8B parameters, 1B active per token, comparable to 3-4B dense models and faster than 2B parameter models.',
     size: '8B',
     useCases: ['chat-completions', 'coding', 'function-calling'],
-    platforms: ['transformers', 'ollama', 'llamacpp', 'mlx', 'ios', 'android', 'vllm'],
+    platforms: [
+      'transformers',
+      'ollama',
+      'llamacpp',
+      'mlx',
+      'ios',
+      'android',
+      'vllm',
+      'transformersjs',
+    ],
   },
   {
     id: 'LFM2-2.6B',
@@ -19,7 +29,16 @@ const models = [
     description: 'Mid-size model for balanced performance',
     size: '2.6B',
     useCases: ['chat-completions', 'coding', 'function-calling'],
-    platforms: ['transformers', 'ollama', 'llamacpp', 'mlx', 'ios', 'android', 'vllm'],
+    platforms: [
+      'transformers',
+      'ollama',
+      'llamacpp',
+      'mlx',
+      'ios',
+      'android',
+      'vllm',
+      'transformersjs',
+    ],
   },
   {
     id: 'LFM2-1.2B',
@@ -27,7 +46,16 @@ const models = [
     description: 'Compact model for general use',
     size: '1.2B',
     useCases: ['chat-completions', 'coding', 'function-calling'],
-    platforms: ['transformers', 'ollama', 'llamacpp', 'mlx', 'ios', 'android', 'vllm'],
+    platforms: [
+      'transformers',
+      'ollama',
+      'llamacpp',
+      'mlx',
+      'ios',
+      'android',
+      'vllm',
+      'transformersjs',
+    ],
   },
   {
     id: 'LFM2-700M',
@@ -35,7 +63,16 @@ const models = [
     description: 'Smaller efficient model',
     size: '700M',
     useCases: ['chat-completions', 'coding', 'function-calling'],
-    platforms: ['transformers', 'ollama', 'llamacpp', 'mlx', 'ios', 'android', 'vllm'],
+    platforms: [
+      'transformers',
+      'ollama',
+      'llamacpp',
+      'mlx',
+      'ios',
+      'android',
+      'vllm',
+      'transformersjs',
+    ],
   },
   {
     id: 'LFM2-350M',
@@ -43,7 +80,16 @@ const models = [
     description: 'Ultra-lightweight for edge devices',
     size: '350M',
     useCases: ['chat-completions', 'coding', 'function-calling'],
-    platforms: ['transformers', 'ollama', 'llamacpp', 'mlx', 'ios', 'android', 'vllm'],
+    platforms: [
+      'transformers',
+      'ollama',
+      'llamacpp',
+      'mlx',
+      'ios',
+      'android',
+      'vllm',
+      'transformersjs',
+    ],
   },
   {
     id: 'LFM2-VL-3B',
@@ -52,7 +98,7 @@ const models = [
       'Lightweight 3B vision-language model with enhanced visual reasoning and fine-grained perception, built on the LFM2 backbone for efficient multimodal understanding at variable resolutions.',
     size: '3B',
     useCases: ['vision'],
-    platforms: ['transformers', 'ollama', 'llamacpp', 'ios', 'android'],
+    platforms: ['transformers', 'ollama', 'llamacpp', 'ios', 'android', 'transformersjs'],
   },
   {
     id: 'LFM2-VL-1.6B',
@@ -61,7 +107,7 @@ const models = [
       'Compact 1.6B vision-language model balancing strong multimodal capabilities with efficient inference, built on the LFM2 backbone for practical visual understanding at variable resolutions.',
     size: '1.6B',
     useCases: ['vision'],
-    platforms: ['transformers', 'ollama', 'llamacpp', 'ios', 'android'],
+    platforms: ['transformers', 'ollama', 'llamacpp', 'ios', 'android', 'transformersjs'],
   },
   {
     id: 'LFM2-VL-450M',
@@ -70,7 +116,7 @@ const models = [
       'Ultra-lightweight 450M vision-language model optimized for resource-constrained deployments, delivering essential multimodal understanding with minimal compute requirements and efficient on-device inference',
     size: '450M',
     useCases: ['vision'],
-    platforms: ['transformers', 'ollama', 'llamacpp', 'ios', 'android'],
+    platforms: ['transformers', 'ollama', 'llamacpp', 'ios', 'android', 'transformersjs'],
   },
   {
     id: 'LFM2-Audio-1.5B',
@@ -78,7 +124,7 @@ const models = [
     description: 'Audio processing and conversation model for speech and audio understanding tasks',
     size: '1.5B',
     useCases: ['audio'],
-    platforms: ['transformers'],
+    platforms: ['liquid-audio', 'llamacpp'],
   },
   {
     id: 'LFM2-ColBERT-350M',
@@ -87,7 +133,7 @@ const models = [
       'Late interaction retriever with excellent multilingual performance. It allows you to store documents in one language (for example, a product description in English) and retrieve them in many languages with high accuracy.',
     size: '350M',
     useCases: ['embeddings'],
-    platforms: ['transformers'],
+    platforms: ['transformers', 'transformersjs'],
   },
 ];
 
@@ -135,64 +181,137 @@ const useCases = [
 const platforms = [
   {
     id: 'transformers',
-    name: 'Transformers',
+    name: 'Laptop with Transformers',
     description: 'Research & prototyping',
     icon: '🤗',
     category: 'laptop',
   },
   {
     id: 'ollama',
-    name: 'Ollama',
+    name: 'Laptop with Ollama',
     description: 'Easy local deployment',
-    icon: '🔧',
-    category: 'laptop',
-  },
-  {
-    id: 'llamacpp',
-    name: 'llama.cpp',
-    description: 'High-performance C++',
     icon: '🦙',
     category: 'laptop',
   },
   {
-    id: 'mlx',
-    name: 'MLX',
-    description: 'Apple Silicon optimized',
+    id: 'llamacpp',
+    name: 'Laptop with llama.cpp',
+    description: 'High-performance C++',
     icon: '⚡',
     category: 'laptop',
   },
   {
-    id: 'ios',
-    name: 'iOS',
-    description: 'Swift & Objective-C',
+    id: 'mlx',
+    name: 'Macbook with MLX',
+    description: 'Apple Silicon optimized',
     icon: '🍎',
+    category: 'laptop',
+  },
+  {
+    id: 'ios',
+    name: 'iOS with LEAP SDK',
+    description: 'Swift & Objective-C',
+    icon: '📱',
     category: 'mobile',
   },
   {
     id: 'android',
-    name: 'Android',
+    name: 'Android with LEAP SDK',
     description: 'Java & Kotlin',
     icon: '🤖',
     category: 'mobile',
   },
   {
     id: 'vllm',
-    name: 'vLLM',
+    name: 'Cloud with vLLM',
     description: 'High-throughput serving',
-    icon: '⚡',
+    icon: '☁️',
     category: 'cloud',
   },
   {
     id: 'transformersjs',
-    name: 'Transformers.js',
+    name: 'Browser with Transformers.js',
     description: 'JavaScript & WebAssembly',
     icon: '🌐',
     category: 'browser',
+  },
+  {
+    id: 'liquid-audio',
+    name: 'liquid-audio library',
+    description: 'Audio processing library',
+    icon: '🎵',
+    category: 'library',
   },
 ];
 
 // Tutorial templates with structured steps
 const tutorialTemplates = {
+  'LFM2-8B-A1B': {
+    transformers: {
+      title: 'LFM2-8B-A1B with Transformers',
+      description:
+        'Perfect for research, prototyping, and quick experimentation in Jupyter notebooks.',
+      steps: [
+        {
+          title: 'Install Python dependencies',
+          description:
+            'Install the latest version of transformers with the specific commit that supports LFM2 models.',
+          code: `pip install git+https://github.com/huggingface/transformers.git@0c9a72e4576fe4c84077f066e585129c97bfd4e6 bitsandbytes`,
+          language: 'bash',
+        },
+        {
+          title: 'Run inference',
+          description: 'Use the pipeline interface for quick and easy text generation.',
+          code: `from transformers import AutoModelForCausalLM, AutoTokenizer
+
+# Load model and tokenizer
+model_id = "LiquidAI/LFM2-8B-A1B"
+model = AutoModelForCausalLM.from_pretrained(
+    model_id,
+    device_map="auto",
+    dtype="bfloat16",
+    load_in_8bit=True,
+#    attn_implementation="flash_attention_2" <- uncomment on compatible GPU
+)
+tokenizer = AutoTokenizer.from_pretrained(model_id)
+
+# Generate answer
+prompt = "What is C. elegans?"
+input_ids = tokenizer.apply_chat_template(
+    [{"role": "user", "content": prompt}],
+    add_generation_prompt=True,
+    return_tensors="pt",
+    tokenize=True,
+).to(model.device)
+
+output = model.generate(
+    input_ids,
+    do_sample=True,
+    temperature=0.3,
+    min_p=0.15,
+    repetition_penalty=1.05,
+    max_new_tokens=512,
+)
+
+print(tokenizer.decode(output[0], skip_special_tokens=False))
+
+# <|startoftext|><|im_start|>user
+# What is C. elegans?<|im_end|>
+# <|im_start|>assistant
+# C. elegans, also known as Caenorhabditis elegans, is a small, free-living
+# nematode worm (roundworm) that belongs to the phylum Nematoda.`,
+          language: 'python',
+        },
+      ],
+      tips: [
+        'Use `device_map="auto"` for automatic GPU/CPU selection',
+        'Uncomment `attn_implementation="flash_attention_2"` on compatible GPUs for faster inference',
+        'Adjust temperature and min_p parameters to control generation creativity',
+        "Try different prompts to explore the model's capabilities",
+      ],
+    },
+  },
+
   'LFM2-1.2B': {
     transformers: {
       title: 'LFM2-1.2B with Transformers',
@@ -200,35 +319,54 @@ const tutorialTemplates = {
         'Perfect for research, prototyping, and quick experimentation in Jupyter notebooks.',
       steps: [
         {
-          title: 'Install Dependencies',
+          title: 'Install Python dependencies',
           description:
-            'First, install the required packages. We recommend using a virtual environment.',
-          code: `pip install transformers torch`,
+            'Install the latest version of transformers with the specific commit that supports LFM2 models.',
+          code: `pip install git+https://github.com/huggingface/transformers.git@0c9a72e4576fe4c84077f066e585129c97bfd4e6`,
           language: 'bash',
         },
         {
-          title: 'Load the Model',
+          title: 'Run inference with the pipeline() interface',
           description: 'Use the pipeline interface for quick and easy text generation.',
-          code: `from transformers import pipeline
+          code: `from transformers import AutoModelForCausalLM, AutoTokenizer
 
-# Load the model
-generator = pipeline("text-generation", "LiquidAI/LFM2-1.2B", device_map="auto")`,
-          language: 'python',
-        },
-        {
-          title: 'Generate Text',
-          description: 'Create a conversation and generate responses from the model.',
-          code: `# Generate text
-messages = [{"role": "user", "content": "What is machine learning?"}]
-response = generator(messages, max_new_tokens=256)
-print(response[0]["generated_text"][-1]["content"])`,
+# Load model and tokenizer
+model_id = "LiquidAI/LFM2-1.2B"
+model = AutoModelForCausalLM.from_pretrained(
+    model_id,
+    device_map="auto",
+    dtype="bfloat16",
+#    attn_implementation="flash_attention_2" <- uncomment on compatible GPU
+)
+tokenizer = AutoTokenizer.from_pretrained(model_id)
+
+# Generate answer
+prompt = "What is C. elegans?"
+input_ids = tokenizer.apply_chat_template(
+    [{"role": "user", "content": prompt}],
+    add_generation_prompt=True,
+    return_tensors="pt",
+    tokenize=True,
+).to(model.device)
+
+output = model.generate(
+    input_ids,
+    do_sample=True,
+    temperature=0.3,
+    min_p=0.15,
+    repetition_penalty=1.05,
+    max_new_tokens=512,
+)
+
+print(tokenizer.decode(output[0], skip_special_tokens=False))`,
           language: 'python',
         },
       ],
       tips: [
         'Use `device_map="auto"` for automatic GPU/CPU selection',
-        'Adjust `max_new_tokens` to control response length',
-        'Try different temperature values for varied creativity',
+        'Uncomment `attn_implementation="flash_attention_2"` on compatible GPUs for faster inference',
+        'Adjust temperature and min_p parameters to control generation creativity',
+        "Try different prompts to explore the model's capabilities",
       ],
     },
 
@@ -384,6 +522,72 @@ print(response)`,
   },
 };
 
+// Function to create Transformers tutorial for any LFM2 model
+const createTransformersTutorial = (model) => {
+  const installCommand =
+    model.id === 'LFM2-8B-A1B'
+      ? `pip install git+https://github.com/huggingface/transformers.git@0c9a72e4576fe4c84077f066e585129c97bfd4e6 bitsandbytes`
+      : `pip install git+https://github.com/huggingface/transformers.git@0c9a72e4576fe4c84077f066e585129c97bfd4e6`;
+
+  const modelConfig = model.id === 'LFM2-8B-A1B' ? `    load_in_8bit=True,` : '';
+
+  return {
+    title: `${model.name} with Transformers`,
+    description: `Perfect for research, prototyping, and quick experimentation in Jupyter notebooks.`,
+    steps: [
+      {
+        title: 'Install Python dependencies',
+        description:
+          'Install the latest version of transformers with the specific commit that supports LFM2 models.',
+        code: installCommand,
+        language: 'bash',
+      },
+      {
+        title: 'Run inference with the pipeline() interface',
+        description: 'Use the pipeline interface for quick and easy text generation.',
+        code: `from transformers import AutoModelForCausalLM, AutoTokenizer
+
+# Load model and tokenizer
+model_id = "${model.name}"
+model = AutoModelForCausalLM.from_pretrained(
+    model_id,
+    device_map="auto",
+    dtype="bfloat16",${modelConfig}
+#    attn_implementation="flash_attention_2" <- uncomment on compatible GPU
+)
+tokenizer = AutoTokenizer.from_pretrained(model_id)
+
+# Generate answer
+prompt = "What is C. elegans?"
+input_ids = tokenizer.apply_chat_template(
+    [{"role": "user", "content": prompt}],
+    add_generation_prompt=True,
+    return_tensors="pt",
+    tokenize=True,
+).to(model.device)
+
+output = model.generate(
+    input_ids,
+    do_sample=True,
+    temperature=0.3,
+    min_p=0.15,
+    repetition_penalty=1.05,
+    max_new_tokens=512,
+)
+
+print(tokenizer.decode(output[0], skip_special_tokens=False))`,
+        language: 'python',
+      },
+    ],
+    tips: [
+      'Use `device_map="auto"` for automatic GPU/CPU selection',
+      'Uncomment `attn_implementation="flash_attention_2"` on compatible GPUs for faster inference',
+      'Adjust temperature and min_p parameters to control generation creativity',
+      "Try different prompts to explore the model's capabilities",
+    ],
+  };
+};
+
 // Generate placeholder tutorials for missing combinations
 models.forEach((model) => {
   if (!tutorialTemplates[model.id]) {
@@ -392,19 +596,24 @@ models.forEach((model) => {
 
   platforms.forEach((platform) => {
     if (!tutorialTemplates[model.id][platform.id]) {
-      tutorialTemplates[model.id][platform.id] = {
-        title: `${model.name} with ${platform.name}`,
-        description: `Tutorial for ${model.name} deployment using ${platform.name} - coming soon!`,
-        steps: [
-          {
-            title: 'Setup',
-            description: `Instructions for setting up ${model.name} with ${platform.name}.`,
-            code: `# Setup instructions for ${model.name} with ${platform.name} coming soon!`,
-            language: 'bash',
-          },
-        ],
-        tips: [`${platform.name} integration with ${model.name} is being developed`],
-      };
+      // Use the standard Transformers template for LFM2 models with Transformers platform
+      if (platform.id === 'transformers' && model.name.includes('LFM2')) {
+        tutorialTemplates[model.id][platform.id] = createTransformersTutorial(model);
+      } else {
+        tutorialTemplates[model.id][platform.id] = {
+          title: `${model.name} on ${platform.name}`,
+          description: `Tutorial for ${model.name} deployment using ${platform.name} - coming soon!`,
+          steps: [
+            {
+              title: 'Setup',
+              description: `Instructions for setting up ${model.name} with ${platform.name}.`,
+              code: `# Setup instructions for ${model.name} with ${platform.name} coming soon!`,
+              language: 'bash',
+            },
+          ],
+          tips: [`${platform.name} integration with ${model.name} is being developed`],
+        };
+      }
     }
   });
 });
@@ -535,12 +744,39 @@ const InteractiveQuickstart: React.FC = () => {
   const getAvailablePlatforms = (useCase: (typeof useCases)[0]) => {
     // Define platform availability by use case based on documentation
     const useCasePlatformMap = {
-      'chat-completions': ['transformers', 'ollama', 'llamacpp', 'mlx', 'ios', 'android', 'vllm'],
-      coding: ['transformers', 'ollama', 'llamacpp', 'mlx', 'ios', 'android', 'vllm'],
-      'function-calling': ['transformers', 'ollama', 'llamacpp', 'mlx', 'ios', 'android', 'vllm'],
-      vision: ['transformers', 'ollama', 'llamacpp', 'ios', 'android'],
-      audio: ['transformers'], // Based on LFM2-Audio being transformers only
-      embeddings: ['transformers'],
+      'chat-completions': [
+        'transformers',
+        'ollama',
+        'llamacpp',
+        'mlx',
+        'ios',
+        'android',
+        'vllm',
+        'transformersjs',
+      ],
+      coding: [
+        'transformers',
+        'ollama',
+        'llamacpp',
+        'mlx',
+        'ios',
+        'android',
+        'vllm',
+        'transformersjs',
+      ],
+      'function-calling': [
+        'transformers',
+        'ollama',
+        'llamacpp',
+        'mlx',
+        'ios',
+        'android',
+        'vllm',
+        'transformersjs',
+      ],
+      vision: ['transformers', 'ollama', 'llamacpp', 'ios', 'android', 'transformersjs'],
+      audio: ['liquid-audio', 'llamacpp'], // Updated based on documentation
+      embeddings: ['transformers', 'transformersjs'],
     };
 
     const availablePlatformIds = useCasePlatformMap[useCase.id] || [];
@@ -551,7 +787,7 @@ const InteractiveQuickstart: React.FC = () => {
     if (!selectedModel || !selectedPlatform) return null;
     return (
       tutorialTemplates[selectedModel.id]?.[selectedPlatform.id] || {
-        title: `${selectedModel.name} with ${selectedPlatform.name}`,
+        title: `${selectedModel.name} on ${selectedPlatform.name}`,
         description: 'Tutorial coming soon!',
         steps: [],
         tips: [],
@@ -562,26 +798,26 @@ const InteractiveQuickstart: React.FC = () => {
   const getHeaderContent = () => {
     if (!selectedUseCase) {
       return {
-        title: 'Choose your use case',
+        title: 'Step 1. Choose your use case',
         subtitle: 'Get personalized code snippets for your specific model and deployment platform.',
         // icon: '🚀',
       };
     } else if (!selectedPlatform) {
       return {
-        title: 'Choose your deployment platform',
+        title: 'Step 2. Choose your deployment platform',
         subtitle: `Deploy your ${selectedUseCase.name.toLowerCase()} solution on your preferred deployment platform`,
         // icon: '🚀',
       };
     } else if (!selectedModel) {
       return {
-        title: 'Choose model size',
+        title: 'Step 3. Choose model size',
         subtitle: `Select the best LFM model for your ${selectedUseCase.name.toLowerCase()} use case`,
         // icon: '🚀',
       };
     } else {
       return {
         title: '',
-        subtitle: `Step-by-step guide for ${selectedUseCase.name.toLowerCase()} with ${selectedModel.name} on ${selectedPlatform.name}`,
+        subtitle: '',
         // icon: '📚',
       };
     }
@@ -730,49 +966,56 @@ const InteractiveQuickstart: React.FC = () => {
       <div className={styles.tutorialContainer}>
         <div className={styles.tutorialHeader}>
           <h1>{tutorial.title}</h1>
-          <p className={styles.tutorialDescription}>{tutorial.description}</p>
+          {tutorial.description && !tutorial.description.includes('coming soon') && (
+            <p className={styles.tutorialDescription}>{tutorial.description}</p>
+          )}
+          <div className={styles.colabButtonContainer}>
+            <a
+              target="_blank"
+              href="https://colab.research.google.com/drive/1_q3jQ6LtyiuPzFZv7Vw8xSfPU5FwkKZY?usp=sharing"
+              rel="noopener noreferrer"
+            >
+              <img
+                src="https://colab.research.google.com/assets/colab-badge.svg"
+                alt="Open In Colab"
+              />
+            </a>
+          </div>
         </div>
 
         <div className={styles.stepsContainer}>
           {tutorial.steps.map((step, index) => (
-            <div key={index} className={styles.step}>
-              <div className={styles.stepHeader}>
-                <span className={styles.stepNumber}>{index + 1}</span>
-                <h3>{step.title}</h3>
-              </div>
-
-              <p className={styles.stepDescription}>{step.description}</p>
-
-              <div className={styles.codeContainer}>
-                <div className={styles.codeHeader}>
-                  <span>{step.language}</span>
-                  <button
-                    className={styles.copyButton}
-                    onClick={() => navigator.clipboard.writeText(step.code)}
-                  >
-                    📋 Copy
-                  </button>
-                </div>
-                <pre className={styles.codeBlock}>
-                  <code>{step.code}</code>
-                </pre>
-              </div>
+            <div key={index} style={{ marginBottom: '2rem' }}>
+              <h2>{step.title}</h2>
+              <p>{step.description}</p>
+              <CodeBlock language={step.language} title={step.language}>
+                {step.code}
+              </CodeBlock>
             </div>
           ))}
         </div>
 
-        {tutorial.tips && tutorial.tips.length > 0 && (
-          <div className={styles.tipsContainer}>
-            <h3>💡 Pro Tips</h3>
-            <ul className={styles.tipsList}>
-              {tutorial.tips.map((tip, index) => (
-                <li key={index} className={styles.tip}>
-                  {tip}
-                </li>
-              ))}
-            </ul>
+        <div className={styles.nextStepsContainer}>
+          <h2>Next steps</h2>
+          <div className={styles.nextStepsGrid}>
+            <div className={styles.nextStepCard}>
+              <h3>🚀 Advanced Usage</h3>
+              <p>Learn about fine-tuning, custom parameters, and advanced configuration options.</p>
+            </div>
+            <div className={styles.nextStepCard}>
+              <h3>🔧 Deployment</h3>
+              <p>Deploy your model to production with optimized settings and scaling strategies.</p>
+            </div>
+            <div className={styles.nextStepCard}>
+              <h3>📚 API Reference</h3>
+              <p>Explore the complete API documentation and available model parameters.</p>
+            </div>
+            <div className={styles.nextStepCard}>
+              <h3>💬 Community</h3>
+              <p>Join our Discord community to ask questions and share your implementations.</p>
+            </div>
           </div>
-        )}
+        </div>
       </div>
 
       <button className={styles.resetButton} onClick={reset}>
