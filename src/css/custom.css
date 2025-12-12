@@ -364,6 +364,11 @@ body {
   font-weight: 300; /* Light font weight for all text */
 }
 
+/* Remove all rounded corners globally */
+* {
+  border-radius: 0 !important;
+}
+
 /* Apply to all text elements, but preserve code fonts */
 * {
   font-family: inherit;
