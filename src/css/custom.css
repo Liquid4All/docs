@@ -467,10 +467,11 @@ pre,
   color: var(--color-purple-300);
 }
 
-/* Code blocks - Simple like Sphinx */
+/* Code blocks - Simple like Sphinx with borders */
 .theme-doc-markdown pre {
   background-color: #f5f5f5;
-  border: none !important;
+  border: 1px solid #000000 !important;
+  border-radius: 4px;
   padding: 0.05em 0.5em;
   margin: 1em 0;
   overflow-x: auto;
@@ -482,40 +483,33 @@ pre,
 
 [data-theme='dark'] .theme-doc-markdown pre {
   background-color: #2d2d2d;
-  border: none !important;
+  border: 1px solid #ffffff !important;
+  border-radius: 4px;
   box-shadow: none !important;
   outline: none !important;
   padding: 0.05em 0.5em;
 }
 
-/* Fix Prism code block containers - remove all borders in both modes */
+/* Prism code block containers - add borders */
 .theme-code-block,
 .prism-code,
 pre[class*="language-"],
 div[class*="theme-code-block"],
 div[class*="prism-code"] {
-  border: none !important;
-  border-color: transparent !important;
+  border: 1px solid #000000 !important;
+  border-radius: 4px !important;
   box-shadow: none !important;
   outline: none !important;
   padding: 0.05em 0.5em !important;
 }
 
-/* Remove ALL borders from code blocks in both modes - target everything */
-.theme-code-block,
-.prism-code,
-pre[class*="language-"],
-div[class*="theme-code-block"],
-div[class*="prism-code"],
+/* Remove borders from inner elements to avoid double borders */
 .theme-code-block > *,
 .prism-code > *,
 .theme-code-block pre,
 .prism-code pre,
 .theme-code-block code,
-.prism-code code,
-[class*="codeBlock"],
-[class*="code-block"],
-[class*="CodeBlock"] {
+.prism-code code {
   border: none !important;
   border-width: 0 !important;
   border-color: transparent !important;
@@ -528,7 +522,15 @@ div[class*="prism-code"],
 [data-theme='dark'] .prism-code,
 [data-theme='dark'] pre[class*="language-"],
 [data-theme='dark'] div[class*="theme-code-block"],
-[data-theme='dark'] div[class*="prism-code"],
+[data-theme='dark'] div[class*="prism-code"] {
+  border: 1px solid #ffffff !important;
+  border-radius: 4px !important;
+  box-shadow: none !important;
+  outline: none !important;
+  background-color: #2d2d2d !important;
+}
+
+/* Remove borders from inner elements to avoid double borders */
 [data-theme='dark'] .theme-code-block > *,
 [data-theme='dark'] .prism-code > *,
 [data-theme='dark'] .theme-code-block pre,
@@ -544,7 +546,6 @@ div[class*="prism-code"],
   border-style: none !important;
   box-shadow: none !important;
   outline: none !important;
-  background-color: #2d2d2d !important;
 }
 
 /* Ensure code block pre elements have proper padding - same for both modes */
