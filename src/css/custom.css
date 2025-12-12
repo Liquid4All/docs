@@ -167,7 +167,7 @@
   --ifm-link-hover-color: var(--color-purple-600);
 
   --foreground: var(--color-neutral-950);
-  --muted-foreground: var(--color-neutral-500);
+  --muted-foreground: var(--color-neutral-700);
   --card-foreground: var(--color-neutral-950);
   --popover-foreground: var(--color-neutral-950);
 
@@ -1184,6 +1184,32 @@ div.theme-doc-sidebar-container {
   color: var(--color-purple-400);
 }
 
+/* Mobile menu hover styles */
+.navbar-sidebar .navbar__link,
+.navbar-sidebar__items .navbar__link,
+.navbar-sidebar .menu__link {
+  border: 1px solid transparent !important;
+  border-radius: 4px !important;
+  padding: 4px 8px !important;
+  transition: all 0.2s ease !important;
+}
+
+.navbar-sidebar .navbar__link:hover,
+.navbar-sidebar__items .navbar__link:hover,
+.navbar-sidebar .menu__link:hover {
+  color: var(--color-purple-500) !important;
+  border: 1px solid var(--color-purple-500) !important;
+  background-color: rgba(73, 2, 148, 0.05) !important;
+}
+
+[data-theme='dark'] .navbar-sidebar .navbar__link:hover,
+[data-theme='dark'] .navbar-sidebar__items .navbar__link:hover,
+[data-theme='dark'] .navbar-sidebar .menu__link:hover {
+  color: var(--color-purple-400) !important;
+  border: 1px solid var(--color-purple-400) !important;
+  background-color: rgba(86, 3, 173, 0.08) !important;
+}
+
 /* Footer - Simple */
 .footer {
   border-top: 1px solid var(--border);
@@ -1322,12 +1348,67 @@ button:hover,
   background-color: rgba(86, 3, 173, 0.08);
 }
 
-/* Code token styling */
+/* Code token styling - remove italics and update colors */
 .token {
   font-family: 'JetBrains Mono', 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono',
     Consolas, 'Courier New', monospace;
   font-variant-ligatures: none;
   font-feature-settings: "liga" 0, "calt" 0;
+  font-style: normal !important;
+}
+
+/* Remove all italics from code tokens */
+.token.comment,
+.token.keyword,
+.token.string,
+.token.function,
+.token.operator,
+.token.punctuation,
+.token.number,
+.token.boolean,
+.token.property,
+.token.attr-name,
+.token.attr-value,
+.token.tag,
+.token.selector,
+.token.class-name {
+  font-style: normal !important;
+}
+
+/* Syntax highlighting colors to match the example */
+.token.keyword,
+.token.builtin,
+.token.function,
+.token.class-name {
+  color: #C586C0 !important; /* Purple for keywords */
+}
+
+.token.string,
+.token.attr-value {
+  color: #CE9178 !important; /* Orange for strings */
+}
+
+.token.comment {
+  color: #6A9955 !important; /* Green for comments */
+}
+
+.token.number,
+.token.boolean {
+  color: #B5CEA8 !important; /* Light green for numbers */
+}
+
+.token.operator,
+.token.punctuation {
+  color: #D4D4D4 !important; /* Light grey for operators */
+}
+
+.token.property,
+.token.attr-name {
+  color: #9CDCFE !important; /* Light blue for properties */
+}
+
+.token.tag {
+  color: #569CD6 !important; /* Blue for tags */
 }
 
 /* Ensure no cutoff/overflow issues */
@@ -1599,6 +1680,41 @@ article {
   box-shadow: 0 6px 16px rgba(86, 3, 173, 0.25) !important;
   background-color: rgba(86, 3, 173, 0.08) !important;
   border: 1px solid var(--color-purple-400) !important;
+}
+
+/* Make light text more readable in light mode only */
+.header p,
+.useCaseCard p,
+.modelCard p,
+.platformCard p,
+.nextStepCard p,
+.useCaseDescription,
+.modelDescription,
+.platformCard p {
+  color: var(--color-neutral-700) !important;
+}
+
+/* Also target any elements using --ifm-color-emphasis-600 */
+*[style*="--ifm-color-emphasis-600"],
+.theme-doc-markdown p {
+  color: var(--color-neutral-700) !important;
+}
+
+/* Restore white text for dark mode */
+[data-theme='dark'] .header p,
+[data-theme='dark'] .useCaseCard p,
+[data-theme='dark'] .modelCard p,
+[data-theme='dark'] .platformCard p,
+[data-theme='dark'] .nextStepCard p,
+[data-theme='dark'] .useCaseDescription,
+[data-theme='dark'] .modelDescription,
+[data-theme='dark'] .platformCard p {
+  color: var(--color-white) !important;
+}
+
+[data-theme='dark'] *[style*="--ifm-color-emphasis-600"],
+[data-theme='dark'] .theme-doc-markdown p {
+  color: var(--color-white) !important;
 }
 
 .pagination-nav__link:hover {
