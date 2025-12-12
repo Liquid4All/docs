@@ -67,35 +67,15 @@ The constrained-generation macros (`@Generatable`, `@Guide`) ship inside the `Le
 ## Getting and Loading Models
 
 The SDK supports two methods for loading models.
-- GGUF manifests. This is the recommended for new projects because of superior inference performance and good default generation parameters.
+- GGUF manifests (recommended method for new projects due to superior inference performance and better default generation parameters)
 - Executorch bundles (legacy)
 
 <Tabs>
 <TabItem value="automatic" label="GGUF manifests (recommended)" default>
 
-The LeapSDK supports direct downloads of GGUF files from the [LeapBundles repository](https://huggingface.co/LiquidAI/LeapBundles/tree/main). You can point directly to a remote JSON manifest, and the SDK will automatically download the necessary GGUF files along with generation parameters for optimal performance.
+The LEAP Edge SDK supports directly downloading LEAP models in GGUF format. Given the model name and quantization method (which you can find in the [LEAP Model Library](https://leap.liquid.ai/models)), the SDK will automatically download the necessary GGUF files along with generation parameters for optimal performance.
 
-```swift
-import LeapSDK
-import LeapModelDownloader
-
-// Download model from manifest
-let manifestURL: URL = URL(string: "https://huggingface.co/LiquidAI/LFM2-350M-GGUF/resolve/main/leap/Q5_K_M.json")!
-
-// Initialize downloader
-let downloader = ModelDownloader()
-
-// Call `downloadModelFromManifest` to download & cache a model and related files from given manifest URL
-let _ = try await downloader.downloadModelFromManifest(manifestURL) { progress, speed in
-    // progress: Double (0...1)
-    // speed: bytes per second
-}
-
-```
-
-Use `Leap.load(manifestURL)` inside an async context, to load the model runner from the GGUF manifest.
-
-### Example with GGUF manifests (recommended)
+### Loading from remote GGUF manifest (recommended)
 ```swift
 import LeapSDK
 import LeapModelDownloader
@@ -115,22 +95,11 @@ final class ChatViewModel: ObservableObject {
         defer { isLoading = false }
 
         do {
-            // Download model from manifest
-            let manifestURL: URL = URL(string: "https://huggingface.co/LiquidAI/LFM2-350M-GGUF/resolve/main/leap/Q5_K_M.json")!
-
-            // Initialize downloader
-            let downloader = ModelDownloader()
-
-            // Call `downloadModelFromManifest` to download & cache a model and related files from given manifest URL
-            let _ = try await downloader.downloadModelFromManifest(manifestURL) { progress, speed in
+            // LEAP will download the model if needed or reuse a cached copy.
+            let modelRunner = try await Leap.load(model: "LFM2-1.2B", quantization: "Q5_K_M", downloadProgressHandler: { progress, speed in
                 // progress: Double (0...1)
                 // speed: bytes per second
-            }
-
-            // ModelRunner is initialized with manifestURL.
-            // Even if you skipped direct downloading with ModelDownloader,
-            // ModelRunner is able to handle download itself.
-            let modelRunner = try await Leap.load(manifestURL: manifestURL) { _, _ in }
+            })
 
             conversation = modelRunner.createConversation(systemPrompt: "You are a helpful travel assistant.")
             self.modelRunner = modelRunner

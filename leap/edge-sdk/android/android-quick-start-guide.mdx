@@ -2,8 +2,8 @@
 sidebar_position: 1
 ---
 
-import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
+import Tabs from '@theme/Tabs';
 
 # Quick Start Guide
 
@@ -50,36 +50,35 @@ dependencies {
 
 Then perform a project sync in Android Studio to fetch the LeapSDK artifacts.
 
-## 3. Getting and Loading Models  
+## 3. Getting and Loading Models
 
 The SDK supports two methods for loading models.
 
-- GGUF manifests. This is the recommended for new projects because of superior inference performance and good default generation parameters.
+- GGUF manifests (recommended method for new projects due to superior inference performance and better default generation parameters)
 - Executorch bundles (legacy)
 
 <Tabs>
 <TabItem value="automatic" label="GGUF manifests (recommended)" default>
 
-The LeapSDK supports direct downloads of GGUF files from the [LeapBundles repository](https://huggingface.co/LiquidAI/LeapBundles/tree/main). You can point directly to a remote JSON manifest, and the SDK will automatically download the necessary GGUF files along with generation parameters for optimal performance.
+The LEAP Edge SDK supports directly downloading LEAP models in GGUF format. Given the model name and quantization method (which you can find in the [LEAP Model Library](https://leap.liquid.ai/models)), the SDK will automatically download the necessary GGUF files along with generation parameters for optimal performance.
 
 ### Loading from remote GGUF manifest (recommended)
 
-The `LeapManifestProcessor.loadModel` suspend function loads a model and returns a model runner instance for invoking the model. This function takes some time to finish as loading the model is a heavy I/O operation, but it is safe to call on the main thread. The function should be executed in a coroutine scope.
+The `LeapDownloader.loadModel` suspend function loads a model and returns a model runner instance for invoking the model. This function takes some time to finish as loading the model is a heavy I/O operation, but it is safe to call on the main thread. The function should be executed in a coroutine scope.
 
 ```kotlin
-lifecycleScope.launch {
-  try {
-    // Point to the JSON manifest URL in the LeapBundles repo
-    val manifestUrl = "https://huggingface.co/LiquidAI/LeapBundles/resolve/main/LFM2-350M-PII-Extract-JP-GGUF/Q5_K_M.json"
-    val baseDir = File(context.filesDir, "model_files").absolutePath
-    val config = LeapManifestProcessorConfig(targetDir = baseDir, validateSha256 = true)
-    val processor = LeapManifestProcessor(config = config)
-    val modelRunner = processor.loadModel(manifestUrl)
-   }
-   catch (e: LeapModelLoadingException) {
-     Log.e(TAG, "Failed to load the model. Error message: ${e.message}")
-   }
- }
+try {
+  // Point to the JSON manifest URL in the LeapBundles repo
+  val baseDir = File(context.filesDir, "model_files").absolutePath
+  val modelDownloader = LeapDownloader(config = LeapDownloaderConfig(saveDir = baseDir))
+  val modelRunner = modelDownloader.loadModel(
+      modelSlug = "LFM2-1.2B",
+      quantizationSlug = "Q5_K_M"
+  )
+}
+catch (e: LeapModelLoadingException) {
+    Log.e(TAG, "Failed to load the model. Error message: ${e.message}")
+}
 ```
 
 The SDK will automatically download the required GGUF files to the device's cache and load the model with the appropriate generation parameters specified in the manifest.
@@ -120,7 +119,7 @@ lifecycleScope.launch {
 
 ## 4. Generate content with the model
 
-In order to generate contents, a conversation object should be created from the model runner.
+To generate content, a conversation object should be created from the model runner:
 
 ```kotlin
 val conversation = modelRunner.createConversation()
