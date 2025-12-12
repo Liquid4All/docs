@@ -186,9 +186,9 @@
   --chart-4: var(--color-purple-300);
   --chart-5: var(--color-sky-500);
 
-  --border: var(--color-black-8);
+  --border: #000000;
   --ring: var(--color-sky-400);
-  --sidebar-border: var(--color-black-12);
+  --sidebar-border: #000000;
   --sidebar-ring: var(--color-neutral-400);
 
   --aa-muted-color-rgb: 115, 115, 115 !important;
@@ -250,9 +250,9 @@
   --chart-4: var(--color-purple-200);
   --chart-5: var(--color-sky-400);
 
-  --border: var(--color-white-12);
+  --border: #ffffff;
   --ring: var(--color-sky-400);
-  --sidebar-border: var(--color-white-16);
+  --sidebar-border: #ffffff;
   --sidebar-ring: var(--color-neutral-500);
 
   --aa-muted-color-rgb: 161, 161, 161 !important;
@@ -1036,11 +1036,46 @@ article {
 
 /* Right sidebar table of contents - Simple */
 .table-of-contents {
-  border-left: 1px solid var(--border);
+  border-left: 1px solid #000000;
   padding-left: 1em;
   font-size: 0.9em;
   width: 230px;
   min-width: 230px;
+}
+
+[data-theme='dark'] .table-of-contents {
+  border-left: 1px solid #ffffff;
+}
+
+/* Main sidebar container border - force white/black borders */
+.theme-doc-sidebar-container {
+  border-right: 1px solid #000000 !important;
+}
+
+[data-theme='dark'] .theme-doc-sidebar-container {
+  border-right: 1px solid #ffffff !important;
+}
+
+/* Also target any potential wrapper containers */
+.theme-doc-root {
+  border: none !important;
+}
+
+.theme-doc-layout {
+  border: none !important;
+}
+
+/* Override any potential Docusaurus default borders */
+aside.theme-doc-sidebar-container,
+nav.theme-doc-sidebar-container,
+div.theme-doc-sidebar-container {
+  border-right: 1px solid #000000 !important;
+}
+
+[data-theme='dark'] aside.theme-doc-sidebar-container,
+[data-theme='dark'] nav.theme-doc-sidebar-container,
+[data-theme='dark'] div.theme-doc-sidebar-container {
+  border-right: 1px solid #ffffff !important;
 }
 
 .table-of-contents__link {
@@ -1103,11 +1138,15 @@ article {
 
 /* Navbar - Simple */
 .navbar {
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid #000000;
   background-color: var(--background);
   padding: 0.5em 1em;
   box-shadow: none;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+}
+
+[data-theme='dark'] .navbar {
+  border-bottom: 1px solid #ffffff;
 }
 
 .navbar__brand {
