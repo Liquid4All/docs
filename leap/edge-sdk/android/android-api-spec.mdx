@@ -2,11 +2,14 @@
 sidebar_position: 2
 ---
 
+import TabItem from '@theme/TabItem';
+import Tabs from '@theme/Tabs';
+
 # API Spec
 
 Latest version: `v0.7.0`
 
-Import the SDK with following code in `build.gradle.kts`:
+Import the SDK with the following code in `build.gradle.kts`:
 
 ```kotlin
 dependencies {
@@ -18,6 +21,107 @@ dependencies {
 Note: All functions listed in this document are safe to call from the main or UI thread and all
 callbacks will be run on the main thread, unless there are explicit instructions or explanations.
 :::
+
+<Tabs>
+<TabItem value="automatic" label="LeapDownloader" default>
+The `LeapDownloader` class is the recommended entrypoint for loading models. It is a wrapper around the LEAP SDK that provides a simple and convenient way to download and load models.
+
+## `LeapDownloader`
+```kotlin
+class LeapDownloader(config: LeapDownloaderConfig = LeapDownloaderConfig())
+```
+| Field | Type | Required | Default | Description |
+|------- | ----|---|---|---|
+| `config` | `LeapDownloaderConfig` | No | `LeapDownloaderConfig()` | Configuration options for the downloader. See [`LeapDownloaderConfig`](#leapdownloaderconfig) for more details. |
+
+<br/>
+### `loadModel`
+Download a model from the LEAP Model Library and load it into memory. If the model has already been downloaded, it will be loaded from the local cache without a remote request.
+
+**Arguments**
+| Name | Type | Required | Default | Description |
+|------- | ----|---|---|---|
+| `modelSlug` | `String` | Yes | - | The name of the model to load. See the [LEAP Model Library](https://leap.liquid.ai/models) for all available models. |
+| `quantizationSlug` | `String` | Yes | - | The quantization level to download for the given model. See the [LEAP Model Library](https://leap.liquid.ai/models) for all available quantization levels. |
+| `modelLoadingOptions` | `ModelLoadingOptions` | No | `null` | Options for loading the model. See [`ModelLoadingOptions`](#modelloadingoptions) for more details. |
+| `generationTimeParameters` | `GenerationTimeParameters` | No | `null` | Parameters to control model generation at inference time. See [`GenerationTimeParameters`](#generationtimeparameters) for more details. |
+| `progress` | `(ProgressData) -> Unit` | No | `{}` | A callback function to receive the download progress. |
+
+**Returns**
+
+`ModelRunner`: A [`ModelRunner`](#modelrunner) instance that can be used to interact with the loaded model.
+
+<br/>
+### `downloadModel`
+Downloads a model from the LEAP Model Library and saves it to the local cache, without loading it into memory.
+
+**Arguments**
+| Name | Type | Required | Default | Description |
+|---|---|---|---|---|
+|`modelSlug`| `String` | Yes | - | The name of the model to download. See the [LEAP Model Library](https://leap.liquid.ai/models) for all available models. |
+|`quantizationSlug`| `String` | Yes | - | The quantization level to download for the given model. See the [LEAP Model Library](https://leap.liquid.ai/models) for all available quantization levels. |
+|`progress`| `(ProgressData) -> Unit` | No | `{}` | A callback function to receive the download progress. |
+
+**Returns**
+
+`Manifest`: The [`Manifest`](#manifest) instance that contains the metadata of the downloaded model.
+
+<br/>
+## `LeapDownloaderConfig`
+The `LeapDownloaderConfig` class contains all the configuration options for `LeapDownloader`. It is a data class with the following fields:
+```kotlin
+data class LeapDownloaderConfig (
+    val saveDir: String = "leap_models", // The directory to save downloaded models.
+    val validateSha256: Boolean = true, // Whether to validate the downloaded model's SHA256 checksum.
+)
+```
+
+## `GenerationTimeParameters`
+The `GenerationTimeParameters` class contains all the parameters for controlling model generation. It is a data class with the following fields:
+```kotlin
+data class GenerationTimeParameters (
+    val samplingParameters: SamplingParameters? = null, TODO @davidberrios to confirm default behavior (pull from model config?)
+    val numberOfDecodingThreads: Int? = null, TODO @davidberrios to confirm default behavior (if the default is a number, should we just set that here instead of `null`?)
+)
+```
+
+## `SamplingParameters`
+The `SamplingParameters` class contains potential sampling options . It is a data class with the following fields: TODO @davidberrios to confirm default behavior
+```kotlin
+data class SamplingParameters (
+    val temperature: Double? = null,
+    val topP: Double? = null,
+    val minP: Double? = null,
+    val repetitionPenalty: Double? = null,
+)
+```
+
+## `ProgressData`
+The `ProgressData` class can be used to track download progress. It is a data class with the following fields:
+```kotlin
+data class ProgressData(
+    val bytes: Long,
+    val total: Long,
+) {
+    val progress: Float // Returns the progress percentage as a float between 0 and 1.
+}
+```
+
+## `Manifest`
+The `Manifest` class contains metadata about a downloaded model. It is a data class with the following fields: TODO @davidberrios to provide description/default behavior for each field
+```kotlin
+data class Manifest(
+    val schemaVersion: String,
+    val inferenceType: String,
+    val loadTimeParameters: LoadTimeParameters,
+    val generationTimeParameters: GenerationTimeParameters? = null,
+    val originalUrl: String? = null,
+    val pathOnDisk: String? = null,
+)
+```
+</TabItem>
+<TabItem value="manual" label="LeapClient (legacy)">
+The `LeapClient` class is a legacy class that is no longer recommended for use. It is still available for backward compatibility, but it is recommended to use the new `LeapDownloader` class instead.
 
 ## LeapClient
 
@@ -69,16 +173,18 @@ data class AudioGenerationModelDescriptor(
 ### `loadModelAsResult`
 
 This function can be called from UI thread. The `path` should be a local path pointing to model bundle file. This function is merely a wrapper around `loadModel` function to return a [`Result`](https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-result/).
+</TabItem>
+</Tabs>
 
-### `ModelLoadingOptions`
+## `ModelLoadingOptions`
 
 A data class to represents options in loading a model.
 
 ```kotlin
 data class ModelLoadingOptions(var randomSeed: Long? = null, var cpuThreads: Int = 2) {
-  companion object {
-    fun build(action: ModelLoadingOptions.() -> Unit): ModelLoadingOptions
-  }
+    companion object {
+        fun build(action: ModelLoadingOptions.() -> Unit): ModelLoadingOptions
+    }
 }
 ```
 
@@ -87,12 +193,12 @@ data class ModelLoadingOptions(var randomSeed: Long? = null, var cpuThreads: Int
 
 Kotlin builder function `ModelLoadingOptions.build` is also available. For example, loading a model with 4 CPU threads can be done by
 
-```kotlin
+````kotlin
 val modelRunner = LeapClient.loadModel(
-  MODEL_PATH,
-  ModelLoadingOptions.build {
-    cpuThread = 4
-  }
+    MODEL_PATH,
+    ModelLoadingOptions.build {
+        cpuThread = 4
+    }
 )
 ```
 
@@ -118,7 +224,7 @@ interface Conversation {
   // Export the chat history in this conversation to a `JSONArray`.
   fun exportToJSONArray(): JSONArray
 }
-```
+````
 
 ### Creation
 
@@ -236,7 +342,7 @@ val options = GenerationOptions.build {
 
 If a parameter is not set in this options, the default value from the model bundle will be used.
 
-## ModelRunner
+## `ModelRunner`
 
 An instance of the model loaded in memory. `Conversation` instances should always be created from an instance of `ModelRunner`. The application needs to own the model runner object – if the model runner object is destroyed, any ongoing generations may fail.
 
@@ -286,7 +392,7 @@ This function may block the caller thread. If you must use it, please call it ou
 thread.
 :::
 
-## ChatMessage
+## `ChatMessage`
 
 Data class that is compatible with the message object in OpenAI chat completion API.
 
@@ -328,7 +434,7 @@ message.{' '}
 
 See also: [Gson Support](#gson-support).
 
-### ChatMessage.Role
+### `ChatMessage.Role`
 
 Roles of the chat messages, which follows the OpenAI API definition. It is an enum with the following values:
 
@@ -344,7 +450,7 @@ enum class Role(val type: String) {
 - `USER`: Indicates the associated content is user input.
 - `ASSISTANT`: Indicates the associated content is model-generated output.
 
-## ChatMessageContent
+## `ChatMessageContent`
 
 Data class that is compatible with the content object in OpenAI chat completion API. It is a sealed interface.
 
@@ -375,7 +481,7 @@ Currently, only following content types are supported:
 message.{' '}
 :::
 
-### ChatMessageContent.Text
+### `ChatMessageContent.Text`
 
 ```kotlin
 data class ChatMessageContent.Text(val text: String): ChatMessageContent
@@ -383,7 +489,7 @@ data class ChatMessageContent.Text(val text: String): ChatMessageContent
 
 Pure text content. The content is available in the `text` field.
 
-### ChatMessageContent.Image
+### `ChatMessageContent.Image`
 
 ```kotlin
 data class ChatMessageContent.Image(val jpegByteArray: ByteArray): ChatMessageContent {
@@ -403,7 +509,7 @@ Only the models with vision capabilities can process image content. Sending imag
 models may result in unexpected outputs or errors.
 :::
 
-### ChatMessageContent.Audio
+### `ChatMessageContent.Audio`
 
 ```kotlin
 data class Audio(val wavByteArray: ByteArray) : ChatMessageContent
@@ -411,7 +517,7 @@ data class Audio(val wavByteArray: ByteArray) : ChatMessageContent
 
 WAV-encoded audio content. Other audio formats are not supported yet.
 
-## MessageResponse
+## `MessageResponse`
 
 The response generated from models. The generation may take a while to finish, so the generated text will be emitted as “chunks”. When the generation completes, a complete response object will be emitted. This is a sealed class where only the following options are available:
 
@@ -649,7 +755,11 @@ import ai.liquid.leap.gson.LeapGson
 val chatHistory: List<ChatMessage> = gson.fromJson(json, LeapGson.messageListTypeToken)
 ```
 
-## Model Downloader
+## Model Downloader (deprecated)
+
+:::warning
+This module is deprecated and will be removed in the near future. To download models using the Edge SDK, see [`LeapDownloader`](#leapdownloader).
+:::
 
 LeapSDK Android Model Downloader module is a helper for downloading models from Leap Model Library.
 While it is good for early prototyping and demos, you may want to build your own model downloaders to support private
