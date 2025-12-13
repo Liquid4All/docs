@@ -2,14 +2,85 @@
 sidebar_position: 2
 ---
 
+import Tabs from "@theme/Tabs";
+import TabItem from "@theme/TabItem";
+
 # API Spec
 
 Latest version: `v0.8.0`.
 
-## Leap
+## `Leap`
 
 `Leap` is the static entry point for loading on-device models.
 
+<Tabs>
+<TabItem value="automatic" label="Load model directly" default>
+### `Leap.load(model:quantization:options:downloadProgressHandler:)`
+
+Download a model from the LEAP Model Library and load it into memory. If the model has already been downloaded, it will be loaded from the local cache without a remote request.
+
+```swift
+public struct Leap {
+  public static func load(
+    model: String,
+    quantization: String,
+    options: LiquidInferenceEngineManifestOptions? = nil,
+    downloadProgressHandler: @escaping (_ progress: Double, _speed: Int64) -> Void
+  ) async throws -> ModelRunner
+}
+```
+
+**Arguments**
+| Name | Type | Required | Default | Description |
+|------- | ----|---|---|---|
+| `model` | `String` | Yes | - | The name of the model to load. See the [LEAP Model Library](https://leap.liquid.ai/models) for all available models. |
+| `quantization` | `String` | Yes | - | The quantization level to download for the given model. See the [LEAP Model Library](https://leap.liquid.ai/models) for all available quantization levels. |
+| `options` | `LiquidInferenceEngineManifestOptions` | No | `nil` | Override options for loading the model (recommended for advanced use cases only). |
+| `downloadProgressHandler` | `(_ progress: Double, _speed: Int64) -> Void` | No | `nil` | A callback function to receive the download progress (as a percentage in decimal form between 0 and 1) and speed (in bytes per second). TODO @nickprokopiev is the "required" and "Default" correct for this? I assume a callback is not required, but don't see a default in the code |
+
+**Returns**
+
+`ModelRunner`: A [`ModelRunner`](#modelrunner) instance that can be used to interact with the loaded model.
+
+<br/>
+
+### `ModelDownloader.downloadModel(model:quantization:downloadProgress:)`
+
+Download a model from the LEAP Model Library and save it to the local cache, without loading it into memory.
+
+```swift
+public class ModelDownloader {
+  public func downloadModel(
+    _ model: String,
+    quantization: String,
+    downloadProgress: @escaping (_ progress: Double, _ speed: Int64) -> Void
+  ) async throws -> DownloadedModelManifest
+}
+```
+
+**Arguments**
+| Name | Type | Required | Default | Description |
+|------- | ----|---|---|---|
+| `model` | `String` | Yes | - | The name of the model to load. See the [LEAP Model Library](https://leap.liquid.ai/models) for all available models. |
+| `quantization` | `String` | Yes | - | The quantization level to download for the given model. See the [LEAP Model Library](https://leap.liquid.ai/models) for all available quantization levels. |
+| `downloadProgressHandler` | `(_ progress: Double, _speed: Int64) -> Void` | No | `nil` | A callback function to receive the download progress (as a percentage in decimal form between 0 and 1) and speed (in bytes per second). TODO @nickprokopiev is the "required" and "Default" correct for this? I assume a callback is not required, but don't see a default in the code |
+
+**Returns**
+
+`DownloadedModelManifest`: The `DownloadedModelManifest` instance that contains the metadata of the downloaded model:
+```swift
+public struct DownloadedModelManifest {
+  public let manifest: ModelManifest
+  public let localModelUrl: URL
+  public let localMultimodalProjectorURL: URL?
+  public let local AudioDecoderURL: URL?
+  public let localAudioTokenizerURL: URL?
+  public let chatTemplate: String?
+}
+```
+
+</TabItem>
+<TabItem value="manual" label="Load from URL (legacy)">
 ```swift
 public struct Leap {
   public static func load(
@@ -86,8 +157,10 @@ let options = LiquidInferenceEngineOptions(
 )
 let runner = try await Leap.load(url: bundleURL, options: options)
 ```
+</TabItem>
+</Tabs>
 
-## ModelRunner
+## `ModelRunner`
 
 A `ModelRunner` represents a loaded model instance. The SDK returns concrete `ModelRunner` implementations, but your code only needs the protocol surface:
 
@@ -133,7 +206,7 @@ let handler = runner.generateResponse(
 handler.stop()
 ```
 
-## GenerationHandler
+## `GenerationHandler`
 
 ```swift
 public protocol GenerationHandler: Sendable {
@@ -143,7 +216,7 @@ public protocol GenerationHandler: Sendable {
 
 The handler returned by `ModelRunner.generateResponse` or `Conversation.generateResponse(..., onResponse:)` lets you cancel generation without tearing down the conversation.
 
-## Conversation
+## `Conversation`
 
 `Conversation` tracks chat state and provides streaming helpers built on top of the model runner.
 
@@ -249,7 +322,7 @@ The callback overload does not surface generation errors. Use the async-stream h
 
 `exportToJSON()` serializes the conversation history into a `[[String: Any]]` payload that mirrors OpenAI's chat-completions format. This is useful for persistence, analytics, or debugging tools.
 
-## MessageResponse
+## `MessageResponse`
 
 ```swift
 public enum MessageResponse {
@@ -342,9 +415,9 @@ public enum ChatMessageContent {
 
 Provide JPEG-encoded bytes for `.image` and WAV data for `.audio`. Helper initializers such as `ChatMessageContent.fromUIImage`, `ChatMessageContent.fromNSImage`, `ChatMessageContent.fromWAVData`, and `ChatMessageContent.fromFloatSamples(_:sampleRate:channelCount:)` simplify interop with platform-native buffers. On the wire, image parts are encoded as OpenAI-style `image_url` payloads and audio parts as `input_audio` arrays with Base64 data.
 
-## GenerationOptions
+## `GenerationOptions`
 
-Tune generation behaviour with `GenerationOptions`.
+Tune generation behavior with `GenerationOptions`.
 
 ```swift
 public struct GenerationOptions {
