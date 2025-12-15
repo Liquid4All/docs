@@ -20,8 +20,11 @@ MODEL_NAME=LiquidAI/<model-slug> modal deploy deploy-vllm-docker.py
 
 See full list of open source LFM models on [Hugging Face](https://huggingface.co/collections/LiquidAI/lfm2).
 
-> [!NOTE]
-> This is the recommended approach for production deployment.
+:::note
+
+This is the recommended approach for production deployment.
+
+:::
 
 ## Use `vLLM` PyPI package
 

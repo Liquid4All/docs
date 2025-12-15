@@ -297,14 +297,13 @@ This is what we will address in the next step.
 
 Structured generation is a technique that allows us to “force” the Language Model to output a specific format, like JSON, or, in our case, a valid entry from a list of car makers.
 
-> [!NOTE]
-> **Remember**
->
-> Language Models generate text by sampling one token at a time. At each step of the decoding process, the model generates a probability distribution
-over the next token and samples one token from it.
->
-> Structured generation techniques "intervene" at each step of the decoding process, by masking tokens that are not compatible with the structured output
-we want to generate.
+:::note
+
+Language Models generate text by sampling one token at a time. At each step of the decoding process, the model generates a probability distribution over the next token and samples one token from it.
+
+Structured generation techniques "intervene" at each step of the decoding process, by masking tokens that are not compatible with the structured output we want to generate.
+
+:::
 
 ![](/img/examples/car-maker-identification/structured_generation.webp)
 

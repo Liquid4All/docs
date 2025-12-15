@@ -42,5 +42,8 @@ curl -X POST https://fal.run/<org-id>/<app-id>/v1/chat/completions \
 }'
 ```
 
-> [!NOTE]
-> Note that Fal endpoints expect the `Key` prefix in the `Authorization` header.
+:::note
+
+Fal endpoints expect the `Key` prefix in the `Authorization` header.
+
+:::
