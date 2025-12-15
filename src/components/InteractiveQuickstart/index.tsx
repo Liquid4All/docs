@@ -943,25 +943,25 @@ const InteractiveQuickstart: React.FC = () => {
       return {
         title: 'Step 1. Choose your use case',
         subtitle: 'Get personalized code snippets for your specific model and deployment platform.',
-        // icon: '🚀',
+        icon: '🚀',
       };
     } else if (!selectedPlatform) {
       return {
         title: 'Step 2. Choose your deployment platform',
         subtitle: `Deploy your ${selectedUseCase.name.toLowerCase()} solution on your preferred deployment platform`,
-        // icon: '🚀',
+        icon: '🚀',
       };
     } else if (!selectedModel) {
       return {
         title: 'Step 3. Choose model size',
         subtitle: `Each model represent a different trade-off between quality and speed/memory consumption`,
-        // icon: '🚀',
+        icon: '🚀',
       };
     } else {
       return {
         title: '',
         subtitle: '',
-        // icon: '📚',
+        icon: '📚',
       };
     }
   };
