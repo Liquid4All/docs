@@ -86,13 +86,13 @@ data class LeapDownloaderConfig (
 The `GenerationTimeParameters` class contains all the parameters for controlling model generation. It is a data class with the following fields:
 ```kotlin
 data class GenerationTimeParameters (
-    val samplingParameters: SamplingParameters? = null, TODO @davidberrios to confirm default behavior (pull from model config?)
-    val numberOfDecodingThreads: Int? = null, TODO @davidberrios to confirm default behavior (if the default is a number, should we just set that here instead of `null`?)
+    val samplingParameters: SamplingParameters? = null, // optional, defaults to values from the model manifest
+    val numberOfDecodingThreads: Int? = null, // optional, defaults to optimal number of threads at runtime
 )
 ```
 
 ## `SamplingParameters`
-The `SamplingParameters` class contains potential sampling options . It is a data class with the following fields: TODO @davidberrios to confirm default behavior
+The `SamplingParameters` class contains sampling options to override the values provided in a model manifest. It is a data class with the following fields:
 ```kotlin
 data class SamplingParameters (
     val temperature: Double? = null,
@@ -101,6 +101,10 @@ data class SamplingParameters (
     val repetitionPenalty: Double? = null,
 )
 ```
+:::warning
+Note: LEAP models are generally trained to perform well with the given set of parameters defined in the model manifest (used by default).
+    Overriding these values with the `SamplingParameters` class can result in degraded output quality - developers should proceed with caution.
+:::
 
 ## `ProgressData`
 The `ProgressData` class can be used to track download progress. It is a data class with the following fields:
@@ -114,7 +118,7 @@ data class ProgressData(
 ```
 
 ## `Manifest`
-The `Manifest` class contains metadata about a downloaded model. It is a data class with the following fields: TODO @davidberrios to provide description/default behavior for each field
+The `Manifest` class is a wrapper class to read and encapsulate data read from the model manifests, and contains metadata about a downloaded model. It is a data class with the following fields:
 ```kotlin
 data class Manifest(
     val schemaVersion: String,
@@ -125,6 +129,9 @@ data class Manifest(
     val pathOnDisk: String? = null,
 )
 ```
+:::info
+It is rarely necessary to instantiate a `Manifest` class directly. It is created internally by `LeapDownloader` to store and return metadata about downloaded models.
+:::
 </TabItem>
 <TabItem value="manual" label="LeapClient (legacy)">
 The `LeapClient` class is a legacy class that is no longer recommended for use. It is still available for backward compatibility, but it is recommended to use the new `LeapDownloader` class instead.
