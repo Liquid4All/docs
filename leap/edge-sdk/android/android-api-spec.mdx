@@ -30,15 +30,18 @@ The `LeapDownloader` class is the recommended entrypoint for loading models. It 
 ```kotlin
 class LeapDownloader(config: LeapDownloaderConfig = LeapDownloaderConfig())
 ```
+<div className="overflow-auto">
 | Field | Type | Required | Default | Description |
 |------- | ----|---|---|---|
 | `config` | `LeapDownloaderConfig` | No | `LeapDownloaderConfig()` | Configuration options for the downloader. See [`LeapDownloaderConfig`](#leapdownloaderconfig) for more details. |
+</div>
 
 <br/>
 ### `loadModel`
 Download a model from the LEAP Model Library and load it into memory. If the model has already been downloaded, it will be loaded from the local cache without a remote request.
 
 **Arguments**
+<div className="overflow-auto">
 | Name | Type | Required | Default | Description |
 |------- | ----|---|---|---|
 | `modelSlug` | `String` | Yes | - | The name of the model to load. See the [LEAP Model Library](https://leap.liquid.ai/models) for all available models. |
@@ -46,6 +49,7 @@ Download a model from the LEAP Model Library and load it into memory. If the mod
 | `modelLoadingOptions` | `ModelLoadingOptions` | No | `null` | Options for loading the model. See [`ModelLoadingOptions`](#modelloadingoptions) for more details. |
 | `generationTimeParameters` | `GenerationTimeParameters` | No | `null` | Parameters to control model generation at inference time. See [`GenerationTimeParameters`](#generationtimeparameters) for more details. |
 | `progress` | `(ProgressData) -> Unit` | No | `{}` | A callback function to receive the download progress. |
+</div>
 
 **Returns**
 
@@ -56,11 +60,13 @@ Download a model from the LEAP Model Library and load it into memory. If the mod
 Download a model from the LEAP Model Library and save it to the local cache, without loading it into memory.
 
 **Arguments**
+<div className="overflow-auto">
 | Name | Type | Required | Default | Description |
 |---|---|---|---|---|
 |`modelSlug`| `String` | Yes | - | The name of the model to download. See the [LEAP Model Library](https://leap.liquid.ai/models) for all available models. |
 |`quantizationSlug`| `String` | Yes | - | The quantization level to download for the given model. See the [LEAP Model Library](https://leap.liquid.ai/models) for all available quantization levels. |
 |`progress`| `(ProgressData) -> Unit` | No | `{}` | A callback function to receive the download progress. |
+</div>
 
 **Returns**
 

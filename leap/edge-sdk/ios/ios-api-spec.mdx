@@ -31,12 +31,14 @@ public struct Leap {
 ```
 
 **Arguments**
+<div className="overflow-auto">
 | Name | Type | Required | Default | Description |
 |------- | ----|---|---|---|
 | `model` | `String` | Yes | - | The name of the model to load. See the [LEAP Model Library](https://leap.liquid.ai/models) for all available models. |
 | `quantization` | `String` | Yes | - | The quantization level to download for the given model. See the [LEAP Model Library](https://leap.liquid.ai/models) for all available quantization levels. |
 | `options` | `LiquidInferenceEngineManifestOptions` | No | `nil` | Override options for loading the model (recommended for advanced use cases only). |
-| `downloadProgressHandler` | `(_ progress: Double, _speed: Int64) -> Void` | No | `nil` | A callback function to receive the download progress (as a percentage in decimal form between 0 and 1) and speed (in bytes per second). TODO @nickprokopiev is the "required" and "Default" correct for this? I assume a callback is not required, but don't see a default in the code |
+| `downloadProgressHandler` | `(_ progress: Double, _speed: Int64) -> Void` | No | `nil` | A callback function to receive the download progress (as a percentage in decimal form between 0 and 1) and speed (in bytes per second). |
+</div>
 
 **Returns**
 
@@ -59,11 +61,13 @@ public class ModelDownloader {
 ```
 
 **Arguments**
+<div className="overflow-auto">
 | Name | Type | Required | Default | Description |
 |------- | ----|---|---|---|
 | `model` | `String` | Yes | - | The name of the model to load. See the [LEAP Model Library](https://leap.liquid.ai/models) for all available models. |
 | `quantization` | `String` | Yes | - | The quantization level to download for the given model. See the [LEAP Model Library](https://leap.liquid.ai/models) for all available quantization levels. |
-| `downloadProgressHandler` | `(_ progress: Double, _speed: Int64) -> Void` | No | `nil` | A callback function to receive the download progress (as a percentage in decimal form between 0 and 1) and speed (in bytes per second). TODO @nickprokopiev is the "required" and "Default" correct for this? I assume a callback is not required, but don't see a default in the code |
+| `downloadProgressHandler` | `(_ progress: Double, _speed: Int64) -> Void` | No | `nil` | A callback function to receive the download progress (as a percentage in decimal form between 0 and 1) and speed (in bytes per second). |
+</div>
 
 **Returns**
 
@@ -73,7 +77,7 @@ public struct DownloadedModelManifest {
   public let manifest: ModelManifest
   public let localModelUrl: URL
   public let localMultimodalProjectorURL: URL?
-  public let local AudioDecoderURL: URL?
+  public let localAudioDecoderURL: URL?
   public let localAudioTokenizerURL: URL?
   public let chatTemplate: String?
 }
