@@ -19,7 +19,7 @@ const CARDS: { title: string; description: string; icon: TablerIcon; href: strin
     title: 'Liquid Foundation Models',
     description: 'Liquid Foundation Models (LFM) - efficient, scalable, open-source AI',
     icon: IconFileDescription,
-    href: '/lfm/getting-started',
+    href: '/lfm/getting-started/intro',
   },
   {
     title: 'LEAP',

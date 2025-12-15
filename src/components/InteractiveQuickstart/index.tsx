@@ -1,5 +1,5 @@
 import CodeBlock from '@theme/CodeBlock';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import styles from './styles.module.css';
 
@@ -325,7 +325,7 @@ print(tokenizer.decode(output[0], skip_special_tokens=False))
           title: 'Pull the model checkpoint from Hugging Face and start the server',
           description:
             'After running this command for the first time, the model weights will be cached in your local drive.',
-          code: `ollama run hf.co/LiquidAI/LFM2-8B-A1B-GGUF`,
+          code: `ollama pull hf.co/LiquidAI/LFM2-8B-A1B-GGUF`,
           language: 'shell',
         },
         {
@@ -465,7 +465,7 @@ print(tokenizer.decode(output[0], skip_special_tokens=False))
           title: 'Pull the model checkpoint from Hugging Face and start the server',
           description:
             'After running this command for the first time, the model weights will be cached in your local drive.',
-          code: `ollama run hf.co/LiquidAI/LFM2-2.6B-GGUF`,
+          code: `ollama pull hf.co/LiquidAI/LFM2-2.6B-GGUF`,
           language: 'shell',
         },
         {
@@ -810,6 +810,56 @@ const InteractiveQuickstart: React.FC = () => {
   const [selectedModel, setSelectedModel] = useState<(typeof models)[0] | null>(null);
   const [selectedPlatform, setSelectedPlatform] = useState<(typeof platforms)[0] | null>(null);
 
+  // URL parameter handling
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const useCaseParam = urlParams.get('useCase');
+    const modelParam = urlParams.get('model');
+    const platformParam = urlParams.get('platform');
+
+    // Set use case from URL
+    if (useCaseParam) {
+      const useCase = useCases.find((uc) => uc.id === useCaseParam);
+      if (useCase) {
+        setSelectedUseCase(useCase);
+      }
+    }
+
+    // Set model from URL
+    if (modelParam) {
+      const model = models.find((m) => m.id === modelParam);
+      if (model) {
+        setSelectedModel(model);
+      }
+    }
+
+    // Set platform from URL
+    if (platformParam) {
+      const platform = platforms.find((p) => p.id === platformParam);
+      if (platform) {
+        setSelectedPlatform(platform);
+      }
+    }
+  }, []);
+
+  // Update URL when selections change
+  useEffect(() => {
+    const params = new URLSearchParams();
+
+    if (selectedUseCase) {
+      params.set('useCase', selectedUseCase.id);
+    }
+    if (selectedModel) {
+      params.set('model', selectedModel.id);
+    }
+    if (selectedPlatform) {
+      params.set('platform', selectedPlatform.id);
+    }
+
+    const newUrl = `${window.location.pathname}${params.toString() ? '?' + params.toString() : ''}`;
+    window.history.replaceState({}, '', newUrl);
+  }, [selectedUseCase, selectedModel, selectedPlatform]);
+
   const reset = () => {
     setSelectedUseCase(null);
     setSelectedModel(null);
@@ -1091,13 +1141,13 @@ const InteractiveQuickstart: React.FC = () => {
         <div className={styles.nextStepsContainer}>
           <h2>Next steps</h2>
           <div className={styles.nextStepsGrid}>
-            <div className={styles.nextStepCard}>
+            <a href="/lfm/fine-tuning/trl" className={styles.nextStepCard}>
               <h3>🎯 Fine-tuning guides</h3>
               <p>
                 Learn how to fine-tune LFM2 models on your specific datasets for optimal
                 performance.
               </p>
-            </div>
+            </a>
             <a href="/examples" className={styles.nextStepCard}>
               <h3>📚 Examples</h3>
               <p>Explore practical examples and use cases to get inspired for your next project.</p>

@@ -13,29 +13,38 @@ We give you the models. You run them <span style={{color: 'var(--ifm-color-prima
 
 <div className="deployment-grid">
 
+<a href="/lfm/getting-started/quickstart" className="deployment-card-link">
 <div className="deployment-card">
 <div className="deployment-icon">🚀</div>
 <h4>Deploy your first LFM in minutes</h4>
 <p>Get started quickly with step-by-step deployment guides</p>
 </div>
+</a>
 
+<a href="/lfm/key-concepts/models" className="deployment-card-link">
 <div className="deployment-card">
 <div className="deployment-icon">🔍</div>
 <h4>Explore models</h4>
-<p>Browse our collection of models and their capabilities</p>
+<p>Browse our collection of language models and their capabilities</p>
 </div>
+</a>
 
+<a href="/lfm/inference/transformers" className="deployment-card-link">
 <div className="deployment-card">
 <div className="deployment-icon">📖</div>
 <h4>Inference guides</h4>
 <p>Learn how to run models for different use cases and platforms</p>
 </div>
+</a>
 
+<a href="/lfm/fine-tuning/trl" className="deployment-card-link">
 <div className="deployment-card">
 <div className="deployment-icon">🛠️</div>
 <h4>Fine tuning guides</h4>
 <p>Customize models for your specific requirements and datasets</p>
 </div>
+</a>
+
 </div>
 
 <style>{`

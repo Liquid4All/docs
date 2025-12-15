@@ -43,6 +43,9 @@ const sidebars: SidebarsConfig = {
         'inference/mlx',
         'inference/lm-studio',
         'inference/ollama',
+        'inference/modal-deployment',
+        'inference/baseten-deployment',
+        'inference/fal-deployment',
       ],
     },
     {

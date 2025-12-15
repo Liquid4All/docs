@@ -735,14 +735,7 @@
 }
 
 /* Purple borders and thicker border on hover for all cards */
-.useCaseCard:hover,
-.modelCard:hover,
-.platformCard:hover,
-.nextStepCard:hover,
-.changeButton:hover,
-.resetButton:hover {
-  /* border-width removed to prevent card expansion on hover */
-}
+/* Removed empty hover ruleset to prevent card expansion on hover */
 
 [data-theme='dark'] .useCaseCard:hover,
 [data-theme='dark'] .modelCard:hover,
