@@ -53,7 +53,7 @@
 
 .changeButton {
   background: transparent;
-  border: 1px solid #000000;
+  border: 2px solid #000000;
   color: var(--ifm-color-emphasis-700);
   padding: 0.375rem 0.75rem;
   border-radius: 6px;
@@ -77,7 +77,7 @@
 }
 
 .useCaseCard {
-  border: 1px solid #000000;
+  border: 2px solid #000000;
   border-radius: 12px;
   padding: 1.5rem;
   background: var(--ifm-background-surface-color);
@@ -132,7 +132,7 @@
 
 /* Grid Model Cards */
 .modelCard {
-  border: 1px solid #000000;
+  border: 2px solid #000000;
   border-radius: 12px;
   padding: 1rem;
   background: var(--ifm-background-surface-color);
@@ -271,7 +271,7 @@
 }
 
 .platformCard {
-  border: 1px solid #000000;
+  border: 2px solid #000000;
   border-radius: 12px;
   padding: 1.5rem;
   background: var(--ifm-background-surface-color);
@@ -489,7 +489,7 @@
 .nextStepCard {
   padding: 1.5rem;
   background: var(--ifm-background-surface-color);
-  border: 1px solid #000000;
+  border: 2px solid #000000;
   border-radius: 12px;
   transition: all 0.2s ease;
   cursor: pointer;
@@ -528,7 +528,7 @@
   display: inline-block;
   margin: 0;
   background: transparent;
-  border: 1px solid #000000;
+  border: 2px solid #000000;
   color: var(--ifm-color-emphasis-700);
   padding: 0.75rem 1.5rem;
   border-radius: 8px;
@@ -727,7 +727,7 @@
 [data-theme='dark'] .changeButton,
 [data-theme='dark'] .modelLink,
 [data-theme='dark'] .resetButton {
-  border: 1px solid #ffffff;
+  border: 2px solid #ffffff;
 }
 
 [data-theme='dark'] .codeHeader {
@@ -741,7 +741,7 @@
 .nextStepCard:hover,
 .changeButton:hover,
 .resetButton:hover {
-  border-width: 2px;
+  /* border-width removed to prevent card expansion on hover */
 }
 
 [data-theme='dark'] .useCaseCard:hover,
@@ -751,5 +751,5 @@
 [data-theme='dark'] .changeButton:hover,
 [data-theme='dark'] .resetButton:hover {
   border-color: var(--ifm-color-primary-lighter);
-  border-width: 2px;
+  /* border-width removed to prevent card expansion on hover */
 }

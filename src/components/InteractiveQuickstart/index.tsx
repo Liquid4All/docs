@@ -248,20 +248,19 @@ const platforms = [
 const tutorialTemplates = {
   'LFM2-8B-A1B': {
     transformers: {
-      title: 'LFM2-8B-A1B with Transformers',
+      title: 'LiquidAI/LFM2-8B-A1B with Transformers',
       description:
         'Perfect for research, prototyping, and quick experimentation in Jupyter notebooks.',
       steps: [
         {
           title: 'Install Python dependencies',
-          description:
-            'Install the latest version of transformers with the specific commit that supports LFM2 models.',
+          description: '',
           code: `pip install git+https://github.com/huggingface/transformers.git@0c9a72e4576fe4c84077f066e585129c97bfd4e6 bitsandbytes`,
-          language: 'bash',
+          language: 'shell',
         },
         {
           title: 'Run inference',
-          description: 'Use the pipeline interface for quick and easy text generation.',
+          description: '',
           code: `from transformers import AutoModelForCausalLM, AutoTokenizer
 
 # Load model and tokenizer
@@ -310,32 +309,107 @@ print(tokenizer.decode(output[0], skip_special_tokens=False))
         "Try different prompts to explore the model's capabilities",
       ],
     },
+    ollama: {
+      title: 'LiquidAI/LFM2-8B-A1B with Ollama',
+      description:
+        'Perfect for fast local development using an OpenAI API compatible server. Ollama is not intended for production-ready deployments.',
+      steps: [
+        {
+          title: 'Install Ollama',
+          description:
+            'Go to ollama.com/download and follow the installation instructions for your operating system. MacOS, Linux and Windows are supported.',
+          code: `# Download from https://ollama.com/download`,
+          language: 'shell',
+        },
+        {
+          title: 'Pull the model checkpoint from Hugging Face and start the server',
+          description:
+            'After running this command for the first time, the model weights will be cached in your local drive.',
+          code: `ollama run hf.co/LiquidAI/LFM2-8B-A1B-GGUF`,
+          language: 'shell',
+        },
+        {
+          title: 'Request chat completions',
+          description: 'Install the OpenAI Python SDK and generate chat completion with the model.',
+          code: `pip install openai`,
+          language: 'shell',
+        },
+        {
+          title: 'Generate chat completion',
+          description: 'Use the OpenAI client to interact with your local Ollama server.',
+          code: `def generate_chat_completion_with_ollama(
+    model_name: str = 'hf.co/LiquidAI/LFM2-8B-A1B-GGUF',
+    stream: bool = False,
+):
+    from openai import OpenAI
+
+    # Point to local Ollama server
+    client = OpenAI(
+        base_url='http://localhost:11434/v1',
+        api_key='ollama',  # required but unused
+    )
+
+    response = client.chat.completions.create(
+        model=model_name, # model name is ignored by Ollama
+        messages=[
+            {
+                'role': 'user',
+                'content': 'Why is C.Elegans?'
+            }
+        ],
+        stream=stream,
+    )
+
+    if stream:
+        for chunk in response:
+            if chunk.choices[0].delta.content:
+                print(chunk.choices[0].delta.content, end='', flush=True)
+        print()
+    else:
+        print(response.choices[0].message.content)
+
+# Print the full completion at once
+generate_chat_completion_with_ollama(stream=False)
+
+# Stream tokens as they are produced
+generate_chat_completion_with_ollama(stream=True)`,
+          language: 'python',
+        },
+      ],
+      tips: [
+        'Model weights are cached locally after first download',
+        'Use "ollama list" to check cached models',
+        'Supports both streaming and non-streaming responses',
+        'Compatible with OpenAI SDK for easy integration',
+      ],
+    },
   },
 
-  'LFM2-1.2B': {
+  'LFM2-2.6B': {
     transformers: {
-      title: 'LFM2-1.2B with Transformers',
+      title: 'LiquidAI/LFM2-2.6B with Transformers',
       description:
         'Perfect for research, prototyping, and quick experimentation in Jupyter notebooks.',
       steps: [
         {
           title: 'Install Python dependencies',
-          description:
-            'Install the latest version of transformers with the specific commit that supports LFM2 models.',
-          code: `pip install git+https://github.com/huggingface/transformers.git@0c9a72e4576fe4c84077f066e585129c97bfd4e6`,
-          language: 'bash',
+          description: '',
+          code: `pip install transformers
+# if you are using uv do
+# uv pip install transformers`,
+          language: 'shell',
         },
         {
-          title: 'Run inference with the pipeline() interface',
-          description: 'Use the pipeline interface for quick and easy text generation.',
+          title: 'Run inference',
+          description: '',
           code: `from transformers import AutoModelForCausalLM, AutoTokenizer
 
 # Load model and tokenizer
-model_id = "LiquidAI/LFM2-1.2B"
+model_id = "LiquidAI/LFM2-2.6B"
 model = AutoModelForCausalLM.from_pretrained(
     model_id,
     device_map="auto",
-    dtype="bfloat16",
+    torch_dtype="bfloat16",
 #    attn_implementation="flash_attention_2" <- uncomment on compatible GPU
 )
 tokenizer = AutoTokenizer.from_pretrained(model_id)
@@ -358,7 +432,13 @@ output = model.generate(
     max_new_tokens=512,
 )
 
-print(tokenizer.decode(output[0], skip_special_tokens=False))`,
+print(tokenizer.decode(output[0], skip_special_tokens=False))
+
+# <|startoftext|><|im_start|>user
+# What is C. elegans?<|im_end|>
+# <|im_start|>assistant
+# C. elegans, also known as Caenorhabditis elegans, is a small, free-living
+# nematode worm (roundworm) that belongs to the phylum Nematoda.`,
           language: 'python',
         },
       ],
@@ -369,190 +449,116 @@ print(tokenizer.decode(output[0], skip_special_tokens=False))`,
         "Try different prompts to explore the model's capabilities",
       ],
     },
-
     ollama: {
-      title: 'LFM2-1.2B with Ollama',
-      description: 'Easy local deployment with OpenAI-compatible API for seamless integration.',
+      title: 'LiquidAI/LFM2-2.6B with Ollama',
+      description:
+        'Perfect for fast local development using an OpenAI API compatible server. Ollama is not intended for production-ready deployments.',
       steps: [
         {
           title: 'Install Ollama',
-          description: 'Download and install Ollama for your operating system.',
-          code: `curl -fsSL https://ollama.ai/install.sh | sh`,
-          language: 'bash',
+          description:
+            'Go to ollama.com/download and follow the installation instructions for your operating system. MacOS, Linux and Windows are supported.',
+          code: `# Download from https://ollama.com/download`,
+          language: 'shell',
         },
         {
-          title: 'Pull and Run Model',
-          description: 'Download and start the LFM2 model locally.',
-          code: `ollama run hf.co/LiquidAI/LFM2-1.2B-GGUF`,
-          language: 'bash',
+          title: 'Pull the model checkpoint from Hugging Face and start the server',
+          description:
+            'After running this command for the first time, the model weights will be cached in your local drive.',
+          code: `ollama run hf.co/LiquidAI/LFM2-2.6B-GGUF`,
+          language: 'shell',
         },
         {
-          title: 'Connect via OpenAI API',
-          description: 'Use the familiar OpenAI client to interact with your local model.',
-          code: `from openai import OpenAI
-
-client = OpenAI(
-    base_url="http://localhost:11434/v1",
-    api_key="ollama"  # required but unused
-)
-
-response = client.chat.completions.create(
-    model="hf.co/LiquidAI/LFM2-1.2B-GGUF",
-    messages=[{"role": "user", "content": "What is machine learning?"}]
-)
-print(response.choices[0].message.content)`,
-          language: 'python',
-        },
-      ],
-      tips: [
-        'Ollama runs as a local server on port 11434',
-        'Compatible with any OpenAI SDK or library',
-        'Models are cached locally for faster subsequent loads',
-      ],
-    },
-
-    vllm: {
-      title: 'LFM2-1.2B with vLLM',
-      description: 'High-throughput serving for production deployments and GPU clusters.',
-      steps: [
-        {
-          title: 'Install vLLM',
-          description: 'Install vLLM for optimized inference serving.',
-          code: `pip install vllm`,
-          language: 'bash',
+          title: 'Request chat completions',
+          description: 'Install the OpenAI Python SDK',
+          code: `pip install openai`,
+          language: 'shell',
         },
         {
-          title: 'Direct Inference',
-          description: 'Use vLLM directly for batch inference with optimized performance.',
-          code: `from vllm import LLM, SamplingParams
+          title: 'Generate chat completion with streaming support',
+          description:
+            'Generate chat completion with the model, either streaming or non-streaming the response.',
+          code: `def generate_chat_completion_with_ollama(
+    model_name: str = 'hf.co/LiquidAI/LFM2-2.6B-GGUF',
+    stream: bool = False,
+):
+    from openai import OpenAI
 
-# Initialize model
-llm = LLM(model="LiquidAI/LFM2-1.2B")
+    # Point to local Ollama server
+    client = OpenAI(
+        base_url='http://localhost:11434/v1',
+        api_key='ollama',  # required but unused
+    )
 
-# Generate responses
-prompts = ["What is machine learning?"]
-sampling_params = SamplingParams(temperature=0.8, top_p=0.95)
-outputs = llm.generate(prompts, sampling_params)
-
-for output in outputs:
-    print(output.outputs[0].text)`,
-          language: 'python',
-        },
-        {
-          title: 'OpenAI-Compatible Server',
-          description: "Start a server that's compatible with OpenAI API for easy integration.",
-          code: `python -m vllm.entrypoints.openai.api_server \\
-    --model LiquidAI/LFM2-1.2B \\
-    --host 0.0.0.0 \\
-    --port 8000`,
-          language: 'bash',
-        },
-      ],
-      tips: [
-        'vLLM automatically optimizes for your hardware',
-        'Supports continuous batching for higher throughput',
-        'Great for serving multiple concurrent requests',
-      ],
-    },
-  },
-
-  'LFM2-VL-1.6B': {
-    transformers: {
-      title: 'LFM2-VL-1.6B Vision Model',
-      description:
-        'Multimodal model that can process both text and images for comprehensive understanding.',
-      steps: [
-        {
-          title: 'Install Dependencies',
-          description: 'Install the required packages including image processing libraries.',
-          code: `pip install transformers torch pillow`,
-          language: 'bash',
-        },
-        {
-          title: 'Load Model and Processor',
-          description: 'Load both the model and processor for handling multimodal inputs.',
-          code: `from transformers import AutoProcessor, AutoModelForImageTextToText
-from transformers.image_utils import load_image
-
-# Load model and processor
-model = AutoModelForImageTextToText.from_pretrained(
-    "LiquidAI/LFM2-VL-1.6B",
-    device_map="auto",
-    dtype="bfloat16"
-)
-processor = AutoProcessor.from_pretrained("LiquidAI/LFM2-VL-1.6B")`,
-          language: 'python',
-        },
-        {
-          title: 'Process Image and Text',
-          description: 'Create a conversation with both image and text inputs.',
-          code: `# Load image and create conversation
-url = "https://www.ilankelman.org/stopsigns/australia.jpg"
-image = load_image(url)
-conversation = [
-    {
-        "role": "user",
-        "content": [
-            {"type": "image", "image": image},
-            {"type": "text", "text": "What is in this image?"},
+    response = client.chat.completions.create(
+        model=model_name, # model name is ignored by Ollama
+        messages=[
+            {
+                'role': 'user',
+                'content': 'Why is C.Elegans?'
+            }
         ],
-    },
-]
+        stream=stream,
+    )
 
-# Generate response
-inputs = processor.apply_chat_template(
-    conversation,
-    add_generation_prompt=True,
-    return_tensors="pt",
-    return_dict=True,
-    tokenize=True,
-).to(model.device)
-outputs = model.generate(**inputs, max_new_tokens=64)
-response = processor.batch_decode(outputs, skip_special_tokens=True)[0]
-print(response)`,
+    if stream:
+        for chunk in response:
+            if chunk.choices[0].delta.content:
+                print(chunk.choices[0].delta.content, end='', flush=True)
+        print()
+    else:
+        print(response.choices[0].message.content)
+
+# Print the full completion at once - useful for offline jobs and applications that do not
+# require instant feedback to the user.
+generate_chat_completion_with_ollama(
+  model_name='hf.co/LiquidAI/LFM2-2.6B-GGUF',
+  stream=False,
+)
+
+# Stream tokens to the console as they are produced - useful for user-facing applications
+# that need to provide feedback to the user in real-time.
+generate_chat_completion_with_ollama(
+  model_name='hf.co/LiquidAI/LFM2-2.6B-GGUF',
+  stream=True,
+)`,
           language: 'python',
         },
       ],
       tips: [
-        'Supports various image formats (JPEG, PNG, WebP)',
-        'Can handle multiple images in one conversation',
-        'Use bfloat16 for better performance on modern GPUs',
+        'Model weights are cached locally after first download',
+        'Use "ollama list" to check cached models',
+        'Supports both streaming and non-streaming responses',
+        'Compatible with OpenAI SDK for programmatic usage',
       ],
     },
   },
-};
 
-// Function to create Transformers tutorial for any LFM2 model
-const createTransformersTutorial = (model) => {
-  const installCommand =
-    model.id === 'LFM2-8B-A1B'
-      ? `pip install git+https://github.com/huggingface/transformers.git@0c9a72e4576fe4c84077f066e585129c97bfd4e6 bitsandbytes`
-      : `pip install git+https://github.com/huggingface/transformers.git@0c9a72e4576fe4c84077f066e585129c97bfd4e6`;
-
-  const modelConfig = model.id === 'LFM2-8B-A1B' ? `    load_in_8bit=True,` : '';
-
-  return {
-    title: `${model.name} with Transformers`,
-    description: `Perfect for research, prototyping, and quick experimentation in Jupyter notebooks.`,
-    steps: [
-      {
-        title: 'Install Python dependencies',
-        description:
-          'Install the latest version of transformers with the specific commit that supports LFM2 models.',
-        code: installCommand,
-        language: 'bash',
-      },
-      {
-        title: 'Run inference with the pipeline() interface',
-        description: 'Use the pipeline interface for quick and easy text generation.',
-        code: `from transformers import AutoModelForCausalLM, AutoTokenizer
+  'LFM2-1.2B': {
+    transformers: {
+      title: 'LiquidAI/LFM2-1.2B with Transformers',
+      description:
+        'Perfect for research, prototyping, and quick experimentation in Jupyter notebooks.',
+      steps: [
+        {
+          title: 'Install Python dependencies',
+          description: '',
+          code: `pip install transformers
+# if you are using uv do
+# uv pip install transformers`,
+          language: 'shell',
+        },
+        {
+          title: 'Run inference',
+          description: '',
+          code: `from transformers import AutoModelForCausalLM, AutoTokenizer
 
 # Load model and tokenizer
-model_id = "${model.name}"
+model_id = "LiquidAI/LFM2-1.2B"
 model = AutoModelForCausalLM.from_pretrained(
     model_id,
     device_map="auto",
-    dtype="bfloat16",${modelConfig}
+    torch_dtype="bfloat16",
 #    attn_implementation="flash_attention_2" <- uncomment on compatible GPU
 )
 tokenizer = AutoTokenizer.from_pretrained(model_id)
@@ -575,48 +581,157 @@ output = model.generate(
     max_new_tokens=512,
 )
 
-print(tokenizer.decode(output[0], skip_special_tokens=False))`,
-        language: 'python',
-      },
-    ],
-    tips: [
-      'Use `device_map="auto"` for automatic GPU/CPU selection',
-      'Uncomment `attn_implementation="flash_attention_2"` on compatible GPUs for faster inference',
-      'Adjust temperature and min_p parameters to control generation creativity',
-      "Try different prompts to explore the model's capabilities",
-    ],
-  };
+print(tokenizer.decode(output[0], skip_special_tokens=False))
+
+# <|startoftext|><|im_start|>user
+# What is C. elegans?<|im_end|>
+# <|im_start|>assistant
+# C. elegans, also known as Caenorhabditis elegans, is a small, free-living
+# nematode worm (roundworm) that belongs to the phylum Nematoda.`,
+          language: 'python',
+        },
+      ],
+      tips: [
+        'Use `device_map="auto"` for automatic GPU/CPU selection',
+        'Uncomment `attn_implementation="flash_attention_2"` on compatible GPUs for faster inference',
+        'Adjust temperature and min_p parameters to control generation creativity',
+        "Try different prompts to explore the model's capabilities",
+      ],
+    },
+  },
+
+  'LFM2-700M': {
+    transformers: {
+      title: 'LiquidAI/LFM2-700M with Transformers',
+      description:
+        'Perfect for research, prototyping, and quick experimentation in Jupyter notebooks.',
+      steps: [
+        {
+          title: 'Install Python dependencies',
+          description: '',
+          code: `pip install transformers
+# if you are using uv do
+# uv pip install transformers`,
+          language: 'shell',
+        },
+        {
+          title: 'Run inference',
+          description: '',
+          code: `from transformers import AutoModelForCausalLM, AutoTokenizer
+
+# Load model and tokenizer
+model_id = "LiquidAI/LFM2-700M"
+model = AutoModelForCausalLM.from_pretrained(
+    model_id,
+    device_map="auto",
+    torch_dtype="bfloat16",
+#    attn_implementation="flash_attention_2" <- uncomment on compatible GPU
+)
+tokenizer = AutoTokenizer.from_pretrained(model_id)
+
+# Generate answer
+prompt = "What is C. elegans?"
+input_ids = tokenizer.apply_chat_template(
+    [{"role": "user", "content": prompt}],
+    add_generation_prompt=True,
+    return_tensors="pt",
+    tokenize=True,
+).to(model.device)
+
+output = model.generate(
+    input_ids,
+    do_sample=True,
+    temperature=0.3,
+    min_p=0.15,
+    repetition_penalty=1.05,
+    max_new_tokens=512,
+)
+
+print(tokenizer.decode(output[0], skip_special_tokens=False))
+
+# <|startoftext|><|im_start|>user
+# What is C. elegans?<|im_end|>
+# <|im_start|>assistant
+# C. elegans, also known as Caenorhabditis elegans, is a small, free-living
+# nematode worm (roundworm) that belongs to the phylum Nematoda.`,
+          language: 'python',
+        },
+      ],
+      tips: [
+        'Use `device_map="auto"` for automatic GPU/CPU selection',
+        'Uncomment `attn_implementation="flash_attention_2"` on compatible GPUs for faster inference',
+        'Adjust temperature and min_p parameters to control generation creativity',
+        "Try different prompts to explore the model's capabilities",
+      ],
+    },
+  },
+
+  'LFM2-350M': {
+    transformers: {
+      title: 'LiquidAI/LFM2-350M with Transformers',
+      description:
+        'Perfect for research, prototyping, and quick experimentation in Jupyter notebooks.',
+      steps: [
+        {
+          title: 'Install Python dependencies',
+          description: '',
+          code: `pip install transformers
+# if you are using uv do
+# uv pip install transformers`,
+          language: 'shell',
+        },
+        {
+          title: 'Run inference',
+          description: '',
+          code: `from transformers import AutoModelForCausalLM, AutoTokenizer
+
+# Load model and tokenizer
+model_id = "LiquidAI/LFM2-350M"
+model = AutoModelForCausalLM.from_pretrained(
+    model_id,
+    device_map="auto",
+    torch_dtype="bfloat16",
+#    attn_implementation="flash_attention_2" <- uncomment on compatible GPU
+)
+tokenizer = AutoTokenizer.from_pretrained(model_id)
+
+# Generate answer
+prompt = "What is C. elegans?"
+input_ids = tokenizer.apply_chat_template(
+    [{"role": "user", "content": prompt}],
+    add_generation_prompt=True,
+    return_tensors="pt",
+    tokenize=True,
+).to(model.device)
+
+output = model.generate(
+    input_ids,
+    do_sample=True,
+    temperature=0.3,
+    min_p=0.15,
+    repetition_penalty=1.05,
+    max_new_tokens=512,
+)
+
+print(tokenizer.decode(output[0], skip_special_tokens=False))
+
+# <|startoftext|><|im_start|>user
+# What is C. elegans?<|im_end|>
+# <|im_start|>assistant
+# C. elegans, also known as Caenorhabditis elegans, is a small, free-living
+# nematode worm (roundworm) that belongs to the phylum Nematoda.`,
+          language: 'python',
+        },
+      ],
+      tips: [
+        'Use `device_map="auto"` for automatic GPU/CPU selection',
+        'Uncomment `attn_implementation="flash_attention_2"` on compatible GPUs for faster inference',
+        'Adjust temperature and min_p parameters to control generation creativity',
+        "Try different prompts to explore the model's capabilities",
+      ],
+    },
+  },
 };
-
-// Generate placeholder tutorials for missing combinations
-models.forEach((model) => {
-  if (!tutorialTemplates[model.id]) {
-    tutorialTemplates[model.id] = {};
-  }
-
-  platforms.forEach((platform) => {
-    if (!tutorialTemplates[model.id][platform.id]) {
-      // Use the standard Transformers template for LFM2 models with Transformers platform
-      if (platform.id === 'transformers' && model.name.includes('LFM2')) {
-        tutorialTemplates[model.id][platform.id] = createTransformersTutorial(model);
-      } else {
-        tutorialTemplates[model.id][platform.id] = {
-          title: `${model.name} on ${platform.name}`,
-          description: `Tutorial for ${model.name} deployment using ${platform.name} - coming soon!`,
-          steps: [
-            {
-              title: 'Setup',
-              description: `Instructions for setting up ${model.name} with ${platform.name}.`,
-              code: `# Setup instructions for ${model.name} with ${platform.name} coming soon!`,
-              language: 'bash',
-            },
-          ],
-          tips: [`${platform.name} integration with ${model.name} is being developed`],
-        };
-      }
-    }
-  });
-});
 
 // Modality definitions
 const modalityIcons = {
@@ -672,28 +787,6 @@ const ModelCard: React.FC<ModelCardProps> = ({ model, isSelected, onClick }) => 
     <div className={styles.modelInfo}>
       <h3>{model.name}</h3>
       <p className={styles.modelDescription}>{model.description}</p>
-      <div className={styles.modelLinks}>
-        <a
-          href={`https://huggingface.co/${model.name}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className={styles.modelLink}
-          onClick={(e) => e.stopPropagation()}
-        >
-          <span className={styles.hfIcon}>🤗</span>
-          Model weights
-        </a>
-        <a
-          href={`https://huggingface.co/${model.name}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className={styles.modelLink}
-          onClick={(e) => e.stopPropagation()}
-        >
-          <span className={styles.docIcon}>📄</span>
-          Model card
-        </a>
-      </div>
     </div>
   </div>
 );
@@ -811,7 +904,7 @@ const InteractiveQuickstart: React.FC = () => {
     } else if (!selectedModel) {
       return {
         title: 'Step 3. Choose model size',
-        subtitle: `Select the best LFM model for your ${selectedUseCase.name.toLowerCase()} use case`,
+        subtitle: `Each model represent a different trade-off between quality and speed/memory consumption`,
         // icon: '🚀',
       };
     } else {
@@ -999,21 +1092,25 @@ const InteractiveQuickstart: React.FC = () => {
           <h2>Next steps</h2>
           <div className={styles.nextStepsGrid}>
             <div className={styles.nextStepCard}>
-              <h3>🚀 Advanced Usage</h3>
-              <p>Learn about fine-tuning, custom parameters, and advanced configuration options.</p>
+              <h3>🎯 Fine-tuning guides</h3>
+              <p>
+                Learn how to fine-tune LFM2 models on your specific datasets for optimal
+                performance.
+              </p>
             </div>
-            <div className={styles.nextStepCard}>
-              <h3>🔧 Deployment</h3>
-              <p>Deploy your model to production with optimized settings and scaling strategies.</p>
-            </div>
-            <div className={styles.nextStepCard}>
-              <h3>📚 API Reference</h3>
-              <p>Explore the complete API documentation and available model parameters.</p>
-            </div>
-            <div className={styles.nextStepCard}>
+            <a href="/examples" className={styles.nextStepCard}>
+              <h3>📚 Examples</h3>
+              <p>Explore practical examples and use cases to get inspired for your next project.</p>
+            </a>
+            <a
+              href="https://discord.gg/DFU3WQeaYD"
+              target="_blank"
+              rel="noopener noreferrer"
+              className={styles.nextStepCard}
+            >
               <h3>💬 Community</h3>
               <p>Join our Discord community to ask questions and share your implementations.</p>
-            </div>
+            </a>
           </div>
         </div>
       </div>
