@@ -1,5 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-
 @layer theme, base, components, utilities;
 @import 'tailwindcss/theme.css' layer(theme);
 
@@ -167,7 +165,7 @@
   --ifm-link-hover-color: var(--color-purple-600);
 
   --foreground: var(--color-neutral-950);
-  --muted-foreground: var(--color-neutral-700);
+  --muted-foreground: var(--color-neutral-500);
   --card-foreground: var(--color-neutral-950);
   --popover-foreground: var(--color-neutral-950);
 
@@ -186,9 +184,9 @@
   --chart-4: var(--color-purple-300);
   --chart-5: var(--color-sky-500);
 
-  --border: #000000;
+  --border: var(--color-black-8);
   --ring: var(--color-sky-400);
-  --sidebar-border: #000000;
+  --sidebar-border: var(--color-black-12);
   --sidebar-ring: var(--color-neutral-400);
 
   --aa-muted-color-rgb: 115, 115, 115 !important;
@@ -250,9 +248,9 @@
   --chart-4: var(--color-purple-200);
   --chart-5: var(--color-sky-400);
 
-  --border: #ffffff;
+  --border: var(--color-white-12);
   --ring: var(--color-sky-400);
-  --sidebar-border: #ffffff;
+  --sidebar-border: var(--color-white-16);
   --sidebar-ring: var(--color-neutral-500);
 
   --aa-muted-color-rgb: 161, 161, 161 !important;
@@ -357,22 +355,15 @@
    Keep fonts/colors, match Sphinx layout
    ======================================== */
 
-/* Global font standardization - Inter font with system fallbacks */
+/* Global font standardization - Match homepage (Tailwind default) */
 html,
 body {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
-  font-weight: 300; /* Light font weight for all text */
-}
-
-/* Remove all rounded corners globally */
-* {
-  border-radius: 0 !important;
+  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
 }
 
 /* Apply to all text elements, but preserve code fonts */
 * {
   font-family: inherit;
-  font-weight: inherit; /* Inherit the thin weight */
 }
 
 /* Ensure code elements keep monospace font */
@@ -388,34 +379,34 @@ pre,
   font-feature-settings: "liga" 0, "calt" 0 !important;
 }
 
-/* Typography - Inter font */
+/* Typography - Match homepage font */
 .theme-doc-markdown {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
   font-size: 15px;
   line-height: 1.6;
   color: var(--foreground);
 }
 
 .theme-doc-markdown h1 {
-  font-size: 2.5em;
+  font-size: 2em;
   font-weight: normal;
   margin: 0.67em 0 0.5em 0;
   color: var(--foreground);
-  border-bottom: none;
+  border-bottom: 1px solid var(--border);
   padding-bottom: 0.3em;
 }
 
 .theme-doc-markdown h2 {
-  font-size: 2em;
+  font-size: 1.5em;
   font-weight: normal;
   margin: 0.83em 0 0.5em 0;
   color: var(--foreground);
-  border-bottom: none;
+  border-bottom: 1px solid var(--border);
   padding-bottom: 0.3em;
 }
 
 .theme-doc-markdown h3 {
-  font-size: 1.5em;
+  font-size: 1.25em;
   font-weight: normal;
   margin: 1em 0 0.5em 0;
   color: var(--foreground);
@@ -474,11 +465,10 @@ pre,
   color: var(--color-purple-300);
 }
 
-/* Code blocks - Simple like Sphinx with borders */
+/* Code blocks - Simple like Sphinx */
 .theme-doc-markdown pre {
   background-color: #f5f5f5;
-  border: 1px solid #000000 !important;
-  border-radius: 4px;
+  border: none !important;
   padding: 0.05em 0.5em;
   margin: 1em 0;
   overflow-x: auto;
@@ -490,33 +480,40 @@ pre,
 
 [data-theme='dark'] .theme-doc-markdown pre {
   background-color: #2d2d2d;
-  border: 1px solid #ffffff !important;
-  border-radius: 4px;
+  border: none !important;
   box-shadow: none !important;
   outline: none !important;
   padding: 0.05em 0.5em;
 }
 
-/* Prism code block containers - add borders */
+/* Fix Prism code block containers - remove all borders in both modes */
 .theme-code-block,
 .prism-code,
 pre[class*="language-"],
 div[class*="theme-code-block"],
 div[class*="prism-code"] {
-  border: 1px solid #000000 !important;
-  border-radius: 4px !important;
+  border: none !important;
+  border-color: transparent !important;
   box-shadow: none !important;
   outline: none !important;
   padding: 0.05em 0.5em !important;
 }
 
-/* Remove borders from inner elements to avoid double borders */
+/* Remove ALL borders from code blocks in both modes - target everything */
+.theme-code-block,
+.prism-code,
+pre[class*="language-"],
+div[class*="theme-code-block"],
+div[class*="prism-code"],
 .theme-code-block > *,
 .prism-code > *,
 .theme-code-block pre,
 .prism-code pre,
 .theme-code-block code,
-.prism-code code {
+.prism-code code,
+[class*="codeBlock"],
+[class*="code-block"],
+[class*="CodeBlock"] {
   border: none !important;
   border-width: 0 !important;
   border-color: transparent !important;
@@ -529,15 +526,7 @@ div[class*="prism-code"] {
 [data-theme='dark'] .prism-code,
 [data-theme='dark'] pre[class*="language-"],
 [data-theme='dark'] div[class*="theme-code-block"],
-[data-theme='dark'] div[class*="prism-code"] {
-  border: 1px solid #ffffff !important;
-  border-radius: 4px !important;
-  box-shadow: none !important;
-  outline: none !important;
-  background-color: #2d2d2d !important;
-}
-
-/* Remove borders from inner elements to avoid double borders */
+[data-theme='dark'] div[class*="prism-code"],
 [data-theme='dark'] .theme-code-block > *,
 [data-theme='dark'] .prism-code > *,
 [data-theme='dark'] .theme-code-block pre,
@@ -553,6 +542,7 @@ div[class*="prism-code"] {
   border-style: none !important;
   box-shadow: none !important;
   outline: none !important;
+  background-color: #2d2d2d !important;
 }
 
 /* Ensure code block pre elements have proper padding - same for both modes */
@@ -924,17 +914,11 @@ article .tabs-container {
 .tabs__item:hover {
   color: var(--color-purple-500);
   background-color: rgba(73, 2, 148, 0.05);
-  border: 1px solid var(--color-purple-500);
-  border-radius: 4px 4px 0 0;
-  border-bottom: 2px solid transparent;
 }
 
 [data-theme='dark'] .tabs__item:hover {
   color: var(--color-purple-400);
   background-color: rgba(86, 3, 173, 0.08);
-  border: 1px solid var(--color-purple-400);
-  border-radius: 4px 4px 0 0;
-  border-bottom: 2px solid transparent;
 }
 
 .tabs__item--active {
@@ -1041,67 +1025,26 @@ article {
 
 /* Right sidebar table of contents - Simple */
 .table-of-contents {
-  border-left: 1px solid #000000;
+  border-left: 1px solid var(--border);
   padding-left: 1em;
   font-size: 0.9em;
   width: 230px;
   min-width: 230px;
 }
 
-[data-theme='dark'] .table-of-contents {
-  border-left: 1px solid #ffffff;
-}
-
-/* Main sidebar container border - force white/black borders */
-.theme-doc-sidebar-container {
-  border-right: 1px solid #000000 !important;
-}
-
-[data-theme='dark'] .theme-doc-sidebar-container {
-  border-right: 1px solid #ffffff !important;
-}
-
-/* Also target any potential wrapper containers */
-.theme-doc-root {
-  border: none !important;
-}
-
-.theme-doc-layout {
-  border: none !important;
-}
-
-/* Override any potential Docusaurus default borders */
-aside.theme-doc-sidebar-container,
-nav.theme-doc-sidebar-container,
-div.theme-doc-sidebar-container {
-  border-right: 1px solid #000000 !important;
-}
-
-[data-theme='dark'] aside.theme-doc-sidebar-container,
-[data-theme='dark'] nav.theme-doc-sidebar-container,
-[data-theme='dark'] div.theme-doc-sidebar-container {
-  border-right: 1px solid #ffffff !important;
-}
-
 .table-of-contents__link {
   color: var(--muted-foreground);
   text-decoration: none;
   display: block;
-  padding: 4px 8px;
-  border: 1px solid transparent;
-  border-radius: 4px;
+  padding: 0.25em 0;
 }
 
 .table-of-contents__link:hover {
   color: var(--color-purple-500);
-  border: 1px solid var(--color-purple-500);
-  background-color: rgba(73, 2, 148, 0.05);
 }
 
 [data-theme='dark'] .table-of-contents__link:hover {
   color: var(--color-purple-400);
-  border: 1px solid var(--color-purple-400);
-  background-color: rgba(86, 3, 173, 0.08);
 }
 
 .table-of-contents__link--active {
@@ -1143,15 +1086,11 @@ div.theme-doc-sidebar-container {
 
 /* Navbar - Simple */
 .navbar {
-  border-bottom: 1px solid #000000;
+  border-bottom: 1px solid var(--border);
   background-color: var(--background);
   padding: 0.5em 1em;
   box-shadow: none;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
-}
-
-[data-theme='dark'] .navbar {
-  border-bottom: 1px solid #ffffff;
+  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
 }
 
 .navbar__brand {
@@ -1164,21 +1103,14 @@ div.theme-doc-sidebar-container {
   color: var(--foreground);
   font-weight: normal;
   font-family: inherit;
-  border: 1px solid transparent;
-  border-radius: 4px;
-  padding: 4px 8px;
 }
 
 .navbar__link:hover {
   color: var(--color-purple-500);
-  border: 1px solid var(--color-purple-500);
-  background-color: rgba(73, 2, 148, 0.05);
 }
 
 [data-theme='dark'] .navbar__link:hover {
   color: var(--color-purple-400);
-  border: 1px solid var(--color-purple-400);
-  background-color: rgba(86, 3, 173, 0.08);
 }
 
 .navbar__link--active {
@@ -1187,32 +1119,6 @@ div.theme-doc-sidebar-container {
 
 [data-theme='dark'] .navbar__link--active {
   color: var(--color-purple-400);
-}
-
-/* Mobile menu hover styles */
-.navbar-sidebar .navbar__link,
-.navbar-sidebar__items .navbar__link,
-.navbar-sidebar .menu__link {
-  border: 1px solid transparent !important;
-  border-radius: 4px !important;
-  padding: 4px 8px !important;
-  transition: all 0.2s ease !important;
-}
-
-.navbar-sidebar .navbar__link:hover,
-.navbar-sidebar__items .navbar__link:hover,
-.navbar-sidebar .menu__link:hover {
-  color: var(--color-purple-500) !important;
-  border: 1px solid var(--color-purple-500) !important;
-  background-color: rgba(73, 2, 148, 0.05) !important;
-}
-
-[data-theme='dark'] .navbar-sidebar .navbar__link:hover,
-[data-theme='dark'] .navbar-sidebar__items .navbar__link:hover,
-[data-theme='dark'] .navbar-sidebar .menu__link:hover {
-  color: var(--color-purple-400) !important;
-  border: 1px solid var(--color-purple-400) !important;
-  background-color: rgba(86, 3, 173, 0.08) !important;
 }
 
 /* Footer - Simple */
@@ -1294,126 +1200,14 @@ a.bg-\(--card\):hover * {
 .padding-horiz--md a,
 .cardContainer a {
   border-bottom: none !important;
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  border-radius: 8px;
-  transition: box-shadow 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
-  box-shadow: 0 0 0 0px transparent;
-  /* Prevent any layout shifts during hover */
-  will-change: box-shadow, background-color, border-color;
-  contain: layout style;
 }
 
-[data-theme='dark'] .cardContainer a {
-  border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-/* Card hover effect - only shadow and colors, no layout changes */
-.cardContainer a:hover {
-  box-shadow: 0 6px 16px rgba(73, 2, 148, 0.2) !important;
-  background-color: rgba(73, 2, 148, 0.05) !important;
-  border-color: var(--color-purple-500) !important;
-  /* Explicitly prevent any dimension changes */
-  border-width: 1px !important;
-  border-style: solid !important;
-  /* Force same box model */
-  box-sizing: border-box !important;
-}
-
-[data-theme='dark'] .cardContainer a:hover {
-  box-shadow: 0 6px 16px rgba(86, 3, 173, 0.25) !important;
-  background-color: rgba(86, 3, 173, 0.08) !important;
-  border-color: var(--color-purple-400) !important;
-}
-
-/* Button hover borders */
-button:hover,
-.button:hover,
-[role="button"]:hover {
-  border: 1px solid var(--color-purple-500) !important;
-  border-radius: 4px;
-  background-color: rgba(73, 2, 148, 0.05);
-}
-
-[data-theme='dark'] button:hover,
-[data-theme='dark'] .button:hover,
-[data-theme='dark'] [role="button"]:hover {
-  border: 1px solid var(--color-purple-400) !important;
-  background-color: rgba(86, 3, 173, 0.08);
-}
-
-/* Details summary hover borders */
-.theme-doc-markdown details summary:hover {
-  border: 1px solid var(--color-purple-500);
-  border-radius: 4px;
-  background-color: rgba(73, 2, 148, 0.05);
-}
-
-[data-theme='dark'] .theme-doc-markdown details summary:hover {
-  border: 1px solid var(--color-purple-400);
-  background-color: rgba(86, 3, 173, 0.08);
-}
-
-/* Code token styling - remove italics and update colors */
+/* Code token styling */
 .token {
   font-family: 'JetBrains Mono', 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono',
     Consolas, 'Courier New', monospace;
   font-variant-ligatures: none;
   font-feature-settings: "liga" 0, "calt" 0;
-  font-style: normal !important;
-}
-
-/* Remove all italics from code tokens */
-.token.comment,
-.token.keyword,
-.token.string,
-.token.function,
-.token.operator,
-.token.punctuation,
-.token.number,
-.token.boolean,
-.token.property,
-.token.attr-name,
-.token.attr-value,
-.token.tag,
-.token.selector,
-.token.class-name {
-  font-style: normal !important;
-}
-
-/* Syntax highlighting colors to match the example */
-.token.keyword,
-.token.builtin,
-.token.function,
-.token.class-name {
-  color: #C586C0 !important; /* Purple for keywords */
-}
-
-.token.string,
-.token.attr-value {
-  color: #CE9178 !important; /* Orange for strings */
-}
-
-.token.comment {
-  color: #6A9955 !important; /* Green for comments */
-}
-
-.token.number,
-.token.boolean {
-  color: #B5CEA8 !important; /* Light green for numbers */
-}
-
-.token.operator,
-.token.punctuation {
-  color: #D4D4D4 !important; /* Light grey for operators */
-}
-
-.token.property,
-.token.attr-name {
-  color: #9CDCFE !important; /* Light blue for properties */
-}
-
-.token.tag {
-  color: #569CD6 !important; /* Blue for tags */
 }
 
 /* Ensure no cutoff/overflow issues */
@@ -1449,21 +1243,14 @@ article {
   font-weight: 600;
   font-size: 0.95em;
   color: var(--foreground);
-  border: 1px solid transparent;
-  border-radius: 4px;
 }
 
 .theme-doc-sidebar-container .menu__list-item-collapsible > .menu__link:hover {
   color: var(--color-purple-500);
-  border: 1px solid var(--color-purple-500);
-  border-radius: 4px;
-  background-color: rgba(73, 2, 148, 0.05);
 }
 
 [data-theme='dark'] .theme-doc-sidebar-container .menu__list-item-collapsible > .menu__link:hover {
   color: var(--color-purple-400);
-  border: 1px solid var(--color-purple-400);
-  background-color: rgba(86, 3, 173, 0.08);
 }
 
 /* Regular doc links (child pages) - normal weight */
@@ -1471,21 +1258,14 @@ article {
   font-weight: normal;
   font-size: 0.9em;
   color: var(--muted-foreground);
-  border: 1px solid transparent;
-  border-radius: 4px;
 }
 
 .theme-doc-sidebar-container .menu__list-item:not(.menu__list-item-collapsible) .menu__link:hover {
   color: var(--color-purple-500);
-  border: 1px solid var(--color-purple-500);
-  border-radius: 4px;
-  background-color: rgba(73, 2, 148, 0.05);
 }
 
 [data-theme='dark'] .theme-doc-sidebar-container .menu__list-item:not(.menu__list-item-collapsible) .menu__link:hover {
   color: var(--color-purple-400);
-  border: 1px solid var(--color-purple-400);
-  background-color: rgba(86, 3, 173, 0.08);
 }
 
 /* Active page - left border and background highlight */
@@ -1555,18 +1335,6 @@ article {
   text-align: center; /* Center text in button */
 }
 
-.pagination-nav__link:hover {
-  border: 2px solid var(--color-purple-500);
-  background-color: rgba(73, 2, 148, 0.05);
-  color: var(--color-purple-500);
-}
-
-[data-theme='dark'] .pagination-nav__link:hover {
-  border: 2px solid var(--color-purple-400);
-  background-color: rgba(86, 3, 173, 0.08);
-  color: var(--color-purple-400);
-}
-
 /* Previous button - left aligned */
 .pagination-nav__item--prev {
   margin-right: auto;
@@ -1605,121 +1373,6 @@ article {
 /* When there's only one button, it should still be fixed width */
 .pagination-nav:has(.pagination-nav__link:only-child) .pagination-nav__link {
   width: 200px;
-}
-
-/* Menu arrows - make thinner and set colors for light/dark modes */
-:root {
-  --ifm-menu-link-sublist-icon: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16px" height="16px" viewBox="0 0 24 24"><path fill="none" stroke="rgba(0,0,0,1)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M7 14l5-5 5 5"></path></svg>');
-  --ifm-menu-link-sublist-icon-filter: none;
-}
-
-[data-theme='dark'] {
-  --ifm-menu-link-sublist-icon: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16px" height="16px" viewBox="0 0 24 24"><path fill="none" stroke="rgba(255,255,255,1)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M7 14l5-5 5 5"></path></svg>');
-  --ifm-menu-link-sublist-icon-filter: none;
-}
-
-/* InteractiveQuickstart component - match Introduction page card styles exactly */
-.useCaseCard,
-.modelCard,
-.platformCard,
-.nextStepCard {
-  /* Apply same black borders as Introduction cards */
-  border: 1px solid #000000 !important;
-  border-radius: 8px !important;
-  transition: box-shadow 0.2s ease, background-color 0.2s ease, border-color 0.2s ease !important;
-  box-shadow: 0 0 0 0px transparent !important;
-  will-change: box-shadow, background-color, border-color;
-  contain: layout style;
-}
-
-[data-theme='dark'] .useCaseCard,
-[data-theme='dark'] .modelCard,
-[data-theme='dark'] .platformCard,
-[data-theme='dark'] .nextStepCard {
-  border: 1px solid #ffffff !important;
-}
-
-/* Match Introduction page card hover effects exactly */
-.useCaseCard:hover,
-.modelCard:hover,
-.platformCard:hover,
-.nextStepCard:hover {
-  transform: none !important;
-  box-shadow: 0 6px 16px rgba(73, 2, 148, 0.2) !important;
-  background-color: rgba(73, 2, 148, 0.05) !important;
-  border: 1px solid var(--color-purple-500) !important;
-}
-
-[data-theme='dark'] .useCaseCard:hover,
-[data-theme='dark'] .modelCard:hover,
-[data-theme='dark'] .platformCard:hover,
-[data-theme='dark'] .nextStepCard:hover {
-  box-shadow: 0 6px 16px rgba(86, 3, 173, 0.25) !important;
-  background-color: rgba(86, 3, 173, 0.08) !important;
-  border: 1px solid var(--color-purple-400) !important;
-}
-
-/* Also apply to buttons and other interactive elements for consistency */
-.changeButton,
-.resetButton {
-  border: 1px solid #000000 !important;
-  transition: box-shadow 0.2s ease, background-color 0.2s ease, border-color 0.2s ease !important;
-  will-change: box-shadow, background-color, border-color;
-}
-
-[data-theme='dark'] .changeButton,
-[data-theme='dark'] .resetButton {
-  border: 1px solid #ffffff !important;
-}
-
-.changeButton:hover,
-.resetButton:hover {
-  transform: none !important;
-  box-shadow: 0 6px 16px rgba(73, 2, 148, 0.2) !important;
-  background-color: rgba(73, 2, 148, 0.05) !important;
-  border: 1px solid var(--color-purple-500) !important;
-}
-
-[data-theme='dark'] .changeButton:hover,
-[data-theme='dark'] .resetButton:hover {
-  box-shadow: 0 6px 16px rgba(86, 3, 173, 0.25) !important;
-  background-color: rgba(86, 3, 173, 0.08) !important;
-  border: 1px solid var(--color-purple-400) !important;
-}
-
-/* Make light text more readable in light mode only */
-.header p,
-.useCaseCard p,
-.modelCard p,
-.platformCard p,
-.nextStepCard p,
-.useCaseDescription,
-.modelDescription,
-.platformCard p {
-  color: var(--color-neutral-700) !important;
-}
-
-/* Also target any elements using --ifm-color-emphasis-600 */
-*[style*="--ifm-color-emphasis-600"],
-.theme-doc-markdown p {
-  color: var(--color-neutral-700) !important;
-}
-
-/* Restore white text for dark mode */
-[data-theme='dark'] .header p,
-[data-theme='dark'] .useCaseCard p,
-[data-theme='dark'] .modelCard p,
-[data-theme='dark'] .platformCard p,
-[data-theme='dark'] .nextStepCard p,
-[data-theme='dark'] .useCaseDescription,
-[data-theme='dark'] .modelDescription,
-[data-theme='dark'] .platformCard p {
-  color: var(--color-white) !important;
-}
-
-[data-theme='dark'] *[style*="--ifm-color-emphasis-600"],
-[data-theme='dark'] .theme-doc-markdown p {
-  color: var(--color-white) !important;
 }
 
 .pagination-nav__link:hover {
