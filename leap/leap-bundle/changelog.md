@@ -4,6 +4,12 @@ sidebar_position: 4
 
 # Changelog
 
+## `v0.8.0` - 2025-12-16
+
+**Improvements**
+
+- Update GGUF model download interface to take model name and quantization rather than manifest URL directly.
+
 ## `v0.7.0` - 2025-11-19
 
 **New features**
