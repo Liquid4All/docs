@@ -35,10 +35,11 @@ leap-bundle download LFM2-1.2B --quantization Q5_K_M
 ```
 
 The command will:
-1. Create an output directory based on the URL or according to `--output-path` if specified.
-2. Download the JSON manifest file for the given combination of model and quantization, if it exists.
-3. Download all model files referenced in the manifest.
-4. Update the local manifest to use relative paths to the downloaded files.
+1. Resolve the appropriate manifest URL for the model/quantization.
+2. Create an output directory based on the URL or according to `--output-path` if specified.
+3. Download the JSON manifest file for the given combination of model and quantization, if it exists.
+4. Download all model files referenced in the manifest.
+5. Update the local manifest to use relative paths to the downloaded files.
 
 :::tip
 Manifest downloads don't require authentication with `leap-bundle login`. They work immediately after installation.
