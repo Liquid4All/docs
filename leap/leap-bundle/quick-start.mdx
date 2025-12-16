@@ -25,20 +25,20 @@ pip install leap-bundle
 ## Quick Start for GGUF Model Download
 
 ```sh
-leap-bundle download <manifest-url>
+leap-bundle download <model-name> [--quantization <quantization>]
 ```
 
-Example with a HuggingFace URL:
+Example:
 
 ```sh
-leap-bundle download https://huggingface.co/LiquidAI/LeapBundles/blob/main/LFM2-Audio-1.5B-GGUF/F16.json
+leap-bundle download LFM2-1.2B --quantization Q5_K_M
 ```
 
 The command will:
 1. Create an output directory based on the URL or according to `--output-path` if specified.
-2. Download the JSON manifest file.
+2. Download the JSON manifest file for the given combination of model and quantization, if it exists.
 3. Download all model files referenced in the manifest.
-4. Update the manifest to use relative paths to the downloaded files.
+4. Update the local manifest to use relative paths to the downloaded files.
 
 :::tip
 Manifest downloads don't require authentication with `leap-bundle login`. They work immediately after installation.
