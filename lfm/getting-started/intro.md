@@ -63,6 +63,9 @@ We give you the models. You run them <span style={{color: 'var(--ifm-color-prima
   background: var(--ifm-background-surface-color);
   transition: all 0.2s ease;
   text-align: center;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
 .deployment-card:hover {
@@ -88,5 +91,6 @@ We give you the models. You run them <span style={{color: 'var(--ifm-color-prima
   color: var(--ifm-color-emphasis-700);
   font-size: 0.9rem;
   line-height: 1.4;
+  flex: 1;
 }
 `}</style>
