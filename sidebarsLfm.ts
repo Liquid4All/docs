@@ -16,6 +16,16 @@ const sidebars: SidebarsConfig = {
     },
     {
       type: 'category',
+      label: 'Key concepts',
+      collapsed: true,
+      items: [
+        'key-concepts/chat-template',
+        'key-concepts/text-generation-and-prompting',
+        'key-concepts/tool-use',
+      ],
+    },
+    {
+      type: 'category',
       label: 'Inference',
       collapsed: true,
       link: {
@@ -59,16 +69,6 @@ const sidebars: SidebarsConfig = {
       items: [
         'frameworks/leap', // Keep in nav, but pagination will skip it
         'frameworks/outlines',
-      ],
-    },
-    {
-      type: 'category',
-      label: 'Key concepts',
-      collapsed: true,
-      items: [
-        'key-concepts/chat-template',
-        'getting-started/text-generation-and-prompting',
-        'key-concepts/tool-use',
       ],
     },
     {
