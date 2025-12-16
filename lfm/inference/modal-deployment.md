@@ -1,8 +1,16 @@
-# Modal Deployment
+# Modal
 
-All the source code is available in this repository: https://github.com/Liquid4All/lfm-inference/tree/main
+[Modal](https://modal.com) is a serverless cloud platform for running AI/ML workloads with instant autoscaling on GPUs and CPUs.
 
-## Use `vLLM` docker image
+This guide provides scripts for deploying Liquid AI models on Modal.
+
+## Clone the repository
+
+```shell
+git clone https://github.com/Liquid4All/lfm-inference
+```
+
+## Option 1. Use `vLLM` docker image
 
 You can use the `vLLM` docker image `vllm/vllm-openai` to deploy LFM.
 
@@ -26,7 +34,7 @@ This is the recommended approach for production deployment.
 
 :::
 
-## Use `vLLM` PyPI package
+## Option 2. Use `vLLM` PyPI package
 
 Alternatively, you can also use the `vLLM` PyPI package to deploy LFM. This approach is based on the Modal [example](https://modal.com/docs/examples/vllm_inference) for deploying OpenAI-compatible LLM service with vLLM, with a few modifications.
 

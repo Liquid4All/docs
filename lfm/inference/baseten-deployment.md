@@ -1,6 +1,14 @@
-# Baseten deployment
+# Baseten
 
-All the source code is available in this repository: https://github.com/Liquid4All/lfm-inference/tree/main
+[Baseten](https://www.baseten.co/) is an AI infrastructure platform for deploying and serving ML models with optimized inference, autoscaling, and multi-cloud support.
+
+This guide provides scripts for deploying Liquid AI models on Baseten.
+
+## Clone the repository
+
+```shell
+git clone https://github.com/Liquid4All/lfm-inference
+```
 
 ## Deployment
 

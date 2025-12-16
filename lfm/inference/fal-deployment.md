@@ -1,10 +1,20 @@
-# Fal Deployment
+# Fal
 
-All the source code is available in this repository: https://github.com/Liquid4All/lfm-inference/tree/main
+[Fal](https://docs.fal.ai/) is a serverless generative media platform offering lightning-fast inference for AI models for image, video, and audio generation.
+
+This guide provides scripts for deploying Liquid AI models on Fal.
+
+## Clone the repository
+
+```shell
+git clone https://github.com/Liquid4All/lfm-inference
+```
 
 ## Deployment
 
 ```sh
+cd fal
+
 # run one-off server
 fal run deploy-lfm2.py::serve
 
