@@ -1,15 +1,15 @@
 ---
-sidebar_label: "Introduction"
+sidebar_label: "Welcome to the LFM docs"
 ---
 
 # Welcome to the LFM docs
 
-Liquid Foundational Models (LFMs) are a family of [open-source](https://huggingface.co/LiquidAI/collections) models built by Liquid AI from the ground up with
+Liquid Foundational Models (LFMs) are a family of **[open-source](https://huggingface.co/LiquidAI/collections)** models built by Liquid AI from the ground up with
 - **state-of-the-art quality**, outpeforming similar-sizeed models on benchmarks.
-- **lowest memory consumption** thanks to its [optimal hybrid architecture](https://www.arxiv.org/pdf/2511.23404).
+- **lowest memory consumption** thanks to its **[optimal hybrid architecture](https://www.arxiv.org/pdf/2511.23404)**.
 - **the fastest inference in the world**, and most probably in the entire Universe.
 
-We give you the models. You run them <span style={{color: 'var(--ifm-color-primary)'}}>**wherever**</span> you want.
+We give you the models. You run them **wherever** you want.
 
 <div className="deployment-grid">
 

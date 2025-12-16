@@ -7,25 +7,11 @@ const sidebars: SidebarsConfig = {
       type: 'category',
       label: 'Getting started',
       collapsed: false,
-      link: {
-        type: 'doc',
-        id: 'getting-started/quickstart',
-      },
       items: [
         'getting-started/intro',
         'getting-started/quickstart', // Keep in nav, but pagination will skip it
         'key-concepts/models',
         'getting-started/vision',
-      ],
-    },
-    {
-      type: 'category',
-      label: 'Key concepts',
-      collapsed: true,
-      items: [
-        'key-concepts/chat-template',
-        'getting-started/text-generation-and-prompting',
-        'key-concepts/tool-use',
       ],
     },
     {
@@ -73,6 +59,16 @@ const sidebars: SidebarsConfig = {
       items: [
         'frameworks/leap', // Keep in nav, but pagination will skip it
         'frameworks/outlines',
+      ],
+    },
+    {
+      type: 'category',
+      label: 'Key concepts',
+      collapsed: true,
+      items: [
+        'key-concepts/chat-template',
+        'getting-started/text-generation-and-prompting',
+        'key-concepts/tool-use',
       ],
     },
     {
