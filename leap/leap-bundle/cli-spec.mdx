@@ -584,7 +584,7 @@ leap-bundle list --last --json
 This command supports two modes of operation:
 
 1. **Bundle Request Download**: Download a generated model bundle file from a completed request
-2. **Manifest Download**: Download GGUF model files from a JSON manifest URL
+2. **LEAP Model Download**: Download GGUF model files for a model from the [LEAP Model Library](https://leap.liquid.ai/models)
 
 #### Mode 1: Bundle Request Download
 
@@ -650,12 +650,12 @@ A completed request will be automatically archived 5 days after completion. You 
 to download it afterwards.
 :::
 
-#### Mode 2: Manifest Download
+#### Mode 2: LEAP Model Download
 
-Download GGUF model files from a JSON manifest URL.
+Download GGUF files for a model from the [LEAP Model Library](https://leap.liquid.ai/models).
 
 ```sh
-leap-bundle download <manifest-url> [--output-path <path>] [--overwrite]
+leap-bundle download <model-name> [--quantization <quantization>] [--output-path <path>] [--overwrite]
 ```
 
 **Arguments**
@@ -664,6 +664,7 @@ leap-bundle download <manifest-url> [--output-path <path>] [--overwrite]
 
 **Options**
 
+- `--quantization <quantization>`: Quantization level to download for the model. You can find available quantization levels for each model in the [LEAP Model Library](https://leap.liquid.ai/models). Defaults to `Q5_K_M` if not specified.
 - `--output-path <path>`: Directory to save the downloaded files. If not specified, auto-generates a directory name based on the manifest URL.
 - `--overwrite`: By default, if the JSON file already exists in the ouptut path, the command will throw an error. With this flag, the existing file will be overwritten.
 
@@ -672,27 +673,27 @@ leap-bundle download <manifest-url> [--output-path <path>] [--overwrite]
 - Create an output directory based on the URL or according to `--output-path` if specified.
 - Download the JSON manifest file.
 - Download all model files referenced in `load_time_parameters` in the manifest
-- Update the manifest to use relative paths to the downloaded files.
+- Update the local manifest to use relative paths to the downloaded files.
 - **Does not require authentication** - works immediately after installation
 
 **Examples**
 
 ```sh
 # Download from manifest URL (auto-generates directory name)
-leap-bundle download https://huggingface.co/LiquidAI/LeapBundles/blob/main/LFM2-Audio-1.5B-GGUF/F16.json
+leap-bundle download LFM2-1.2B --quantization Q5_K_M
 
 # Example output
-
-```
-ℹ Downloading manifest from URL...
-✓ Manifest downloaded successfully
-ℹ Downloading model files...
-Downloading model file 1/3... ✓
-Downloading model file 2/3... ✓
-Downloading model file 3/3... ✓
-✓ All files downloaded successfully
-ℹ Updating manifest with relative paths...
-✓ Download completed successfully! Files saved to: LFM2-Audio-1.5B-GGUF-F16/
+ℹ Verifying URL returns JSON content...
+ℹ No output path specified, using: <default_path>
+ℹ Downloading manifest from https://huggingface.co/LiquidAI/LeapBundles/resolve/main/LFM2-1.2B-GGUF/Q5_K_M.json...
+⠙ Downloading manifest completed!
+✓ Manifest downloaded to <default_path>/Q5_K_M.json
+ℹ Found 2 parameters in load_time_parameters
+ℹ Downloading model: LFM2-1.2B-Q5_K_M.gguf...
+⠼ Downloading LFM2-1.2B-Q5_K_M.gguf completed!
+✓ Downloaded LFM2-1.2B-Q5_K_M.gguf
+✓ Manifest updated with relative paths: <default_path>/Q5_K_M.json
+✓ All files downloaded successfully to: <default_path>
 ```
 
 **Manifest Format**
