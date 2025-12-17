@@ -144,6 +144,20 @@
   </div>
 </a>
 
+<a href="/examples/laptop-examples/lfm2-english-to-korean" className="example-card" data-platform="laptops" data-type="customization" data-search="english korean translation machine translation fine-tuning lfm2 bidirectional flores benchmark grpo">
+  <div className="example-header">
+    <span className="example-icon">🌐</span>
+    <div className="example-title">English-Korean Translation</div>
+  </div>
+  <div className="example-description">
+    Efficient bidirectional translation system powered by LFM2 1.2B fine-tuned for Korean-English translation with automatic language detection.
+  </div>
+  <div className="example-tags">
+    <span className="example-tag">Laptop</span>
+    <span className="example-tag">Machine Translation</span>
+  </div>
+</a>
+
 </div>
 
 :::note[See also]
