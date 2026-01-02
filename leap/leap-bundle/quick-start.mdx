@@ -6,11 +6,10 @@ sidebar_position: 1
 
 The Bundling Service helps users create and manage model bundles for Liquid Edge AI Platform (LEAP). Currently users interact with it through `leap-bundle`, a command-line interface (CLI).
 
-Here is a typical user workflow:
+The CLI supports two inference engines for model bundling:
 
-- Download an open source base model.
-- Customize the base model with your own dataset e.g. by finetuning.
-- Create a model bundle using the `leap-bundle` CLI for LEAP SDK.
+- **GGUF (default)**: Generates `.gguf` files for llama.cpp inference
+- **ExecuteTorch**: Generates `.bundle` files for ExecuteTorch inference (use `--executorch` flag)
 
 The CLI also supports downloading GGUF models directly from JSON manifest files.
 
@@ -52,13 +51,7 @@ Manifest downloads don't require authentication with `leap-bundle login`. They w
 the model architecture comes from a base model that is part of the LEAP model library.
 :::
 
-If you have a custom-trained or fine-tuned model, you can create a model bundle for use with LEAP SDK.
-
-Here is a typical user workflow:
-
-- Download an open source base model.
-- Customize the base model with your own dataset e.g. by finetuning.
-- Create a model bundle using the `leap-bundle` CLI for LEAP SDK.
+If you have a custom-trained or fine-tuned model, you can create a model bundle for use with LEAP SDK. By default, the CLI generates GGUF files for llama.cpp inference. Use the `--executorch` flag to generate ExecuteTorch bundles instead.
 
 ### Authenticate
 
@@ -151,10 +144,10 @@ Example output:
 ℹ Requesting download for bundle request 1...
 ✓ Download URL obtained for request 1
 Downloading bundle output... ✓
-✓ Download completed successfully! File saved to: input-8da4w_output_8da8w-seq_8196.bundle
+✓ Download completed successfully! File saved to: model-Q4_K_M.gguf
 ```
 
-The model bundle file will be saved in the current directory with a `.bundle` extension.
+The model files will be saved in the current directory. GGUF bundling produces `.gguf` files, while ExecuteTorch bundling produces `.bundle` files.
 
 ### Complete Example
 
@@ -166,8 +159,11 @@ pip install leap-bundle
 leap-bundle login <api-key>
 leap-bundle whoami
 
-# 2. Create a bundle request
+# 2. Create a bundle request (GGUF by default)
 leap-bundle create <model-directory>
+
+# Or create an ExecuteTorch bundle
+leap-bundle create <model-directory> --executorch
 
 # 3. Monitor the request (repeat until completed)
 leap-bundle list
@@ -175,8 +171,8 @@ leap-bundle list
 # 4. Download when ready
 leap-bundle download <request-id>
 
-# 5. Your bundle file is now ready to use!
-ls -la <downloaded-bundle-file>
+# 5. Your model files are now ready to use!
+ls -la <downloaded-model-files>
 ```
 
 ### Managing Requests

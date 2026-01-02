@@ -4,6 +4,19 @@ sidebar_position: 4
 
 # Changelog
 
+## `v0.9.0` - 2026-01-02
+
+**New features**
+
+- GGUF is now the default inference engine for model bundling, generating `.gguf` files for llama.cpp inference.
+- Add `--executorch` flag to use ExecuteTorch bundling instead of GGUF.
+- Add `--mmproj-quantization` option for GGUF bundling of vision-language and audio models.
+- Support downloading multiple `.gguf` files for GGUF bundle requests.
+
+**Improvements**
+
+- Update `--quantization` option to support GGUF quantization types (e.g., `Q4_K_M`, `Q8_0`, `F16`).
+
 ## `v0.8.0` - 2025-12-16
 
 **Improvements**

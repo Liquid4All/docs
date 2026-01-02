@@ -8,7 +8,9 @@ sidebar_position: 2
 
 The Model Bundling Service provides a command-line interface (CLI) with two main features:
 
-1. **LEAP Bundle Requests**: Upload model directories, create bundle requests, monitor processing status, and download completed bundles for the LEAP (Liquid Edge AI Platform)
+1. **LEAP Bundle Requests**: Upload model directories, create bundle requests, monitor processing status, and download completed bundles for the LEAP (Liquid Edge AI Platform). Supports two inference engines:
+   - **GGUF (default)**: Generates `.gguf` files for llama.cpp inference
+   - **ExecuteTorch**: Generates `.bundle` files for ExecuteTorch inference
 2. **Manifest Downloads**: Download pre-packaged GGUF models from JSON manifest URLs without authentication
 
 ## Requirements
@@ -209,7 +211,11 @@ leap-bundle create <input-path>
 - `--sequential`: Upload files sequentially. This is the fallback option if parallel upload fails.
   - If neither `--parallel` nor `--sequential` is specified, the CLI will attempt parallel upload first, and fall back to sequential if it fails.
   - If both `--parallel` and `--sequential` are specified, `--parallel` takes precedence.
-- `--quantization <type>`: Specify the quantization type for the model bundle. Valid options: `8da4w_output_8da8w` (default), `8da8w_output_8da8w`.
+- `--executorch`: Use ExecuteTorch bundling instead of GGUF. By default, the CLI uses GGUF bundling.
+- `--quantization <type>`: Specify the quantization type for the model bundle.
+  - For GGUF (default): `Q4_K_M` (default), `Q8_0`, `F16`, and [other llama.cpp quantization types](https://github.com/ggml-org/llama.cpp/blob/master/ggml/src/ggml-quants.c).
+  - For ExecuteTorch: `8da4w_output_8da8w` (default), `8da8w_output_8da8w`.
+- `--mmproj-quantization <type>`: (GGUF only) Specify the mmproj quantization type for vision-language or audio models. Valid options: `q4`, `q8` (default), `f16`.
 
 **Behavior**
 
@@ -245,8 +251,17 @@ leap-bundle create ./my-model-directory --json
 # Example JSON output when request already exists
 {"error": "A bundle request with the same input hash already exists: req_xyz789abc123", "status": "exists"}
 
-# Create bundle with specific quantization
-leap-bundle create ./my-model-directory --quantization 8da8w_output_8da8w
+# Create GGUF bundle with specific quantization
+leap-bundle create ./my-model-directory --quantization Q8_0
+
+# Create ExecuteTorch bundle
+leap-bundle create ./my-model-directory --executorch
+
+# Create ExecuteTorch bundle with specific quantization
+leap-bundle create ./my-model-directory --executorch --quantization 8da8w_output_8da8w
+
+# Create GGUF bundle for VL model with mmproj quantization
+leap-bundle create ./my-vl-model-directory --mmproj-quantization f16
 ```
 
 **Validation**
@@ -588,7 +603,7 @@ This command supports two modes of operation:
 
 #### Mode 1: Bundle Request Download
 
-Download the bundle file for a completed request.
+Download the model files for a completed request.
 
 ```sh
 leap-bundle download <request-id> [--output-path <path>]
@@ -600,26 +615,27 @@ leap-bundle download <request-id> [--output-path <path>]
 
 **Options**
 
-- `--output-path <path>`: Directory to save the downloaded file (default: current directory)
+- `--output-path <path>`: Directory to save the downloaded files (default: current directory)
 
 **Behavior**
 
-- Requests a signed download URL from the LEAP platform
-- Downloads the bundle file using the signed URL
-- Saves the file with a default name or to the specified output path
+- Requests signed download URLs from the LEAP platform
+- Downloads the model files using the signed URLs
+- Saves files with default names or to the specified output path
+- GGUF requests may produce multiple `.gguf` files; ExecuteTorch requests produce a single `.bundle` file
 - **Requires authentication** via `leap-bundle login`
 
 **Examples**
 
 ```sh
-# Download bundle request to current directory
+# Download GGUF bundle request to current directory
 leap-bundle download 18734
 
 # Example output
 ℹ Requesting download for bundle request 18734...
 ✓ Download URL obtained for request 18734
 Downloading bundle output... ✓
-✓ Download completed successfully! File saved to: input-8da4w_output_8da8w-seq_8196.bundle
+✓ Download completed successfully! File saved to: model-Q4_K_M.gguf
 
 # Download to specific directory
 leap-bundle download 18734 --output-path ./downloads/
@@ -628,7 +644,7 @@ leap-bundle download 18734 --output-path ./downloads/
 ℹ Requesting download for bundle request 18734...
 ✓ Download URL obtained for request 18734
 Downloading bundle output... ✓
-✓ Download completed successfully! File saved to: downloads/input-8da4w_output_8da8w-seq_8196.bundle
+✓ Download completed successfully! File saved to: downloads/model-Q4_K_M.gguf
 ```
 
 **Error Cases**
