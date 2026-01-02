@@ -10,7 +10,7 @@ The Model Bundling Service provides a command-line interface (CLI) with two main
 
 1. **LEAP Bundle Requests**: Upload model directories, create bundle requests, monitor processing status, and download completed bundles for the LEAP (Liquid Edge AI Platform). Supports two inference engines:
    - **GGUF (default)**: Generates `.gguf` files for llama.cpp inference
-   - **ExecuteTorch**: Generates `.bundle` files for ExecuteTorch inference
+   - **ExecuteTorch** (deprecated): Generates `.bundle` files for ExecuteTorch inference. This option may be removed in a future version.
 2. **Manifest Downloads**: Download pre-packaged GGUF models from JSON manifest URLs without authentication
 
 ## Requirements
@@ -211,10 +211,10 @@ leap-bundle create <input-path>
 - `--sequential`: Upload files sequentially. This is the fallback option if parallel upload fails.
   - If neither `--parallel` nor `--sequential` is specified, the CLI will attempt parallel upload first, and fall back to sequential if it fails.
   - If both `--parallel` and `--sequential` are specified, `--parallel` takes precedence.
-- `--executorch`: Use ExecuteTorch bundling instead of GGUF. By default, the CLI uses GGUF bundling.
+- `--executorch` (deprecated): Use ExecuteTorch bundling instead of GGUF. By default, the CLI uses GGUF bundling. This option may be removed in a future version.
 - `--quantization <type>`: Specify the quantization type for the model bundle.
-  - For GGUF (default): `Q4_K_M` (default), `Q8_0`, `F16`, and [other llama.cpp quantization types](https://github.com/ggml-org/llama.cpp/blob/master/ggml/src/ggml-quants.c).
-  - For ExecuteTorch: `8da4w_output_8da8w` (default), `8da8w_output_8da8w`.
+  - For GGUF (default): `Q4_K_M` (default), `Q8_0`, `F16`, and [other llama.cpp quantization types](https://github.com/ggml-org/llama.cpp/blob/0a0bba05e8390ab7e4a54bb8c0ed0a25da64cf62/tools/quantize/quantize.cpp#L22-L58).
+  - For ExecuteTorch (deprecated): `8da4w_output_8da8w` (default), `8da8w_output_8da8w`.
 - `--mmproj-quantization <type>`: (GGUF only) Specify the mmproj quantization type for vision-language or audio models. Valid options: `q4`, `q8` (default), `f16`.
 
 **Behavior**
