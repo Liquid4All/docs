@@ -11,15 +11,18 @@ const sidebars: SidebarsConfig = {
         'getting-started/intro',
         'getting-started/quickstart', // Keep in nav, but pagination will skip it
         'key-concepts/models',
-        'getting-started/vision',
       ],
     },
     {
       type: 'category',
       label: 'Key concepts',
       collapsed: true,
+      link: {
+        type: 'doc',
+        id: 'key-concepts/chat-template',
+      },
       items: [
-        'key-concepts/chat-template',
+        'key-concepts/chat-template', // Keep in nav, but pagination will skip it
         'key-concepts/text-generation-and-prompting',
         'key-concepts/tool-use',
       ],
@@ -55,7 +58,7 @@ const sidebars: SidebarsConfig = {
       items: [
         'fine-tuning/trl', // Keep in nav, but pagination will skip it
         'fine-tuning/unsloth',
-        'fine-tuning/axolotl',
+        // 'fine-tuning/axolotl', // Hidden but not deleted
       ],
     },
     {
