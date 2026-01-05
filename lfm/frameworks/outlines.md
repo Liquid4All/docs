@@ -30,8 +30,8 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 
 # Load model with Outlines
 model = outlines.from_transformers(
-    AutoModelForCausalLM.from_pretrained("LiquidAI/LFM2-1.2B", device_map="auto"),
-    AutoTokenizer.from_pretrained("LiquidAI/LFM2-1.2B")
+    AutoModelForCausalLM.from_pretrained("LiquidAI/LFM2.5-1.2B-Instruct", device_map="auto"),
+    AutoTokenizer.from_pretrained("LiquidAI/LFM2.5-1.2B-Instruct")
 )
 ```
 
