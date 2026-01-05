@@ -239,7 +239,7 @@ The LFM model collection includes general-purpose language models, vision-langua
 
 ## 💬 LFM2 {#lfm2}
 
-[LFM2](https://huggingface.co/collections/LiquidAI/lfm2-686d721927015b2ad73eaa38) is a family of general-purpose text-only language models optimized for edge AI and on-device deployment.
+[LFM2](https://huggingface.co/LiquidAI/collections) is a family of general-purpose text-only language models optimized for edge AI and on-device deployment.
 
 <a id="lfm2-5-text"></a>
 ### LFM2.5 Models <span style={{display: 'none'}}>Text</span> <span style={{display: 'inline-block', backgroundColor: 'rgba(34, 197, 94, 0.2)', color: 'rgba(22, 163, 74, 1)', padding: '0.2em 0.6em', borderRadius: '0.375rem', fontSize: '0.75em', fontWeight: 500, marginLeft: '0.5em', verticalAlign: 'middle', letterSpacing: '0.01em'}}>Latest Release</span>
@@ -263,7 +263,7 @@ The LFM model collection includes general-purpose language models, vision-langua
 
 ## 👁️ LFM2-VL {#lfm2-vl}
 
-[LFM2-VL](https://huggingface.co/collections/LiquidAI/lfm2-vl-68963bbc84a610f7638d5ffa) is a family of Vision Language Models (VLMs) that support text and image as inputs and text as outputs. These models are built on the LFM2 text model backbone with dynamic, user-tunable SigLIP2 NaFlex image encoders (Base 86M and shape-optimized 400M variants).
+[LFM2-VL](https://huggingface.co/LiquidAI/collections) is a family of Vision Language Models (VLMs) that support text and image as inputs and text as outputs. These models are built on the LFM2 text model backbone with dynamic, user-tunable SigLIP2 NaFlex image encoders (Base 86M and shape-optimized 400M variants).
 
 <a id="lfm2-5-vision"></a>
 ### LFM2.5 Models <span style={{display: 'none'}}>Vision</span> <span style={{display: 'inline-block', backgroundColor: 'rgba(34, 197, 94, 0.2)', color: 'rgba(22, 163, 74, 1)', padding: '0.2em 0.6em', borderRadius: '0.375rem', fontSize: '0.75em', fontWeight: 500, marginLeft: '0.5em', verticalAlign: 'middle', letterSpacing: '0.01em'}}>Latest Release</span>
@@ -283,7 +283,7 @@ The LFM model collection includes general-purpose language models, vision-langua
 
 ## 🎵 LFM2-Audio {#lfm2-audio}
 
-[LFM2-Audio](https://huggingface.co/collections/LiquidAI/lfm2-audio-68ddd9cf81a89f1f4b5bb391) is a family of audio foundation models that support text and audio both as inputs and outputs.
+[LFM2-Audio](https://huggingface.co/LiquidAI/collections) is a family of audio foundation models that support text and audio both as inputs and outputs.
 
 <a id="lfm2-5-audio"></a>
 ### LFM2.5 Models <span style={{display: 'none'}}>Audio</span> <span style={{display: 'inline-block', backgroundColor: 'rgba(34, 197, 94, 0.2)', color: 'rgba(22, 163, 74, 1)', padding: '0.2em 0.6em', borderRadius: '0.375rem', fontSize: '0.75em', fontWeight: 500, marginLeft: '0.5em', verticalAlign: 'middle', letterSpacing: '0.01em'}}>Latest Release</span>
