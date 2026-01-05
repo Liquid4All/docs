@@ -295,18 +295,31 @@ print(response.choices[0].message.content)
 
 For command-line tools (`llama-cli`), use flags like `--temperature`, `--top-p`, `--top-k`, `--repeat-penalty`, and `--n-predict`.
 
-## Vision Models
+LFM2-VL GGUF models can also be used for multimodal inference with llama.cpp. Vision models require both the main model and a multimodal projector (mmproj) file.
 
-LFM2-VL GGUF models can be used for multimodal inference with llama.cpp. Vision models require both the main model file and a vision projector (mmproj) file.
+**Download the model and projector:**
 
-**Download both files:**
 ```bash
-# Download the main model
-hf download LiquidAI/LFM2.5-VL-1.6B-GGUF lfm2.5-vl-1.6b-q4_k_m.gguf --local-dir .
-
-# Download the vision projector (mmproj) file
-hf download LiquidAI/LFM2.5-VL-1.6B-GGUF mmproj-model-f16.gguf --local-dir .
+pip install huggingface-hub
+hf download LiquidAI/LFM2-VL-1.6B-GGUF LFM2-VL-1.6B-Q8_0.gguf --local-dir .
+hf download LiquidAI/LFM2-VL-1.6B-GGUF mmproj-LFM2-VL-1.6B-Q8_0.gguf --local-dir .
 ```
+
+<details>
+<summary>Using llama-mtmd-cli</summary>
+
+Run inference directly from the command line:
+
+```bash
+llama-mtmd-cli \
+  -m LFM2-VL-1.6B-Q8_0.gguf \
+  --mmproj mmproj-LFM2-VL-1.6B-Q8_0.gguf \
+  --image image.jpg \
+  -p "What is in this image?" \
+  -ngl 99
+```
+
+</details>
 
 <details>
 <summary>Using llama-server</summary>
@@ -314,7 +327,12 @@ hf download LiquidAI/LFM2.5-VL-1.6B-GGUF mmproj-model-f16.gguf --local-dir .
 Start a vision model server with both the model and mmproj files:
 
 ```bash
-llama-server -m lfm2.5-vl-1.6b-q4_k_m.gguf --mmproj mmproj-model-f16.gguf -c 4096 --port 8080
+llama-server \
+  -m LFM2-VL-1.6B-Q8_0.gguf \
+  --mmproj mmproj-LFM2-VL-1.6B-Q8_0.gguf \
+  -c 4096 \
+  --port 8080 \
+  -ngl 99
 ```
 
 Use with the OpenAI Python client:
@@ -324,7 +342,7 @@ from openai import OpenAI
 import base64
 
 client = OpenAI(
-    base_url="http://localhost:8080/v1",
+    base_url="http://localhost:8080/v1",  # The hosted llama-server
     api_key="not-needed"
 )
 
