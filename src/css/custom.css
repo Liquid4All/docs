@@ -405,6 +405,11 @@ pre,
   padding-bottom: 0.3em;
 }
 
+/* Add extra spacing between main model sections (h2 headings) */
+.theme-doc-markdown h2:not(:first-child) {
+  margin-top: 1.75em;
+}
+
 .theme-doc-markdown h3 {
   font-size: 1.25em;
   font-weight: normal;
@@ -1425,6 +1430,24 @@ article {
   text-align: center;
 }
 
+/* Make table scrollable on mobile */
+@media (max-width: 996px) {
+  .theme-doc-markdown details {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+    display: block;
+  }
+  
+  .theme-doc-markdown details > *:not(summary) {
+    overflow-x: auto;
+  }
+  
+  .model-matrix-table {
+    min-width: 600px; /* Ensure table maintains readable width on mobile */
+    width: max-content;
+  }
+}
+
 .model-matrix-table thead tr {
   background-color: rgba(124, 58, 237, 0.15);
   border-top: 2px solid #7C3AED;
@@ -1453,6 +1476,38 @@ article {
   text-align: left;
   font-weight: 600;
   background-color: var(--color-background-secondary);
+  padding: 0.75rem;
+}
+
+/* Subsection headers - centered, thinner, less bold, different colors */
+.model-matrix-table tr td[colspan][style*="text-align: center"],
+.model-matrix-table tr td[colspan][style*="textAlign: 'center'"] {
+  text-align: center !important;
+  font-weight: 500 !important;
+  padding: 0.3rem !important;
+}
+
+/* LFM2.5 Models row - light green background */
+.model-matrix-table tr td[colspan][style*="rgba(34, 197, 94"],
+.model-matrix-table tr td[colspan][style*="rgba(34,197,94"] {
+  background-color: rgba(34, 197, 94, 0.08) !important;
+}
+
+/* LFM2 Models row - light purple background */
+.model-matrix-table tr td[colspan][style*="rgba(124, 58, 237"],
+.model-matrix-table tr td[colspan][style*="rgba(124,58,237"] {
+  background-color: rgba(124, 58, 237, 0.05) !important;
+}
+
+/* Dark mode styles for table header rows */
+[data-theme="dark"] .model-matrix-table tr td[colspan][style*="rgba(34, 197, 94"],
+[data-theme="dark"] .model-matrix-table tr td[colspan][style*="rgba(34,197,94"] {
+  background-color: rgba(34, 197, 94, 0.2) !important;
+}
+
+[data-theme="dark"] .model-matrix-table tr td[colspan][style*="rgba(124, 58, 237"],
+[data-theme="dark"] .model-matrix-table tr td[colspan][style*="rgba(124,58,237"] {
+  background-color: rgba(124, 58, 237, 0.15) !important;
 }
 
 .model-matrix-table a {
