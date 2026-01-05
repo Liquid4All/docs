@@ -46,11 +46,11 @@ from peft import LoraConfig
 from datasets import load_dataset
 
 model = AutoModelForCausalLM.from_pretrained(
-    "LiquidAI/LFM2-1.2B",
+    "LiquidAI/LFM2.5-1.2B-Instruct",
     torch_dtype="auto",
     device_map="auto"
 )
-tokenizer = AutoTokenizer.from_pretrained("LiquidAI/LFM2-1.2B")
+tokenizer = AutoTokenizer.from_pretrained("LiquidAI/LFM2.5-1.2B-Instruct")
 
 # Configure LoRA
 peft_config = LoraConfig(
@@ -95,11 +95,11 @@ from datasets import load_dataset
 
 # Load model and tokenizer
 model = AutoModelForCausalLM.from_pretrained(
-    "LiquidAI/LFM2-1.2B",
+    "LiquidAI/LFM2.5-1.2B-Instruct",
     torch_dtype="auto",
     device_map="auto"
 )
-tokenizer = AutoTokenizer.from_pretrained("LiquidAI/LFM2-1.2B")
+tokenizer = AutoTokenizer.from_pretrained("LiquidAI/LFM2.5-1.2B-Instruct")
 
 # Load your dataset
 dataset = load_dataset("your-dataset")
@@ -147,11 +147,11 @@ from peft import LoraConfig
 from datasets import load_dataset
 
 model = AutoModelForCausalLM.from_pretrained(
-    "LiquidAI/LFM2-1.2B",
+    "LiquidAI/LFM2.5-1.2B-Instruct",
     torch_dtype="auto",
     device_map="auto"
 )
-tokenizer = AutoTokenizer.from_pretrained("LiquidAI/LFM2-1.2B")
+tokenizer = AutoTokenizer.from_pretrained("LiquidAI/LFM2.5-1.2B-Instruct")
 
 peft_config = LoraConfig(
     r=16,
@@ -196,11 +196,11 @@ from datasets import load_dataset
 
 # Load model and tokenizer
 model = AutoModelForCausalLM.from_pretrained(
-    "LiquidAI/LFM2-1.2B",
+    "LiquidAI/LFM2.5-1.2B-Instruct",
     torch_dtype="auto",
     device_map="auto"
 )
-tokenizer = AutoTokenizer.from_pretrained("LiquidAI/LFM2-1.2B")
+tokenizer = AutoTokenizer.from_pretrained("LiquidAI/LFM2.5-1.2B-Instruct")
 
 # Load preference dataset
 # Dataset should have "prompt", "chosen", and "rejected" columns

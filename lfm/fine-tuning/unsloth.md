@@ -48,7 +48,7 @@ from datasets import load_dataset
 
 # Load model with Unsloth optimizations
 model, tokenizer = FastLanguageModel.from_pretrained(
-    model_name="LiquidAI/LFM2-1.2B",
+    model_name="LiquidAI/LFM2.5-1.2B-Instruct",
     max_seq_length=2048,
     dtype=None,
     load_in_4bit=False,
@@ -100,7 +100,7 @@ from datasets import load_dataset
 
 # Load model in 4-bit
 model, tokenizer = FastLanguageModel.from_pretrained(
-    model_name="LiquidAI/LFM2-1.2B",
+    model_name="LiquidAI/LFM2.5-1.2B-Instruct",
     max_seq_length=2048,
     dtype=None,
     load_in_4bit=True,  # Enable 4-bit quantization
@@ -154,7 +154,7 @@ from datasets import load_dataset
 
 # Load model with Unsloth optimizations
 model, tokenizer = FastLanguageModel.from_pretrained(
-    model_name="LiquidAI/LFM2-1.2B",
+    model_name="LiquidAI/LFM2.5-1.2B-Instruct",
     max_seq_length=2048,
     dtype=None,  # Auto-detect
     load_in_4bit=False,
@@ -240,7 +240,7 @@ PatchDPOTrainer()
 
 # Load model
 model, tokenizer = FastLanguageModel.from_pretrained(
-    model_name="LiquidAI/LFM2-1.2B",
+    model_name="LiquidAI/LFM2.5-1.2B-Instruct",
     max_seq_length=2048,
     dtype=None,
     load_in_4bit=False,

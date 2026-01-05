@@ -96,7 +96,7 @@ Create `configs/lfm2-2.6b-lora.yml`:
 
 ```yaml
 # ---- Model ----
-base_model: LiquidAI/LFM2-2.6B
+base_model: LiquidAI/LFM2.5-1.2B-Base
 adapter: lora                  # LoRA; omit for full fine‑tune
 
 # ---- Data ----
@@ -147,7 +147,7 @@ For maximum memory efficiency on resource-constrained hardware, use QLoRA with 4
 `configs/lfm2-2.6b-qlora.yml`:
 
 ```yaml
-base_model: LiquidAI/LFM2-2.6B
+base_model: LiquidAI/LFM2.5-1.2B-Base
 adapter: lora
 
 # 4‑bit loading for QLoRA
@@ -184,7 +184,7 @@ Full fine-tuning updates all model parameters. Use this only when you have suffi
 `configs/lfm2-2.6b-full.yml`:
 
 ```yaml
-base_model: LiquidAI/LFM2-2.6B
+base_model: LiquidAI/LFM2.5-1.2B-Base
 # adapter: null   # no PEFT adapters -> full FT
 
 sequence_len: 4096
