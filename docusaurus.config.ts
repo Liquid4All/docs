@@ -146,7 +146,7 @@ const config: Config = {
           items: [
             {
               label: 'LFM',
-              to: '/lfm',
+              to: '/lfm/getting-started/intro',
             },
             {
               label: 'LEAP',
