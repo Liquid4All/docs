@@ -1,59 +1,41 @@
-# Text Generation and Prompting
+# Generation Parameters and Prompting
 
 This guide covers how to effectively use system prompts, user prompts, and assistant prompts with LFM2 models, along with an overview of sampling parameters and special prompting recipes for specific models.
 
 ## Prompt Roles
 
-LFM2 models use a structured conversation format with three main prompt roles:
+LFM2 models use a structured conversation format with three prompt roles:
 
-### System Prompt
-
-The system prompt (optional) sets the assistant's behavior, context, and instructions. It defines who the assistant is and how it should respond.
-
-**Use cases:**
-- Setting the assistant's personality or role
-- Providing context about the task or domain
-- Specifying output format requirements
-- Defining constraints or guidelines
+- **`system`** (optional) - Sets assistant behavior, context, and instructions. Use for personality, task context, output format, or constraints.
+- **`user`** - Contains the question, instruction, or request from the user.
+- **`assistant`** - Provides a partial response for the model to continue from. Useful for multi-turn conversations, few-shot prompting, or prefilling structured outputs (e.g., JSON opening brace).
 
 **Example:**
 ```python
 messages = [
-    {"role": "system", "content": "You are a helpful coding assistant. Always provide code examples with explanations."},
+    {"role": "system", "content": "You are a helpful coding assistant."},
     {"role": "user", "content": "How do I sort a list in Python?"}
 ]
 ```
 
-### User Prompt
+<details>
+<summary>Additional examples: few-shot prompting and prefill</summary>
 
-The user prompt contains the actual question, instruction, or request from the user. This is the primary input that the model will respond to.
+**Multi-turn conversations / Few-shot prompting:**
 
-**Example:**
-```python
-messages = [
-    {"role": "system", "content": "You are a helpful assistant."},
-    {"role": "user", "content": "Explain quantum computing in simple terms."}
-]
-```
+Continue a previous conversation or provide example interactions to guide the model's behavior. The model learns from the conversation history and applies patterns to new inputs.
 
-### Assistant Prompt
-
-The assistant prompt allows you to provide a partial response that the model will continue from. This is useful for:
-
-- **Multi-turn conversations**: Continuing a previous assistant response or building conversation history
-- **Few-shot prompting**: Providing example interactions to guide the model's behavior
-- **Prefill**: Starting the model with a specific format or structure (e.g., JSON opening brace)
-
-**Example (multi-turn conversation):**
 ```python
 messages = [
     {"role": "system", "content": "You are a helpful assistant."},
     {"role": "user", "content": "What are the benefits of exercise?"},
-    {"role": "assistant", "content": "Exercise has many benefits including:\n1. Improved cardiovascular health\n2. "},  # Partial response
+    {"role": "assistant", "content": "Exercise has many benefits including:\n1. Improved cardiovascular health\n2. "},  # Partial response to continue
+    {"role": "user", "content": "Tell me more about cardiovascular health."}
 ]
 ```
 
-**Example (few-shot prompting):**
+Or provide few-shot examples:
+
 ```python
 messages = [
     {"role": "system", "content": "You are a helpful assistant that formats dates."},
@@ -61,11 +43,14 @@ messages = [
     {"role": "assistant", "content": "January 15, 2024"},
     {"role": "user", "content": "2024-12-25"},
     {"role": "assistant", "content": "December 25, 2024"},
-    {"role": "user", "content": "2024-03-08"}  # Model is more likely to follow the pattern
+    {"role": "user", "content": "2024-03-08"}  # Model follows the pattern
 ]
 ```
 
-**Example (prefill for structured output):**
+**Prefill for structured output:**
+
+Start the model with a specific format or structure (e.g., JSON opening brace) to guide it toward structured outputs.
+
 ```python
 messages = [
     {"role": "system", "content": "Extract information and return as JSON."},
@@ -74,48 +59,74 @@ messages = [
 ]
 ```
 
-For full structured generation with schema validation, consider using [Outlines](../frameworks/outlines.md), which provides robust support for constrained generation.
+</details>
 
-## Sampling Parameters
+For structured generation with schema validation, see [Outlines](../frameworks/outlines.md).
 
-Sampling parameters control how the model generates text, balancing creativity, determinism, and output quality.
+## Text Sampling Parameters
 
-**Temperature** (`temperature`) - Controls randomness (0.0-2.0). Lower values (0.1-0.7) produce more deterministic outputs; higher values (0.8-1.5) increase creativity.
+Control text generation behavior, balancing creativity, determinism, and quality:
 
-**Top-p (Nucleus Sampling)** (`top_p`) - Samples from tokens whose cumulative probability exceeds `p` (0.0-1.0). Lower values (0.1-0.5) are more focused; higher values (0.7-0.95) allow more diversity.
+- **`temperature`** (0.0-2.0) - Randomness control. Lower (0.1-0.7) = deterministic; higher (0.8-1.5) = creative.
+- **`top_p`** (0.0-1.0) - Nucleus sampling. Lower (0.1-0.5) = focused; higher (0.7-0.95) = diverse.
+- **`top_k`** - Limits to top-k tokens. Lower (10-50) = high-probability; higher (50-100) = diverse.
+- **`min_p`** (0.0-1.0) - Filters tokens below `min_p * max_probability`. Maintains quality with diversity.
+- **`repetition_penalty`** (1.0+) - Reduces repetition. 1.0 = no penalty; >1.0 = prevents repetition.
+- **`max_tokens`** / **`max_new_tokens`** - Maximum tokens to generate.
 
-**Top-k** (`top_k`) - Limits sampling to the top `k` most likely tokens. Lower values (10-50) focus on high-probability tokens; higher values (50-100) increase diversity.
+Parameter names and syntax vary by platform. See [Transformers](../inference/transformers.md), [vLLM](../inference/vllm.md), or [llama.cpp](../inference/llama-cpp.md) for details.
 
-**Min-p** (`min_p`) - Filters tokens below `min_p * max_probability` (0.0-1.0). Helps maintain quality while allowing diversity.
+### Recommended Settings <span style={{display: 'none'}}>Text</span>
 
-**Repetition Penalty** (`repetition_penalty`) - Reduces likelihood of repetition (1.0 = no penalty, 2.0+ = strong penalty). Values > 1.0 help prevent repetitive outputs.
-
-**Max Tokens** (`max_tokens`, `max_new_tokens`) - Maximum number of tokens to generate, preventing infinite generation.
-
-Each inference platform has slightly different implementations for sampling parameters. Check the specific inference platform documentation (e.g., [Transformers](../inference/transformers.md), [vLLM](../inference/vllm.md), [llama.cpp](../inference/llama-cpp.md)) for exact parameter names and syntax.
-
-### Recommended Settings
-
-**Recommended configuration for all text models:**
+**For all text models:**
 - `temperature=0.3`
 - `min_p=0.15`
 - `repetition_penalty=1.05`
 
-Liquid-Nanos models may have [special prompting recipes](#special-prompting-recipes) with different recommended parameters. See the Special Prompting Recipes section below for model-specific guidance.
+Some models have [special requirements](#special-prompting-recipes) with different parameters.
+
+## Vision Generation Parameters
+
+LFM2-VL models use a **variable resolution encoder** to control the quality/speed tradeoff by adjusting how images are tokenized.
+
+### Image Token Management
+
+Control image tokenization with:
+- **`min_image_tokens`** - Minimum tokens for image encoding
+- **`max_image_tokens`** - Maximum tokens for image encoding  
+- **`do_image_splitting`** - Split large images into 512×512 patches
+
+**How it works:** Large images are split into non-overlapping patches, then a 2-layer MLP connector with pixel unshuffle reduces tokens (e.g., 256×384 → 96 tokens, 1000×3000 → 1,020 tokens). Adjust `min_image_tokens` and `max_image_tokens` to balance quality vs. speed.
+
+**Example configurations:**
+```python
+# High quality (slower)
+max_image_tokens=256, min_image_tokens=128
+
+# Balanced
+max_image_tokens=128, min_image_tokens=64
+
+# Fast (lower quality)
+max_image_tokens=64, min_image_tokens=32
+```
+
+### Recommended Settings <span style={{display: 'none'}}>Vision</span>
+
+**For vision models:**
+- `temperature=0.1`
+- `min_p=0.15`
+- `repetition_penalty=1.05`
+- `min_image_tokens=64`
+- `max_image_tokens=256`
+- `do_image_splitting=True`
 
 ## Special Prompting Recipes
 
-Certain LFM2 models have specialized prompting requirements for optimal performance.
+Some LFM2 models require specific prompting for optimal performance.
 
 ### LFM2-Extract
 
-LFM2-Extract models are designed for structured information extraction. They require a specific system prompt format that defines the extraction schema.
-
-**Generation Parameters:**
-We strongly recommend using greedy decoding with `temperature=0`.
-
-**System Prompt:**
-If no system prompt is provided, the model will default to JSON outputs. We recommend providing a system prompt with a specific format (JSON, XML, or YAML) and a given schema to improve accuracy (see the following example).
+Structured information extraction models. Use `temperature=0` (greedy decoding).
 
 **System Prompt Format:**
 ```
@@ -126,6 +137,8 @@ Schema:
 - nested_object:
   - nested_field: "Description"
 ```
+
+If no system prompt is provided, defaults to JSON. Specify format (JSON, XML, or YAML) and schema for better accuracy.
 
 <details>
 <summary>Example</summary>
@@ -187,10 +200,7 @@ We have secured a lease for a facility located at 345 Ocean View Drive, Seward, 
 
 ### LFM2-RAG
 
-LFM2-RAG models are optimized for Retrieval-Augmented Generation tasks. They work best when provided with relevant documents in the system prompt.
-
-**Generation Parameters:**
-We recommend using greedy decoding with `temperature=0`.
+Optimized for Retrieval-Augmented Generation. Use `temperature=0` (greedy decoding). Provide relevant documents in the system prompt.
 
 **System Prompt Format:**
 ```
@@ -233,29 +243,17 @@ The library at the Agriculture Canada research centre in Lethbridge was reported
 
 ### LFM2-Tool
 
-LFM2-Tool models are optimized for efficient and precise tool calling.
-
-**Generation Parameters:**
-We recommend using greedy decoding with `temperature=0`.
-
-For detailed information on tool use, including how to define tools, format tool calls, and handle tool responses, see the [Tool Use](../key-concepts/tool-use.md) guide.
+Optimized for efficient and precise tool calling. Use `temperature=0` (greedy decoding). See the [Tool Use](../key-concepts/tool-use.md) guide for details.
 
 ---
 
 ### LFM2-350M-ENJP-MT
 
-LFM2-350M-ENJP-MT is a specialized English-Japanese translation model that requires a specific system prompt to specify translation direction.
+Specialized English-Japanese translation model. **Requires** one of these system prompts:
+- `"Translate to Japanese."` - English → Japanese
+- `"Translate to English."` - Japanese → English
 
-**System Prompts:**
-
-LFM2-350M-ENJP-MT will not work without one of the two following system prompts:
-
-- **`"Translate to Japanese."`** for English to Japanese translation
-- **`"Translate to English."`** for Japanese to English translation
-
-**Chat Template:**
-
-The chat template can be applied using the dedicated `.apply_chat_template()` function from Hugging Face transformers. However, you must supply the system prompt that specifies the translation directionality.
+Use `.apply_chat_template()` with the system prompt to specify direction.
 
 <details>
 <summary>Example</summary>
@@ -292,24 +290,16 @@ C. elegansとは何ですか？<|im_end|>
 
 ### LFM2-350M-PII-Extract-JP
 
-LFM2-350M-PII-Extract-JP is designed to extract personally identifiable information (PII) from Japanese text and output it in JSON format. The output can be used to mask sensitive information in contracts, emails, personal medical reports, insurance bills, etc. directly on-device.
+Extracts PII from Japanese text as JSON. Use `temperature=0` (greedy decoding). Output can mask sensitive information on-device.
 
-**Generation Parameters:**
-We strongly recommend using greedy decoding with `temperature=0`.
-
-**System Prompt:**
-This checkpoint requires the following system prompt format:
-
+**System Prompt Format:**
 ```
 Extract <address>, <company_name>, <email_address>, <human_name>, <phone_number>
 ```
 
-The model can be configured to extract only specific entities. For example, `Extract <human_name>` will output only human names. For optimal performance, entity categories should be listed in alphabetical order as shown above.
+Extract specific entities by listing only what you need (e.g., `Extract <human_name>`). List categories in alphabetical order for optimal performance.
 
-**Output Format:**
-The model outputs JSON format with lists for each category. If no entities are found for a category, an empty list is returned. If entities exist, a list of extracted strings is returned for that category.
-
-The model is trained to output entities exactly as they appear in the text. If the same entity appears multiple times with different notation variations, all variations are output to enable exact-match masking.
+**Output Format:** JSON with lists per category. Empty lists for missing entities. Outputs entities exactly as they appear (including notation variations) for exact-match masking.
 
 <details>
 <summary>Example</summary>
