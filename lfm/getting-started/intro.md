@@ -2,95 +2,164 @@
 sidebar_label: "Welcome to the LFM docs"
 ---
 
-# Welcome to the LFM docs
+# Welcome to LFM Docs! 👋
 
-Liquid Foundational Models (LFMs) are a family of **[open-source](https://huggingface.co/LiquidAI/collections)** models built by Liquid AI from the ground up with
-- **state-of-the-art quality**, outpeforming similar-sized models on benchmarks.
-- **lowest memory consumption** thanks to its **[optimal hybrid architecture](https://www.arxiv.org/pdf/2511.23404)**.
-- **the fastest inference in the world**, and most probably in the entire Universe.
+**LFM2** is a new generation of hybrid models developed by Liquid AI, specifically designed for **edge AI and on-device deployment**.
 
-We give you the models. You run them **wherever** you want.
+## Why LFM2?
 
-<div className="deployment-grid">
+Built on a new hybrid architecture, LFM2 sets a new standard in terms of quality, speed, and memory efficiency.
 
-<a href="/lfm/getting-started/quickstart" className="deployment-card-link">
-<div className="deployment-card">
-<div className="deployment-icon">🚀</div>
-<h4>Deploy your first LFM in minutes</h4>
+&nbsp;&nbsp;⚡ **3x faster training** - New hybrid architecture accelerates training and inference
+
+&nbsp;&nbsp;🏆 **State-of-the-art quality** - Outperforms similar-sized models on benchmarks
+
+&nbsp;&nbsp;💾 **Memory efficient** - Optimized for resource-constrained environments
+
+&nbsp;&nbsp;🌐 **Deploy anywhere** - Compatible with major inference frameworks and platforms
+
+[Learn more about the architecture →](https://www.liquid.ai/blog/liquid-foundation-models-v2-our-second-series-of-generative-ai-models)
+
+## Get Started
+
+<div className="get-started-grid">
+
+<a href="/lfm/getting-started/quickstart" className="model-card">
+<h3>🚀 Deploy your first LFM in minutes</h3>
 <p>Get started quickly with step-by-step deployment guides</p>
-</div>
+<span className="learn-more">Get started →</span>
 </a>
 
-<a href="/lfm/key-concepts/models" className="deployment-card-link">
-<div className="deployment-card">
-<div className="deployment-icon">🔍</div>
-<h4>Explore models</h4>
+<a href="/lfm/key-concepts/models" className="model-card">
+<h3>🔍 Explore models</h3>
 <p>Browse our collection of language models and their capabilities</p>
-</div>
+<span className="learn-more">Learn more →</span>
 </a>
 
-<a href="/lfm/inference/transformers" className="deployment-card-link">
-<div className="deployment-card">
-<div className="deployment-icon">📖</div>
-<h4>Inference guides</h4>
+<a href="/lfm/inference/transformers" className="model-card">
+<h3>📖 Inference guides</h3>
 <p>Learn how to run models for different use cases and platforms</p>
-</div>
+<span className="learn-more">Learn more →</span>
 </a>
 
-<a href="/lfm/fine-tuning/trl" className="deployment-card-link">
-<div className="deployment-card">
-<div className="deployment-icon">🛠️</div>
-<h4>Fine tuning guides</h4>
+<a href="/lfm/fine-tuning/trl" className="model-card">
+<h3>🛠️ Fine tuning guides</h3>
 <p>Customize models for your specific requirements and datasets</p>
-</div>
+<span className="learn-more">Learn more →</span>
 </a>
 
 </div>
+
+## Model Families
 
 <style>{`
-
-.deployment-grid {
+.model-grid {
   display: grid;
   gap: 1rem;
-  margin: 2rem 0;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  margin-bottom: 2rem;
+  grid-template-columns: 1fr;
 }
 
-.deployment-card {
+@media (min-width: 768px) {
+  .model-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.model-card {
   border: 1px solid var(--ifm-color-emphasis-300);
-  border-radius: 12px;
-  padding: 1.5rem;
-  background: var(--ifm-background-surface-color);
-  transition: all 0.2s ease;
-  text-align: center;
-  height: 100%;
+  border-radius: 8px;
+  padding: 1rem;
+  background-color: var(--ifm-background-surface-color);
+  transition: all 0.2s ease-in-out;
+  cursor: pointer;
+  text-decoration: none;
+  color: inherit;
   display: flex;
   flex-direction: column;
+  height: 100%;
 }
 
-.deployment-card:hover {
+.model-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   border-color: var(--ifm-color-primary);
+  text-decoration: none;
+  color: inherit;
 }
 
-.deployment-icon {
-  font-size: 2rem;
-  margin-bottom: 0.75rem;
-}
-
-.deployment-card h4 {
+.model-card h3 {
   margin: 0 0 0.5rem 0;
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: var(--ifm-color-emphasis-900);
+  transition: color 0.2s ease-in-out;
 }
 
-.deployment-card p {
+.model-card:hover h3 {
+  color: var(--ifm-color-primary);
+}
+
+.model-card p {
   margin: 0 0 1rem 0;
   color: var(--ifm-color-emphasis-700);
-  font-size: 0.9rem;
-  line-height: 1.4;
   flex: 1;
 }
+
+.model-card .learn-more {
+  color: var(--ifm-color-primary);
+  text-decoration: none;
+  font-weight: 500;
+  margin-top: auto;
+}
+
+.model-card:hover .learn-more {
+  text-decoration: underline;
+}
+
+.get-started-grid {
+  display: grid;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 768px) {
+  .get-started-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 992px) {
+  .get-started-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
 `}</style>
+
+<div className="model-grid">
+
+<a href="/lfm/key-concepts/models#lfm2" className="model-card">
+<h3>💬 Text Models</h3>
+<p>General-purpose language models from 350M to 8B parameters</p>
+<span className="learn-more">Learn more →</span>
+</a>
+
+<a href="/lfm/key-concepts/models#lfm2-vl" className="model-card">
+<h3>👁️ Vision-Language</h3>
+<p>Multimodal models for image understanding and scene analysis</p>
+<span className="learn-more">Learn more →</span>
+</a>
+
+<a href="/lfm/key-concepts/models#lfm2-audio" className="model-card">
+<h3>🎵 Audio</h3>
+<p>Speech and audio processing models for ASR, TTS, and chat</p>
+<span className="learn-more">Learn more →</span>
+</a>
+
+<a href="/lfm/key-concepts/models#liquid-nanos" className="model-card">
+<h3>🎯 Task-Specific</h3>
+<p>Specialized models for extraction, translation, RAG, and tool use</p>
+<span className="learn-more">Learn more →</span>
+</a>
+
+</div>
+
+[Explore all models →](/lfm/key-concepts/models)
