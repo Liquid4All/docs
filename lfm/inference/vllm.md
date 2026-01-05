@@ -26,7 +26,7 @@ The `LLM` class provides a simple interface for offline inference. Use the [`cha
 from vllm import LLM, SamplingParams
 
 # Initialize the model
-llm = LLM(model="LiquidAI/LFM2-1.2B")
+llm = LLM(model="LiquidAI/LFM2.5-1.2B-Instruct")
 
 # Define sampling parameters
 sampling_params = SamplingParams(
@@ -76,7 +76,7 @@ vLLM automatically batches multiple prompts for efficient processing. You can co
 ```python
 from vllm import LLM, SamplingParams
 
-llm = LLM(model="LiquidAI/LFM2-1.2B")
+llm = LLM(model="LiquidAI/LFM2.5-1.2B-Instruct")
 
 sampling_params = SamplingParams(
     temperature=0.3,
@@ -105,7 +105,7 @@ for i, output in enumerate(outputs):
 vLLM can serve models through an OpenAI-compatible API, allowing you to use existing OpenAI client libraries:
 
 ```bash
-vllm serve LiquidAI/LFM2-1.2B \
+vllm serve LiquidAI/LFM2.5-1.2B-Instruct \
     --host 0.0.0.0 \
     --port 8000 \
     --dtype auto
@@ -130,7 +130,7 @@ client = OpenAI(
 
 # Chat completion
 response = client.chat.completions.create(
-    model="LiquidAI/LFM2-1.2B",
+    model="LiquidAI/LFM2.5-1.2B-Instruct",
     messages=[
         {"role": "user", "content": "What is machine learning?"}
     ],
@@ -144,7 +144,7 @@ print(response.choices[0].message.content)
 
 # Streaming response
 stream = client.chat.completions.create(
-    model="LiquidAI/LFM2-1.2B",
+    model="LiquidAI/LFM2.5-1.2B-Instruct",
     messages=[
         {"role": "user", "content": "Tell me a story."}
     ],
@@ -176,83 +176,4 @@ curl http://localhost:8000/v1/chat/completions \
 
 ## Vision Models
 
-vLLM supports LFM2-VL multimodal models for both offline inference and serving.
-
-<details>
-<summary>Offline Inference</summary>
-
-```python
-from vllm import LLM, SamplingParams
-from vllm.assets.image import ImageAsset
-
-# Initialize vision model
-llm = LLM(model="LiquidAI/LFM2-VL-1.6B")
-
-sampling_params = SamplingParams(
-    temperature=0.1,
-    min_p=0.15,
-    repetition_penalty=1.05,
-    max_tokens=512
-)
-
-# Load image
-image = ImageAsset("path/to/image.jpg").pil_image
-
-# Create prompt with image placeholder
-messages = [
-    {
-        "role": "user",
-        "content": [
-            {"type": "image"},
-            {"type": "text", "text": "What's in this image?"}
-        ]
-    }
-]
-
-# Generate
-output = llm.chat(messages, sampling_params=sampling_params, images=[image])
-print(output[0].outputs[0].text)
-```
-
-</details>
-
-<details>
-<summary>OpenAI-Compatabile Server</summary>
-
-Start a server with a vision model:
-
-```bash
-vllm serve LiquidAI/LFM2-VL-1.6B --port 8000
-```
-
-Use the OpenAI client with image URLs or base64-encoded images:
-
-```python
-from openai import OpenAI
-
-client = OpenAI(
-    base_url="http://localhost:8000/v1",
-    api_key="dummy"
-)
-
-response = client.chat.completions.create(
-    model="LiquidAI/LFM2-VL-1.6B",
-    messages=[
-        {
-            "role": "user",
-            "content": [
-                {"type": "image_url", "image_url": {"url": "https://example.com/image.jpg"}},
-                {"type": "text", "text": "Describe this image."}
-            ]
-        }
-    ],
-    temperature=0.1,
-    min_p=0.15,
-    repetition_penalty=1.05,
-    max_tokens=512
-)
-
-print(response.choices[0].message.content)
-```
-
-</details>
+Official vLLM support for LFM Vision Models is coming soon. For vision model inference, please use [Transformers](transformers.md) or other supported inference frameworks.
