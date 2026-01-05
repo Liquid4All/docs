@@ -17,21 +17,44 @@ LFM2 implements tool use through a conversational loop:
 
 ## Tool Use Format
 
-LFM2 uses special tokens to structure tool use in conversations:
+LFM2.5 supports function calling with a simplified format:
 
-- **Tool Definitions**: Embedded between `<|tool_list_start|>` and `<|tool_list_end|>` tokens
-- **Tool Calls**: Model generates function calls between `<|tool_call_start|>` and `<|tool_call_end|>` tokens
-- **Tool Results**: Return tool execution results between `<|tool_response_start|>` and `<|tool_response_end|>` tokens in `tool` role messages
-
-When using [`apply_chat_template()`](https://huggingface.co/docs/transformers/v4.57.1/en/internal/tokenization_utils#transformers.PreTrainedTokenizerBase.apply_chat_template), these tokens are handled automatically. You can also manually format tools using these tokens directly.
+- **Function Definition**: Provide tools as a JSON object in the system prompt (recommended), or use `tokenizer.apply_chat_template()` with the `tools` argument
+- **Function Call**: Model generates Pythonic function calls between `<|tool_call_start|>` and `<|tool_call_end|>` tokens. You can override to JSON format by requesting it in the system prompt
+- **Function Execution**: Execute the function call and return results as a `tool` role message
+- **Final Answer**: Model interprets the tool result and responds to the original user prompt in plain text
 
 ## Defining Tools
 
-When using `apply_chat_template()`, pass tools via the `tools` argument. You can use either Python functions or JSON schemas.
+**Recommended:** Provide tools as a JSON object in the system prompt. Alternatively, use `tokenizer.apply_chat_template()` with the `tools` argument.
 
-### Python Functions
+### JSON in System Prompt (Recommended)
 
-Pass functions directly with Google-style docstrings. The parser automatically extracts function name, arguments, types, and descriptions:
+```python
+tools_json = [{
+  "name": "get_candidate_status",
+  "description": "Retrieves the current status of a candidate in the recruitment process",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "candidate_id": {
+        "type": "string",
+        "description": "Unique identifier for the candidate"
+      }
+    },
+    "required": ["candidate_id"]
+  }
+}]
+
+messages = [
+    {"role": "system", "content": f"List of tools: {json.dumps(tools_json)}"},
+    {"role": "user", "content": "What is the current status of candidate ID 12345?"}
+]
+```
+
+### Using apply_chat_template()
+
+You can also use `apply_chat_template()` with Python functions or JSON schemas:
 
 ```python
 def get_current_temperature(location: str, unit: str):
@@ -42,114 +65,122 @@ def get_current_temperature(location: str, unit: str):
         location: The location to get the temperature for, in the format "City, Country"
         unit: The unit to return the temperature in. (choices: ["celsius", "fahrenheit"])
     """
-    return 22.  # A real function should probably actually get the temperature!
+    return 22.
 
-tools = [get_current_temperature]
-```
-
-### JSON Schemas
-
-Alternatively, pass tools as JSON schema dictionaries:
-
-```python
-tools = [{
-  "type": "function",
-  "function": {
-    "name": "get_current_temperature",
-    "description": "Get the current temperature at a location.",
-    "parameters": {
-      "type": "object",
-      "properties": {
-        "location": {
-          "type": "string",
-          "description": "The location to get the temperature for, in the format 'City, Country'"
-        },
-        "unit": {
-          "type": "string",
-          "description": "The unit to return the temperature in. (choices: ['celsius', 'fahrenheit'])"
-        }
-      },
-      "required": ["location", "unit"]
-    }
-  }
-}]
+messages = [{"role": "user", "content": "What's the weather in San Francisco?"}]
+inputs = tokenizer.apply_chat_template(messages, tools=[get_current_temperature], ...)
 ```
 
 ## Complete Example
 
-The tool use workflow follows these steps:
+The tool use workflow:
 
-1. **Define tools** and include them in the conversation using `apply_chat_template()` with the `tools` argument
-2. **Generate with tools** - the model may generate tool calls between `<|tool_call_start|>` and `<|tool_call_end|>` tokens
-3. **Parse and execute** the tool call from the model's response
-4. **Append tool result** to messages with `role="tool"` and regenerate for the final response
+1. **Define tools** as JSON in the system prompt (or use `apply_chat_template()` with `tools`)
+2. **Generate** - model generates Pythonic function calls between `<|tool_call_start|>` and `<|tool_call_end|>` tokens
+3. **Execute** the function call and append result with `role="tool"`
+4. **Regenerate** - model interprets the tool result and responds to the user
 
-```python
-from transformers import AutoModelForCausalLM, AutoTokenizer
-
-model = AutoModelForCausalLM.from_pretrained("LiquidAI/LFM2-1.2B", torch_dtype="bfloat16", device_map="auto")
-tokenizer = AutoTokenizer.from_pretrained("LiquidAI/LFM2-1.2B")
-
-# Define tool
-def get_status(id: str):
-    """Get status for an ID."""
-    return {"status": "active"}
-
-messages = [{"role": "user", "content": "Get status for ID 123"}]
-
-# Generate with tools
-inputs = tokenizer.apply_chat_template(messages, tools=[get_status], add_generation_prompt=True, return_dict=True, return_tensors="pt")
-outputs = model.generate(**inputs.to(model.device), max_new_tokens=256)
-response = tokenizer.decode(outputs[0][len(inputs["input_ids"][0]):], skip_special_tokens=False)
-
-# Parse tool call, execute, and append result
-messages.append({"role": "assistant", "tool_calls": [...]})  # Parse from response
-messages.append({"role": "tool", "content": str(get_status("123"))})
-
-# Generate final response
-inputs = tokenizer.apply_chat_template(messages, tools=[get_status], add_generation_prompt=True, return_dict=True, return_tensors="pt")
-outputs = model.generate(**inputs.to(model.device), max_new_tokens=256)
-final = tokenizer.decode(outputs[0][len(inputs["input_ids"][0]):], skip_special_tokens=True)
-```
-
-## Manual Tool Formatting
-
-You can manually format tools using special tokens instead of `apply_chat_template()`. Define tools as Python functions or JSON schemas, then list them between `<|tool_list_start|>` and `<|tool_list_end|>` tokens:
+**Example:**
 
 ```python
 import json
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
-model_id = "LiquidAI/LFM2-1.2B"
-model = AutoModelForCausalLM.from_pretrained(model_id, device_map="auto", torch_dtype="bfloat16")
-tokenizer = AutoTokenizer.from_pretrained(model_id)
+model = AutoModelForCausalLM.from_pretrained("LiquidAI/LFM2.5-1.2B-Instruct", torch_dtype="bfloat16", device_map="auto")
+tokenizer = AutoTokenizer.from_pretrained("LiquidAI/LFM2.5-1.2B-Instruct")
 
-# Define tools (as JSON schema or Python functions)
+# Define tools as JSON
 tools = [{
-    "type": "function",
-    "function": {
-        "name": "get_weather",
-        "description": "Get the current weather for a location",
-        "parameters": {
-            "type": "object",
-            "properties": {
-                "location": {"type": "string", "description": "The city and state"},
-                "unit": {"type": "string", "enum": ["celsius", "fahrenheit"]}
-            },
-            "required": ["location", "unit"]
-        }
+    "name": "get_candidate_status",
+    "description": "Retrieves the current status of a candidate in the recruitment process",
+    "parameters": {
+        "type": "object",
+        "properties": {
+            "candidate_id": {
+                "type": "string",
+                "description": "Unique identifier for the candidate"
+            }
+        },
+        "required": ["candidate_id"]
     }
 }]
 
-# Manually format prompt with tools
-tool_definitions = json.dumps(tools)
-prompt = f"<|tool_list_start|>{tool_definitions}<|tool_list_end|><|startoftext|><|im_start|>system\nYou are a helpful assistant.<|im_end|>\n<|im_start|>user\nWhat's the weather in San Francisco?<|im_end|>\n<|im_start|>assistant\n"
+# Create conversation with tools in system prompt
+messages = [
+    {"role": "system", "content": f"List of tools: {json.dumps(tools)}"},
+    {"role": "user", "content": "What is the current status of candidate ID 12345?"}
+]
 
-# Generate
-input_ids = tokenizer.encode(prompt, return_tensors="pt").to(model.device)
-output = model.generate(input_ids, max_new_tokens=512)
-response = tokenizer.decode(output[0][len(input_ids[0]):], skip_special_tokens=False)
-print(response)
+# Generate first response (may include tool call)
+inputs = tokenizer.apply_chat_template(messages, add_generation_prompt=True, return_dict=True, return_tensors="pt")
+outputs = model.generate(**inputs.to(model.device), max_new_tokens=256)
+response = tokenizer.decode(outputs[0][len(inputs["input_ids"][0]):], skip_special_tokens=False)
+
+# Parse tool call: <|tool_call_start|>[get_candidate_status(candidate_id="12345")]<|tool_call_end|>
+# Execute function and append result
+def get_candidate_status(candidate_id: str):
+    return [{"candidate_id": candidate_id, "status": "Interview Scheduled", "position": "Clinical Research Associate", "date": "2023-11-20"}]
+
+messages.append({"role": "assistant", "content": response})
+messages.append({"role": "tool", "content": json.dumps(get_candidate_status("12345"))})
+
+# Generate final response
+inputs = tokenizer.apply_chat_template(messages, add_generation_prompt=True, return_dict=True, return_tensors="pt")
+outputs = model.generate(**inputs.to(model.device), max_new_tokens=256)
+final = tokenizer.decode(outputs[0][len(inputs["input_ids"][0]):], skip_special_tokens=True)
+```
+
+**Formatted output example:**
+
+```
+<|startoftext|><|im_start|>system
+List of tools: [{"name": "get_candidate_status", ...}]<|im_end|>
+<|im_start|>user
+What is the current status of candidate ID 12345?<|im_end|>
+<|im_start|>assistant
+<|tool_call_start|>[get_candidate_status(candidate_id="12345")]<|tool_call_end|>Checking the current status of candidate ID 12345.<|im_end|>
+<|im_start|>tool
+[{"candidate_id": "12345", "status": "Interview Scheduled", ...}]<|im_end|>
+<|im_start|>assistant
+The candidate with ID 12345 is currently in the "Interview Scheduled" stage...<|im_end|>
+```
+
+**Note:** By default, LFM2.5 generates Pythonic function calls. To get JSON format, add "Output function calls as JSON" to your system prompt.
+
+## Using Vision Models for Text-Only Tool Calling
+
+LFM2.5-VL vision models can also be used for text-only function calling. Use the tokenizer from the processor:
+
+```python
+from transformers import AutoProcessor, AutoModelForImageTextToText
+
+processor = AutoProcessor.from_pretrained("LiquidAI/LFM2.5-VL-1.6B")
+model = AutoModelForImageTextToText.from_pretrained("LiquidAI/LFM2.5-VL-1.6B", device_map="auto", dtype="bfloat16")
+
+tools = [{
+    "name": "get_weather",
+    "description": "Get current weather for a location",
+    "parameters": {
+        "type": "object",
+        "properties": {"location": {"type": "string"}},
+        "required": ["location"]
+    }
+}]
+
+messages = [{"role": "user", "content": "What's the weather in Paris?"}]
+
+# Apply chat template with tools using processor.tokenizer
+inputs = processor.tokenizer.apply_chat_template(
+    messages,
+    tools=tools,
+    add_generation_prompt=True,
+    return_tensors="pt",
+    return_dict=True,
+)
+
+input_ids = inputs["input_ids"].to(model.device)
+outputs = model.generate(input_ids, max_new_tokens=256)
+response = processor.tokenizer.decode(outputs[0, input_ids.shape[1]:], skip_special_tokens=False)
 ```
 
 ## Managing Tool Lists
