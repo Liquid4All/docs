@@ -28,7 +28,7 @@ The Transformers library provides two interfaces for text generation: [`generate
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
 # Load model and tokenizer
-model_id = "LiquidAI/LFM2-1.2B"
+model_id = "LiquidAI/LFM2.5-1.2B-Instruct"
 model = AutoModelForCausalLM.from_pretrained(
     model_id,
     device_map="auto",
@@ -57,7 +57,7 @@ print(response)
 ```
 
 **Model loading notes:**
-- **`model_id`**: Can be a Hugging Face model ID (e.g., `"LiquidAI/LFM2-1.2B"`) or a local path
+- **`model_id`**: Can be a Hugging Face model ID (e.g., `"LiquidAI/LFM2.5-1.2B-Instruct"`) or a local path
 - **`device_map="auto"`**: Automatically distributes across available GPUs/CPU (requires `accelerate`). Use `device="cuda"` for single GPU or `device="cpu"` for CPU only
 - **`torch_dtype="bfloat16"`**: Recommended for modern GPUs. Use `"auto"` for automatic selection, or `"float32"` (slower, more memory)
 
@@ -71,7 +71,7 @@ from transformers import pipeline
 
 generator = pipeline(
     "text-generation",
-    "LiquidAI/LFM2-1.2B",
+    "LiquidAI/LFM2.5-1.2B-Instruct",
     torch_dtype="auto",
     device_map="auto",
 )
@@ -87,7 +87,7 @@ messages = generator(messages, max_new_tokens=512)[0]["generated_text"]
 
 **Key parameters:**
 - **`"text-generation"`**: Task type for the pipeline
-- **`model_name_or_path`**: Model ID (e.g., `"LiquidAI/LFM2-1.2B"`) or local path (download locally with `hf download --local-dir ./LFM2-1.2B LiquidAI/LFM2-1.2B`)
+- **`model_name_or_path`**: Model ID (e.g., `"LiquidAI/LFM2.5-1.2B-Instruct"`) or local path (download locally with `hf download --local-dir ./LFM2.5-1.2B-Instruct LiquidAI/LFM2.5-1.2B-Instruct`)
 - **`torch_dtype="auto"`**: Automatically selects optimal dtype (`bfloat16` on modern devices). Can use `"bfloat16"` explicitly or `"float32"` (slower, more memory)
 - **`device_map="auto"`**: Automatically distributes across available GPUs/CPU (requires `accelerate`). Alternative: `device="cuda"` for single GPU, `device="cpu"` for CPU only. Don't mix `device_map` and `device`
 
@@ -190,41 +190,43 @@ for output in outputs:
 LFM2-VL models support both text and images as input. Use `generate()` with the vision model and processor:
 
 ```python
-from transformers import AutoModelForCausalLM, AutoProcessor
-from PIL import Image
+from transformers import AutoProcessor, AutoModelForImageTextToText
+from transformers.image_utils import load_image
 
-# Load vision model and processor
-model_id = "LiquidAI/LFM2-VL-1.6B"
-model = AutoModelForCausalLM.from_pretrained(
+# Load model and processor
+model_id = "LiquidAI/LFM2.5-VL-1.6B"
+model = AutoModelForImageTextToText.from_pretrained(
     model_id,
     device_map="auto",
-    torch_dtype="bfloat16",
+    dtype="bfloat16"
 )
 processor = AutoProcessor.from_pretrained(model_id)
 
-# Load image
-image = Image.open("path/to/image.jpg")
+# Load image and create conversation
+url = "https://cdn.britannica.com/61/93061-050-99147DCE/Statue-of-Liberty-Island-New-York-Bay.jpg"
+image = load_image(url)  # or use PIL Image: Image.open("path/to/image.jpg")
 
-# Create prompt with image
-messages = [
+conversation = [
     {
         "role": "user",
         "content": [
-            {"type": "image"},
-            {"type": "text", "text": "What's in this image?"}
-        ]
-    }
+            {"type": "image", "image": image},
+            {"type": "text", "text": "What is in this image?"},
+        ],
+    },
 ]
 
-# Apply chat template and process image
-prompt = processor.apply_chat_template(messages, add_generation_prompt=True)
-inputs = processor(images=image, text=prompt, return_tensors="pt").to(model.device)
+# Apply chat template and generate
+inputs = processor.apply_chat_template(
+    conversation,
+    add_generation_prompt=True,
+    return_tensors="pt",
+    return_dict=True,
+    tokenize=True,
+).to(model.device)
 
-# Generate
-output = model.generate(**inputs, max_new_tokens=256)
-
-# Decode response
-response = processor.batch_decode(output, skip_special_tokens=True)[0]
+outputs = model.generate(**inputs, max_new_tokens=64)
+response = processor.batch_decode(outputs, skip_special_tokens=True)[0]
 print(response)
 ```
 
@@ -232,31 +234,35 @@ print(response)
 <summary>Multiple Images Example</summary>
 
 ```python
-from transformers import AutoModelForCausalLM, AutoProcessor
-from PIL import Image
+from transformers import AutoProcessor, AutoModelForImageTextToText
+from transformers.image_utils import load_image
 
 # Use the model and processor setup from above
 
-image1 = Image.open("path/to/first.jpg")
-image2 = Image.open("path/to/second.jpg")
+image1 = load_image("path/to/first.jpg")
+image2 = load_image("path/to/second.jpg")
 
-messages = [
+conversation = [
     {
         "role": "user",
         "content": [
-            {"type": "image"},
-            {"type": "image"},
+            {"type": "image", "image": image1},
+            {"type": "image", "image": image2},
             {"type": "text", "text": "What are the differences between these two images?"}
-        ]
-    }
+        ],
+    },
 ]
 
-prompt = processor.apply_chat_template(messages, add_generation_prompt=True)
-inputs = processor(images=[image1, image2], text=prompt, return_tensors="pt").to(model.device)
+inputs = processor.apply_chat_template(
+    conversation,
+    add_generation_prompt=True,
+    return_tensors="pt",
+    return_dict=True,
+    tokenize=True,
+).to(model.device)
 
-output = model.generate(**inputs, max_new_tokens=256)
-
-response = processor.batch_decode(output, skip_special_tokens=True)[0]
+outputs = model.generate(**inputs, max_new_tokens=256)
+response = processor.batch_decode(outputs, skip_special_tokens=True)[0]
 print(response)
 ```
 

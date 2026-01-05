@@ -44,7 +44,7 @@ docker run -d --gpus=all -v ollama:/root/.ollama -p 11434:11434 --name ollama ol
 
 Then run a model:
 ```
-docker exec -it ollama ollama run hf.co/LiquidAI/LFM2-1.2B-GGUF
+docker exec -it ollama ollama run hf.co/LiquidAI/LFM2.5-1.2B-Instruct-GGUF
 ```
 
 See the [Ollama Docker documentation](https://ollama.com/blog/ollama-is-now-available-as-an-official-docker-image) for more details.
@@ -61,7 +61,7 @@ Ollama can load GGUF models directly from Hugging Face or from local files.
 You can run LFM2 models directly from Hugging Face:
 
 ```bash
-ollama run hf.co/LiquidAI/LFM2-1.2B-GGUF
+ollama run hf.co/LiquidAI/LFM2.5-1.2B-Instruct-GGUF
 ```
 
 See the [Models page](../key-concepts/models.md#gguf-models) for all available GGUF repositories.
@@ -70,7 +70,7 @@ To use a local GGUF file, first download a model from Hugging Face:
 
 ```bash
 pip install huggingface-hub
-hf download LiquidAI/LFM2-1.2B-GGUF {quantization}.gguf --local-dir .
+hf download LiquidAI/LFM2.5-1.2B-Instruct-GGUF {quantization}.gguf --local-dir .
 ```
 
 Replace `{quantization}` with your preferred quantization level (e.g., `q4_k_m`, `q8_0`).
@@ -125,7 +125,7 @@ Interact with models through the command-line interface.
 ### Interactive Chat
 
 ```bash
-ollama run hf.co/LiquidAI/LFM2-1.2B-GGUF
+ollama run hf.co/LiquidAI/LFM2.5-1.2B-Instruct-GGUF
 ```
 
 Type your messages and press Enter. Use `/bye` to exit.
@@ -133,7 +133,7 @@ Type your messages and press Enter. Use `/bye` to exit.
 ### Single Prompt
 
 ```bash
-ollama run hf.co/LiquidAI/LFM2-1.2B-GGUF "What is machine learning?"
+ollama run hf.co/LiquidAI/LFM2.5-1.2B-Instruct-GGUF "What is machine learning?"
 ```
 
 If you imported a model with a custom name using a Modelfile, use that name instead (e.g., `ollama run my-model`).
@@ -153,7 +153,7 @@ client = OpenAI(
 )
 
 response = client.chat.completions.create(
-    model="hf.co/LiquidAI/LFM2-1.2B-GGUF",
+    model="hf.co/LiquidAI/LFM2.5-1.2B-Instruct-GGUF",
     messages=[
         {"role": "user", "content": "Explain quantum computing."}
     ],
@@ -198,7 +198,7 @@ LFM2-VL GGUF models can also be used for multimodal inference with Ollama.
 Run a vision model directly and provide images in the chat:
 
 ```bash
-ollama run hf.co/LiquidAI/LFM2-VL-1.6B-GGUF
+ollama run hf.co/LiquidAI/LFM2.5-VL-1.6B-GGUF
 ```
 
 In the interactive chat, you can ask questions about images using the `/image` command followed by the file path:
@@ -232,7 +232,7 @@ with open("image.jpg", "rb") as image_file:
     image_data = base64.b64encode(image_file.read()).decode("utf-8")
 
 response = client.chat.completions.create(
-    model="hf.co/LiquidAI/LFM2-VL-1.6B-GGUF",
+    model="hf.co/LiquidAI/LFM2.5-VL-1.6B-GGUF",
     messages=[
         {
             "role": "user",
@@ -258,10 +258,10 @@ ollama list
 
 Remove a model:
 ```bash
-ollama rm hf.co/LiquidAI/LFM2-1.2B-GGUF
+ollama rm hf.co/LiquidAI/LFM2.5-1.2B-Instruct-GGUF
 ```
 
 Show model information:
 ```bash
-ollama show hf.co/LiquidAI/LFM2-1.2B-GGUF
+ollama show hf.co/LiquidAI/LFM2.5-1.2B-Instruct-GGUF
 ```

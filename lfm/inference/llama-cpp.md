@@ -66,7 +66,7 @@ You can download LFM models in GGUF format from Hugging Face as follows:
 
 ```
 pip install huggingface-hub
-hf download LiquidAI/LFM2-1.2B-GGUF lfm2-1.2b-q4_k_m.gguf --local-dir .
+hf download LiquidAI/LFM2.5-1.2B-Instruct-GGUF lfm2.5-1.2b-instruct-q4_k_m.gguf --local-dir .
 ```
 
 <details>
@@ -109,7 +109,7 @@ from llama_cpp import Llama
 
 # Load model
 llm = Llama(
-    model_path="lfm2-1.2b-q4_k_m.gguf",
+    model_path="lfm2.5-1.2b-instruct-q4_k_m.gguf",
     n_ctx=4096,
     n_threads=8
 )
@@ -148,7 +148,7 @@ llama-server provides an OpenAI-compatible API for serving models locally.
 **Starting the Server:**
 
 ```bash
-llama-server -m lfm2-1.2b-q4_k_m.gguf -c 4096 --port 8080
+llama-server -m lfm2.5-1.2b-instruct-q4_k_m.gguf -c 4096 --port 8080
 ```
 
 Key parameters:
@@ -170,7 +170,7 @@ client = OpenAI(
 )
 
 response = client.chat.completions.create(
-    model="lfm2-1.2b",
+    model="lfm2.5-1.2b-instruct",
     messages=[
         {"role": "user", "content": "What is machine learning?"}
     ],
@@ -199,7 +199,7 @@ curl http://localhost:8080/v1/chat/completions \
 llama-cli provides an interactive terminal interface for chatting with models.
 
 ```bash
-llama-cli -m lfm2-1.2b-q4_k_m.gguf -c 4096 --color -i
+llama-cli -m lfm2.5-1.2b-instruct-q4_k_m.gguf -c 4096 --color -i
 ```
 
 Key parameters:
@@ -232,7 +232,7 @@ Control text generation behavior using parameters in the OpenAI-compatible API o
 from llama_cpp import Llama
 
 llm = Llama(
-    model_path="lfm2-1.2b-q4_k_m.gguf",
+    model_path="lfm2.5-1.2b-instruct-q4_k_m.gguf",
     n_ctx=4096,
     n_threads=8
 )
@@ -279,7 +279,7 @@ client = OpenAI(
 )
 
 response = client.chat.completions.create(
-    model="lfm2-1.2b",
+    model="lfm2.5-1.2b-instruct",
     messages=[{"role": "user", "content": "What is machine learning?"}],
     temperature=0.7,
     top_p=0.9,
@@ -297,15 +297,24 @@ For command-line tools (`llama-cli`), use flags like `--temperature`, `--top-p`,
 
 ## Vision Models
 
-LFM2-VL GGUF models can also be used for multimodal inference with llama.cpp.
+LFM2-VL GGUF models can be used for multimodal inference with llama.cpp. Vision models require both the main model file and a vision projector (mmproj) file.
+
+**Download both files:**
+```bash
+# Download the main model
+hf download LiquidAI/LFM2.5-VL-1.6B-GGUF lfm2.5-vl-1.6b-q4_k_m.gguf --local-dir .
+
+# Download the vision projector (mmproj) file
+hf download LiquidAI/LFM2.5-VL-1.6B-GGUF mmproj-model-f16.gguf --local-dir .
+```
 
 <details>
 <summary>Using llama-server</summary>
 
-Start a vision model server:
+Start a vision model server with both the model and mmproj files:
 
 ```bash
-llama-server -m lfm2-vl-1.6b-q4_k_m.gguf -c 4096 --port 8080
+llama-server -m lfm2.5-vl-1.6b-q4_k_m.gguf --mmproj mmproj-model-f16.gguf -c 4096 --port 8080
 ```
 
 Use with the OpenAI Python client:
@@ -324,7 +333,7 @@ with open("image.jpg", "rb") as image_file:
     image_data = base64.b64encode(image_file.read()).decode("utf-8")
 
 response = client.chat.completions.create(
-    model="lfm2-vl",
+    model="lfm2.5-vl-1.6b",  # Model name should match your server configuration
     messages=[
         {
             "role": "user",
@@ -350,9 +359,10 @@ from llama_cpp import Llama
 from llama_cpp.llama_chat_format import Llava15ChatHandler
 
 # Initialize with vision support
-chat_handler = Llava15ChatHandler(clip_model_path="mmproj-model.gguf")
+# Note: Use the correct chat handler for your model architecture
+chat_handler = Llava15ChatHandler(clip_model_path="mmproj-model-f16.gguf")
 llm = Llama(
-    model_path="lfm2-vl-1.6b-q4_k_m.gguf",
+    model_path="lfm2.5-vl-1.6b-q4_k_m.gguf",
     chat_handler=chat_handler,
     n_ctx=4096
 )
@@ -367,7 +377,8 @@ response = llm.create_chat_completion(
                 {"type": "text", "text": "Describe this image."}
             ]
         }
-    ]
+    ],
+    max_tokens=256
 )
 
 print(response["choices"][0]["message"]["content"])
