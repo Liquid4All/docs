@@ -1,4 +1,4 @@
-# Generation Parameters and Prompting
+# Prompting Guide
 
 This guide covers how to effectively use system prompts, user prompts, and assistant prompts with LFM2 models, along with an overview of sampling parameters and special prompting recipes for specific models.
 
@@ -63,7 +63,7 @@ messages = [
 
 For structured generation with schema validation, see [Outlines](../frameworks/outlines.md).
 
-## Text Sampling Parameters
+## 💬 Text Models
 
 Control text generation behavior, balancing creativity, determinism, and quality:
 
@@ -78,14 +78,20 @@ Parameter names and syntax vary by platform. See [Transformers](../inference/tra
 
 ### Recommended Settings <span style={{display: 'none'}}>Text</span>
 
-**For all text models:**
+**For LFM2.5 text models:**
+- `temperature=0.1`
+- `top_k=50`
+- `top_p=0.1`
+- `repetition_penalty=1.05`
+
+**For LFM2 text models:**
 - `temperature=0.3`
 - `min_p=0.15`
 - `repetition_penalty=1.05`
 
-Some models have [special requirements](#special-prompting-recipes) with different parameters.
+Note that Liquid Nanos have [special requirements](#liquid-nanos) with different parameters.
 
-## Vision Generation Parameters
+## 👁️ Vision Models
 
 LFM2-VL models use a **variable resolution encoder** to control the quality/speed tradeoff by adjusting how images are tokenized.
 
@@ -120,9 +126,7 @@ max_image_tokens=64, min_image_tokens=32
 - `max_image_tokens=256`
 - `do_image_splitting=True`
 
-## Special Prompting Recipes
-
-Some LFM2 models require specific prompting for optimal performance.
+## 🎯 Liquid Nanos
 
 ### LFM2-Extract
 
@@ -196,8 +200,6 @@ We have secured a lease for a facility located at 345 Ocean View Drive, Seward, 
 
 ⚠️ **The model is intended for single turn conversations.**
 
----
-
 ### LFM2-RAG
 
 Optimized for Retrieval-Augmented Generation. Use `temperature=0` (greedy decoding). Provide relevant documents in the system prompt.
@@ -239,13 +241,9 @@ The library at the Agriculture Canada research centre in Lethbridge was reported
 
 </details>
 
----
-
 ### LFM2-Tool
 
 Optimized for efficient and precise tool calling. Use `temperature=0` (greedy decoding). See the [Tool Use](../key-concepts/tool-use.md) guide for details.
-
----
 
 ### LFM2-350M-ENJP-MT
 
@@ -286,8 +284,6 @@ C. elegansとは何ですか？<|im_end|>
 
 ⚠️ **The model is intended for single turn conversations.**
 
----
-
 ### LFM2-350M-PII-Extract-JP
 
 Extracts PII from Japanese text as JSON. Use `temperature=0` (greedy decoding). Output can mask sensitive information on-device.
@@ -322,8 +318,6 @@ Extract <address>, <company_name>, <email_address>, <human_name>, <phone_number>
 </details>
 
 ⚠️ **The model is intended for single turn conversations.**
-
----
 
 ### LFM2-2.6B-Transcript
 

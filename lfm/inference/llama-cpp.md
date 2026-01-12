@@ -5,8 +5,7 @@ import Tabs from '@theme/Tabs';
 
 [llama.cpp](https://github.com/ggml-org/llama.cpp) is a C++ library for efficient LLM inference with minimal dependencies. It's designed for CPU-first inference with cross-platform support.
 
-:::tip
-**Use llama.cpp for:**
+:::tip[**Use llama.cpp for:**]
 - CPU-only environments (no GPU required)
 - Local development and testing
 - Edge deployment and on-device inference

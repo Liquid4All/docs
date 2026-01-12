@@ -50,7 +50,7 @@ Built on a new hybrid architecture, LFM2 sets a new standard in terms of quality
 
 </div>
 
-## Model Families
+## Models
 
 <style>{`
 .model-grid {
@@ -161,5 +161,3 @@ Built on a new hybrid architecture, LFM2 sets a new standard in terms of quality
 </a>
 
 </div>
-
-[Explore all models →](/lfm/key-concepts/models)

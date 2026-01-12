@@ -201,7 +201,7 @@ The LFM model collection includes general-purpose language models, vision-langua
 <td>Yes (TRL)</td>
 </tr>
 <tr>
-<td style={{textAlign: 'left'}}>LFM2-1.2B-Tool</td>
+<td style={{textAlign: 'left'}}>LFM2-1.2B-Tool <span style={{display: 'inline-block', backgroundColor: 'rgba(239, 68, 68, 0.2)', color: 'rgba(220, 38, 38, 1)', padding: '0.2em 0.6em', borderRadius: '0.375rem', fontSize: '0.75em', fontWeight: 500, marginLeft: '0.5em', verticalAlign: 'middle', letterSpacing: '0.01em'}}>Deprecated</span></td>
 <td><a href="https://huggingface.co/LiquidAI/LFM2-1.2B-Tool" style={{color: '#22c55e', textDecoration: 'none'}}>✓</a></td>
 <td><a href="https://huggingface.co/LiquidAI/LFM2-1.2B-Tool-GGUF" style={{color: '#22c55e', textDecoration: 'none'}}>✓</a></td>
 <td style={{color: '#ef4444'}}>✗</td>
@@ -245,7 +245,7 @@ The LFM model collection includes general-purpose language models, vision-langua
 
 </details>
 
-## 💬 Text-to-text Models {#lfm2}
+## 💬 Text Models {#lfm2}
 
 [LFM2](https://huggingface.co/LiquidAI/collections) is a family of general-purpose text-only language models optimized for edge AI and on-device deployment.
 
@@ -265,11 +265,11 @@ The LFM model collection includes general-purpose language models, vision-langua
 |-------|-------------|
 | [`LiquidAI/LFM2-8B-A1B`](https://huggingface.co/LiquidAI/LFM2-8B-A1B) | MoE model with 8B total parameters, 1.5B active per token for efficient inference. Best performance. |
 | [`LiquidAI/LFM2-2.6B`](https://huggingface.co/LiquidAI/LFM2-2.6B) | High-performance model balancing capability and efficiency. |
-| [`LiquidAI/LFM2-1.2B`](https://huggingface.co/LiquidAI/LFM2-1.2B) <span style={{display: 'inline-block', backgroundColor: 'rgba(239, 68, 68, 0.2)', color: 'rgba(220, 38, 38, 1)', padding: '0.2em 0.6em', borderRadius: '0.375rem', fontSize: '0.75em', fontWeight: 500, marginLeft: '0.5em', verticalAlign: 'middle', letterSpacing: '0.01em'}}>Deprecated</span> | Compact model for resource-constrained environments. See updated [`LFM2.5-1.2B-Instruct`](https://huggingface.co/LiquidAI/LFM2.5-1.2B-Instruct) instead. |
+| [`LiquidAI/LFM2-1.2B`](https://huggingface.co/LiquidAI/LFM2-1.2B) | <span style={{display: 'inline-block', backgroundColor: 'rgba(239, 68, 68, 0.2)', color: 'rgba(220, 38, 38, 1)', padding: '0.2em 0.6em', borderRadius: '0.375rem', fontSize: '0.75em', fontWeight: 500, marginLeft: '0.5em', verticalAlign: 'middle', letterSpacing: '0.01em'}}>Deprecated</span> Compact model for resource-constrained environments. See updated [`LFM2.5-1.2B-Instruct`](https://huggingface.co/LiquidAI/LFM2.5-1.2B-Instruct) instead. |
 | [`LiquidAI/LFM2-700M`](https://huggingface.co/LiquidAI/LFM2-700M) | Lightweight model for edge deployment. |
 | [`LiquidAI/LFM2-350M`](https://huggingface.co/LiquidAI/LFM2-350M) | Tiny model for big data operations and edge deployment. Fastest inference. |
 
-## 👁️ Vision Language Models {#lfm2-vl}
+## 👁️ Vision Models {#lfm2-vl}
 
 [LFM2-VL](https://huggingface.co/LiquidAI/collections) is a family of Vision Language Models (VLMs) that support text and image as inputs and text as outputs. These models are built on the LFM2 text model backbone with dynamic, user-tunable SigLIP2 NaFlex image encoders (Base 86M and shape-optimized 400M variants).
 
@@ -317,11 +317,11 @@ The LFM model collection includes general-purpose language models, vision-langua
 | [`LiquidAI/LFM2-350M-Extract`](https://huggingface.co/LiquidAI/LFM2-350M-Extract) | Smaller version of the extraction model. [See prompting guidelines](/lfm/key-concepts/text-generation-and-prompting#lfm2-extract) |
 | [`LiquidAI/LFM2-350M-ENJP-MT`](https://huggingface.co/LiquidAI/LFM2-350M-ENJP-MT) | Near real-time bi-directional Japanese/English translation of short-to-medium inputs. > [See prompting guidelines](/lfm/key-concepts/text-generation-and-prompting#lfm2-350m-enjp-mt) |
 | [`LiquidAI/LFM2-1.2B-RAG`](https://huggingface.co/LiquidAI/LFM2-1.2B-RAG) | Answer questions based on provided contextual documents, for use in RAG systems. > [See prompting guidelines](/lfm/key-concepts/text-generation-and-prompting#lfm2-rag) |
-| [`LiquidAI/LFM2-1.2B-Tool`](https://huggingface.co/LiquidAI/LFM2-1.2B-Tool) | Efficient model optimized for concise and precise tool calling. [See tool use guidelines](tool-use.md) |
 | [`LiquidAI/LFM2-350M-Math`](https://huggingface.co/LiquidAI/LFM2-350M-Math) | Tiny reasoning model designed for tackling tricky math problems. |
 | [`LiquidAI/LFM2-350M-PII-Extract-JP`](https://huggingface.co/LiquidAI/LFM2-350M-PII-Extract-JP) | Extract personally identifiable information (PII) from Japanese text and output it in JSON format. [See prompting guidelines](/lfm/key-concepts/text-generation-and-prompting#lfm2-350m-pii-extract-jp) |
 | [`LiquidAI/LFM2-ColBERT-350M`](https://huggingface.co/LiquidAI/LFM2-ColBERT-350M) | Embed documents and queries for fast retrieval and reranking across many languages. |
 | [`LiquidAI/LFM2-2.6B-Transcript`](https://huggingface.co/LiquidAI/LFM2-2.6B-Transcript) | Designed for private, on-device meeting summarization. [See prompting guidelines](/lfm/key-concepts/text-generation-and-prompting#lfm2-2.6b-transcript) |
+| [`LiquidAI/LFM2-1.2B-Tool`](https://huggingface.co/LiquidAI/LFM2-1.2B-Tool) | <span style={{display: 'inline-block', backgroundColor: 'rgba(239, 68, 68, 0.2)', color: 'rgba(220, 38, 38, 1)', padding: '0.2em 0.6em', borderRadius: '0.375rem', fontSize: '0.75em', fontWeight: 500, marginLeft: '0.5em', verticalAlign: 'middle', letterSpacing: '0.01em'}}>Deprecated</span> Model optimized for concise and precise tool calling. See updated [`LFM2.5-1.2B-Instruct`](https://huggingface.co/LiquidAI/LFM2.5-1.2B-Instruct) instead. |
 
 ## GGUF Models
 
@@ -334,3 +334,9 @@ To access our official GGUF models, append `-GGUF` to any model repository name 
 MLX quantized versions are available for many of the LFM2 model library for efficient inference on Apple Silicon with [MLX](../inference/mlx.md). These models leverage unified memory architecture for optimal performance on M-series chips.
 
 Browse all MLX-compatible models at [mlx-community LFM2 models](https://huggingface.co/mlx-community/collections?search=LFM). All models are available in multiple quantization levels (`4-bit`, `5-bit`, `6-bit`, `8-bit`, `bf16`).
+
+## ONNX Models
+
+ONNX versions are available for many LFM2 models for cross-platform deployment and inference with ONNX Runtime. These models enable deployment across diverse hardware including CPUs, GPUs, and specialized accelerators.
+
+To access our official ONNX models, append `-ONNX` to any model repository name (e.g., `LiquidAI/LFM2.5-1.2B-Instruct-ONNX`).
