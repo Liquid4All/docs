@@ -1,0 +1,42 @@
+/* Custom styles for Liquid AI Documentation */
+
+/* Discord navbar link styling - make icon less bright to match GitHub */
+.navbar-link a[href*="discord"] img,
+a[href*="discord.gg"] img {
+  opacity: 0.6;
+}
+
+/* Hover state - turn purple accent color for both icon and text */
+.navbar-link a[href*="discord"]:hover,
+a[href*="discord.gg"]:hover {
+  color: #864bc4 !important;
+}
+
+.navbar-link a[href*="discord"]:hover img,
+a[href*="discord.gg"]:hover img {
+  opacity: 1;
+  filter: brightness(0) saturate(100%) invert(32%) sepia(89%) saturate(1500%) hue-rotate(258deg) brightness(87%) contrast(95%);
+}
+
+/* Fix card hover border/ring being cut off */
+/* The mdx-content has contain:inline-size which clips card hover effects */
+.mdx-content {
+  contain: none !important;
+}
+
+/* Parent container has overflow-x-clip that clips bottom border */
+.lg\:overflow-x-clip {
+  overflow: visible !important;
+}
+
+/* Ensure card groups don't clip */
+.card-group {
+  overflow: visible !important;
+  contain: none !important;
+  padding-bottom: 4px !important;
+}
+
+/* Ensure cards themselves don't clip */
+.card {
+  overflow: visible !important;
+}

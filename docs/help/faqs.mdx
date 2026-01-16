@@ -1,0 +1,85 @@
+---
+title: "FAQs"
+description: "Frequently asked questions about LFM models and deployment."
+---
+
+## General Questions
+
+<Accordion title="What are LFM models?">
+LFM (Liquid Foundation Models) are a family of efficient language models built on a new hybrid architecture designed for fast training and inference. They range from 350M to 8B parameters and support text, vision, and audio modalities.
+</Accordion>
+
+<Accordion title="What context length do LFM models support?">
+All LFM models support a 32k token text context length for extended conversations and document processing.
+</Accordion>
+
+<Accordion title="Which inference frameworks are supported?">
+LFM models are compatible with:
+- [Transformers](/lfm/inference/transformers) - For research and development
+- [llama.cpp](/lfm/inference/llama-cpp) - For efficient CPU inference
+- [vLLM](/lfm/inference/vllm) - For high-throughput production serving
+- [MLX](/lfm/inference/mlx) - For Apple Silicon optimization
+- [Ollama](/lfm/inference/ollama) - For easy local deployment
+- [LEAP](/leap/index) - For edge and mobile deployment
+</Accordion>
+
+## Model Selection
+
+<Accordion title="Which model should I use for my use case?">
+- **General chat/instruction following**: LFM2.5-1.2B-Instruct (recommended)
+- **Vision tasks**: LFM2.5-VL-1.6B
+- **Audio/speech**: LFM2.5-Audio-1.5B
+- **Extraction tasks**: LFM2-1.2B-Extract or LFM2-350M-Extract
+- **Edge deployment**: LFM2-350M or LFM2-700M for smallest footprint
+- **Highest performance**: LFM2-8B-A1B (MoE architecture)
+</Accordion>
+
+<Accordion title="What is the difference between LFM2 and LFM2.5?">
+LFM2.5 models are updated versions with improved training that deliver higher performance while maintaining the same architecture. We recommend using LFM2.5 variants when available.
+</Accordion>
+
+<Accordion title="What are Liquid Nanos?">
+[Liquid Nanos](/lfm/models/liquid-nanos) are task-specific models fine-tuned for specialized use cases like:
+- Information extraction (LFM2-Extract)
+- Translation (LFM2-350M-ENJP-MT)
+- RAG question answering (LFM2-1.2B-RAG)
+- Meeting summarization (LFM2-2.6B-Transcript)
+</Accordion>
+
+## Deployment
+
+<Accordion title="Can I run LFM models on mobile devices?">
+Yes! Use the [LEAP SDK](/leap/index) to deploy models on iOS and Android devices. LEAP provides optimized inference for edge deployment with support for quantized models.
+</Accordion>
+
+<Accordion title="What quantization formats are available?">
+- **GGUF**: For llama.cpp, LM Studio, Ollama (Q4_0, Q4_K_M, Q5_K_M, Q6_K, Q8_0, F16)
+- **MLX**: For Apple Silicon (4-bit, 5-bit, 6-bit, 8-bit, bf16)
+- **ONNX**: For cross-platform deployment with ONNX Runtime
+</Accordion>
+
+<Accordion title="How do I choose the right quantization level?">
+- **Q4_0 / 4-bit**: Smallest size, fastest inference, some quality loss
+- **Q8_0 / 8-bit**: Good balance of size and quality
+- **F16 / bf16**: Full precision, best quality, largest size
+
+For most use cases, Q4_K_M or Q5_K_M provide good quality with significant size reduction.
+</Accordion>
+
+## Fine-tuning
+
+<Accordion title="Can I fine-tune LFM models?">
+Yes! Most LFM models support fine-tuning with [TRL](/lfm/fine-tuning/trl) and [Unsloth](/lfm/fine-tuning/unsloth). Check the [Complete Model Library](/lfm/models/complete-library) for trainability information.
+</Accordion>
+
+<Accordion title="What fine-tuning methods are supported?">
+- **LoRA/QLoRA**: Memory-efficient fine-tuning
+- **Full fine-tuning**: For maximum customization
+- **SFT (Supervised Fine-Tuning)**: For instruction tuning
+</Accordion>
+
+## Still Have Questions?
+
+- Join our [Discord community](https://discord.gg/DFU3WQeaYD) for real-time help
+- Check the [Cookbook](https://github.com/Liquid4All/cookbook) for examples
+- See [Troubleshooting](/lfm/help/troubleshooting) for common issues

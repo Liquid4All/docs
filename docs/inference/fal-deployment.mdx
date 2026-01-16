@@ -1,0 +1,36 @@
+---
+title: "Fal"
+description: "Fal is a serverless generative media platform offering lightning-fast inference for AI models for image, video, and audio generation."
+---
+
+This guide provides scripts for deploying Liquid AI models on Fal.
+
+## Clone the repository[​](#clone-the-repository "Direct link to Clone the repository")
+
+```
+git clone https://github.com/Liquid4All/lfm-inference
+```
+
+## Deployment[​](#deployment "Direct link to Deployment")
+
+```
+cd fal# run one-off serverfal run deploy-lfm2.py::serve# run production serverfal deploy deploy-lfm2.py::serve --app-name lfm2-8b --auth private
+```
+
+The first run will require extra time to download the docker image and model weights.
+
+## Test call[​](#test-call "Direct link to Test call")
+
+First, create an API key [here](https://fal.ai/dashboard/keys).
+
+Then run the following cURL commands:
+
+```
+export FAL_API_KEY=<your-fal-api-key># List deployed modelcurl https://fal.run/<org-id>/<app-id>/v1/models -H "Authorization: Key $FAL_API_KEY"# Query the deployed LFM modelcurl -X POST https://fal.run/<org-id>/<app-id>/v1/chat/completions \  -H "Authorization: Key $FAL_API_KEY" \  --json '{  "model": "LiquidAI/LFM2-8B-A1B",  "messages": [    {      "role": "user",      "content": "What is the melting temperature of silver?"    }  ],  "max_tokens": 32,  "temperature": 0}'
+```
+
+<Note>
+  Fal endpoints expect the `Key` prefix in the `Authorization` header.
+</Note>
+
+[Edit this page](https://github.com/Liquid4All/docs/tree/main/lfm/inference/fal-deployment.md)

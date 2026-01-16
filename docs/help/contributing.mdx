@@ -1,0 +1,142 @@
+---
+title: "Contributing to Docs"
+description: "Guidelines for contributing to Liquid AI documentation."
+---
+
+We welcome contributions to improve our documentation! Here's how you can help.
+
+## Quick Edits
+
+Every page has an "Edit this page" link at the bottom that takes you directly to the source file on GitHub. For small fixes (typos, clarifications), this is the fastest way to contribute.
+
+## Larger Changes
+
+For more substantial changes:
+
+1. **Fork the repository**: [github.com/Liquid4All/docs](https://github.com/Liquid4All/docs)
+
+2. **Clone your fork**:
+```bash
+git clone https://github.com/YOUR_USERNAME/docs.git
+cd docs
+```
+
+3. **Create a branch**:
+```bash
+git checkout -b feature/your-improvement
+```
+
+4. **Make your changes** following the style guide below
+
+5. **Preview locally**:
+```bash
+mintlify dev
+```
+
+6. **Submit a pull request** with a clear description of changes
+
+## Style Guide
+
+### Writing Style
+
+- Use clear, concise language
+- Prefer active voice ("Run the command" not "The command should be run")
+- Include code examples where helpful
+- Link to related pages for context
+- Avoid jargon without explanation
+
+### Code Blocks
+
+Always specify the language for syntax highlighting:
+
+````markdown
+```python
+from transformers import AutoModelForCausalLM
+model = AutoModelForCausalLM.from_pretrained("LiquidAI/LFM2.5-1.2B-Instruct")
+```
+````
+
+For bash commands:
+
+````markdown
+```bash
+pip install transformers torch
+```
+````
+
+### Page Structure
+
+```mdx
+---
+title: "Page Title"
+description: "Brief description for SEO and previews (1-2 sentences)"
+---
+
+Introduction paragraph explaining what this page covers.
+
+## Main Section
+
+Content organized under clear headings...
+
+### Subsection
+
+More detailed content...
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Related Topic" href="/path/to/page">
+    Brief description
+  </Card>
+</CardGroup>
+```
+
+### Components
+
+Use Mintlify components appropriately:
+
+- `<Accordion>` for expandable content (FAQs, optional details)
+- `<Card>` and `<CardGroup>` for navigation and feature highlights
+- `<Note>`, `<Warning>`, `<Info>` for callouts
+- `<Tabs>` for alternative approaches (e.g., different languages)
+
+### Links
+
+- Use relative links for internal pages: `/lfm/inference/transformers`
+- Use descriptive link text: "See the [inference guide](/lfm/inference/transformers)" not "Click [here](/lfm/inference/transformers)"
+
+## What to Contribute
+
+### High-Impact Contributions
+
+- Fix typos or unclear explanations
+- Add missing code examples
+- Update outdated information
+- Improve navigation or organization
+- Add FAQs based on common questions
+
+### Content Ideas
+
+- Tutorials for specific use cases
+- Integration guides for popular tools
+- Performance optimization tips
+- Troubleshooting solutions
+
+## Review Process
+
+1. Maintainers will review your PR within a few days
+2. You may receive feedback or requests for changes
+3. Once approved, your contribution will be merged
+4. Changes deploy automatically after merge
+
+## Code of Conduct
+
+- Be respectful and constructive
+- Focus on improving the documentation
+- Test your code examples before submitting
+- Keep discussions on-topic
+
+## Questions?
+
+- Join our [Discord](https://discord.gg/DFU3WQeaYD) to discuss documentation improvements
+- Open an issue for larger discussions about documentation structure

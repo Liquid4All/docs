@@ -1,0 +1,65 @@
+---
+title: "Liquid Nanos"
+description: "Task-specific models fine-tuned for extraction, translation, RAG, math, and tool use."
+icon: "sparkles"
+---
+
+[Liquid Nanos](https://huggingface.co/collections/LiquidAI/liquid-nanos-68b98d898414dd94d4d5f99a) are task-specific models fine-tuned for specialized use cases.
+
+## Available Models
+
+| Model                                                                                           | Description                                                                                                                                                                                             |
+| ----------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [`LiquidAI/LFM2-1.2B-Extract`](https://huggingface.co/LiquidAI/LFM2-1.2B-Extract)               | Extract important information from a wide variety of unstructured documents into structured outputs like JSON. [See prompting guidelines](/lfm/key-concepts/text-generation-and-prompting#lfm2-extract) |
+| [`LiquidAI/LFM2-350M-Extract`](https://huggingface.co/LiquidAI/LFM2-350M-Extract)               | Smaller version of the extraction model. [See prompting guidelines](/lfm/key-concepts/text-generation-and-prompting#lfm2-extract)                                                                       |
+| [`LiquidAI/LFM2-350M-ENJP-MT`](https://huggingface.co/LiquidAI/LFM2-350M-ENJP-MT)               | Near real-time bi-directional Japanese/English translation of short-to-medium inputs. [See prompting guidelines](/lfm/key-concepts/text-generation-and-prompting#lfm2-350m-enjp-mt)                     |
+| [`LiquidAI/LFM2-1.2B-RAG`](https://huggingface.co/LiquidAI/LFM2-1.2B-RAG)                       | Answer questions based on provided contextual documents, for use in RAG systems. [See prompting guidelines](/lfm/key-concepts/text-generation-and-prompting#lfm2-rag)                                   |
+| [`LiquidAI/LFM2-350M-Math`](https://huggingface.co/LiquidAI/LFM2-350M-Math)                     | Tiny reasoning model designed for tackling tricky math problems.                                                                                                                                        |
+| [`LiquidAI/LFM2-350M-PII-Extract-JP`](https://huggingface.co/LiquidAI/LFM2-350M-PII-Extract-JP) | Extract personally identifiable information (PII) from Japanese text and output it in JSON format. [See prompting guidelines](/lfm/key-concepts/text-generation-and-prompting#lfm2-350m-pii-extract-jp) |
+| [`LiquidAI/LFM2-ColBERT-350M`](https://huggingface.co/LiquidAI/LFM2-ColBERT-350M)               | Embed documents and queries for fast retrieval and reranking across many languages.                                                                                                                     |
+| [`LiquidAI/LFM2-2.6B-Transcript`](https://huggingface.co/LiquidAI/LFM2-2.6B-Transcript)         | Designed for private, on-device meeting summarization. [See prompting guidelines](/lfm/key-concepts/text-generation-and-prompting#lfm2-2.6b-transcript)                                                 |
+| [`LiquidAI/LFM2-1.2B-Tool`](https://huggingface.co/LiquidAI/LFM2-1.2B-Tool)                     | Deprecated Model optimized for concise and precise tool calling. See updated [`LFM2.5-1.2B-Instruct`](https://huggingface.co/LiquidAI/LFM2.5-1.2B-Instruct) instead.                                    |
+
+## Use Cases
+
+### Information Extraction
+Extract structured data from unstructured documents using the Extract models:
+
+```python
+from transformers import AutoModelForCausalLM, AutoTokenizer
+
+model_id = "LiquidAI/LFM2-1.2B-Extract"
+tokenizer = AutoTokenizer.from_pretrained(model_id)
+model = AutoModelForCausalLM.from_pretrained(model_id, device_map="auto")
+
+# See prompting guidelines for optimal results
+```
+
+### Translation
+Use LFM2-350M-ENJP-MT for fast Japanese/English translation:
+- Bidirectional translation support
+- Optimized for short-to-medium text
+- Near real-time performance
+
+### RAG Systems
+LFM2-1.2B-RAG is designed for retrieval-augmented generation:
+- Answer questions based on provided context
+- Optimized for document Q&A
+- Supports long context windows
+
+### Document Embeddings
+LFM2-ColBERT-350M provides efficient document embeddings:
+- Multi-language support
+- Fast retrieval and reranking
+- Compatible with PyLate for training
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Prompting Guidelines" icon="message-circle" href="/lfm/key-concepts/text-generation-and-prompting">
+    Learn optimal prompting for each Nano model
+  </Card>
+  <Card title="Invoice Extractor Tutorial" icon="file-text" href="/examples/laptop-examples/invoice-extractor-tool-with-liquid-nanos">
+    See Nanos in action with a practical example
+  </Card>
+</CardGroup>

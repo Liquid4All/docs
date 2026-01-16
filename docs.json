@@ -1,0 +1,247 @@
+{
+  "$schema": "https://mintlify.com/docs.json",
+  "theme": "mint",
+  "name": "Liquid Docs",
+  "description": "Documentation for Liquid AI Foundation Models (LFM)",
+  "colors": {
+    "primary": "#5603ad",
+    "light": "#864bc4",
+    "dark": "#490294"
+  },
+  "favicon": "/favicon.svg",
+  "logo": {
+    "light": "/logo/light.svg",
+    "dark": "/logo/dark.svg",
+    "href": "https://liquid.ai"
+  },
+  "navbar": {
+    "links": [
+      {
+        "label": "Discord",
+        "icon": "discord",
+        "href": "https://discord.gg/DFU3WQeaYD"
+      }
+    ],
+    "primary": {
+      "type": "github",
+      "href": "https://github.com/Liquid4All/cookbook"
+    }
+  },
+  "navigation": {
+    "global": {
+      "anchors": [
+        {
+          "anchor": "About Us",
+          "icon": "building",
+          "href": "https://www.liquid.ai/company/about"
+        },
+        {
+          "anchor": "Blog",
+          "icon": "pencil",
+          "href": "https://www.liquid.ai/company/blog"
+        }
+      ]
+    },
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Get Started",
+            "icon": "rocket",
+            "pages": [
+              "docs/getting-started/welcome",
+              "docs/getting-started/quickstart"
+            ]
+          },
+          {
+            "group": "Models",
+            "icon": "brain",
+            "pages": [
+              "docs/models/complete-library",
+              "docs/models/text-models",
+              "docs/models/vision-models",
+              "docs/models/audio-models",
+              "docs/models/liquid-nanos"
+            ]
+          },
+          {
+            "group": "Key Concepts",
+            "icon": "lightbulb",
+            "pages": [
+              "docs/key-concepts/chat-template",
+              "docs/key-concepts/text-generation-and-prompting",
+              "docs/key-concepts/tool-use"
+            ]
+          },
+          {
+            "group": "Inference",
+            "icon": "play",
+            "pages": [
+              "docs/inference/transformers",
+              "docs/inference/llama-cpp",
+              "docs/inference/vllm",
+              "docs/inference/mlx",
+              "docs/inference/ollama",
+              {
+                "group": "Other Frameworks",
+                "icon": "layers",
+                "pages": [
+                  "docs/inference/lm-studio",
+                  "docs/inference/modal-deployment",
+                  "docs/inference/baseten-deployment",
+                  "docs/inference/fal-deployment"
+                ]
+              }
+            ]
+          },
+          {
+            "group": "Fine-tuning",
+            "icon": "sliders",
+            "pages": [
+              "docs/fine-tuning/leap-finetune",
+              "docs/fine-tuning/trl",
+              "docs/fine-tuning/unsloth"
+            ]
+          },
+          {
+            "group": "Frameworks",
+            "icon": "boxes",
+            "pages": [
+              "docs/frameworks/leap",
+              "docs/frameworks/outlines"
+            ]
+          },
+          {
+            "group": "Help",
+            "icon": "circle-help",
+            "pages": [
+              "docs/help/faqs",
+              "docs/help/troubleshooting",
+              "docs/help/contributing"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "API Spec",
+        "groups": [
+          {
+            "group": "Getting Started",
+            "icon": "rocket",
+            "pages": [
+              "leap/index",
+              "leap/find-model",
+              "leap/vibe-check-models"
+            ]
+          },
+          {
+            "group": "Deploy to Mobile",
+            "icon": "smartphone",
+            "pages": [
+              "leap/edge-sdk/overview",
+              {
+                "group": "Android",
+                "icon": "tablet",
+                "pages": [
+                  "leap/edge-sdk/android/android-quick-start-guide",
+                  "leap/edge-sdk/android/android-api-spec",
+                  "leap/edge-sdk/android/cloud-ai-comparison",
+                  "leap/edge-sdk/android/constrained-generation",
+                  "leap/edge-sdk/android/function-calling"
+                ]
+              },
+              {
+                "group": "iOS",
+                "icon": "apple",
+                "pages": [
+                  "leap/edge-sdk/ios/ios-quick-start-guide",
+                  "leap/edge-sdk/ios/ios-api-spec",
+                  "leap/edge-sdk/ios/cloud-ai-comparison",
+                  "leap/edge-sdk/ios/constrained-generation",
+                  "leap/edge-sdk/ios/function-calling"
+                ]
+              }
+            ]
+          },
+          {
+            "group": "Deploy to Laptop",
+            "icon": "laptop",
+            "pages": [
+              "leap/laptop-support"
+            ]
+          },
+          {
+            "group": "Customize Model",
+            "icon": "settings",
+            "pages": [
+              "leap/finetuning",
+              {
+                "group": "Model Bundling Service",
+                "icon": "package",
+                "pages": [
+                  "leap/leap-bundle/quick-start",
+                  "leap/leap-bundle/cli-spec",
+                  "leap/leap-bundle/data-privacy"
+                ]
+              }
+            ]
+          },
+          {
+            "group": "Resources",
+            "icon": "book-open",
+            "pages": [
+              "leap/changelog"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Guides",
+        "groups": [
+          {
+            "group": "Examples",
+            "icon": "code",
+            "pages": [
+              "examples/index"
+            ]
+          },
+          {
+            "group": "Laptop Examples",
+            "icon": "laptop",
+            "pages": [
+              "examples/laptop-examples/invoice-extractor-tool-with-liquid-nanos",
+              "examples/laptop-examples/audio-to-text-in-real-time",
+              "examples/laptop-examples/lfm2-english-to-korean"
+            ]
+          },
+          {
+            "group": "iOS Examples",
+            "icon": "apple",
+            "pages": [
+              "examples/deploy-models-on-ios/slogan-generator-app"
+            ]
+          },
+          {
+            "group": "Model Customization",
+            "icon": "sliders",
+            "pages": [
+              "examples/customize-models/car-maker-identification"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "ai": {
+    "chat": true,
+    "search": true
+  },
+  "footer": {
+    "socials": {
+      "github": "https://github.com/Liquid4All/cookbook",
+      "discord": "https://discord.gg/DFU3WQeaYD",
+      "website": "https://liquid.ai"
+    }
+  }
+}

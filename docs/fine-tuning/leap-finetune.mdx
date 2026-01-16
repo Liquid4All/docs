@@ -1,0 +1,48 @@
+---
+title: "LEAP Finetune"
+description: "Fine-tune LFM models using the LEAP platform for edge deployment."
+---
+
+<Info>
+LEAP Finetune documentation is coming soon. This feature enables fine-tuning LFM models specifically optimized for edge deployment on mobile and embedded devices.
+</Info>
+
+## Overview
+
+LEAP Finetune will provide:
+
+- **Streamlined fine-tuning** optimized for edge deployment
+- **Automatic model optimization** for mobile and embedded targets
+- **Integration with LEAP SDK** for seamless deployment
+
+## Current Alternatives
+
+While LEAP Finetune is in development, you can fine-tune models using:
+
+<CardGroup cols={2}>
+  <Card title="TRL" icon="graduation-cap" href="/lfm/fine-tuning/trl">
+    Hugging Face's training library with LoRA/QLoRA support
+  </Card>
+  <Card title="Unsloth" icon="zap" href="/lfm/fine-tuning/unsloth">
+    Memory-efficient fine-tuning with 2x faster training
+  </Card>
+</CardGroup>
+
+## Workflow for Edge Deployment
+
+After fine-tuning with TRL or Unsloth, prepare your model for edge deployment:
+
+1. **Fine-tune** your model using TRL or Unsloth
+2. **Convert** to edge-optimized format using the [Model Bundling Service](/leap/leap-bundle/quick-start)
+3. **Deploy** to mobile devices using the [LEAP SDK](/leap/edge-sdk/overview)
+
+```bash
+# Example: Bundle a fine-tuned model for edge deployment
+leap-bundle create --model ./my-finetuned-model --target ios
+```
+
+## Stay Updated
+
+- Join our [Discord](https://discord.gg/DFU3WQeaYD) for announcements
+- Check the [Changelog](/leap/changelog) for updates
+- Follow [Liquid AI](https://liquid.ai) for news

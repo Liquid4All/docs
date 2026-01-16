@@ -1,0 +1,16 @@
+default: true
+line-length: false
+link-fragments: false
+no-inline-html: false
+blanks-around-fences: false
+blanks-around-headings: false
+blanks-around-lists: false
+blanks-around-tables: false
+no-bare-urls: false
+no-trailing-punctuation: false
+no-emphasis-as-heading: false
+no-alt-text: false
+fenced-code-language: false
+ol-prefix: false
+descriptive-link-text: false
+first-line-h1: false

@@ -1,0 +1,105 @@
+---
+title: "Unsloth"
+description: "Unsloth is a library that makes fine-tuning LLMs 2-5x faster and uses 70% less memory through optimized kernels and efficient memory management."
+---
+
+<Check>
+  * 2-5x faster training with optimized kernels
+  * 70% less memory usage through efficient management
+  * Utilities for quantization and quick inference
+</Check>
+
+## Installation[​](#installation "Direct link to Installation")
+
+Install Unsloth and required dependencies:
+
+```
+pip install "unsloth[colab-new] @ git+https://github.com/unslothai/unsloth.git"
+```
+
+For a stable release:
+
+```
+pip install unsloth transformers>=4.55.0 torch>=2.6
+```
+
+Optional: Install `xformers` for additional memory optimizations.
+
+## Supervised Fine-Tuning (SFT)[​](#supervised-fine-tuning-sft "Direct link to Supervised Fine-Tuning (SFT)")
+
+[![Colab link](/images/lfm/fine-tuning/production/uploads/61b8e2ba285851687028d395/vlOyMEjwHa_b_LXysEu2E.png)](https://colab.research.google.com/drive/1HROdGaPFt1tATniBcos11-doVaH7kOI3?usp=sharing)
+
+Unsloth provides the `FastLanguageModel` wrapper that automatically applies optimizations to your model and integrates seamlessly with TRL's `SFTTrainer`.
+
+### LoRA Fine-Tuning (Recommended)[​](#lora-fine-tuning-recommended "Direct link to LoRA Fine-Tuning (Recommended)")
+
+LoRA (Low-Rank Adaptation) is the recommended approach for fine-tuning LFM2 models with Unsloth. Combined with Unsloth's optimizations, LoRA offers:
+
+* **Memory efficient**: Trains only small adapter weights (\~1-2% of model size) instead of full model parameters
+* **Data efficient**: Achieves strong task performance improvements with less training data than full fine-tuning
+* **Fast training**: Unsloth's optimized kernels combined with reduced parameters enable 2-5x faster training
+* **Flexible**: Easy to switch between different task adapters without retraining the base model
+
+Unsloth provides optimized LoRA support through `FastLanguageModel.get_peft_model()`:
+
+```
+from unsloth import FastLanguageModelfrom trl import SFTTrainer, SFTConfigfrom datasets import load_dataset# Load model with Unsloth optimizationsmodel, tokenizer = FastLanguageModel.from_pretrained(    model_name="LiquidAI/LFM2.5-1.2B-Instruct",    max_seq_length=2048,    dtype=None,    load_in_4bit=False,)# Apply LoRA with Unslothmodel = FastLanguageModel.get_peft_model(    model,    r=16,    target_modules=["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj"],    lora_alpha=32,    lora_dropout=0.05,    bias="none",    use_gradient_checkpointing="unsloth",  # Unsloth's optimized gradient checkpointing    random_state=42,)training_args = SFTConfig(    output_dir="./lfm2-unsloth-lora",    num_train_epochs=3,    per_device_train_batch_size=4,    gradient_accumulation_steps=4,    learning_rate=2e-4,    logging_steps=10,    bf16=True,)dataset = load_dataset("your-dataset")trainer = SFTTrainer(    model=model,    args=training_args,    train_dataset=dataset["train"],    tokenizer=tokenizer,)trainer.train()
+```
+
+<Accordion title="QLoRA (4-Bit Quantization)">
+  For maximum memory efficiency on resource-constrained hardware, use QLoRA with 4-bit quantization. This reduces memory usage by \~4x while maintaining strong performance.
+
+  ```
+  from unsloth import FastLanguageModelfrom trl import SFTTrainer, SFTConfigfrom datasets import load_dataset# Load model in 4-bitmodel, tokenizer = FastLanguageModel.from_pretrained(    model_name="LiquidAI/LFM2.5-1.2B-Instruct",    max_seq_length=2048,    dtype=None,    load_in_4bit=True,  # Enable 4-bit quantization)# Apply LoRAmodel = FastLanguageModel.get_peft_model(    model,    r=16,    target_modules=["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj"],    lora_alpha=32,    lora_dropout=0.05,    bias="none",    use_gradient_checkpointing="unsloth",    random_state=42,)training_args = SFTConfig(    output_dir="./lfm2-unsloth-qlora",    num_train_epochs=3,    per_device_train_batch_size=2,    gradient_accumulation_steps=8,    learning_rate=2e-4,    logging_steps=10,    bf16=True,)dataset = load_dataset("your-dataset")trainer = SFTTrainer(    model=model,    args=training_args,    train_dataset=dataset["train"],    tokenizer=tokenizer,)trainer.train()
+  ```
+</Accordion>
+
+<Accordion title="Full Fine-Tuning">
+  Full fine-tuning updates all model parameters. Use this only when you have sufficient GPU memory and need maximum adaptation for your task.
+
+  ```
+  from unsloth import FastLanguageModelfrom trl import SFTTrainer, SFTConfigfrom datasets import load_dataset# Load model with Unsloth optimizationsmodel, tokenizer = FastLanguageModel.from_pretrained(    model_name="LiquidAI/LFM2.5-1.2B-Instruct",    max_seq_length=2048,    dtype=None,  # Auto-detect    load_in_4bit=False,)# Load your datasetdataset = load_dataset("your-dataset")# Configure trainingtraining_args = SFTConfig(    output_dir="./lfm2-unsloth-sft",    num_train_epochs=3,    per_device_train_batch_size=4,    gradient_accumulation_steps=4,    learning_rate=2e-5,    logging_steps=10,    save_strategy="epoch",    bf16=True,)# Create trainertrainer = SFTTrainer(    model=model,    args=training_args,    train_dataset=dataset["train"],    tokenizer=tokenizer,)# Traintrainer.train()
+  ```
+</Accordion>
+
+## Saving Models[​](#saving-models "Direct link to Saving Models")
+
+After training, save your model:
+
+```
+# Save LoRA adapters only (lightweight)model.save_pretrained("./lfm2-lora-adapters")tokenizer.save_pretrained("./lfm2-lora-adapters")# Or save merged model (full weights)model.save_pretrained_merged("./lfm2-merged", tokenizer)
+```
+
+## Inference[​](#inference "Direct link to Inference")
+
+Load and run inference with your fine-tuned model:
+
+```
+from unsloth import FastLanguageModel# Load modelmodel, tokenizer = FastLanguageModel.from_pretrained(    model_name="./lfm2-lora-adapters",    max_seq_length=2048,    dtype=None,    load_in_4bit=False,)# Enable inference mode for faster generationFastLanguageModel.for_inference(model)# Generateinputs = tokenizer("Your prompt here", return_tensors="pt").to("cuda")outputs = model.generate(**inputs, max_new_tokens=512)print(tokenizer.decode(outputs[0], skip_special_tokens=True))
+```
+
+## Direct Preference Optimization (DPO)[​](#direct-preference-optimization-dpo "Direct link to Direct Preference Optimization (DPO)")
+
+Unsloth also supports DPO training with the `DPOTrainer`:
+
+```
+from unsloth import FastLanguageModel, PatchDPOTrainerfrom trl import DPOTrainer, DPOConfigfrom datasets import load_dataset# Patch DPO for Unsloth optimizationsPatchDPOTrainer()# Load modelmodel, tokenizer = FastLanguageModel.from_pretrained(    model_name="LiquidAI/LFM2.5-1.2B-Instruct",    max_seq_length=2048,    dtype=None,    load_in_4bit=False,)# Apply LoRAmodel = FastLanguageModel.get_peft_model(    model,    r=16,    target_modules=["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj"],    lora_alpha=32,    lora_dropout=0.05,    bias="none",    use_gradient_checkpointing="unsloth",    random_state=42,)# Load preference datasetdataset = load_dataset("your-preference-dataset")training_args = DPOConfig(    output_dir="./lfm2-unsloth-dpo",    num_train_epochs=3,    per_device_train_batch_size=2,    gradient_accumulation_steps=8,    learning_rate=5e-7,    beta=0.1,    logging_steps=10,    bf16=True,)trainer = DPOTrainer(    model=model,    args=training_args,    train_dataset=dataset["train"],    tokenizer=tokenizer,)trainer.train()
+```
+
+<Note>
+  Multi-GPU support exists in Unsloth but is less clearly documented and tested than other packages like TRL or Axolotl. For production multi-GPU training, consider using TRL or Axolotl with Unsloth optimizations where available.
+</Note>
+
+## Tips[​](#tips "Direct link to Tips")
+
+* **`max_seq_length`**: Set to your expected maximum sequence length; Unsloth pre-allocates memory for efficiency
+* **`load_in_4bit`**: Enables QLoRA, reducing memory by \~4x with minimal quality loss
+* **`use_gradient_checkpointing`**: Use `"unsloth"` for faster checkpointing than default
+* **Target modules**: Include MLP layers (`gate_proj`, `up_proj`, `down_proj`) for better quality, especially on smaller models
+* **Batch size**: Unsloth's optimizations allow larger batch sizes; experiment to maximize GPU utilization
+
+***
+
+For more end to end examples, visit the [Liquid AI Cookbook](https://github.com/Liquid4All/cookbook).
+
+[Edit this page](https://github.com/Liquid4All/docs/tree/main/lfm/fine-tuning/unsloth.md)

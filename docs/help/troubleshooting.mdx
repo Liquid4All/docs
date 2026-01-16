@@ -1,0 +1,145 @@
+---
+title: "Troubleshooting"
+description: "Common issues and solutions when working with LFM models."
+---
+
+## Installation Issues
+
+<Accordion title="ImportError: cannot import name 'LfmForCausalLM'">
+Ensure you have the latest version of transformers installed:
+
+```bash
+pip install transformers>=4.55.0
+```
+
+If you're using an older version, the LFM model classes may not be available.
+</Accordion>
+
+<Accordion title="CUDA out of memory errors">
+Try these solutions in order:
+
+1. **Use a smaller model**: Try LFM2-350M instead of LFM2-1.2B
+2. **Enable quantization**:
+```python
+model = AutoModelForCausalLM.from_pretrained(
+    model_id,
+    load_in_4bit=True,
+    device_map="auto"
+)
+```
+3. **Reduce batch size or sequence length**
+4. **Use gradient checkpointing for training**:
+```python
+model.gradient_checkpointing_enable()
+```
+</Accordion>
+
+<Accordion title="Model download fails or times out">
+- Check your internet connection
+- Try using `huggingface-cli login` if the model requires authentication
+- Set a longer timeout: `HF_HUB_DOWNLOAD_TIMEOUT=600`
+- Try downloading with `snapshot_download`:
+```python
+from huggingface_hub import snapshot_download
+snapshot_download("LiquidAI/LFM2.5-1.2B-Instruct")
+```
+</Accordion>
+
+## Inference Issues
+
+<Accordion title="Model generates repetitive or low-quality output">
+Adjust generation parameters:
+
+```python
+outputs = model.generate(
+    **inputs,
+    max_new_tokens=512,
+    temperature=0.7,
+    top_p=0.9,
+    do_sample=True,
+    repetition_penalty=1.1
+)
+```
+
+Key parameters to tune:
+- `temperature`: Lower (0.3-0.5) for factual, higher (0.7-1.0) for creative
+- `top_p`: 0.9 is a good default
+- `repetition_penalty`: 1.1-1.2 helps avoid loops
+</Accordion>
+
+<Accordion title="Slow inference speed">
+Optimization strategies:
+
+1. **Use GGUF models with llama.cpp** for CPU inference
+2. **Use MLX models on Apple Silicon**
+3. **Enable Flash Attention** (if available):
+```python
+model = AutoModelForCausalLM.from_pretrained(
+    model_id,
+    attn_implementation="flash_attention_2"
+)
+```
+4. **Use vLLM for high-throughput serving**
+5. **Use smaller quantization levels** (Q4 vs Q8)
+</Accordion>
+
+<Accordion title="Output is cut off or incomplete">
+Increase `max_new_tokens`:
+
+```python
+outputs = model.generate(
+    **inputs,
+    max_new_tokens=1024,  # Increase this value
+)
+```
+
+Check that your input isn't too long - LFM models support 32k context, but very long inputs leave less room for output.
+</Accordion>
+
+## Fine-tuning Issues
+
+<Accordion title="Training loss not decreasing">
+Common causes and solutions:
+
+1. **Learning rate too high/low**: Try 2e-4 for LoRA, 2e-5 for full fine-tuning
+2. **Dataset format issues**: Verify your data matches the expected chat template
+3. **Insufficient data**: Ensure you have enough training examples
+4. **Check for data leakage**: Make sure eval data isn't in training set
+</Accordion>
+
+<Accordion title="Out of memory during fine-tuning">
+Memory optimization strategies:
+
+1. **Use QLoRA** instead of full fine-tuning
+2. **Reduce batch size** and increase gradient accumulation
+3. **Enable gradient checkpointing**
+4. **Use a smaller model** (LFM2-350M for experiments)
+
+```python
+training_args = TrainingArguments(
+    per_device_train_batch_size=1,
+    gradient_accumulation_steps=8,
+    gradient_checkpointing=True,
+)
+```
+</Accordion>
+
+## llama.cpp / GGUF Issues
+
+<Accordion title="Model fails to load in llama.cpp">
+- Ensure you're using a compatible llama.cpp version
+- Check that the GGUF file downloaded completely
+- Try a different quantization level (e.g., Q4_K_M)
+</Accordion>
+
+<Accordion title="Very slow inference with llama.cpp">
+- Ensure you compiled with GPU support if available
+- Use appropriate thread count: `-t $(nproc)`
+- Try a more aggressive quantization (Q4_0)
+</Accordion>
+
+## Still Stuck?
+
+- **Discord**: Join our [Discord community](https://discord.gg/DFU3WQeaYD) for real-time help
+- **GitHub Issues**: Report bugs at [github.com/Liquid4All/docs/issues](https://github.com/Liquid4All/docs/issues)
+- **Cookbook**: Check [examples](https://github.com/Liquid4All/cookbook) for working code
