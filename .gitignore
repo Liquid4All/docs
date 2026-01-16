@@ -143,3 +143,19 @@ vite.config.ts.timestamp-*
 public/_pagefind/
 build/
 .idea/
+
+# Playwright MCP
+.playwright-mcp/
+
+# Claude Code
+.claude/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor/IDE
+*.swp
+*.swo
+*~
+.vscode/
