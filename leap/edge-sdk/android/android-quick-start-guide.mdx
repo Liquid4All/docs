@@ -1,169 +1,129 @@
 ---
-sidebar_position: 1
+title: "Quick Start Guide"
 ---
 
-import TabItem from '@theme/TabItem';
-import Tabs from '@theme/Tabs';
-
-# Quick Start Guide
-
-## 1. Prerequisites
+## 1. Prerequisites[​](#1-prerequisites "Direct link to 1. Prerequisites")
 
 You should already have:
 
-- An Android project created in Android Studio. You may create an empty project with the wizard. LEAP Android SDK is Kotlin-first. We recommend to work with the SDK only in Kotlin.
-- Leap Android SDK needs [Kotlin Android plugin](https://kotlinlang.org/docs/releases.html#update-to-a-new-kotlin-version) v2.2.0 or above and [Android Gradle Plugin](https://developer.android.com/build/releases/gradle-plugin) v8.12.0 or above to build. Declare it in `build.gradle.kts` as
-  ```kotlin
-  plugins {
-   id("com.android.application") version "8.12.0" apply false
-   id("com.android.library") version "8.12.0" apply false
-   id("org.jetbrains.kotlin.android") version "2.2.0" apply false
-  }
+* An Android project created in Android Studio. You may create an empty project with the wizard. LEAP Android SDK is Kotlin-first. We recommend to work with the SDK only in Kotlin.
+* Leap Android SDK needs [Kotlin Android plugin](https://kotlinlang.org/docs/releases.html#update-to-a-new-kotlin-version) v2.2.0 or above and [Android Gradle Plugin](https://developer.android.com/build/releases/gradle-plugin) v8.12.0 or above to build. Declare it in `build.gradle.kts` as
   ```
-- A working Android device that supports `arm64-v8a` ABI with [developer mode enabled](https://developer.android.com/studio/debug/dev-options). We recommend having 3GB+ of RAM to run the models.
-- The minimal SDK requirement is API 31. Declare it in `build.gradle.kts` as
-  ```kotlin
-  android {
-   defaultConfig {
-    minSdk = 31
-    targetSdk = 36
-   }
-  }
+  plugins { id("com.android.application") version "8.12.0" apply false id("com.android.library") version "8.12.0" apply false id("org.jetbrains.kotlin.android") version "2.2.0" apply false}
+  ```
+* A working Android device that supports `arm64-v8a` ABI with [developer mode enabled](https://developer.android.com/studio/debug/dev-options). We recommend having 3GB+ of RAM to run the models.
+* The minimal SDK requirement is API 31. Declare it in `build.gradle.kts` as
+  ```
+  android { defaultConfig {  minSdk = 31  targetSdk = 36 }}
   ```
 
-:::warning
-The SDK may crash on loading model bundles on simulators. A physical Android device is
-recommended.
-:::
+<Warning>
+  The SDK may crash on loading model bundles on simulators. A physical Android device is recommended.
+</Warning>
 
-## 2. Import the LeapSDK
+## 2. Import the LeapSDK[​](#2-import-the-leapsdk "Direct link to 2. Import the LeapSDK")
 
 Add the following dependencies into `$PROJECT_ROOT/app/build.gradle.kts`:
 
-```kotlin
-dependencies {
-  ...
-
-  implementation("ai.liquid.leap:leap-sdk:0.7.4")
-}
+```
+dependencies {  ...  implementation("ai.liquid.leap:leap-sdk:0.7.4")}
 ```
 
 Then perform a project sync in Android Studio to fetch the LeapSDK artifacts.
 
-## 3. Getting and Loading Models
+## 3. Getting and Loading Models[​](#3-getting-and-loading-models "Direct link to 3. Getting and Loading Models")
 
 The SDK supports two methods for loading models.
 
-- GGUF manifests (recommended method for new projects due to superior inference performance and better default generation parameters)
-- Executorch bundles (legacy)
+* GGUF manifests (recommended method for new projects due to superior inference performance and better default generation parameters)
+* Executorch bundles (legacy)
 
 <Tabs>
-<TabItem value="automatic" label="GGUF manifests (recommended)" default>
+  <Tab title="GGUF manifests (recommended)">
+    The LEAP Edge SDK supports directly downloading LEAP models in GGUF format. Given the model name and quantization method (which you can find in the [LEAP Model Library](https://leap.liquid.ai/models)), the SDK will automatically download the necessary GGUF files along with generation parameters for optimal performance.
+  </Tab>
 
-The LEAP Edge SDK supports directly downloading LEAP models in GGUF format. Given the model name and quantization method (which you can find in the [LEAP Model Library](https://leap.liquid.ai/models)), the SDK will automatically download the necessary GGUF files along with generation parameters for optimal performance.
+  <Tab title="Executorch bundles (legacy)">
+    ### Loading from remote GGUF manifest (recommended)[​](#loading-from-remote-gguf-manifest-recommended "Direct link to Loading from remote GGUF manifest (recommended)")
+  </Tab>
 
-### Loading from remote GGUF manifest (recommended)
+  <Tab title>
+    The `LeapDownloader.loadModel` suspend function loads a model and returns a model runner instance for invoking the model. This function takes some time to finish as loading the model is a heavy I/O operation, but it is safe to call on the main thread. The function should be executed in a coroutine scope.
+  </Tab>
 
-The `LeapDownloader.loadModel` suspend function loads a model and returns a model runner instance for invoking the model. This function takes some time to finish as loading the model is a heavy I/O operation, but it is safe to call on the main thread. The function should be executed in a coroutine scope.
+  <Tab title>
+    ```
+    try {  val baseDir = File(context.filesDir, "model_files").absolutePath  val modelDownloader = LeapDownloader(config = LeapDownloaderConfig(saveDir = baseDir))  val modelRunner = modelDownloader.loadModel(      modelSlug = "LFM2-1.2B",      quantizationSlug = "Q5_K_M"  )}catch (e: LeapModelLoadingException) {    Log.e(TAG, "Failed to load the model. Error message: ${e.message}")}
+    ```
+  </Tab>
 
-```kotlin
-try {
-  val baseDir = File(context.filesDir, "model_files").absolutePath
-  val modelDownloader = LeapDownloader(config = LeapDownloaderConfig(saveDir = baseDir))
-  val modelRunner = modelDownloader.loadModel(
-      modelSlug = "LFM2-1.2B",
-      quantizationSlug = "Q5_K_M"
-  )
-}
-catch (e: LeapModelLoadingException) {
-    Log.e(TAG, "Failed to load the model. Error message: ${e.message}")
-}
-```
+  <Tab title>
+    The SDK will automatically download the required GGUF files to the device's cache and load the model with the appropriate generation parameters specified in the manifest.
+  </Tab>
 
-The SDK will automatically download the required GGUF files to the device's cache and load the model with the appropriate generation parameters specified in the manifest.
+  <Tab title>
+    Browse the [Leap Model Library](https://leap.liquid.ai/models) to find and download a model bundle that matches your needs.
+  </Tab>
 
-</TabItem>
-<TabItem value="manual" label="Executorch bundles (legacy)">
+  <Tab title>
+    ### Download and transfer bundle (legacy)[​](#download-and-transfer-bundle-legacy "Direct link to Download and transfer bundle (legacy)")
+  </Tab>
 
-Browse the [Leap Model Library](https://leap.liquid.ai/models) to find and download a model bundle that matches your needs.
+  <Tab title>
+    Push the bundle file to the device using `adb push`. Assuming the downloaded model file is located at `~/Downloads/model.bundle`, run the following commands:
+  </Tab>
 
-### Download and transfer bundle (legacy)
+  <Tab title>
+    ```
+    adb shell mkdir -p /data/local/tmp/leap/adb push ~/Downloads/model.bundle /data/local/tmp/leap/model.bundle
+    ```
+  </Tab>
 
-Push the bundle file to the device using `adb push`. Assuming the downloaded model file is located at `~/Downloads/model.bundle`, run the following commands:
+  <Tab title>
+    ### Loading from local bundle file (legacy)[​](#loading-from-local-bundle-file-legacy "Direct link to Loading from local bundle file (legacy)")
+  </Tab>
 
-```shell
-adb shell mkdir -p /data/local/tmp/leap/
-adb push ~/Downloads/model.bundle /data/local/tmp/leap/model.bundle
-```
+  <Tab title>
+    The `LeapClient.loadModel` suspend function loads a model bundle file and returns a model runner instance for invoking the model. This function takes some time to finish as loading the model is a heavy I/O operation, but it is safe to call on the main thread. The function should be executed in a coroutine scope.
+  </Tab>
 
-### Loading from local bundle file (legacy)
-
-The `LeapClient.loadModel` suspend function loads a model bundle file and returns a model runner instance for invoking the model. This function takes some time to finish as loading the model is a heavy I/O operation, but it is safe to call on the main thread. The function should be executed in a coroutine scope.
-
-```kotlin
-lifecycleScope.launch {
-  try {
-    modelRunner = LeapClient.loadModel("/data/local/tmp/leap/model.bundle")
-   }
-   catch (e: LeapModelLoadingException) {
-     Log.e(TAG, "Failed to load the model. Error message: ${e.message}")
-   }
- }
-```
-
-</TabItem>
+  <Tab title>
+    ```
+    lifecycleScope.launch {  try {    modelRunner = LeapClient.loadModel("/data/local/tmp/leap/model.bundle")   }   catch (e: LeapModelLoadingException) {     Log.e(TAG, "Failed to load the model. Error message: ${e.message}")   } }
+    ```
+  </Tab>
 </Tabs>
 
----
+***
 
-## 4. Generate content with the model
+## 4. Generate content with the model[​](#4-generate-content-with-the-model "Direct link to 4. Generate content with the model")
 
 To generate content, a conversation object should be created from the model runner:
 
-```kotlin
+```
 val conversation = modelRunner.createConversation()
 ```
 
 With user input text, we can use `Conversation.generateResponse` function to invoke the generation. Its return value is a Kotlin asynchronous flow of `MessageResponse`, which can be processed with Kotlin flow operators:
 
-```kotlin
-val input = "Here is a user message!"
-val generationJob = lifecycleScope.launch {
-  conversation.generateResponse(input).onEach {
-    when (it) {
-      is MessageResponse.Chunk -> {
-        Log.d(TAG, "text chunk: ${it.text}")
-      }
-      is MessageResponse.ReasoningChunk -> {
-        Log.d(TAG, "reasoning chunk: ${it.text}")
-      }
-      else -> {
-        // ignore other response
-      }
-    }
-  }
-  .onCompletion {
-     Log.d(TAG, "Generation done!")
-  }
-  .catch { exception ->
-    Log.e(TAG, "Error in generation: $exception")
-  }
-  .collect()
-}
+```
+val input = "Here is a user message!"val generationJob = lifecycleScope.launch {  conversation.generateResponse(input).onEach {    when (it) {      is MessageResponse.Chunk -> {        Log.d(TAG, "text chunk: ${it.text}")      }      is MessageResponse.ReasoningChunk -> {        Log.d(TAG, "reasoning chunk: ${it.text}")      }      else -> {        // ignore other response      }    }  }  .onCompletion {     Log.d(TAG, "Generation done!")  }  .catch { exception ->    Log.e(TAG, "Error in generation: $exception")  }  .collect()}
 ```
 
 In this code snippet:
 
-- `onEach` callback will be called when the model generates a chunk of content.
-- `onCompletion` callback will be called when the generation is done. At this time point, `conversation.history` will have the latest message generated by the model.
-- `catch` callback will be called if an exception is thrown from the generation.
+* `onEach` callback will be called when the model generates a chunk of content.
+* `onCompletion` callback will be called when the generation is done. At this time point, `conversation.history` will have the latest message generated by the model.
+* `catch` callback will be called if an exception is thrown from the generation.
 
 To interrupt the generation, simply cancel the generation job returned from the coroutine scope `launch` method:
 
-```kotlin
+```
 generationJob.cancel()
 ```
 
-## 5. Examples
+## 5. Examples[​](#5-examples "Direct link to 5. Examples")
 
 See [LeapSDK-Examples](https://github.com/Liquid4All/LeapSDK-Examples) for complete example apps using LeapSDK.
+
+[Edit this page](https://github.com/Liquid4All/docs/tree/main/leap/edge-sdk/android/android-quick-start-guide.mdx)

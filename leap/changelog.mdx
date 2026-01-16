@@ -1,69 +1,92 @@
-# Changelog
+---
+title: "Changelog"
+---
 
-## August 26, 2025
+## August 26, 2025[​](#august-26-2025 "Direct link to August 26, 2025")
 
-- 📷 VLM support
-  - 🧠 LFM2-VL models now available in model library
-  - 📱 Edge SDK now accepts image content type as message inputs for LFM2-VL models (v0.5.0 and up)
-  - 💻 Laptop support for LFM2-VL models out-of-the-box
-  - 🏹 Test LFM2-VL models live in Apollo (v1.1.4 and up)
-  - 🛠️ Finetuning tools accept LFM2-VL checkpoints for high customization capabilities
-  - 📦 Model Bundling Service accepts LFM2-VL finetuned checkpoints for export to Edge SDK
-- 🛠️ Finetuning tools
-  - Liger kernel now supported out-of-the-box
+* 📷 VLM support
 
-## August 18, 2025
+  * 🧠 LFM2-VL models now available in model library
+  * 📱 Edge SDK now accepts image content type as message inputs for LFM2-VL models (v0.5.0 and up)
+  * 💻 Laptop support for LFM2-VL models out-of-the-box
+  * 🏹 Test LFM2-VL models live in Apollo (v1.1.4 and up)
+  * 🛠️ Finetuning tools accept LFM2-VL checkpoints for high customization capabilities
+  * 📦 Model Bundling Service accepts LFM2-VL finetuned checkpoints for export to Edge SDK
 
-- 💻 Laptop support
-  - Native support for laptop and desktop computers for LEAP models via llama.cpp
-  - Best-in-class performance on AMD Ryzen™ chips
-  - Examples using language bindings for NodeJS and Python
-  - See more details [here](/leap/laptop-support)
-- 🛠️ Finetuning tools
-  - Fixed a bug that caused training to hang unexpectedly
-- 🤖 Android Edge SDK
-  - Fixed a bug related to model downloading
+* 🛠️ Finetuning tools
+  * Liger kernel now supported out-of-the-box
 
-## August 11, 2025
+## August 18, 2025[​](#august-18-2025 "Direct link to August 18, 2025")
 
-- 🤖 Android Edge SDK
-  - Added [function-calling support](/leap/edge-sdk/android/function-calling) to aid in agentic tool-calling
-  - Update model downloader query result format
-- 🍎 iOS Edge SDK
-  - Added [function-calling support](/leap/edge-sdk/ios/function-calling) to aid in agentic tool-calling
+* 💻 Laptop support
 
-## August 4, 2025
+  * Native support for laptop and desktop computers for LEAP models via llama.cpp
+  * Best-in-class performance on AMD Ryzen™ chips
+  * Examples using language bindings for NodeJS and Python
+  * See more details [here](/leap/laptop-support)
 
-- 🤖 Android Edge SDK
-  - Added [constrained generation support](/leap/edge-sdk/android/constrained-generation) to aid in structured output generation
-- 🍎 iOS Edge SDK
-  - Added [constrained generation support](/leap/edge-sdk/ios/constrained-generation) to aid in structured output generation
-- 📦 Model Bundling Service
-  - Fixed a bug regarding file upload
+* 🛠️ Finetuning tools
+  * Fixed a bug that caused training to hang unexpectedly
 
-## July 28, 2025
+* 🤖 Android Edge SDK
+  * Fixed a bug related to model downloading
 
-- 🛠️ Finetuning tools
-  - Initial release of finetuning tools for LFM2 models on ≤ 1 GPU (Google Colab notebooks) and > 1 GPU (`leap-finetune`)
-  - See more details [here](/leap/finetuning)
-- 📦 Model Bundling Service
-  - Use the Finetuning customization tools described above along with `leap-bundle` to develop and deploy finetuned LEAP models on the edge
-  - CLI-based service to create model bundles for usage within the Edge SDK - currently supports any model architecture within the LEAP [model library](https://leap.liquid.ai/models)
-  - See more details [here](/leap/leap-bundle/quick-start)
-- 🤖 Android Edge SDK
-  - Features
-    - Added `ModelLoadingOptions` and `GenerationOptions` for more finegrained control over generation and loading options
-    - Exposed model ID via `ModelRunner.modelId`
-    - Exposed generation statistics via `stats` field on `MessageResponse.Complete`
-    - Added Model Downloader module to simplify model fetching in prototypes and development; see details [here](/leap/edge-sdk/android/android-api-spec#model-downloader)
-  - 🐛 Bug fixes
-    - Added Proguard rules to preserve inference engine class names and prevent obfuscation issues.
-    - If the generation content hits the maximum context length, `finishReason` field of `MessageResponse.Complete` will be `EXCEED_CONTEXT`. If the prompt exceeds the context length, `LeapGenerationPromptExceedContextLengthException` will be thrown.
-- 🍎 iOS Edge SDK
-  - Features
-    - Added `ModelLoadingOptions` and `GenerationOptions` for more finegrained control over generation and loading options
-    - Exposed model ID via `ModelRunner.modelId`
-    - Exposed generation statistics via `stats` field on `MessageResponse.Complete`
-    - Added `LeapModelDownloader` module to simplify model fetching in prototypes and development
-  - 🐛 Bug fixes
-    - If the generation content hits the maximum context length, `finishReason` field of `MessageResponse.Complete` will be `EXCEED_CONTEXT`. If the prompt exceeds the context length, `LeapGenerationPromptExceedContextLengthException` will be thrown.
+## August 11, 2025[​](#august-11-2025 "Direct link to August 11, 2025")
+
+* 🤖 Android Edge SDK
+
+  * Added [function-calling support](/leap/edge-sdk/android/function-calling) to aid in agentic tool-calling
+  * Update model downloader query result format
+
+* 🍎 iOS Edge SDK
+  * Added [function-calling support](/leap/edge-sdk/ios/function-calling) to aid in agentic tool-calling
+
+## August 4, 2025[​](#august-4-2025 "Direct link to August 4, 2025")
+
+* 🤖 Android Edge SDK
+  * Added [constrained generation support](/leap/edge-sdk/android/constrained-generation) to aid in structured output generation
+* 🍎 iOS Edge SDK
+  * Added [constrained generation support](/leap/edge-sdk/ios/constrained-generation) to aid in structured output generation
+* 📦 Model Bundling Service
+  * Fixed a bug regarding file upload
+
+## July 28, 2025[​](#july-28-2025 "Direct link to July 28, 2025")
+
+* 🛠️ Finetuning tools
+
+  * Initial release of finetuning tools for LFM2 models on ≤ 1 GPU (Google Colab notebooks) and > 1 GPU (`leap-finetune`)
+  * See more details [here](/leap/finetuning)
+
+* 📦 Model Bundling Service
+
+  * Use the Finetuning customization tools described above along with `leap-bundle` to develop and deploy finetuned LEAP models on the edge
+  * CLI-based service to create model bundles for usage within the Edge SDK - currently supports any model architecture within the LEAP [model library](https://leap.liquid.ai/models)
+  * See more details [here](/leap/leap-bundle/quick-start)
+
+* 🤖 Android Edge SDK
+
+  * Features
+
+    * Added `ModelLoadingOptions` and `GenerationOptions` for more finegrained control over generation and loading options
+    * Exposed model ID via `ModelRunner.modelId`
+    * Exposed generation statistics via `stats` field on `MessageResponse.Complete`
+    * Added Model Downloader module to simplify model fetching in prototypes and development; see details [here](/leap/edge-sdk/android/android-api-spec#model-downloader)
+
+  * 🐛 Bug fixes
+
+    * Added Proguard rules to preserve inference engine class names and prevent obfuscation issues.
+    * If the generation content hits the maximum context length, `finishReason` field of `MessageResponse.Complete` will be `EXCEED_CONTEXT`. If the prompt exceeds the context length, `LeapGenerationPromptExceedContextLengthException` will be thrown.
+
+* 🍎 iOS Edge SDK
+
+  * Features
+
+    * Added `ModelLoadingOptions` and `GenerationOptions` for more finegrained control over generation and loading options
+    * Exposed model ID via `ModelRunner.modelId`
+    * Exposed generation statistics via `stats` field on `MessageResponse.Complete`
+    * Added `LeapModelDownloader` module to simplify model fetching in prototypes and development
+
+  * 🐛 Bug fixes
+    * If the generation content hits the maximum context length, `finishReason` field of `MessageResponse.Complete` will be `EXCEED_CONTEXT`. If the prompt exceeds the context length, `LeapGenerationPromptExceedContextLengthException` will be thrown.
+
+[Edit this page](https://github.com/Liquid4All/docs/tree/main/leap/changelog.mdx)

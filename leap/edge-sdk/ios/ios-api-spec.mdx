@@ -1,9 +1,7 @@
 ---
-sidebar_position: 2
+title: "iOS API Spec"
+description: "Complete API reference for the LEAP iOS SDK."
 ---
-
-import Tabs from "@theme/Tabs";
-import TabItem from "@theme/TabItem";
 
 # API Spec
 
@@ -14,7 +12,7 @@ Latest version: `v0.9.0`.
 `Leap` is the static entry point for loading on-device models.
 
 <Tabs>
-<TabItem value="automatic" label="Load model directly" default>
+<Tab title="Load model directly">
 ### `Leap.load(model:quantization:options:downloadProgressHandler:)`
 
 Download a model from the LEAP Model Library and load it into memory. If the model has already been downloaded, it will be loaded from the local cache without a remote request.
@@ -83,8 +81,8 @@ public struct DownloadedModelManifest {
 }
 ```
 
-</TabItem>
-<TabItem value="manual" label="Load from URL (legacy)">
+</Tab>
+<Tab title="Load from URL (legacy)">
 ```swift
 public struct Leap {
   public static func load(
@@ -143,13 +141,13 @@ public struct LiquidInferenceEngineOptions {
 - `audioTokenizerPath`: Optional tokenizer for audio-capable checkpoints.
 - `extras`: Backend-specific configuration payload (advanced use only).
 
-:::info
+<Info>
 Backend selection is automatic: `.bundle` files run on the ExecuTorch backend, while `.gguf`
 checkpoints use the embedded llama.cpp backend. Bundled models reference their projection data in
 metadata; GGUF checkpoints look for sibling companion files (multimodal projection, audio decoder,
 audio tokenizer) unless you override the paths through `LiquidInferenceEngineOptions`. Ensure
 these artifacts are co-located when you want vision or audio features.
-:::
+</Info>
 
 Example overriding the number of CPU threads and context size:
 
@@ -161,7 +159,7 @@ let options = LiquidInferenceEngineOptions(
 )
 let runner = try await Leap.load(url: bundleURL, options: options)
 ```
-</TabItem>
+</Tab>
 </Tabs>
 
 ## `ModelRunner`
@@ -317,10 +315,10 @@ handler?.stop()
 
 If a generation is already running, the method returns `nil` and emits a `.complete` message with `finishReason == .stop` via the callback.
 
-:::warning
+<Warning>
 The callback overload does not surface generation errors. Use the async-stream helper or call
 `ModelRunner.generateResponse` with `onErrorCallback` when you need error handling.
-:::
+</Warning>
 
 ### Export Chat History
 

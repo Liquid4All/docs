@@ -1,9 +1,7 @@
 ---
-sidebar_position: 2
+title: "Android API Spec"
+description: "Complete API reference for the LEAP Android SDK"
 ---
-
-import TabItem from '@theme/TabItem';
-import Tabs from '@theme/Tabs';
 
 # API Spec
 
@@ -17,13 +15,13 @@ dependencies {
 }
 ```
 
-:::info
+<Info>
 Note: All functions listed in this document are safe to call from the main or UI thread and all
 callbacks will be run on the main thread, unless there are explicit instructions or explanations.
-:::
+</Info>
 
 <Tabs>
-<TabItem value="automatic" label="LeapDownloader" default>
+  <Tab title="LeapDownloader">
 The `LeapDownloader` class is the recommended entrypoint for loading models. It is a wrapper around the LEAP SDK that provides a simple and convenient way to download and load models.
 
 ## `LeapDownloader`
@@ -101,10 +99,10 @@ data class SamplingParameters (
     val repetitionPenalty: Double? = null,
 )
 ```
-:::warning
+<Warning>
 Note: LEAP models are generally trained to perform well with the given set of parameters defined in the model manifest (used by default).
     Overriding these values with the `SamplingParameters` class can result in degraded output quality - developers should proceed with caution.
-:::
+</Warning>
 
 ## `ProgressData`
 The `ProgressData` class can be used to track download progress. It is a data class with the following fields:
@@ -129,11 +127,11 @@ data class Manifest(
     val pathOnDisk: String? = null,
 )
 ```
-:::info
+<Info>
 It is rarely necessary to instantiate a `Manifest` class directly. It is created internally by `LeapDownloader` to store and return metadata about downloaded models.
-:::
-</TabItem>
-<TabItem value="manual" label="LeapClient (legacy)">
+</Info>
+  </Tab>
+  <Tab title="LeapClient (legacy)">
 The `LeapClient` class is a legacy class that is no longer recommended for use. It is still available for backward compatibility, but it is recommended to use the new `LeapDownloader` class instead.
 
 ## LeapClient
@@ -160,10 +158,9 @@ This function can be called from UI thread. The app should hold the `ModelRunner
 - `options`: Options for loading the model.
 - `mmprojPath`: Optional multimodal projection model path. This parameter should only be filled if the model needs a separate multimodal projection model to parsing multimodal (image, audio, etc.) contents.
 
-:::info
-{' '}
+<Info>
 The function will throw `LeapModelLoadingException` if LEAP fails to load the model.
-:::
+</Info>
 
 #### `AudioGenerationModelDescriptor`
 
@@ -186,7 +183,7 @@ data class AudioGenerationModelDescriptor(
 ### `loadModelAsResult`
 
 This function can be called from UI thread. The `path` should be a local path pointing to model bundle file. This function is merely a wrapper around `loadModel` function to return a [`Result`](https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-result/).
-</TabItem>
+  </Tab>
 </Tabs>
 
 ## `ModelLoadingOptions`
@@ -263,16 +260,16 @@ The return value is a Kotlin [asynchronous flow](https://kotlinlang.org/docs/flo
 
 A `MessageResponse` instance will be emitted from this flow, which contains the chunk of data generated from the model.
 
-:::info
+<Info>
 Errors will be thrown as `LeapGenerationException` in the stream. Use `.catch` to capture errors
 from the generation.
-:::
-:::warning
-{' '}
+</Info>
+
+<Warning>
 If there is already a running generation, further generation requests are blocked until the
 current generation is done. However, there is no guarantee that the order in which requests are
 received will be the order in which they are processed.
-:::
+</Warning>
 
 ### `registerFunction`
 
@@ -400,10 +397,10 @@ Unload the model from memory. The model runner will not be able to perform gener
 
 This function is **not** recommended to be called by the app directly. It is an internal interface for the model runner implementation to expose the generation ability to LEAP SDK. `Conversation.generateResponse` is the better wrapper of this method, which relies on Kotlin coroutines to connect with lifecycle-aware components.
 
-:::warning
+<Warning>
 This function may block the caller thread. If you must use it, please call it outside the main
 thread.
-:::
+</Warning>
 
 ## `ChatMessage`
 
@@ -439,11 +436,10 @@ See also: [Gson Support](#gson-support).
 
 Construct a `ChatMessage` instance from a `JSONObject`. Not all JSON object variants in `ChatCompletionRequestMessage` of OpenAI API are acceptable. As of now, `role` supports `user`, `system` and `assistant`; `content` can be a string or an array.
 
-:::info
-{' '}
+<Info>
 `LeapSerializationException` will be thrown if the provided JSONObject cannot be recognized as a
-message.{' '}
-:::
+message.
+</Info>
 
 See also: [Gson Support](#gson-support).
 
@@ -488,11 +484,10 @@ Currently, only following content types are supported:
 - `Image`: JPEG-encoded image content.
 - `Audio`: WAV-encoded audio content
 
-:::info
-{' '}
+<Info>
 `LeapSerializationException` will be thrown if the provided JSONObject cannot be recognized as a
-message.{' '}
-:::
+message.
+</Info>
 
 ### `ChatMessageContent.Text`
 
@@ -517,10 +512,10 @@ data class ChatMessageContent.Image(val jpegByteArray: ByteArray): ChatMessageCo
 
 Image content. Currently, we only support JPEG encoded data. `fromBitmap` helper function can create an `ChatMessageContent.Image` content from an Android `Bitmap` object, but the image will be compressed.
 
-:::warning
+<Warning>
 Only the models with vision capabilities can process image content. Sending image content to other
 models may result in unexpected outputs or errors.
-:::
+</Warning>
 
 ### `ChatMessageContent.Audio`
 
@@ -770,9 +765,9 @@ val chatHistory: List<ChatMessage> = gson.fromJson(json, LeapGson.messageListTyp
 
 ## Model Downloader (deprecated)
 
-:::warning
+<Warning>
 This module is deprecated and will be removed in the near future. To download models using the Edge SDK, see [`LeapDownloader`](#leapdownloader).
-:::
+</Warning>
 
 LeapSDK Android Model Downloader module is a helper for downloading models from Leap Model Library.
 While it is good for early prototyping and demos, you may want to build your own model downloaders to support private
