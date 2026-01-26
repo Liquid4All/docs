@@ -874,6 +874,7 @@ div:has(> pre[class*="language-"]) {
 /* Tabs - Fix spacing and alignment */
 .theme-doc-markdown .tabs-container,
 article .tabs-container {
+  display: block !important;
   margin: 1.5em 0;
   margin-left: -2em !important; /* Compensate for article padding */
   margin-right: -2em !important;
@@ -977,8 +978,10 @@ article .tabs-container .tabs .tabs__item--active {
 
 /* Ensure tab content has minimal spacing */
 .tabs-container > div:not(.tabs) {
+  display: block !important;
   margin-top: 0.25em !important;
   padding-top: 0 !important;
+  width: 100% !important;
 }
 
 /* Main content area - Simple like Sphinx */

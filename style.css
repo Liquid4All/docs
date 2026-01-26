@@ -1,5 +1,15 @@
 /* Custom styles for Liquid AI Documentation */
 
+/* Global text color adjustments */
+/* Mintlify uses a div.antialiased wrapper with text-gray-500/dark:text-gray-400 */
+:root:not(.dark) body > div.antialiased {
+  color: #1f2937 !important;
+}
+
+.dark body > div.antialiased {
+  color: #e5e7eb !important;
+}
+
 /* Discord navbar link styling - make icon less bright to match GitHub */
 .navbar-link a[href*="discord"] img,
 a[href*="discord.gg"] img {
@@ -18,25 +28,475 @@ a[href*="discord.gg"]:hover img {
   filter: brightness(0) saturate(100%) invert(32%) sepia(89%) saturate(1500%) hue-rotate(258deg) brightness(87%) contrast(95%);
 }
 
-/* Fix card hover border/ring being cut off */
-/* The mdx-content has contain:inline-size which clips card hover effects */
-.mdx-content {
+/* Fix card border - consistent 2.5px border on all sides */
+.card-group {
+  overflow: visible !important;
   contain: none !important;
+  padding: 4px !important;
 }
 
-/* Parent container has overflow-x-clip that clips bottom border */
+/* Card border styling */
+[class*="block"][class*="rounded"][class*="border"]:not(.use-cases *) {
+  border-width: 2.5px !important;
+  border-style: solid !important;
+}
+
+/* Purple accent border and arrow on HOVER only in light mode */
+:root:not(.dark) .card-group a[class*="block"][class*="border"]:hover {
+  border-color: #864bc4 !important;
+}
+
+:root:not(.dark) .card-group a[class*="block"]:hover svg {
+  color: #864bc4 !important;
+}
+
+/* Card icons - purple accent color in light mode (default state) */
+/* Only target the main icon, not the arrow icon (which contains "arrow" in class) */
+:root:not(.dark) .card-group a[class*="block"] svg:not([class*="arrow"]) {
+  background-color: #864bc4 !important;
+}
+
+/* Light mode LEFT sidebar - selected item styling */
+/* Target links with bg-primary-light class (Mintlify's active state) */
+:root:not(.dark) a[class*="bg-primary-light"],
+:root:not(.dark) a[class*="bg-background-light"] {
+  color: #864bc4 !important;
+  background-color: rgba(134, 75, 196, 0.1) !important;
+}
+
+/* Icon in selected sidebar item - use mask-image coloring */
+:root:not(.dark) a[class*="bg-primary-light"] svg,
+:root:not(.dark) a[class*="bg-background-light"] svg {
+  color: #864bc4 !important;
+}
+
+/* For mask-image based icons, set background color */
+:root:not(.dark) a[class*="bg-primary-light"] [class*="mask-"],
+:root:not(.dark) a[class*="bg-background-light"] [class*="mask-"],
+:root:not(.dark) a[class*="bg-primary-light"] [style*="mask-image"],
+:root:not(.dark) a[class*="bg-background-light"] [style*="mask-image"] {
+  background-color: #864bc4 !important;
+}
+
+/* Fix container clipping issues */
+.mdx-content {
+  contain: none !important;
+  overflow: visible !important;
+}
+
 .lg\:overflow-x-clip {
   overflow: visible !important;
 }
 
-/* Ensure card groups don't clip */
-.card-group {
+/* Ensure the content container doesn't clip */
+body > div.antialiased {
   overflow: visible !important;
-  contain: none !important;
-  padding-bottom: 4px !important;
 }
 
-/* Ensure cards themselves don't clip */
-.card {
-  overflow: visible !important;
+/* Panel styling - right-side custom TOC replacement (matches TOC width) */
+/* Hide panel on mobile/tablet where the right sidebar isn't visible */
+@media (max-width: 1279px) {
+  .panel {
+    display: none !important;
+  }
 }
+
+.panel {
+  width: 16.5rem !important;
+}
+
+/* Panel links - spacing and clickable styling */
+.panel ul {
+  list-style: none !important;
+  padding-left: 0 !important;
+  margin: 0 !important;
+}
+
+.panel li {
+  margin-bottom: 0.75rem !important;
+}
+
+.panel li a {
+  text-decoration: none !important;
+  color: inherit !important;
+  font-weight: 600 !important;
+  background-image: linear-gradient(#864bc4, #864bc4) !important;
+  background-size: calc(100% - 1.1em) 1px !important;
+  background-position: left top 100% !important;
+  background-repeat: no-repeat !important;
+  padding-bottom: 3px !important;
+  transition: color 0.15s ease, background-size 0.15s ease !important;
+}
+
+/* Arrow icon - grey by default */
+.panel li a::after {
+  content: "↗" !important;
+  font-size: 0.85em !important;
+  color: #9ca3af !important;
+  margin-left: 0.35em !important;
+  transition: transform 0.15s ease, color 0.15s ease !important;
+  display: inline-block !important;
+}
+
+/* Hover: text turns purple, underline thickens, arrow turns purple and jumps */
+.panel li a:hover {
+  color: #864bc4 !important;
+  background-size: calc(100% - 1.1em) 1.5px !important;
+}
+
+.panel li a:hover::after {
+  color: #864bc4 !important;
+  transform: translate(2px, -2px) !important;
+}
+
+/* Section header (eyebrow) - purple accent in light mode to match dark mode */
+:root:not(.dark) .eyebrow {
+  color: #864bc4 !important;
+}
+
+/* Use-case cards - compact 2x2 tiles with grey background, no border */
+.use-cases .card-group {
+  padding: 0 !important;
+  row-gap: 0.5rem !important;
+  column-gap: 0.5rem !important;
+}
+
+/* Card: remove margins, border, overflow-hidden; add grey bg + less rounding */
+.use-cases .card {
+  margin: 0 !important;
+  border: none !important;
+  border-color: transparent !important;
+  border-width: 0 !important;
+  border-radius: 6px !important;
+  background-color: #f3f4f6 !important;
+  overflow: visible !important;
+  --tw-ring-color: transparent !important;
+  --tw-ring-offset-color: transparent !important;
+  --tw-ring-shadow: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+/* Override internal card padding and layout - icon inline with title */
+.use-cases [data-component-part="card-content-container"] {
+  padding: 0.7rem 0.9rem !important;
+  display: grid !important;
+  grid-template-columns: auto 1fr !important;
+  align-items: start !important;
+  column-gap: 0.45rem !important;
+  row-gap: 0 !important;
+}
+
+/* Icon sizing - scale down from native h-6 w-6 to prevent mask clipping */
+.use-cases [data-component-part="card-icon"] {
+  transform: scale(0.7) !important;
+  transform-origin: left center !important;
+  margin-right: -0.35rem !important;
+}
+
+.use-cases [data-component-part="card-icon"] svg {
+  background-color: #4b5563 !important;
+}
+
+/* Title inline with icon */
+.use-cases [data-component-part="card-title"] {
+  margin-top: 0 !important;
+  font-size: 0.9rem !important;
+  color: #374151 !important;
+}
+
+/* Description text */
+.use-cases [data-component-part="card-content"] {
+  margin-top: 0.25rem !important;
+  font-size: 0.85rem !important;
+  color: #4b5563 !important;
+  line-height: 1.35 !important;
+}
+
+/* Dark mode use-case cards */
+.dark .use-cases .card {
+  background-color: #2b2e35 !important;
+}
+
+.dark .use-cases [data-component-part="card-title"] {
+  color: #f3f4f6 !important;
+}
+
+.dark .use-cases [data-component-part="card-content"] {
+  color: #b8bfc8 !important;
+}
+
+.dark .use-cases [data-component-part="card-icon"] svg {
+  background-color: #c9cdd4 !important;
+}
+
+/* Capabilities section - tighter spacing, uniform text color */
+.capabilities ul {
+  margin: 0.5rem 0 !important;
+}
+
+.capabilities li {
+  margin-bottom: 0.25rem !important;
+}
+
+.capabilities p,
+.capabilities li {
+  color: inherit !important;
+}
+
+.capabilities strong {
+  font-weight: 600 !important;
+  color: inherit !important;
+}
+
+/* Global content links - purple underline with hover effect */
+/* Scope to main content area only, exclude navigation/sidebar/tables */
+article a:not([class*="block"]):not(table a),
+[role="main"] a:not([class*="block"]):not(table a),
+.prose a:not([class*="block"]):not(table a) {
+  text-decoration: none !important;
+  color: inherit !important;
+  font-weight: 600 !important;
+  background-image: linear-gradient(#864bc4, #864bc4) !important;
+  background-size: 100% 1px !important;
+  background-position: left top 100% !important;
+  background-repeat: no-repeat !important;
+  padding-bottom: 3px !important;
+  transition: color 0.15s ease, background-size 0.15s ease !important;
+}
+
+article a:not([class*="block"]):not(table a):hover,
+[role="main"] a:not([class*="block"]):not(table a):hover,
+.prose a:not([class*="block"]):not(table a):hover {
+  color: #864bc4 !important;
+  background-size: 100% 1.5px !important;
+}
+
+/* Default table styling - applies to all tables */
+table {
+  border-collapse: collapse !important;
+  border-spacing: 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: 1em 0 !important;
+  table-layout: auto !important;
+}
+
+table thead th {
+  padding: 0.75rem 1rem !important;
+  font-weight: 600 !important;
+  text-align: left !important;
+}
+
+table tbody td {
+  padding: 0.75rem 1rem !important;
+  vertical-align: middle !important;
+}
+
+table tbody tr {
+  border-bottom: 1px solid #e5e7eb !important;
+}
+
+/* API Spec tables (5 columns: Name, Type, Required, Default, Description) - ensure auto layout and proper spacing */
+/* Reset model table styles for tables that don't have 6 columns */
+table:not(:has(thead th:nth-child(6))) td,
+table:not(:has(thead th:nth-child(6))) th {
+  width: auto !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+  white-space: normal !important;
+  text-align: left !important;
+  padding: 0.75rem 1rem !important;
+}
+
+table:not(:has(thead th:nth-child(6))) {
+  table-layout: auto !important;
+  font-size: inherit !important;
+}
+
+/* Model table styling - only for tables with 6 columns (Model, HF, GGUF, MLX, ONNX, Trainable?) */
+
+table:has(thead th:nth-child(6):not(:nth-child(7))) {
+  table-layout: fixed !important;
+  font-size: 0.8rem !important;
+  margin: 0 !important;
+}
+
+/* First column - model names (only for 6-column tables) */
+table:has(thead th:nth-child(6):not(:nth-child(7))) td:first-child,
+table:has(thead th:nth-child(6):not(:nth-child(7))) th:first-child {
+  width: 45% !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+/* Checkmark columns - equal width (only for 6-column tables) */
+table:has(thead th:nth-child(6):not(:nth-child(7))) td:nth-child(2),
+table:has(thead th:nth-child(6):not(:nth-child(7))) th:nth-child(2),
+table:has(thead th:nth-child(6):not(:nth-child(7))) td:nth-child(3),
+table:has(thead th:nth-child(6):not(:nth-child(7))) th:nth-child(3),
+table:has(thead th:nth-child(6):not(:nth-child(7))) td:nth-child(4),
+table:has(thead th:nth-child(6):not(:nth-child(7))) th:nth-child(4),
+table:has(thead th:nth-child(6):not(:nth-child(7))) td:nth-child(5),
+table:has(thead th:nth-child(6):not(:nth-child(7))) th:nth-child(5) {
+  width: 8% !important;
+  text-align: center !important;
+  padding: 0.5rem 0 !important;
+}
+
+/* Last column - Trainable (only for 6-column tables) */
+table:has(thead th:nth-child(6):not(:nth-child(7))) td:nth-child(6),
+table:has(thead th:nth-child(6):not(:nth-child(7))) th:nth-child(6) {
+  width: 15% !important;
+  text-align: center !important;
+  padding: 0.5rem 0 !important;
+  white-space: nowrap !important;
+}
+
+/* Table header - purple gradient with top border (only for 6-column tables) */
+table:has(thead th:nth-child(6):not(:nth-child(7))) thead tr {
+  background: linear-gradient(135deg, #e9d5f5 0%, #d4c4e3 100%) !important;
+  border-top: 3px solid #864bc4 !important;
+}
+
+table:has(thead th:nth-child(6):not(:nth-child(7))) thead th {
+  color: #1f2937 !important;
+}
+
+/* Section header rows with bold text - purple gradient like header (only for 6-column tables) */
+table:has(thead th:nth-child(6):not(:nth-child(7))) tbody tr:has(td:first-child strong) {
+  background: linear-gradient(135deg, #e9d5f5 0%, #d4c4e3 100%) !important;
+}
+
+/* Sub-section rows (LFM2.5 Models, LFM2 Models labels) - light green background (only for 6-column tables) */
+table:has(thead th:nth-child(6):not(:nth-child(7))) tbody tr:has(td:nth-child(2):empty):not(:has(strong)) {
+  background-color: #dcfce7 !important;
+}
+
+table:has(thead th:nth-child(6):not(:nth-child(7))) tbody tr:has(td:nth-child(2):empty):not(:has(strong)) td {
+  background-color: #dcfce7 !important;
+  padding: 0.35rem 0.5rem !important;
+}
+
+table:has(thead th:nth-child(6):not(:nth-child(7))) tbody tr:has(td:nth-child(2):empty):not(:has(strong)) td:first-child {
+  text-align: left !important;
+  font-size: 0.75rem !important;
+  color: #166534 !important;
+  padding-left: 1rem !important;
+}
+
+/* Table links (checkmarks) - green, no underline */
+table a {
+  text-decoration: none !important;
+  background-image: none !important;
+  font-weight: normal !important;
+  padding-bottom: 0 !important;
+  color: #22c55e !important;
+  padding: 0.35rem 0.5rem !important;
+  border-radius: 6px !important;
+  transition: background-color 0.15s ease !important;
+}
+
+table a:hover {
+  color: #16a34a !important;
+  background-image: none !important;
+  background-color: rgba(134, 75, 196, 0.15) !important;
+}
+
+/* Dark mode table styling */
+.dark table thead tr {
+  background: linear-gradient(135deg, #4c1d95 0%, #5b21b6 100%) !important;
+}
+
+.dark table thead th {
+  color: #f3f4f6 !important;
+}
+
+.dark table tbody tr {
+  border-bottom: 1px solid #374151 !important;
+}
+
+.dark table tbody tr:has(td:first-child strong) {
+  background: linear-gradient(135deg, #4c1d95 0%, #5b21b6 100%) !important;
+}
+
+.dark table tbody tr:has(td:nth-child(2):empty):not(:has(strong)) {
+  background-color: #14532d !important;
+}
+
+.dark table tbody tr:has(td:nth-child(2):empty):not(:has(strong)) td:first-child {
+  color: #86efac !important;
+}
+
+.dark table a {
+  color: #4ade80 !important;
+}
+
+.dark table a:hover {
+  color: #86efac !important;
+}
+
+/* Code block styling - ensure visible background contrast */
+/* Inline code */
+:root:not(.dark) code:not(pre code) {
+  background-color: #f9fafb !important;
+  border: 1px solid #e5e7eb !important;
+  border-radius: 4px !important;
+  padding: 0.15em 0.4em !important;
+}
+
+.dark code:not(pre code) {
+  background-color: #374151 !important;
+  border: 1px solid #4b5563 !important;
+  border-radius: 4px !important;
+  padding: 0.15em 0.4em !important;
+}
+
+/* Fenced code blocks */
+/* Target the code block wrapper container */
+:root:not(.dark) .code-block-background,
+:root:not(.dark) [class*="code-block"] > div {
+  background-color: #f9fafb !important;
+}
+
+/* Hide the right-side fade gradient overlay in code blocks */
+/* The gradient overlay is a direct child div with no class attribute */
+[class*="code-block"].group > div:not([class]):last-child {
+  display: none !important;
+}
+
+:root:not(.dark) pre,
+:root:not(.dark) pre.shiki,
+:root:not(.dark) .shiki {
+  background-color: #f9fafb !important;
+  border-radius: 8px !important;
+}
+
+:root:not(.dark) pre code,
+:root:not(.dark) .shiki code {
+  background-color: transparent !important;
+  border: none !important;
+  color: #1f2937 !important;
+}
+
+.dark pre {
+  background-color: #374151 !important;
+  border-radius: 8px !important;
+}
+
+.dark pre code {
+  background-color: transparent !important;
+  border: none !important;
+  color: #e5e7eb !important;
+}
+
+/* Make Colab button images much smaller */
+a[href*="colab.research.google.com"] img,
+img[alt*="Colab"],
+img[alt*="colab"] {
+  height: 20px !important;
+  width: auto !important;
+  max-width: 120px !important;
+}
+
