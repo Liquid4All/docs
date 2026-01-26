@@ -1,0 +1,115 @@
+---
+title: "Authentication"
+description: "Authentication commands for the LEAP Bundle CLI"
+---
+
+## `login`
+
+Authenticate with the LEAP platform using your API token.
+
+```sh
+leap-bundle login <api-token>
+```
+
+**Arguments**
+
+- `api-token` (required): Your LEAP platform API token
+
+**Behavior**
+
+- Validates the API token with the LEAP platform
+- Stores the token in `~/.liquid-leap` configuration file
+- If already logged in with a different token, prompts for confirmation to switch
+- If already logged in with the same token, shows a warning message
+
+**Examples**
+
+```sh
+# Login with API token
+leap-bundle login leap_1234567890abcdef
+
+# Example output on success
+ℹ Validating API token...
+✓ Successfully logged in to LEAP platform!
+
+# Example output when already logged in with different token
+⚠ You are already logged in with a different API token.
+Do you want to log out and log in with the new token? [y/N]: y
+ℹ Validating API token...
+✓ Successfully logged in to LEAP platform!
+```
+
+**Error Cases**
+
+- Invalid API token: Shows validation error and exits with code 1
+- Network connectivity issues: Shows connection error
+- Token storage failure: Shows file system error
+
+<Warning>
+API tokens are stored locally in `~/.liquid-leap` with restricted file permissions (600). Keep
+your tokens secure and never share them.
+</Warning>
+
+## `logout`
+
+Clear stored authentication credentials.
+
+```sh
+leap-bundle logout
+```
+
+**Arguments:** None
+
+**Behavior**
+
+- Removes the stored API token from the configuration file
+- If not logged in, shows informational message
+- Always exits successfully
+
+**Examples**
+
+```sh
+# Logout from LEAP platform
+leap-bundle logout
+
+# Example output on success
+✓ Successfully logged out from LEAP platform!
+
+# Example output when not logged in
+ℹ You are not currently logged in.
+```
+
+## `whoami`
+
+Display information about the currently authenticated user.
+
+```sh
+leap-bundle whoami
+```
+
+**Arguments:** None
+
+**Behavior**
+
+- Queries the LEAP platform API to get user information
+- Displays the email address associated with the current API token
+- Requires valid authentication
+
+**Examples**
+
+```sh
+# Check current user
+leap-bundle whoami
+
+# Example output on success
+✓ Logged in as: user@example.com
+
+# Example output when not logged in
+✗ You are not logged in. Run 'leap-bundle login' first.
+```
+
+**Error Cases**
+
+- Not authenticated: Prompts to login first
+- Invalid/expired token: Shows authentication error
+- Network issues: Shows connection error

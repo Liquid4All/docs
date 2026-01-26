@@ -1,0 +1,79 @@
+---
+title: "Reference"
+description: "Reference information for the LEAP Bundle CLI including limitations, error handling, and exit codes"
+---
+
+## All Commands
+
+| Command                | Description                                                                   |
+| ---------------------- | ----------------------------------------------------------------------------- |
+| `leap-bundle login`    | Authenticate with LEAP using API token                                        |
+| `leap-bundle whoami`   | Show current authenticated user                                               |
+| `leap-bundle logout`   | Logout from LEAP                                                              |
+| `leap-bundle config`   | Show current configuration                                                    |
+| `leap-bundle validate` | Validate directory for bundle creation                                        |
+| `leap-bundle create`   | Submit new bundle request                                                     |
+| `leap-bundle resume`   | Resume an interrupted bundle request creation                                 |
+| `leap-bundle list`     | List all bundle requests or a specific request                                |
+| `leap-bundle cancel`   | Cancel a bundle request                                                       |
+| `leap-bundle download` | Download bundle request output OR download GGUF models from a manifest URL    |
+
+## Global Options
+
+All commands support these global options:
+
+- `--version`, `-v`: Show version information and exit
+- `--help`: Show help information for any command
+
+## Current Limitations
+
+- The bundle tool only works on these model types for now: LFM2, LFM2-VL, Qwen.
+  - We are working on expanding support to more models.
+
+## Error Handling
+
+### Authentication Errors
+
+```sh
+# Example authentication error
+✗ You must be logged in. Run 'leap-bundle login' first.
+
+# Example invalid token error
+✗ Invalid API token. Please check your token and try again.
+```
+
+### Network Errors
+
+```sh
+# Example connection error
+✗ Failed to connect to server: Connection timeout
+
+# Example API error
+✗ HTTP 429 error: Rate limit exceeded. Please try again later.
+```
+
+### File System Errors
+
+```sh
+# Example directory not found
+✗ Directory does not exist: /path/to/nonexistent/directory
+
+# Example permission error
+✗ Failed to save login credentials: Permission denied
+```
+
+### API Response Errors
+
+The CLI tool extracts and displays error messages from API responses:
+
+```sh
+# Example API error response
+✗ Bundle processing failed: Insufficient disk space on server
+```
+
+## Exit Codes
+
+The CLI tool uses standard exit codes:
+
+- `0`: Success
+- `1`: General error (authentication, network, file system, etc.)

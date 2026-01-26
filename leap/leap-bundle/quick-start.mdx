@@ -18,6 +18,18 @@ This guide will help you quickly get started with both features.
 pip install leap-bundle
 ```
 
+## Requirements[​](#requirements "Direct link to Requirements")
+
+Before using the Model Bundle Tool, ensure your system meets the following requirements:
+
+- **Python 3.8 or higher**: The CLI tool is built with Python and requires at least version 3.8.
+- **`pip` installed**: You need `pip` to install the CLI tool and its dependencies.
+- **AWS services access**: Model uploads use Amazon Web Services (AWS) for file storage. Ensure you can access `amazonaws.com` domains from your network. If you're behind a corporate firewall or VPN, you may need to configure network settings to allow access to AWS services.
+
+<Info>
+If model uploads fail with connectivity errors, verify that your network allows access to AWS services and that DNS resolution is working properly.
+</Info>
+
 ## Quick Start for GGUF Model Download[​](#quick-start-for-gguf-model-download "Direct link to Quick Start for GGUF Model Download")
 
 ```
@@ -38,14 +50,14 @@ The command will:
 4. Download all model files referenced in the manifest.
 5. Update the local manifest to use relative paths to the downloaded files.
 
-<Check>
-  Manifest downloads don't require authentication with `leap-bundle login`. They work immediately after installation.
-</Check>
+<Info>
+Manifest downloads don't require authentication with `leap-bundle login`. They work immediately after installation.
+</Info>
 
 ## Quick Start for Model Bundling[​](#quick-start-for-model-bundling "Direct link to Quick Start for Model Bundling")
 
 <Info>
-  **Compatability Note:** The Model Bundling Service will work with any fine-tuned model, as long as the model architecture comes from a base model that is part of the LEAP model library.
+**Compatibility Note:** The Model Bundling Service will work with any fine-tuned model, as long as the model architecture comes from a base model that is part of the LEAP model library.
 </Info>
 
 If you have a custom-trained or fine-tuned model, you can create a model bundle for use with LEAP SDK. By default, the CLI generates GGUF files for llama.cpp inference. Use the `--executorch` flag to generate ExecuTorch bundles instead.

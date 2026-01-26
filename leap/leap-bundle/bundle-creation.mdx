@@ -1,0 +1,273 @@
+---
+title: "Bundle Creation"
+description: "Commands for creating and validating bundle requests in the LEAP Bundle CLI"
+---
+
+## `create`
+
+Create a new bundle request by uploading a model directory.
+
+```sh
+leap-bundle create <input-path>
+```
+
+**Arguments**
+
+- `input-path` (required): Path to the directory to upload and bundle
+
+**Options**
+
+- `--dry-run`: Validate the input directory without actually creating a request or uploading files.
+- `--json`: Output result in JSON format for programmatic parsing.
+- `--parallel`: Upload files in parallel with multipart support. This is the default behavior if neither `--parallel` nor `--sequential` is specified.
+- `--sequential`: Upload files sequentially. This is the fallback option if parallel upload fails.
+  - If neither `--parallel` nor `--sequential` is specified, the CLI will attempt parallel upload first, and fall back to sequential if it fails.
+  - If both `--parallel` and `--sequential` are specified, `--parallel` takes precedence.
+- `--executorch` (deprecated): Use ExecuTorch bundling instead of GGUF. By default, the CLI uses GGUF bundling. This option may be removed in a future version.
+- `--quantization <type>`: Specify the quantization type for the model bundle.
+  - For GGUF (default): `Q4_K_M` (default), `Q8_0`, `F16`, and [other llama.cpp quantization types](https://github.com/ggml-org/llama.cpp/blob/0a0bba05e8390ab7e4a54bb8c0ed0a25da64cf62/tools/quantize/quantize.cpp#L22-L58).
+  - For ExecuTorch (deprecated): `8da4w_output_8da8w` (default), `8da8w_output_8da8w`.
+- `--mmproj-quantization <type>`: (GGUF only) Specify the mmproj quantization type for vision-language or audio models. Valid options: `q4`, `q8` (default), `f16`.
+
+**Behavior**
+
+- Calculates a hash of the directory contents
+- Creates a bundle request on the LEAP platform
+- Uploads the directory contents to cloud storage
+- Updates the request status throughout the process
+- If a request with the same hash already exists, shows a warning instead of creating a duplicate
+
+**Examples**
+
+```sh
+# Create bundle from directory
+leap-bundle create ./my-model-directory
+
+# Example output on success
+ℹ Calculating directory hash...
+ℹ Submitting bundle request...
+✓ Bundle request created with ID: 18734
+ℹ Starting upload...
+Uploading directory... ✓
+✓ Upload completed successfully! Request ID: 18734
+
+# Example output when request already exists
+⚠ A bundle request with the same input hash already exists: req_xyz789abc123
+
+# Create bundle with JSON output
+leap-bundle create ./my-model-directory --json
+
+# Example JSON output on success
+{"request_id": "18734", "status": "success"}
+
+# Example JSON output when request already exists
+{"error": "A bundle request with the same input hash already exists: req_xyz789abc123", "status": "exists"}
+
+# Create GGUF bundle with specific quantization
+leap-bundle create ./my-model-directory --quantization Q8_0
+
+# Create ExecuTorch bundle
+leap-bundle create ./my-model-directory --executorch
+
+# Create ExecuTorch bundle with specific quantization
+leap-bundle create ./my-model-directory --executorch --quantization 8da8w_output_8da8w
+
+# Create GGUF bundle for VL model with mmproj quantization
+leap-bundle create ./my-vl-model-directory --mmproj-quantization f16
+```
+
+**Validation**
+
+- Hidden files and subdirectories (starting with `.`) are ignored
+- The directory must have a valid `config.json` file
+- The directory must have one or more safe tensor files with the `.safetensors` extension
+- Individual files must not exceed 10GB
+- The total size of the directory must not exceed 10GB
+  - This limit will be increased in the future as the bundle service supports more models
+
+**Error Cases**
+
+- Directory doesn't exist: Shows file not found error
+- Path is not a directory: Shows invalid path error
+- Not authenticated: Prompts to login first
+- Upload failure: Shows upload error and updates request status to failed
+  - Upload will timeout in 10 minutes if not completed. We are working on optimizing upload performance.
+  - For transient issues, try resuming the upload: `leap-bundle resume <request-id>`
+  - For persistent issues, cancel the request and create a new one
+- Network issues: Shows connection error
+
+**Process Flow**
+
+1. Validates input directory exists
+2. Calculates directory hash for deduplication
+3. Creates bundle request via API
+4. Uploads directory contents to S3 using signed URLs
+5. Updates request status to track progress
+
+<Warning>
+Large directories may take significant time to upload. The upload process can be interrupted with
+Ctrl+C.
+</Warning>
+
+<Info>
+If the upload fails due to transient issue (e.g. network instability), you can use the `resume`
+command to continue from where it left off.
+</Info>
+
+**Rate Limits**
+
+| Account type    | Max requests per 24 hours |
+| --------------- | ------------------------- |
+| Free tier       | 5                         |
+| Enterprise tier | Coming soon               |
+
+**Processing Time**
+
+If the request is not rate limited, it will usually be completed within 20 minutes for small model checkpoints.
+
+## `resume`
+
+Resume uploading for a failed or interrupted bundle request.
+
+```sh
+leap-bundle resume [<request-id>]
+```
+
+**Arguments**
+
+- `request-id` (optional): ID of the bundle request to resume. If not provided, resumes the latest request.
+
+**Options**
+
+- `--json`: Output result in JSON format for programmatic parsing
+- `--sequential`: Upload files sequentially (fallback option if parallel upload fails)
+- `--parallel`: Upload files in parallel with multipart support (default behavior if neither option is specified)
+
+**Behavior**
+
+- Retrieves the specified bundle request (or latest request if no ID provided)
+- Validates that the request is in a resumable status ("Uploading" or "Uploading Failed")
+- Checks that the original input directory still exists
+- Resumes the upload process from where it left off
+- Updates the request status throughout the process
+- Supports both parallel and sequential upload mechanisms
+
+**Examples**
+
+```sh
+# Resume the latest failed upload
+leap-bundle resume
+
+# Example output on success
+ℹ Retrieving latest bundle request...
+✓ Resuming upload for request 18734...
+ℹ Input path: /path/to/model/directory
+ℹ Using parallel upload with multipart support...
+✓ Upload completed successfully! Request ID: 18734
+
+# Resume a specific request by ID
+leap-bundle resume 18734
+
+# Example output
+ℹ Retrieving bundle request 18734...
+✓ Resuming upload for request 18734...
+ℹ Input path: /path/to/model/directory
+ℹ Using parallel upload with multipart support...
+✓ Upload completed successfully! Request ID: 18734
+
+# Resume with JSON output
+leap-bundle resume 18734 --json
+
+# Example JSON output on success
+{"request_id": "18734", "status": "success"}
+
+# Example JSON output on error
+{"error": "Resume only works for model uploading. Current status: completed"}
+```
+
+**Resumable Statuses**
+
+The resume command only works for requests in the following statuses:
+
+- `Uploading`: Upload was interrupted before the status was updated
+- `Uploading Failed`: Upload encountered an error
+
+**Upload Mechanisms**
+
+- **Parallel (default)**: Uses multipart upload with better performance for large files
+- **Sequential**: Uploads files one by one, used as fallback if parallel upload fails
+- If parallel upload fails, the command automatically falls back to sequential upload
+- You can force sequential upload using the `--sequential` flag
+
+**Error Cases**
+
+- Not authenticated: Prompts to login first
+- Request not found: Shows request not found error
+- Request not resumable: Shows status error (only "Uploading" and "Uploading Failed" requests can be resumed)
+- Original directory missing: Shows directory not found error
+- Upload failure: Shows upload error and updates request status
+- Network issues: Shows connection error
+
+<Info>
+Use `resume` to continue interrupted uploads without losing progress. The command will pick up
+where the upload left off, saving time on large model directories.
+</Info>
+
+<Warning>
+The original input directory must still exist at the same path for resume to work. If you've moved
+or deleted the directory, the resume will fail.
+</Warning>
+
+## `validate`
+
+Validate a directory for bundle creation without uploading or creating a request. This command is equivalent to the `create` command with `--dry-run` option, but does not require authentication.
+
+```sh
+leap-bundle validate <input-path>
+```
+
+**Arguments**
+
+- `input-path` (required): Path to the directory to validate
+
+**Behavior**
+
+- Performs the same validation checks as the `create` command
+- Does not require authentication
+- Does not upload files or create bundle requests
+- Useful for checking if a directory is ready for bundling before actually creating a request
+
+**Examples**
+
+```sh
+# Validate a model directory
+leap-bundle validate ./my-model-directory
+
+# Example output on success
+✓ Directory validation passed
+✓ Directory is ready for bundle creation
+
+# Example output on failure
+✗ Validation failed: No config.json found in directory.
+```
+
+**Validation**
+
+The same validation rules apply as for the `create` command:
+
+- Hidden files and subdirectories (starting with `.`) are ignored
+- The directory must have a valid `config.json` file
+- The directory must have one or more safe tensor files with the `.safetensors` extension
+- Individual files must not exceed 10GB
+- The total size of the directory must not exceed 10GB
+
+**Error Cases**
+
+- Directory doesn't exist: Shows file not found error
+- Path is not a directory: Shows invalid path error
+- Validation failure: Shows specific validation error message
+
+<Info>
+Use `validate` to check your directory before running `create` to catch validation issues early
+without using your bundle request quota.
+</Info>
