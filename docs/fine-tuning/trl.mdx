@@ -1,13 +1,11 @@
 ---
-title: "Overview"
+title: "TRL"
 description: "TRL (Transformer Reinforcement Learning) is a library for fine-tuning and aligning language models using methods like Supervised Fine-Tuning (SFT), Reward Modeling, and Direct Preference Optimization (DPO)."
 ---
 
-<Check>
-  * Native integration in the Hugging Face ecosystem
-  * Many trained with SFT, DPO, PPO, GRPO
-  * Most recent training algorithms and techniques
-</Check>
+<Tip>
+  Use TRL for fine-tuning with native Hugging Face integration, support for SFT, DPO, PPO, and GRPO, and access to the most recent training algorithms and techniques.
+</Tip>
 
 LFM models work out-of-the-box with TRL without requiring any custom integration.
 
@@ -40,15 +38,91 @@ LoRA (Low-Rank Adaptation) is the recommended approach for fine-tuning LFM2 mode
 
 For memory-efficient fine-tuning, use LoRA with the `SFTTrainer`:
 
-```
-from transformers import AutoModelForCausalLM, AutoTokenizerfrom trl import SFTTrainer, SFTConfigfrom peft import LoraConfigfrom datasets import load_datasetmodel = AutoModelForCausalLM.from_pretrained(    "LiquidAI/LFM2.5-1.2B-Instruct",    torch_dtype="auto",    device_map="auto")tokenizer = AutoTokenizer.from_pretrained("LiquidAI/LFM2.5-1.2B-Instruct")# Configure LoRApeft_config = LoraConfig(    r=16,    lora_alpha=32,    lora_dropout=0.05,    target_modules=["q_proj", "k_proj", "v_proj", "o_proj"],    task_type="CAUSAL_LM",)training_args = SFTConfig(    output_dir="./lfm2-sft-lora",    num_train_epochs=3,    per_device_train_batch_size=4,    gradient_accumulation_steps=4,    learning_rate=2e-4,    bf16=True,)dataset = load_dataset("your-dataset")trainer = SFTTrainer(    model=model,    args=training_args,    train_dataset=dataset["train"],    tokenizer=tokenizer,    peft_config=peft_config,)trainer.train()
+```python
+from transformers import AutoModelForCausalLM, AutoTokenizer
+from trl import SFTTrainer, SFTConfig
+from peft import LoraConfig
+from datasets import load_dataset
+
+model = AutoModelForCausalLM.from_pretrained(
+    "LiquidAI/LFM2.5-1.2B-Instruct",
+    torch_dtype="auto",
+    device_map="auto"
+)
+tokenizer = AutoTokenizer.from_pretrained("LiquidAI/LFM2.5-1.2B-Instruct")
+
+# Configure LoRA
+peft_config = LoraConfig(
+    r=16,
+    lora_alpha=32,
+    lora_dropout=0.05,
+    target_modules=["q_proj", "k_proj", "v_proj", "o_proj"],
+    task_type="CAUSAL_LM",
+)
+
+training_args = SFTConfig(
+    output_dir="./lfm2-sft-lora",
+    num_train_epochs=3,
+    per_device_train_batch_size=4,
+    gradient_accumulation_steps=4,
+    learning_rate=2e-4,
+    bf16=True,
+)
+
+dataset = load_dataset("your-dataset")
+
+trainer = SFTTrainer(
+    model=model,
+    args=training_args,
+    train_dataset=dataset["train"],
+    tokenizer=tokenizer,
+    peft_config=peft_config,
+)
+
+trainer.train()
 ```
 
 <Accordion title="Full Fine-Tuning">
   Full fine-tuning updates all model parameters. Use this only when you have sufficient GPU memory and need maximum adaptation for your task.
 
-  ```
-  from transformers import AutoModelForCausalLM, AutoTokenizerfrom trl import SFTTrainer, SFTConfigfrom datasets import load_dataset# Load model and tokenizermodel = AutoModelForCausalLM.from_pretrained(    "LiquidAI/LFM2.5-1.2B-Instruct",    torch_dtype="auto",    device_map="auto")tokenizer = AutoTokenizer.from_pretrained("LiquidAI/LFM2.5-1.2B-Instruct")# Load your datasetdataset = load_dataset("your-dataset")# Configure trainingtraining_args = SFTConfig(    output_dir="./lfm2-sft",    num_train_epochs=3,    per_device_train_batch_size=4,    gradient_accumulation_steps=4,    learning_rate=2e-5,    logging_steps=10,    save_strategy="epoch",    bf16=True,)# Create trainertrainer = SFTTrainer(    model=model,    args=training_args,    train_dataset=dataset["train"],    tokenizer=tokenizer,)# Traintrainer.train()
+  ```python
+  from transformers import AutoModelForCausalLM, AutoTokenizer
+  from trl import SFTTrainer, SFTConfig
+  from datasets import load_dataset
+
+  # Load model and tokenizer
+  model = AutoModelForCausalLM.from_pretrained(
+      "LiquidAI/LFM2.5-1.2B-Instruct",
+      torch_dtype="auto",
+      device_map="auto"
+  )
+  tokenizer = AutoTokenizer.from_pretrained("LiquidAI/LFM2.5-1.2B-Instruct")
+
+  # Load your dataset
+  dataset = load_dataset("your-dataset")
+
+  # Configure training
+  training_args = SFTConfig(
+      output_dir="./lfm2-sft",
+      num_train_epochs=3,
+      per_device_train_batch_size=4,
+      gradient_accumulation_steps=4,
+      learning_rate=2e-5,
+      logging_steps=10,
+      save_strategy="epoch",
+      bf16=True,
+  )
+
+  # Create trainer
+  trainer = SFTTrainer(
+      model=model,
+      args=training_args,
+      train_dataset=dataset["train"],
+      tokenizer=tokenizer,
+  )
+
+  # Train
+  trainer.train()
   ```
 </Accordion>
 
@@ -62,15 +136,92 @@ The `DPOTrainer` implements Direct Preference Optimization, a method to align mo
 
 LoRA is highly recommended for DPO training, as it significantly reduces memory requirements while maintaining strong alignment performance.
 
-```
-from transformers import AutoModelForCausalLM, AutoTokenizerfrom trl import DPOTrainer, DPOConfigfrom peft import LoraConfigfrom datasets import load_datasetmodel = AutoModelForCausalLM.from_pretrained(    "LiquidAI/LFM2.5-1.2B-Instruct",    torch_dtype="auto",    device_map="auto")tokenizer = AutoTokenizer.from_pretrained("LiquidAI/LFM2.5-1.2B-Instruct")peft_config = LoraConfig(    r=16,    lora_alpha=32,    lora_dropout=0.05,    target_modules=["q_proj", "k_proj", "v_proj", "o_proj"],    task_type="CAUSAL_LM",)training_args = DPOConfig(    output_dir="./lfm2-dpo-lora",    num_train_epochs=3,    per_device_train_batch_size=2,    gradient_accumulation_steps=8,    learning_rate=5e-7,    beta=0.1,    bf16=True,)dataset = load_dataset("your-preference-dataset")trainer = DPOTrainer(    model=model,    args=training_args,    train_dataset=dataset["train"],    tokenizer=tokenizer,    peft_config=peft_config,)trainer.train()
+```python
+from transformers import AutoModelForCausalLM, AutoTokenizer
+from trl import DPOTrainer, DPOConfig
+from peft import LoraConfig
+from datasets import load_dataset
+
+model = AutoModelForCausalLM.from_pretrained(
+    "LiquidAI/LFM2.5-1.2B-Instruct",
+    torch_dtype="auto",
+    device_map="auto"
+)
+tokenizer = AutoTokenizer.from_pretrained("LiquidAI/LFM2.5-1.2B-Instruct")
+
+peft_config = LoraConfig(
+    r=16,
+    lora_alpha=32,
+    lora_dropout=0.05,
+    target_modules=["q_proj", "k_proj", "v_proj", "o_proj"],
+    task_type="CAUSAL_LM",
+)
+
+training_args = DPOConfig(
+    output_dir="./lfm2-dpo-lora",
+    num_train_epochs=3,
+    per_device_train_batch_size=2,
+    gradient_accumulation_steps=8,
+    learning_rate=5e-7,
+    beta=0.1,
+    bf16=True,
+)
+
+dataset = load_dataset("your-preference-dataset")
+
+trainer = DPOTrainer(
+    model=model,
+    args=training_args,
+    train_dataset=dataset["train"],
+    tokenizer=tokenizer,
+    peft_config=peft_config,
+)
+
+trainer.train()
 ```
 
 <Accordion title="Full DPO Training">
   Full DPO training updates all model parameters. Use this only when you have sufficient GPU memory.
 
-  ```
-  from transformers import AutoModelForCausalLM, AutoTokenizerfrom trl import DPOTrainer, DPOConfigfrom datasets import load_dataset# Load model and tokenizermodel = AutoModelForCausalLM.from_pretrained(    "LiquidAI/LFM2.5-1.2B-Instruct",    torch_dtype="auto",    device_map="auto")tokenizer = AutoTokenizer.from_pretrained("LiquidAI/LFM2.5-1.2B-Instruct")# Load preference dataset# Dataset should have "prompt", "chosen", and "rejected" columnsdataset = load_dataset("your-preference-dataset")# Configure DPO trainingtraining_args = DPOConfig(    output_dir="./lfm2-dpo",    num_train_epochs=3,    per_device_train_batch_size=2,    gradient_accumulation_steps=8,    learning_rate=5e-7,    beta=0.1,  # DPO temperature parameter    logging_steps=10,    bf16=True,)# Create trainertrainer = DPOTrainer(    model=model,    args=training_args,    train_dataset=dataset["train"],    tokenizer=tokenizer,)# Traintrainer.train()
+  ```python
+  from transformers import AutoModelForCausalLM, AutoTokenizer
+  from trl import DPOTrainer, DPOConfig
+  from datasets import load_dataset
+
+  # Load model and tokenizer
+  model = AutoModelForCausalLM.from_pretrained(
+      "LiquidAI/LFM2.5-1.2B-Instruct",
+      torch_dtype="auto",
+      device_map="auto"
+  )
+  tokenizer = AutoTokenizer.from_pretrained("LiquidAI/LFM2.5-1.2B-Instruct")
+
+  # Load preference dataset
+  # Dataset should have "prompt", "chosen", and "rejected" columns
+  dataset = load_dataset("your-preference-dataset")
+
+  # Configure DPO training
+  training_args = DPOConfig(
+      output_dir="./lfm2-dpo",
+      num_train_epochs=3,
+      per_device_train_batch_size=2,
+      gradient_accumulation_steps=8,
+      learning_rate=5e-7,
+      beta=0.1,  # DPO temperature parameter
+      logging_steps=10,
+      bf16=True,
+  )
+
+  # Create trainer
+  trainer = DPOTrainer(
+      model=model,
+      args=training_args,
+      train_dataset=dataset["train"],
+      tokenizer=tokenizer,
+  )
+
+  # Train
+  trainer.train()
   ```
 </Accordion>
 
