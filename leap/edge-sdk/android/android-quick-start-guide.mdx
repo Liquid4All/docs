@@ -1,6 +1,9 @@
 ---
 title: "Quick Start Guide"
+description: "Get up and running with the LEAP Android SDK in minutes. Install the SDK, load models, and start generating content."
 ---
+
+Latest version: `v0.9.1`
 
 ## 1. Prerequisites[​](#1-prerequisites "Direct link to 1. Prerequisites")
 
@@ -18,81 +21,79 @@ You should already have:
   ```
 
 <Warning>
-  The SDK may crash on loading model bundles on simulators. A physical Android device is recommended.
+The SDK may crash on loading model bundles on simulators. A physical Android device is recommended.
 </Warning>
 
 ## 2. Import the LeapSDK[​](#2-import-the-leapsdk "Direct link to 2. Import the LeapSDK")
 
 Add the following dependencies into `$PROJECT_ROOT/app/build.gradle.kts`:
 
-```
-dependencies {  ...  implementation("ai.liquid.leap:leap-sdk:0.7.4")}
+```kotlin
+dependencies {
+  implementation("ai.liquid.leap:leap-sdk:0.9.1")
+}
 ```
 
 Then perform a project sync in Android Studio to fetch the LeapSDK artifacts.
 
 ## 3. Getting and Loading Models[​](#3-getting-and-loading-models "Direct link to 3. Getting and Loading Models")
 
-The SDK supports two methods for loading models.
+The SDK supports two methods for loading models:
 
-* GGUF manifests (recommended method for new projects due to superior inference performance and better default generation parameters)
-* Executorch bundles (legacy)
+* **GGUF manifests** (recommended method for new projects due to superior inference performance and better default generation parameters)
+* **Executorch bundles** (legacy)
 
-<Tabs>
-  <Tab title="GGUF manifests (recommended)">
-    The LEAP Edge SDK supports directly downloading LEAP models in GGUF format. Given the model name and quantization method (which you can find in the [LEAP Model Library](https://leap.liquid.ai/models)), the SDK will automatically download the necessary GGUF files along with generation parameters for optimal performance.
-  </Tab>
+## GGUF Manifests (Recommended)
 
-  <Tab title="Executorch bundles (legacy)">
-    ### Loading from remote GGUF manifest (recommended)[​](#loading-from-remote-gguf-manifest-recommended "Direct link to Loading from remote GGUF manifest (recommended)")
-  </Tab>
+The LEAP Edge SDK supports directly downloading LEAP models in GGUF format. Given the model name and quantization method (which you can find in the [LEAP Model Library](https://leap.liquid.ai/models)), the SDK will automatically download the necessary GGUF files along with generation parameters for optimal performance.
 
-  <Tab title>
-    The `LeapDownloader.loadModel` suspend function loads a model and returns a model runner instance for invoking the model. This function takes some time to finish as loading the model is a heavy I/O operation, but it is safe to call on the main thread. The function should be executed in a coroutine scope.
-  </Tab>
+### Loading from remote GGUF manifest
 
-  <Tab title>
-    ```
-    try {  val baseDir = File(context.filesDir, "model_files").absolutePath  val modelDownloader = LeapDownloader(config = LeapDownloaderConfig(saveDir = baseDir))  val modelRunner = modelDownloader.loadModel(      modelSlug = "LFM2-1.2B",      quantizationSlug = "Q5_K_M"  )}catch (e: LeapModelLoadingException) {    Log.e(TAG, "Failed to load the model. Error message: ${e.message}")}
-    ```
-  </Tab>
+The `LeapDownloader.loadModel` suspend function loads a model and returns a model runner instance for invoking the model. This function takes some time to finish as loading the model is a heavy I/O operation, but it is safe to call on the main thread. The function should be executed in a coroutine scope.
 
-  <Tab title>
-    The SDK will automatically download the required GGUF files to the device's cache and load the model with the appropriate generation parameters specified in the manifest.
-  </Tab>
+```kotlin
+try {
+  val baseDir = File(context.filesDir, "model_files").absolutePath
+  val modelDownloader = LeapDownloader(config = LeapDownloaderConfig(saveDir = baseDir))
+  val modelRunner = modelDownloader.loadModel(
+      modelSlug = "LFM2-1.2B",
+      quantizationSlug = "Q5_K_M"
+  )
+}
+catch (e: LeapModelLoadingException) {
+  Log.e(TAG, "Failed to load the model. Error message: ${e.message}")
+}
+```
 
-  <Tab title>
-    Browse the [Leap Model Library](https://leap.liquid.ai/models) to find and download a model bundle that matches your needs.
-  </Tab>
+The SDK will automatically download the required GGUF files to the device's cache and load the model with the appropriate generation parameters specified in the manifest.
 
-  <Tab title>
-    ### Download and transfer bundle (legacy)[​](#download-and-transfer-bundle-legacy "Direct link to Download and transfer bundle (legacy)")
-  </Tab>
+## Executorch Bundles (Legacy)
 
-  <Tab title>
-    Push the bundle file to the device using `adb push`. Assuming the downloaded model file is located at `~/Downloads/model.bundle`, run the following commands:
-  </Tab>
+Browse the [Leap Model Library](https://leap.liquid.ai/models) to find and download a model bundle that matches your needs.
 
-  <Tab title>
-    ```
-    adb shell mkdir -p /data/local/tmp/leap/adb push ~/Downloads/model.bundle /data/local/tmp/leap/model.bundle
-    ```
-  </Tab>
+### Download and transfer bundle
 
-  <Tab title>
-    ### Loading from local bundle file (legacy)[​](#loading-from-local-bundle-file-legacy "Direct link to Loading from local bundle file (legacy)")
-  </Tab>
+Push the bundle file to the device using `adb push`. Assuming the downloaded model file is located at `~/Downloads/model.bundle`, run the following commands:
 
-  <Tab title>
-    The `LeapClient.loadModel` suspend function loads a model bundle file and returns a model runner instance for invoking the model. This function takes some time to finish as loading the model is a heavy I/O operation, but it is safe to call on the main thread. The function should be executed in a coroutine scope.
-  </Tab>
+```bash
+adb shell mkdir -p /data/local/tmp/leap
+adb push ~/Downloads/model.bundle /data/local/tmp/leap/model.bundle
+```
 
-  <Tab title>
-    ```
-    lifecycleScope.launch {  try {    modelRunner = LeapClient.loadModel("/data/local/tmp/leap/model.bundle")   }   catch (e: LeapModelLoadingException) {     Log.e(TAG, "Failed to load the model. Error message: ${e.message}")   } }
-    ```
-  </Tab>
-</Tabs>
+### Loading from local bundle file
+
+The `LeapClient.loadModel` suspend function loads a model bundle file and returns a model runner instance for invoking the model. This function takes some time to finish as loading the model is a heavy I/O operation, but it is safe to call on the main thread. The function should be executed in a coroutine scope.
+
+```kotlin
+lifecycleScope.launch {
+  try {
+    modelRunner = LeapClient.loadModel("/data/local/tmp/leap/model.bundle")
+  }
+  catch (e: LeapModelLoadingException) {
+    Log.e(TAG, "Failed to load the model. Error message: ${e.message}")
+  }
+}
+```
 
 ***
 

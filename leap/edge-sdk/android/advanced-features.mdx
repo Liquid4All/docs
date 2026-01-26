@@ -1,0 +1,162 @@
+---
+title: "Advanced Features"
+description: "API reference for constrained generation and function calling in the LEAP Android SDK"
+---
+
+## Constrained Generation
+
+Please refer to [Constrained Generation](./constrained-generation) guide on detailed usage.
+
+### JSONSchemaGenerator
+
+`JSONSchemaGenerator` only exposes one public method:
+
+```kotlin
+package ai.liquid.leap.structuredoutput
+
+object JSONSchemaGenerator {
+  @Throws(LeapGeneratableSchematizationException::class)
+  fun <T : Any> getJSONSchema(
+    klass: KClass<T>,
+    indentSpaces: Int? = null,
+  ): String
+}
+```
+
+For the method `getJSONSchema`:
+
+- `klass`: the Kotlin class object created from `T::class`. It must be a data class annotated with `Generatable`.
+- `indentSpaces`: a non null value will format the JSON output into a pretty style with the given indent spaces.
+
+If the data class cannot be supported or any other issues blocking the generation of JSONSchema, an `LeapGeneratableSchematizationException` will be thrown.
+
+### GeneratableFactory
+
+`GeneratableFactory` exposes `createFromJSONObject` methods:
+
+```kotlin
+package ai.liquid.leap.structuredoutput
+
+object GeneratableFactory {
+  @Throws(LeapGeneratableDeserializationException::class)
+  fun <T : Any> createFromJSONObject(
+    jsonObject: JSONObject,
+    klass: KClass<T>,
+  ): T
+
+  @Throws(LeapGeneratableDeserializationException::class)
+  inline fun <reified T : Any> createFromJSONObject(jsonObject: JSONObject): T {
+    return createFromJSONObject(jsonObject, T::class)
+  }
+}
+```
+
+The single parameter version can be called if the returned data type can be inferred from the context. It's only a wrapper of the complete version.
+
+- `jsonObject`: the JSON object as the data source for creating the generatable data class instance.
+- `klass`: the Koltin class object created from `T::class`. It must be a data class annotated with `Generatable`.
+
+### Annotations
+
+```kotlin
+package ai.liquid.leap.structuredoutput
+
+@Target(AnnotationTarget.CLASS)
+annotation class Generatable(val description: String)
+
+@Target(AnnotationTarget.PROPERTY)
+annotation class Guide(val description: String)
+```
+
+`Generatable` annotation is for the data class to be used as the generation constraints. `Guide` is for the fields of the generatable data class to add helpful
+descriptions for the fields.
+
+## Function Calling
+
+Please refer to [Function calling](./function-calling) guide on detailed usage.
+
+### LeapFunction
+
+`LeapFunction` describes the signature of a function that can be called by the model.
+
+```kotlin
+data class LeapFunction(
+    val name: String,
+    val description: String,
+    val parameters: List<LeapFunctionParameter>,
+)
+```
+
+- `name` Name of the function.
+- `description` A human and LLM readable description for the function.
+- `parameteres` The list of parameters that is accepted by the function.
+
+### LeapFunctionParameter
+
+`LeapFunctionParameter` describes the signature of a parameter in a function.
+
+```kotlin
+data class LeapFunctionParameter(
+    val name: String,
+    val type: LeapFunctionParameterType,
+    val description: String,
+    val optional: Boolean = false,
+)
+```
+
+- `name` Name of the paramter.
+- `type` Data type of the parameter.
+- `description` A human and LLM readable description for the parameter.
+- `optional`: Whether this parameter is optional.
+
+### LeapFunctionParameterType
+
+`LeapFunctionParameterType` Represents a data type that can be used for the parameters of Leap functions. All types declared must
+be allowed in [JSON Schema](https://json-schema.org/).
+
+```kotlin
+sealed class LeapFunctionParameterType(description: kotlin.String? = null) {
+  val description: kotlin.String? = description
+
+  class String(val enumValues: List<kotlin.String>? = null, description: kotlin.String? = null) : LeapFunctionParameterType(description)
+  class Number(val enumValues: List<kotlin.Number>? = null, description: kotlin.String? = null) : LeapFunctionParameterType(description)
+  class Integer(val enumValues: List<Int>? = null, description: kotlin.String? = null) : LeapFunctionParameterType(description)
+  class Boolean(description: kotlin.String? = null) : LeapFunctionParameterType(description)
+  class Null : LeapFunctionParameterType()
+  class Array(val itemType: LeapFunctionParameterType, description: kotlin.String? = null) : LeapFunctionParameterType(description)
+  class Object(
+    val properties: Map<kotlin.String, LeapFunctionParameterType>,
+    val required: List<kotlin.String> = listOf(),
+    description: kotlin.String? = null,
+  )
+}
+```
+
+- `String` represents a string literal. Its `enumValues` field can be used to restrict the range of the accepted values.
+- `Number` represents a number literal. It could be an integer or a floating point number. Its `enumValues` field can be used to restrict the range of the accepted values.
+- `Integer` represents an integer literal. Its `enumValues` field can be used to restrict the range of the accepted values.
+- `Boolean` represents a boolean literal.
+- `Null` type only accepts null value.
+- `Array` represents an array literal. Its `itemType` field describes the data type of its items.
+- `Object` represent an object literal. Its `properties` field is a map of the property names to their data types. `required` field lists all properties that are required to present.
+
+### LeapFunctionCall
+
+`LeapFunctionCall` describes a function call request generated by the model.
+
+```kotlin
+data class LeapFunctionCall(
+    val name: String,
+    val arguments: Map<String, Any?>,
+)
+```
+
+- `name` Name of the function to be called
+- `arguments` The arguments (parameters) of this call in a map. Values could be strings, numbers, booleans, null, lists for arrays, or maps for objects.
+
+### LeapFunctionCallParser
+
+`LeapFunctionCallParser` is capable to parse the function call requests from the models into `LeapFunctionCall` instances. There are two implementations:
+
+- `LFMFunctionCallParser` The function call parser for Liquid Foundation Models (LFM2). This is the default parser.
+- `HermesFunctionCallParser` The function call parser for Hermes function calling format.

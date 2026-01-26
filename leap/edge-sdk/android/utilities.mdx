@@ -1,0 +1,207 @@
+---
+title: "Utilities"
+description: "API reference for error handling, serialization, and utilities in the LEAP Android SDK"
+---
+
+## Error Handling
+
+All errors are thrown as `LeapException`, which has following subclasses:
+
+- `LeapModelLoadingException` : error in loading the model
+- `LeapGenerationException` : error in generating content
+- `LeapGenerationPromptExceedContextLengthException`: the prompt text exceeds the maximum context length so no content will be generated
+- `LeapSerializationException` : error in serializing / deserializing data.
+
+## Gson Support
+
+Leap Android SDK also has [Gson](https://github.com/google/gson) support. The Gson support has the same behaviors as the existing `org.json` implementation.
+
+The `leap_gson` package should be imported to enable Gson to serialize and deserialize Leap objects.
+
+```kotlin
+dependencies {
+  implementation("ai.liquid.leap:leap-gson:0.2.0")
+}
+```
+
+The following types are supported:
+
+- [`ChatMessage`](../messages-content#chatmessage)
+- [`ChatMessageContent`](../messages-content#chatmessagecontent)
+
+### Create Gson Object
+
+To create a Gson object that supports Leap objects, call `registerLeapAdapters` on the `GsonBuilder` before creating the Gson object.
+
+```kotlin
+import ai.liquid.leap.gson.registerLeapAdapters
+import com.google.gson.GsonBuilder
+
+val gson = GsonBuilder().registerLeapAdapters().create()
+```
+
+### Serializing and Deserializing Conversation History
+
+With a [`Conversation`](../conversation-generation#conversation) object, simply call `Gson.toJson` to convert the chat message history into a JSON string. The returned JSON will be an array.
+
+```kotlin
+val json = gson.toJson(conversation.history)
+```
+
+To deserialize the conversation history from a JSON array, use `LeapGson.messageListTypeToken` as the type hint for Gson.
+
+```kotlin
+import ai.liquid.leap.gson.LeapGson
+
+val chatHistory: List<ChatMessage> = gson.fromJson(json, LeapGson.messageListTypeToken)
+```
+
+## Model Downloader (deprecated)
+
+<Warning>
+This module is deprecated and will be removed in the near future. To download models using the Edge SDK, see [`LeapDownloader`](../model-loading#leapdownloader).
+</Warning>
+
+LeapSDK Android Model Downloader module is a helper for downloading models from Leap Model Library.
+While it is good for early prototyping and demos, you may want to build your own model downloaders to support private
+models and have sophisticated authentication mechanisms.
+
+Model downloader runs as a [foreground service](https://developer.android.com/develop/background-work/services/fgs),
+which is required to show a notification visible to the users when the service is running. As a result, you will need
+to request the permission to show notifications. Please follow [Android official documents on notifications](https://developer.android.com/develop/ui/views/notifications)
+for more details. Here is only a simple code snippet of end-to-end usage of this module.
+
+```kotlin
+// In build.gradle.kts
+dependencies {
+  implementation("ai.liquid.leap:leap-model-downloader:0.2.0")
+}
+
+// in onCreate() of the activity
+val requestPermissionLauncher =
+      registerForActivityResult(
+        ActivityResultContracts.RequestPermission(),
+      ) {}
+modelDownloader = LeapModelDownloader(context)
+
+// When the model downloading is requested
+if (ContextCompat.checkSelfPermission(
+      context,
+      android.Manifest.permission.POST_NOTIFICATIONS,
+     ) != PackageManager.PERMISSION_GRANTED
+   ) {
+    requestPermissionLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+  }
+
+lifecycleScope.launch {
+  val modelToUse = LeapDownloadableModel.resolve("lfm2-1.2b", "lfm2-1.2b-20250710-8da4w")
+  if (modelToUse == null) {
+    Log.e(TAG, "Failed to retrieve LFM2 1.2B model")
+    return@launch
+  }
+  modelDownloader.requestDownloadModel(modelToUse)
+}
+```
+
+### LeapModelDownloader
+
+`LeapModelDownloader` is the instance to make request of downloading models and to query the status of a model download request.
+
+```kotlin
+class LeapModelDownloader(
+    private val context: Context,
+    modelFileDir: File? = null,
+    private val extraHTTPRequestHeaders: Map<String, String> = mapOf(),
+    private val notificationConfig: LeapModelDownloaderNotificationConfig = LeapModelDownloaderNotificationConfig(),
+) {
+  fun getModelFile(model: DownloadableModel): File
+  fun requestDownloadModel(model: DownloadableModel, forceDownload: Boolean = false)
+  fun requestStopDownload(model: DownloadableModel)
+  suspend fun queryStatus(model: DownloadableModel): ModelDownloadStatus
+  fun requestStopService()
+}
+```
+
+#### Constructor parameters
+
+- `context`: The Android context to retrieve cache directory and launch services. The activity context works for this purpose.
+- `modelFileDir`: The path to store model files. If it is not set, a path in the app's external file dir will be used.
+- `extraHTTPRequestHeaders`: Any extra HTTP request headers to send when downloading a model.
+- `notificationConfig`: Configuration on the content of Android notifications visible to the users.
+
+#### getModelFile
+
+Return a file object of the model file based on the `DownloadableModel` instance. The file may not exists.
+
+#### requestDownloadModel
+
+Make a request to download the model. If the model file already exists locally, it won't be downloaded.
+
+- `model`: A [`DownloadableModel`](#downloadablemodel) instance.
+- `forceDownload`: If it's true, downloader will remove the model bundle file that exists locally and to conduct the download.
+
+#### requestStopDownload
+
+Make a request to stop downloading a model.
+
+#### queryStatus
+
+Query the status of the model. The return value is a `ModelDownloadStatus` object:
+
+```kotlin
+sealed interface ModelDownloadStatus {
+  data object NotOnLocal: ModelDownloadStatus
+  data class DownloadInProgress(
+    val totalSizeInBytes: Long,
+    val downloadedSizeInBytes: Long,
+  ): ModelDownloadStatus
+  data class Downloaded(
+    val totalSizeInBytes: Long,
+  ) : ModelDownloadStatus
+}
+```
+
+There are three possible value types:
+
+- `NotOnLocal` The model file has not been downloaded or has already been deleted.
+- `DownloadInProgress` The model file is still being downloaded. `totalSizeInBytes` is the total size of the file and `downloadedSizeInBytes` is the size of downloaded portion. If the total size is not available, `totalSizeInBytes` will be -1.
+- `Downloaded` The file has been downloaded. `totalSizeInBytes` is the file size.
+
+#### requestStopService
+
+Make a request to stop the foreground service of the model downloader.
+
+### DownloadableModel
+
+`DownloadableModel` is an interface to describe the model can be downloaded by the LeapSDK Model Downloader.
+
+```kotlin
+interface DownloadableModel {
+  val uri: Uri
+  val name: String
+  val localFilename: String
+}
+```
+
+- `uri`: The URI of the model to download.
+- `name`: A user-friendly name of the model. It will be displayed in the notification.
+- `localFilename`: The filename to store the model bundle file locally.
+
+### LeapDownloadableModel
+
+`LeapDownloadableModel` implements [`DownloadableModel`](#downloadablemodel).
+It is designed to download models from Leap Model Library. `resolve` method is provided to retrieve the model
+from Leap Model Library.
+
+```kotlin
+class LeapDownloadableModel {
+  companion object {
+    suspend fun resolve(modelSlug: String, quantizationSlug: String) : LeapDownloadableModel?
+  }
+}
+```
+
+The `resolve` method accepts 2 parameters:
+
+- `modelSlug`: The model slug that identifies the model. It is usually the lowercase string of the model name. For example, the slug of `LFM2-1.2B` is `lfm2-1.2b`.
+- `quantizationSlug`: The model quantization slug. It can be found in the "Available quantizations" section of the model card.

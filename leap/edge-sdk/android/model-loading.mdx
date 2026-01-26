@@ -1,0 +1,188 @@
+---
+title: "Model Loading"
+description: "API reference for loading models in the LEAP Android SDK"
+---
+
+## `LeapDownloader`
+
+The `LeapDownloader` class is the recommended entrypoint for loading models. It is a wrapper around the LEAP SDK that provides a simple and convenient way to download and load models.
+```kotlin
+class LeapDownloader(config: LeapDownloaderConfig = LeapDownloaderConfig())
+```
+
+| Field | Type | Required | Default | Description |
+|-------|------|----------|---------|-------------|
+| `config` | `LeapDownloaderConfig` | No | `LeapDownloaderConfig()` | Configuration options for the downloader. See [`LeapDownloaderConfig`](#leapdownloaderconfig) for more details. |
+
+<br/>
+### `loadModel`
+Download a model from the LEAP Model Library and load it into memory. If the model has already been downloaded, it will be loaded from the local cache without a remote request.
+
+**Arguments**
+
+| Name | Type | Required | Default | Description |
+|------|------|----------|---------|-------------|
+| `modelSlug` | `String` | Yes | - | The name of the model to load. See the [LEAP Model Library](https://leap.liquid.ai/models) for all available models. |
+| `quantizationSlug` | `String` | Yes | - | The quantization level to download for the given model. See the [LEAP Model Library](https://leap.liquid.ai/models) for all available quantization levels. |
+| `modelLoadingOptions` | `ModelLoadingOptions` | No | `null` | Options for loading the model. See [`ModelLoadingOptions`](#modelloadingoptions) for more details. |
+| `generationTimeParameters` | `GenerationTimeParameters` | No | `null` | Parameters to control model generation at inference time. See [`GenerationTimeParameters`](#generationtimeparameters) for more details. |
+| `progress` | `(ProgressData) -> Unit` | No | `{}` | A callback function to receive the download progress. |
+
+**Returns**
+
+`ModelRunner`: A [`ModelRunner`](../conversation-generation#modelrunner) instance that can be used to interact with the loaded model.
+
+<br/>
+### `downloadModel`
+Download a model from the LEAP Model Library and save it to the local cache, without loading it into memory.
+
+**Arguments**
+
+| Name | Type | Required | Default | Description |
+|------|------|----------|---------|-------------|
+| `modelSlug` | `String` | Yes | - | The name of the model to download. See the [LEAP Model Library](https://leap.liquid.ai/models) for all available models. |
+| `quantizationSlug` | `String` | Yes | - | The quantization level to download for the given model. See the [LEAP Model Library](https://leap.liquid.ai/models) for all available quantization levels. |
+| `progress` | `(ProgressData) -> Unit` | No | `{}` | A callback function to receive the download progress. |
+
+**Returns**
+
+`Manifest`: The [`Manifest`](#manifest) instance that contains the metadata of the downloaded model.
+
+<br/>
+## `LeapDownloaderConfig`
+The `LeapDownloaderConfig` class contains all the configuration options for `LeapDownloader`. It is a data class with the following fields:
+```kotlin
+data class LeapDownloaderConfig (
+    val saveDir: String = "leap_models", // The directory to save downloaded models.
+    val validateSha256: Boolean = true, // Whether to validate the downloaded model's SHA256 checksum.
+)
+```
+
+## `GenerationTimeParameters`
+The `GenerationTimeParameters` class contains all the parameters for controlling model generation. It is a data class with the following fields:
+```kotlin
+data class GenerationTimeParameters (
+    val samplingParameters: SamplingParameters? = null, // optional, defaults to values from the model manifest
+    val numberOfDecodingThreads: Int? = null, // optional, defaults to optimal number of threads at runtime
+)
+```
+
+## `SamplingParameters`
+The `SamplingParameters` class contains sampling options to override the values provided in a model manifest. It is a data class with the following fields:
+```kotlin
+data class SamplingParameters (
+    val temperature: Double? = null,
+    val topP: Double? = null,
+    val minP: Double? = null,
+    val repetitionPenalty: Double? = null,
+)
+```
+<Warning>
+Note: LEAP models are generally trained to perform well with the given set of parameters defined in the model manifest (used by default).
+    Overriding these values with the `SamplingParameters` class can result in degraded output quality - developers should proceed with caution.
+</Warning>
+
+## `ProgressData`
+The `ProgressData` class can be used to track download progress. It is a data class with the following fields:
+```kotlin
+data class ProgressData(
+    val bytes: Long,
+    val total: Long,
+) {
+    val progress: Float // Returns the progress percentage as a float between 0 and 1.
+}
+```
+
+## `Manifest`
+The `Manifest` class is a wrapper class to read and encapsulate data read from the model manifests, and contains metadata about a downloaded model. It is a data class with the following fields:
+```kotlin
+data class Manifest(
+    val schemaVersion: String,
+    val inferenceType: String,
+    val loadTimeParameters: LoadTimeParameters,
+    val generationTimeParameters: GenerationTimeParameters? = null,
+    val originalUrl: String? = null,
+    val pathOnDisk: String? = null,
+)
+```
+<Info>
+It is rarely necessary to instantiate a `Manifest` class directly. It is created internally by `LeapDownloader` to store and return metadata about downloaded models.
+</Info>
+
+## `LeapClient` (Legacy)
+
+The `LeapClient` class is a legacy class that is no longer recommended for use. It is still available for backward compatibility, but it is recommended to use the new `LeapDownloader` class instead.
+
+The entrypoint of LEAP SDK. It doesn't hold any data.
+
+```kotlin
+object LeapClient {
+  suspend fun loadModel(path: String, options: ModelLoadingOptions? = null): ModelRunner
+  suspend fun loadModelAsResult(path: String, options: ModelLoadingOptions? = null): Result<ModelRunner>
+  suspend fun loadModel(bundlePath: String, mmprojPath: String, options: ModelLoadingOptions? = null): ModelRunner
+  suspend fun loadModel(bundlePath: String, mmprojPath: String, options: ModelLoadingOptions? = null): ModelRunner
+  suspend fun loadModel(model: AudioGenerationModelDescriptor, options: ModelLoadingOptions? = null): ModelRunner
+}
+```
+
+### `loadModel`
+
+This function can be called from UI thread. The app should hold the `ModelRunner` object returned by this function until there is no need to interact with the model anymore. See [`ModelRunner`](../conversation-generation#modelrunner) for more details.
+
+**Arguments**
+
+- `path`: A local path pointing to model bundle file. Both `.bundle` files and `.gguf` files are supported.
+- `options`: Options for loading the model.
+- `mmprojPath`: Optional multimodal projection model path. This parameter should only be filled if the model needs a separate multimodal projection model to parsing multimodal (image, audio, etc.) contents.
+
+<Info>
+The function will throw `LeapModelLoadingException` if LEAP fails to load the model.
+</Info>
+
+#### `AudioGenerationModelDescriptor`
+
+For audio generation model, an instance of `AudioGenerationModelDescriptor` contains all components that are necessary for audio generation.
+
+```kotlin
+data class AudioGenerationModelDescriptor(
+    val modelPath: String,
+    val mmprojPath: String,
+    val audioDecoderPath: String,
+    val audioTokenizerPath: String? = null,
+)
+```
+
+- `modelPath`: Main model path.
+- `mmprojPath`: Multimodal projection model path.
+- `audioDecoderPath`: Audio decoder model path.
+- `audioTokenizerPath`: Audio tokenizer model path.
+
+### `loadModelAsResult`
+
+This function can be called from UI thread. The `path` should be a local path pointing to model bundle file. This function is merely a wrapper around `loadModel` function to return a [`Result`](https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-result/).
+
+## `ModelLoadingOptions`
+
+A data class to represents options in loading a model.
+
+```kotlin
+data class ModelLoadingOptions(var randomSeed: Long? = null, var cpuThreads: Int = 2) {
+    companion object {
+        fun build(action: ModelLoadingOptions.() -> Unit): ModelLoadingOptions
+    }
+}
+```
+
+- `randomSeed`: Set the random seed for loading the model to reproduce the output
+- `cpuThreads`: How many threads to use in the generation.
+
+Kotlin builder function `ModelLoadingOptions.build` is also available. For example, loading a model with 4 CPU threads can be done by
+
+```kotlin
+val modelRunner = LeapClient.loadModel(
+    MODEL_PATH,
+    ModelLoadingOptions.build {
+        cpuThread = 4
+    }
+)
+```
