@@ -3,33 +3,31 @@ title: "LM Studio"
 description: "LM Studio is a desktop application for running LLMs locally with a graphical interface."
 ---
 
-<Check>
-  * No command-line setup required
-  * Easy model discovery and download
-  * Quick testing with a built-in chat interface
-</Check>
+<Tip>
+  Use LM Studio for local inference with a graphical interface, easy model discovery and download, and quick testing without command-line setup.
+</Tip>
 
-## Installation[​](#installation "Direct link to Installation")
+## Installation
 
 Download and install LM Studio directly from [lmstudio.ai](https://lmstudio.ai/download).
 
-## Downloading Models[​](#downloading-models "Direct link to Downloading Models")
+## Downloading Models
 
 1. Open LM Studio and click the **Search** tab (🔍)
 2. Search for "LiquidAI" or "LFM2"
 3. Select a model and quantization level (`Q4_K_M` recommended)
 4. Click **Download**
 
-See the [Models page](/lfm/key-concepts/models#gguf-models) for all available GGUF models.
+See the [Models page](/docs/models/complete-library) for all available GGUF models.
 
-## Using the Chat Interface[​](#using-the-chat-interface "Direct link to Using the Chat Interface")
+## Using the Chat Interface
 
 1. Go to the **Chat** tab (💬)
 2. Select your model from the dropdown
 3. Adjust parameters (`temperature`, `max_tokens`, `top_p`) in the sidebar
 4. Start chatting
 
-## Generation Parameters[​](#generation-parameters "Direct link to Generation Parameters")
+## Generation Parameters
 
 Control text generation behavior using the GUI sidebar or API parameters. Key parameters:
 
@@ -42,11 +40,19 @@ Control text generation behavior using the GUI sidebar or API parameters. Key pa
 
 Via the OpenAI-compatible API:
 
-```
-response = client.chat.completions.create(    model="local-model",    messages=[{"role": "user", "content": "What is machine learning?"}],    temperature=0.7,    top_p=0.9,    top_k=40,    max_tokens=512,    repetition_penalty=1.1,)
+```python
+response = client.chat.completions.create(
+    model="local-model",
+    messages=[{"role": "user", "content": "What is machine learning?"}],
+    temperature=0.7,
+    top_p=0.9,
+    top_k=40,
+    max_tokens=512,
+    repetition_penalty=1.1,
+)
 ```
 
-## Running the Server[​](#running-the-server "Direct link to Running the Server")
+## Running the Server
 
 Start an OpenAI-compatible server for programmatic access:
 
@@ -56,23 +62,54 @@ Start an OpenAI-compatible server for programmatic access:
 
 Use the OpenAI Python client:
 
-```
-from openai import OpenAIclient = OpenAI(    base_url="http://localhost:1234/v1",    api_key="not-needed")response = client.chat.completions.create(    model="local-model",  # Any string works    messages=[        {"role": "user", "content": "What is machine learning?"}    ],    temperature=0.7,    max_tokens=512)print(response.choices[0].message.content)
+```python
+from openai import OpenAI
+
+client = OpenAI(
+    base_url="http://localhost:1234/v1",
+    api_key="not-needed"
+)
+
+response = client.chat.completions.create(
+    model="local-model",  # Any string works
+    messages=[
+        {"role": "user", "content": "What is machine learning?"}
+    ],
+    temperature=0.7,
+    max_tokens=512
+)
+print(response.choices[0].message.content)
 ```
 
-### Streaming Responses[​](#streaming-responses "Direct link to Streaming Responses")
+### Streaming Responses
 
-```
-stream = client.chat.completions.create(    model="local-model",    messages=[        {"role": "user", "content": "Tell me a story."}    ],    stream=True)for chunk in stream:    if chunk.choices[0].delta.content is not None:        print(chunk.choices[0].delta.content, end="")
+```python
+stream = client.chat.completions.create(
+    model="local-model",
+    messages=[
+        {"role": "user", "content": "Tell me a story."}
+    ],
+    stream=True
+)
+
+for chunk in stream:
+    if chunk.choices[0].delta.content is not None:
+        print(chunk.choices[0].delta.content, end="")
 ```
 
 <Accordion title="Curl request example">
-  ```
-  curl http://localhost:1234/v1/chat/completions \  -H "Content-Type: application/json" \  -d '{    "model": "local-model",    "messages": [{"role": "user", "content": "Hello!"}],    "temperature": 0.7  }'
+  ```bash
+  curl http://localhost:1234/v1/chat/completions \
+    -H "Content-Type: application/json" \
+    -d '{
+      "model": "local-model",
+      "messages": [{"role": "user", "content": "Hello!"}],
+      "temperature": 0.7
+    }'
   ```
 </Accordion>
 
-## Vision Models[​](#vision-models "Direct link to Vision Models")
+## Vision Models
 
 Search for "LiquidAI LFM2-VL" to download vision models. In the **Chat** tab:
 
@@ -81,16 +118,38 @@ Search for "LiquidAI LFM2-VL" to download vision models. In the **Chat** tab:
 * Provide image URLs
 
 <Accordion title="Using the API">
-  ```
-  from openai import OpenAIimport base64client = OpenAI(    base_url="http://localhost:1234/v1",    api_key="not-needed")# Encode image to base64with open("image.jpg", "rb") as image_file:    image_data = base64.b64encode(image_file.read()).decode("utf-8")response = client.chat.completions.create(    model="local-model",    messages=[        {            "role": "user",            "content": [                {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{image_data}"}},                {"type": "text", "text": "What's in this image?"}            ]        }    ])print(response.choices[0].message.content)
+  ```python
+  from openai import OpenAI
+  import base64
+
+  client = OpenAI(
+      base_url="http://localhost:1234/v1",
+      api_key="not-needed"
+  )
+
+  # Encode image to base64
+  with open("image.jpg", "rb") as image_file:
+      image_data = base64.b64encode(image_file.read()).decode("utf-8")
+
+  response = client.chat.completions.create(
+      model="local-model",
+      messages=[
+          {
+              "role": "user",
+              "content": [
+                  {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{image_data}"}},
+                  {"type": "text", "text": "What's in this image?"}
+              ]
+          }
+      ]
+  )
+  print(response.choices[0].message.content)
   ```
 </Accordion>
 
-## Tips[​](#tips "Direct link to Tips")
+## Tips
 
 * **GPU Acceleration**: Automatically detects and uses available GPUs
 * **Model Management**: Delete models from the **My Models** section
 * **Performance**: Adjust GPU layers in server settings for speed/memory balance
 * **Quantization**: Q4 is faster, Q6/Q8 have better quality
-
-[Edit this page](https://github.com/Liquid4All/docs/tree/main/lfm/inference/lm-studio.md)

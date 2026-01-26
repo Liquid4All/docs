@@ -3,31 +3,45 @@ title: "vLLM"
 description: "vLLM is a high-throughput and memory-efficient inference engine for LLMs. It supports efficient serving with PagedAttention, continuous batching, and optimized CUDA kernels."
 ---
 
-<Check>
-  * High-throughput inference and production deployments with GPU acceleration
-  * Batch processing of many prompts
-  * Serving models via an API
-</Check>
+<Tip>
+  Use vLLM for high-throughput production deployments, batch processing, or serving models via an API.
+</Tip>
 
-vLLM offers significantly higher throughput than [Transformers](/lfm/inference/transformers), making it ideal for serving many concurrent requests. However, it requires a CUDA-compatible GPU. For CPU-only environments, consider using [llama.cpp](/lfm/inference/llama-cpp) instead.
+vLLM offers significantly higher throughput than [Transformers](/docs/inference/transformers), making it ideal for serving many concurrent requests. However, it requires a CUDA-compatible GPU. For CPU-only environments, consider using [llama.cpp](/docs/inference/llama-cpp) instead.
 
-## Installation[​](#installation "Direct link to Installation")
+## Installation
 
 You need to install [`vLLM`](https://github.com/vllm-project/vllm) v0.10.2 or a more recent version:
 
-```
+```bash
 pip install vllm==0.10.2 --extra-index-url https://wheels.vllm.ai/0.10.2/ --torch-backend=auto
 ```
 
-## Basic Usage[​](#basic-usage "Direct link to Basic Usage")
+## Basic Usage
 
 The `LLM` class provides a simple interface for offline inference. Use the [`chat()`](https://docs.vllm.ai/en/v0.6.0/dev/offline_inference/llm.html) method to automatically apply the chat template and generate text:
 
-```
-from vllm import LLM, SamplingParams# Initialize the modelllm = LLM(model="LiquidAI/LFM2.5-1.2B-Instruct")# Define sampling parameterssampling_params = SamplingParams(    temperature=0.3,    min_p=0.15,    repetition_penalty=1.05,    max_tokens=512)# Generate answerprompt = "What is C. elegans?"output = llm.chat(prompt, sampling_params)print(output[0].outputs[0].text)
+```python
+from vllm import LLM, SamplingParams
+
+# Initialize the model
+llm = LLM(model="LiquidAI/LFM2.5-1.2B-Instruct")
+
+# Define sampling parameters
+sampling_params = SamplingParams(
+    temperature=0.3,
+    min_p=0.15,
+    repetition_penalty=1.05,
+    max_tokens=512
+)
+
+# Generate answer
+prompt = "What is C. elegans?"
+output = llm.chat(prompt, sampling_params)
+print(output[0].outputs[0].text)
 ```
 
-### Sampling Parameters[​](#sampling-parameters "Direct link to Sampling Parameters")
+### Sampling Parameters
 
 Control text generation behavior using [`SamplingParams`](https://docs.vllm.ai/en/v0.4.1/dev/sampling_params.html). Key parameters:
 
@@ -41,26 +55,60 @@ Control text generation behavior using [`SamplingParams`](https://docs.vllm.ai/e
 
 Create a `SamplingParams` object:
 
-```
-from vllm import SamplingParamssampling_params = SamplingParams(    temperature=0.3,    min_p=0.15,    repetition_penalty=1.05,    max_tokens=512,)
+```python
+from vllm import SamplingParams
+
+sampling_params = SamplingParams(
+    temperature=0.3,
+    min_p=0.15,
+    repetition_penalty=1.05,
+    max_tokens=512,
+)
 ```
 
 For a complete list of parameters, see the [vLLM Sampling Parameters documentation](https://docs.vllm.ai/en/v0.4.1/dev/sampling_params.html).
 
-## Batched Generation[​](#batched-generation "Direct link to Batched Generation")
+## Batched Generation
 
 vLLM automatically batches multiple prompts for efficient processing. You can control batch behavior and generate responses for large datasets:
 
-```
-from vllm import LLM, SamplingParamsllm = LLM(model="LiquidAI/LFM2.5-1.2B-Instruct")sampling_params = SamplingParams(    temperature=0.3,    min_p=0.15,    repetition_penalty=1.05,    max_tokens=512)# Large batch of promptsprompts = [    "Explain quantum computing in one sentence.",    "What are the benefits of exercise?",    "Write a haiku about programming.",    # ... many more prompts]# Generate list of answersoutputs = llm.chat(prompts, sampling_params)for i, output in enumerate(outputs):    print(f"Prompt {i}: {output.prompt}")    print(f"Generated: {output.outputs[0].text}\n")
+```python
+from vllm import LLM, SamplingParams
+
+llm = LLM(model="LiquidAI/LFM2.5-1.2B-Instruct")
+
+sampling_params = SamplingParams(
+    temperature=0.3,
+    min_p=0.15,
+    repetition_penalty=1.05,
+    max_tokens=512
+)
+
+# Large batch of prompts
+prompts = [
+    "Explain quantum computing in one sentence.",
+    "What are the benefits of exercise?",
+    "Write a haiku about programming.",
+    # ... many more prompts
+]
+
+# Generate list of answers
+outputs = llm.chat(prompts, sampling_params)
+
+for i, output in enumerate(outputs):
+    print(f"Prompt {i}: {output.prompt}")
+    print(f"Generated: {output.outputs[0].text}\n")
 ```
 
-## OpenAI-Compatible Server[​](#openai-compatible-server "Direct link to OpenAI-Compatible Server")
+## OpenAI-Compatible Server
 
 vLLM can serve models through an OpenAI-compatible API, allowing you to use existing OpenAI client libraries:
 
-```
-vllm serve LiquidAI/LFM2.5-1.2B-Instruct \    --host 0.0.0.0 \    --port 8000 \    --dtype auto
+```bash
+vllm serve LiquidAI/LFM2.5-1.2B-Instruct \
+    --host 0.0.0.0 \
+    --port 8000 \
+    --dtype auto
 ```
 
 Optional parameters:
@@ -68,22 +116,174 @@ Optional parameters:
 * `--max-model-len L`: Set maximum context length
 * `--gpu-memory-utilization 0.9`: Set GPU memory usage (0.0-1.0)
 
-### Chat Completions[​](#chat-completions "Direct link to Chat Completions")
+### Chat Completions
 
 Once running, you can use the OpenAI Python client or any OpenAI-compatible tool:
 
-```
-from openai import OpenAI# Point to your vLLM serverclient = OpenAI(    base_url="http://localhost:8000/v1",    api_key="dummy"  # vLLM doesn't require authentication by default)# Chat completionresponse = client.chat.completions.create(    model="LiquidAI/LFM2.5-1.2B-Instruct",    messages=[        {"role": "user", "content": "What is machine learning?"}    ],    temperature=0.3,    min_p=0.15,    repetition_penalty=1.05,    max_tokens=512)print(response.choices[0].message.content)# Streaming responsestream = client.chat.completions.create(    model="LiquidAI/LFM2.5-1.2B-Instruct",    messages=[        {"role": "user", "content": "Tell me a story."}    ],    stream=True)for chunk in stream:    if chunk.choices[0].delta.content is not None:        print(chunk.choices[0].delta.content, end="")
+```python
+from openai import OpenAI
+
+# Point to your vLLM server
+client = OpenAI(
+    base_url="http://localhost:8000/v1",
+    api_key="dummy"  # vLLM doesn't require authentication by default
+)
+
+# Chat completion
+response = client.chat.completions.create(
+    model="LiquidAI/LFM2.5-1.2B-Instruct",
+    messages=[
+        {"role": "user", "content": "What is machine learning?"}
+    ],
+    temperature=0.3,
+    min_p=0.15,
+    repetition_penalty=1.05,
+    max_tokens=512
+)
+print(response.choices[0].message.content)
+
+# Streaming response
+stream = client.chat.completions.create(
+    model="LiquidAI/LFM2.5-1.2B-Instruct",
+    messages=[
+        {"role": "user", "content": "Tell me a story."}
+    ],
+    stream=True
+)
+
+for chunk in stream:
+    if chunk.choices[0].delta.content is not None:
+        print(chunk.choices[0].delta.content, end="")
 ```
 
 <Accordion title="Curl request example">
-  ```
-  curl http://localhost:8000/v1/chat/completions \  -H "Content-Type: application/json" \  -d '{    "model": "LiquidAI/LFM2-1.2B",    "messages": [      {"role": "user", "content": "What is AI?"}    ],    "temperature": 0.7,    "max_tokens": 256  }'
+  ```bash
+  curl http://localhost:8000/v1/chat/completions \
+    -H "Content-Type: application/json" \
+    -d '{
+      "model": "LiquidAI/LFM2-1.2B",
+      "messages": [
+        {"role": "user", "content": "What is AI?"}
+      ],
+      "temperature": 0.7,
+      "max_tokens": 256
+    }'
   ```
 </Accordion>
 
-## Vision Models[​](#vision-models "Direct link to Vision Models")
+## Vision Models
 
-Official vLLM support for LFM Vision Models is coming soon. For vision model inference, please use [Transformers](/lfm/inference/transformers) or other supported inference frameworks.
+<Warning>
+vLLM support for LFM Vision Models requires a specific version that includes changes not yet merged upstream. You must install vLLM from a custom source to use vision models. See installation instructions below.
+</Warning>
 
-[Edit this page](https://github.com/Liquid4All/docs/tree/main/lfm/inference/vllm.md)
+### Installation for Vision Models
+
+To use LFM Vision Models with vLLM, install the custom version from the Liquid AI fork:
+
+```bash
+pip install git+https://github.com/LiquidAI/vllm.git@lfm-vision-support
+```
+
+This fork includes the necessary changes for LFM Vision Model support. Once these changes are merged upstream, you'll be able to use the standard vLLM installation.
+
+### Basic Usage
+
+Initialize a vision model and process images:
+
+```python
+from vllm import LLM, SamplingParams
+from PIL import Image
+import base64
+from io import BytesIO
+
+# Initialize the vision model
+llm = LLM(model="LiquidAI/LFM2.5-VL-1.6B")
+
+# Define sampling parameters
+sampling_params = SamplingParams(
+    temperature=0.3,
+    min_p=0.15,
+    repetition_penalty=1.05,
+    max_tokens=512
+)
+
+# Load and encode image
+image_path = "path/to/your/image.jpg"
+image = Image.open(image_path)
+
+# Convert image to base64 for the API
+buffered = BytesIO()
+image.save(buffered, format="JPEG")
+image_base64 = base64.b64encode(buffered.getvalue()).decode()
+
+# Create a message with image content
+messages = [
+    {
+        "role": "user",
+        "content": [
+            {"type": "text", "text": "What's in this image?"},
+            {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{image_base64}"}}
+        ]
+    }
+]
+
+# Generate response
+output = llm.chat(messages, sampling_params)
+print(output[0].outputs[0].text)
+```
+
+### OpenAI-Compatible API
+
+You can also serve vision models through the OpenAI-compatible API:
+
+```bash
+vllm serve LiquidAI/LFM2.5-VL-1.6B \
+    --host 0.0.0.0 \
+    --port 8000 \
+    --dtype auto
+```
+
+Then use the OpenAI client with image content:
+
+```python
+from openai import OpenAI
+from PIL import Image
+import base64
+from io import BytesIO
+
+client = OpenAI(
+    base_url="http://localhost:8000/v1",
+    api_key="dummy"
+)
+
+# Load and encode image
+image = Image.open("path/to/image.jpg")
+buffered = BytesIO()
+image.save(buffered, format="JPEG")
+image_base64 = base64.b64encode(buffered.getvalue()).decode()
+
+# Chat completion with image
+response = client.chat.completions.create(
+    model="LiquidAI/LFM2.5-VL-1.6B",
+    messages=[
+        {
+            "role": "user",
+            "content": [
+                {"type": "text", "text": "Describe this image in detail."},
+                {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{image_base64}"}}
+            ]
+        }
+    ],
+    temperature=0.3,
+    min_p=0.15,
+    repetition_penalty=1.05,
+    max_tokens=512
+)
+
+print(response.choices[0].message.content)
+```
+
+<Info>
+For a complete working example, see the [vLLM Vision Model Colab notebook](https://colab.research.google.com/drive/1sUfQlqAvuAVB4bZ6akYVQPGmHtTDUNpF#scrollTo=C14m2ZWdmZWb).
+</Info>
