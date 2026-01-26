@@ -1,10 +1,15 @@
 ---
-title: "Overview"
+title: "Chat Template"
 description: "The chat template defines how conversations are structured using special tokens and roles. LFM2 uses a ChatML-like chat template to structure conversations as follows:"
 ---
 
 ```
-<|startoftext|><|im_start|>systemYou are a helpful assistant trained by Liquid AI.<|im_end|><|im_start|>userWhat is C. elegans?<|im_end|><|im_start|>assistantIt's a tiny nematode that lives in temperate soil environments.<|im_end|>
+<|startoftext|><|im_start|>system
+You are a helpful assistant trained by Liquid AI.<|im_end|>
+<|im_start|>user
+What is C. elegans?<|im_end|>
+<|im_start|>assistant
+It's a tiny nematode that lives in temperate soil environments.<|im_end|>
 ```
 
 Conversations are formatted using special tokens:
@@ -18,50 +23,90 @@ LFM2 supports four conversation roles:
 * **`system`** — (Optional) Defines who the assistant is and how it should respond.
 * **`user`** — Messages from the user containing questions and instructions.
 * **`assistant`** — Responses from the model.
-* **`tool`** — Results from tool/function execution. Used for [tool use](/lfm/key-concepts/tool-use) workflows.
+* **`tool`** — Results from tool/function execution. Used for [tool use](/docs/key-concepts/tool-use) workflows.
 
 The complete chat template definition can be found in the `chat_template.jinja` file in each model's Hugging Face repository.
 
-## Text Models[​](#text-models "Direct link to Text Models")
+## Text Models
 
 We recommend storing your conversation as a list of dictionaries as follows:
 
-```
-messages = [    {"role": "system", "content": "You are a helpful assistant."},    {"role": "user", "content": "What is machine learning?"}]
+```python
+messages = [
+    {"role": "system", "content": "You are a helpful assistant."},
+    {"role": "user", "content": "What is machine learning?"}
+]
 ```
 
 You can then apply LFM2's chat template using the [`.apply_chat_template()`](https://huggingface.co/docs/transformers/main/en/chat_templating#using-applychattemplate) method from Transformers:
 
-```
-from transformers import AutoTokenizertokenizer = AutoTokenizer.from_pretrained("LiquidAI/LFM2.5-1.2B-Instruct")# Apply chat templateprompt = tokenizer.apply_chat_template(    messages,    tokenize=False,    add_generation_prompt=True)print(prompt)
+```python
+from transformers import AutoTokenizer
+
+tokenizer = AutoTokenizer.from_pretrained("LiquidAI/LFM2.5-1.2B-Instruct")
+
+# Apply chat template
+prompt = tokenizer.apply_chat_template(
+    messages,
+    tokenize=False,
+    add_generation_prompt=True
+)
+print(prompt)
 ```
 
 Output:
 
 ```
-<|startoftext|><|im_start|>systemYou are a helpful assistant.<|im_end|><|im_start|>userWhat is machine learning?<|im_end|><|im_start|>assistant
+<|startoftext|><|im_start|>system
+You are a helpful assistant.<|im_end|>
+<|im_start|>user
+What is machine learning?<|im_end|>
+<|im_start|>assistant
 ```
 
-## Vision Models[​](#vision-models "Direct link to Vision Models")
+## Vision Models
 
 LFM2-VL models follow the same chat template with additional support for images. When formatted, images are represented with a sentinel token (`<image>`), which is automatically replaced with image tokens by the processor.
 
 When creating conversations for vision models, use a structured format with `content` as a list containing image and text entries:
 
-```
-image = load_image("path/to/image.jpg")  # or use PIL Imagemessages = [    {        "role": "user",        "content": [            {"type": "image", "image": image},  # PIL Image or loaded image            {"type": "text", "text": "What is in this image?"},        ],    },]
+```python
+image = load_image("path/to/image.jpg")  # or use PIL Image
+
+messages = [
+    {
+        "role": "user",
+        "content": [
+            {"type": "image", "image": image},  # PIL Image or loaded image
+            {"type": "text", "text": "What is in this image?"},
+        ],
+    },
+]
 ```
 
 You can then apply the chat template using the processor's `.apply_chat_template()` method:
 
-```
-from transformers import AutoProcessorfrom transformers.image_utils import load_imageprocessor = AutoProcessor.from_pretrained("LiquidAI/LFM2.5-VL-1.6B")# Apply chat templateprompt = processor.apply_chat_template(    conversation,    tokenize=False,    add_generation_prompt=True)print(prompt)
+```python
+from transformers import AutoProcessor
+from transformers.image_utils import load_image
+
+processor = AutoProcessor.from_pretrained("LiquidAI/LFM2.5-VL-1.6B")
+
+# Apply chat template
+prompt = processor.apply_chat_template(
+    conversation,
+    tokenize=False,
+    add_generation_prompt=True
+)
+print(prompt)
 ```
 
 Output:
 
 ```
-<|startoftext|><|im_start|>systemYou are a helpful multimodal assistant by Liquid AI.<|im_end|><|im_start|>user<image>What is in this image?<|im_end|><|im_start|>assistant
+<|startoftext|><|im_start|>system
+You are a helpful multimodal assistant by Liquid AI.<|im_end|>
+<|im_start|>user
+<image>What is in this image?<|im_end|>
+<|im_start|>assistant
 ```
-
-[Edit this page](https://github.com/Liquid4All/docs/tree/main/lfm/key-concepts/chat-template.md)

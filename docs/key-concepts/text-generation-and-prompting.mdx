@@ -3,7 +3,7 @@ title: "Prompting Guide"
 description: "This guide covers how to effectively use system prompts, user prompts, and assistant prompts with LFM2 models, along with an overview of sampling parameters and special prompting recipes for specific models."
 ---
 
-## Prompt Roles[​](#prompt-roles "Direct link to Prompt Roles")
+## Prompt Roles
 
 LFM2 models use a structured conversation format with three prompt roles:
 
@@ -13,8 +13,11 @@ LFM2 models use a structured conversation format with three prompt roles:
 
 **Example:**
 
-```
-messages = [    {"role": "system", "content": "You are a helpful coding assistant."},    {"role": "user", "content": "How do I sort a list in Python?"}]
+```python
+messages = [
+    {"role": "system", "content": "You are a helpful coding assistant."},
+    {"role": "user", "content": "How do I sort a list in Python?"}
+]
 ```
 
 <Accordion title="Additional examples: few-shot prompting and prefill">
@@ -22,28 +25,44 @@ messages = [    {"role": "system", "content": "You are a helpful coding assistan
 
   Continue a previous conversation or provide example interactions to guide the model's behavior. The model learns from the conversation history and applies patterns to new inputs.
 
-  ```
-  messages = [    {"role": "system", "content": "You are a helpful assistant."},    {"role": "user", "content": "What are the benefits of exercise?"},    {"role": "assistant", "content": "Exercise has many benefits including:\n1. Improved cardiovascular health\n2. "},  # Partial response to continue    {"role": "user", "content": "Tell me more about cardiovascular health."}]
+  ```python
+  messages = [
+      {"role": "system", "content": "You are a helpful assistant."},
+      {"role": "user", "content": "What are the benefits of exercise?"},
+      {"role": "assistant", "content": "Exercise has many benefits including:\n1. Improved cardiovascular health\n2. "},  # Partial response to continue
+      {"role": "user", "content": "Tell me more about cardiovascular health."}
+  ]
   ```
 
   Or provide few-shot examples:
 
-  ```
-  messages = [    {"role": "system", "content": "You are a helpful assistant that formats dates."},    {"role": "user", "content": "2024-01-15"},    {"role": "assistant", "content": "January 15, 2024"},    {"role": "user", "content": "2024-12-25"},    {"role": "assistant", "content": "December 25, 2024"},    {"role": "user", "content": "2024-03-08"}  # Model follows the pattern]
+  ```python
+  messages = [
+      {"role": "system", "content": "You are a helpful assistant that formats dates."},
+      {"role": "user", "content": "2024-01-15"},
+      {"role": "assistant", "content": "January 15, 2024"},
+      {"role": "user", "content": "2024-12-25"},
+      {"role": "assistant", "content": "December 25, 2024"},
+      {"role": "user", "content": "2024-03-08"}  # Model follows the pattern
+  ]
   ```
 
   **Prefill for structured output:**
 
   Start the model with a specific format or structure (e.g., JSON opening brace) to guide it toward structured outputs.
 
-  ```
-  messages = [    {"role": "system", "content": "Extract information and return as JSON."},    {"role": "user", "content": "Extract the name and age from: John is 30 years old."},    {"role": "assistant", "content": "{\n  \"name\": "}  # Prefill with JSON structure]
+  ```python
+  messages = [
+      {"role": "system", "content": "Extract information and return as JSON."},
+      {"role": "user", "content": "Extract the name and age from: John is 30 years old."},
+      {"role": "assistant", "content": "{\n  \"name\": "}  # Prefill with JSON structure
+  ]
   ```
 </Accordion>
 
-For structured generation with schema validation, see [Outlines](/lfm/frameworks/outlines).
+For structured generation with schema validation, see [Outlines](/docs/frameworks/outlines).
 
-## 💬 Text Models[​](#-text-models "Direct link to 💬 Text Models")
+## Text Models
 
 Control text generation behavior, balancing creativity, determinism, and quality:
 
@@ -54,9 +73,9 @@ Control text generation behavior, balancing creativity, determinism, and quality
 * **`repetition_penalty`** (1.0+) - Reduces repetition. 1.0 = no penalty; >1.0 = prevents repetition.
 * **`max_tokens`** / **`max_new_tokens`** - Maximum tokens to generate.
 
-Parameter names and syntax vary by platform. See [Transformers](/lfm/inference/transformers), [vLLM](/lfm/inference/vllm), or [llama.cpp](/lfm/inference/llama-cpp) for details.
+Parameter names and syntax vary by platform. See [Transformers](/docs/inference/transformers), [vLLM](/docs/inference/vllm), or [llama.cpp](/docs/inference/llama-cpp) for details.
 
-### Recommended Settings Text[​](#recommended-settings-text "Direct link to recommended-settings-text")
+### Recommended Settings Text
 
 **For LFM2.5 text models:**
 
@@ -73,11 +92,11 @@ Parameter names and syntax vary by platform. See [Transformers](/lfm/inference/t
 
 Note that Liquid Nanos have [special requirements](#liquid-nanos) with different parameters.
 
-## 👁️ Vision Models[​](#️-vision-models "Direct link to 👁️ Vision Models")
+## Vision Models
 
 LFM2-VL models use a **variable resolution encoder** to control the quality/speed tradeoff by adjusting how images are tokenized.
 
-### Image Token Management[​](#image-token-management "Direct link to Image Token Management")
+### Image Token Management
 
 Control image tokenization with:
 
@@ -89,11 +108,21 @@ Control image tokenization with:
 
 **Example configurations:**
 
-```
-# High quality (slower)max_image_tokens=256, min_image_tokens=128# Balancedmax_image_tokens=128, min_image_tokens=64# Fast (lower quality)max_image_tokens=64, min_image_tokens=32
+```python
+# High quality (slower)
+max_image_tokens = 256
+min_image_tokens = 128
+
+# Balanced
+max_image_tokens = 128
+min_image_tokens = 64
+
+# Fast (lower quality)
+max_image_tokens = 64
+min_image_tokens = 32
 ```
 
-### Recommended Settings Vision[​](#recommended-settings-vision "Direct link to recommended-settings-vision")
+### Recommended Settings Vision
 
 **For vision models:**
 
@@ -104,16 +133,22 @@ Control image tokenization with:
 * `max_image_tokens=256`
 * `do_image_splitting=True`
 
-## 🎯 Liquid Nanos[​](#-liquid-nanos "Direct link to 🎯 Liquid Nanos")
+## Liquid Nanos
 
-### LFM2-Extract[​](#lfm2-extract "Direct link to LFM2-Extract")
+### LFM2-Extract
 
 Structured information extraction models. Use `temperature=0` (greedy decoding).
 
 **System Prompt Format:**
 
 ```
-Identify and extract information matching the following schema. Return data as a JSON object. Missing data should be omitted.Schema:- field_name: "Description of what to extract"- nested_object:  - nested_field: "Description"
+Identify and extract information matching the following schema.
+Return data as a JSON object. Missing data should be omitted.
+
+Schema:
+- field_name: "Description of what to extract"
+- nested_object:
+  - nested_field: "Description"
 ```
 
 If no system prompt is provided, defaults to JSON. Specify format (JSON, XML, or YAML) and schema for better accuracy.
@@ -122,59 +157,117 @@ If no system prompt is provided, defaults to JSON. Specify format (JSON, XML, or
   **System Prompt:**
 
   ```
-  Identify and extract information matching the following schema. Return data as a JSON object. Missing data should be omitted.Schema:- project_name: "The name of the martial arts venture"- executive_summary: "A brief overview of the business"- financial_projections:  - startup_costs: "Initial investment required"  - projected_revenue_year_1: "Expected revenue in the first year"  - projected_revenue_year_3: "Expected revenue in the third year"  - return_on_investment: "Timeframe for recouping investment"- facility_details:  - location:    - address: "Full address of the facility"    - latitude: "Latitude coordinate"    - longitude: "Longitude coordinate"    - distance_to_park_boundary: "Distance to park boundary"    - noise_level_assessment: "Noise level rating"
+  Identify and extract information matching the following schema.
+  Return data as a JSON object. Missing data should be omitted.
+
+  Schema:
+  - project_name: "The name of the martial arts venture"
+  - executive_summary: "A brief overview of the business"
+  - financial_projections:
+    - startup_costs: "Initial investment required"
+    - projected_revenue_year_1: "Expected revenue in the first year"
+    - projected_revenue_year_3: "Expected revenue in the third year"
+    - return_on_investment: "Timeframe for recouping investment"
+  - facility_details:
+    - location:
+      - address: "Full address of the facility"
+      - latitude: "Latitude coordinate"
+      - longitude: "Longitude coordinate"
+      - distance_to_park_boundary: "Distance to park boundary"
+      - noise_level_assessment: "Noise level rating"
   ```
 
   **User Prompt:**
 
   ```
-  We have secured a lease for a facility located at 345 Ocean View Drive, Seward, AK 99664. The facility offers 3000 sq ft of dedicated training space. Its location is approximately 2 miles from the boundary of the Kenai Fjords National Park. A noise level assessment has been conducted, resulting in a rating of Moderate. The coordinates of the facility are 60.1728° N latitude and 149.3422° W longitude.
+  We have secured a lease for a facility located at 345 Ocean View Drive,
+  Seward, AK 99664. The facility offers 3000 sq ft of dedicated training
+  space. Its location is approximately 2 miles from the boundary of the
+  Kenai Fjords National Park. A noise level assessment has been conducted,
+  resulting in a rating of Moderate. The coordinates of the facility are
+  60.1728° N latitude and 149.3422° W longitude.
   ```
 
   **Assistant Response:**
 
-  ```
-  {  "project_name": "Arctic Spirit Martial Arts",  "executive_summary": "This business plan outlines the establishment of a premier martial arts training center in Seward, Alaska.",  "financial_projections": {    "startup_costs": "$75000",    "projected_revenue_year_1": "$120000",    "projected_revenue_year_3": "$250000",    "return_on_investment": "3 years"  },  "facility_details": {    "location": {      "address": "345 Ocean View Drive, Seward, AK 99664",      "latitude": "60.1728° N",      "longitude": "149.3422° W",      "distance_to_park_boundary": "2 miles",      "noise_level_assessment": "Moderate"    }  }}
+  ```json
+  {
+    "project_name": "Arctic Spirit Martial Arts",
+    "executive_summary": "This business plan outlines the establishment of a premier martial arts training center in Seward, Alaska.",
+    "financial_projections": {
+      "startup_costs": "$75000",
+      "projected_revenue_year_1": "$120000",
+      "projected_revenue_year_3": "$250000",
+      "return_on_investment": "3 years"
+    },
+    "facility_details": {
+      "location": {
+        "address": "345 Ocean View Drive, Seward, AK 99664",
+        "latitude": "60.1728° N",
+        "longitude": "149.3422° W",
+        "distance_to_park_boundary": "2 miles",
+        "noise_level_assessment": "Moderate"
+      }
+    }
+  }
   ```
 </Accordion>
 
 ⚠️ **The model is intended for single turn conversations.**
 
-### LFM2-RAG[​](#lfm2-rag "Direct link to LFM2-RAG")
+### LFM2-RAG
 
 Optimized for Retrieval-Augmented Generation. Use `temperature=0` (greedy decoding). Provide relevant documents in the system prompt.
 
 **System Prompt Format:**
 
 ```
-The following documents may provide you additional information to answer questions:<document1>[Document content here]</document1><document2>[Document content here]</document2>
+The following documents may provide you additional information to answer questions:
+
+<document1>
+[Document content here]
+</document1>
+
+<document2>
+[Document content here]
+</document2>
 ```
 
 <Accordion title="Example">
   **System Prompt:**
 
   ```
-  The following documents may provide you additional information to answer questions:<document1>The centre, which was created in 1906, has been instrumental in advancing agriculture research. The library at the Agriculture Canada research centre in Lethbridge serves 48 scientists and 85 technicians, along with many visiting staff and students.</document1>
+  The following documents may provide you additional information to answer questions:
+
+  <document1>
+  The centre, which was created in 1906, has been instrumental in advancing
+  agriculture research. The library at the Agriculture Canada research centre
+  in Lethbridge serves 48 scientists and 85 technicians, along with many
+  visiting staff and students.
+  </document1>
   ```
 
   **User Prompt:**
 
   ```
-  How many individuals were reported to be served by the library at the Agriculture Canada research centre in Lethbridge?
+  How many individuals were reported to be served by the library at the
+  Agriculture Canada research centre in Lethbridge?
   ```
 
   **Assistant Response:**
 
   ```
-  The library at the Agriculture Canada research centre in Lethbridge was reported to serve 48 scientists and 85 technicians, along with many visiting staff and students.
+  The library at the Agriculture Canada research centre in Lethbridge was
+  reported to serve 48 scientists and 85 technicians, along with many
+  visiting staff and students.
   ```
 </Accordion>
 
-### LFM2-Tool[​](#lfm2-tool "Direct link to LFM2-Tool")
+### LFM2-Tool
 
-Optimized for efficient and precise tool calling. Use `temperature=0` (greedy decoding). See the [Tool Use](/lfm/key-concepts/tool-use) guide for details.
+Optimized for efficient and precise tool calling. Use `temperature=0` (greedy decoding). See the [Tool Use](/docs/key-concepts/tool-use) guide for details.
 
-### LFM2-350M-ENJP-MT[​](#lfm2-350m-enjp-mt "Direct link to LFM2-350M-ENJP-MT")
+### LFM2-350M-ENJP-MT
 
 Specialized English-Japanese translation model. **Requires** one of these system prompts:
 
@@ -184,20 +277,35 @@ Specialized English-Japanese translation model. **Requires** one of these system
 Use `.apply_chat_template()` with the system prompt to specify direction.
 
 <Accordion title="Example">
-  ```
-  from transformers import AutoTokenizertokenizer = AutoTokenizer.from_pretrained("LiquidAI/LFM2-350M-ENJP-MT")chat = [    {"role": "system", "content": "Translate to Japanese."},    {"role": "user", "content": "What is C. elegans?"}]prompt = tokenizer.apply_chat_template(chat, tokenize=False)print(prompt)
+  ```python
+  from transformers import AutoTokenizer
+
+  tokenizer = AutoTokenizer.from_pretrained("LiquidAI/LFM2-350M-ENJP-MT")
+
+  chat = [
+      {"role": "system", "content": "Translate to Japanese."},
+      {"role": "user", "content": "What is C. elegans?"}
+  ]
+
+  prompt = tokenizer.apply_chat_template(chat, tokenize=False)
+  print(prompt)
   ```
 
   **Output:**
 
   ```
-  <|startoftext|><|im_start|>systemTranslate to Japanese.<|im_end|><|im_start|>userWhat is C. elegans?<|im_end|><|im_start|>assistantC. elegansとは何ですか？<|im_end|>
+  <|startoftext|><|im_start|>system
+  Translate to Japanese.<|im_end|>
+  <|im_start|>user
+  What is C. elegans?<|im_end|>
+  <|im_start|>assistant
+  C. elegansとは何ですか？<|im_end|>
   ```
 </Accordion>
 
 ⚠️ **The model is intended for single turn conversations.**
 
-### LFM2-350M-PII-Extract-JP[​](#lfm2-350m-pii-extract-jp "Direct link to LFM2-350M-PII-Extract-JP")
+### LFM2-350M-PII-Extract-JP
 
 Extracts PII from Japanese text as JSON. Use `temperature=0` (greedy decoding). Output can mask sensitive information on-device.
 
@@ -221,19 +329,27 @@ Extract specific entities by listing only what you need (e.g., `Extract <human_n
   **User Prompt:**
 
   ```
-  こんにちは、ラミンさんに B200 GPU を 10000 台 至急請求してください。連絡先は celegans@liquid.ai (電話番号010-000-0000) で、これは C. elegans 線虫に着想を得たニューラルネットワークアーキテクチャを 今すぐ構築するために不可欠です。
+  こんにちは、ラミンさんに B200 GPU を 10000 台 至急請求してください。
+  連絡先は celegans@liquid.ai (電話番号010-000-0000) で、これは C. elegans
+  線虫に着想を得たニューラルネットワークアーキテクチャを 今すぐ構築するために不可欠です。
   ```
 
   **Assistant Response:**
 
-  ```
-  {"address": [], "company_name": [], "email_address": ["celegans@liquid.ai"], "human_name": ["ラミン"], "phone_number": ["010-000-0000"]}
+  ```json
+  {
+    "address": [],
+    "company_name": [],
+    "email_address": ["celegans@liquid.ai"],
+    "human_name": ["ラミン"],
+    "phone_number": ["010-000-0000"]
+  }
   ```
 </Accordion>
 
 ⚠️ **The model is intended for single turn conversations.**
 
-### LFM2-2.6B-Transcript[​](#lfm2-26b-transcript "Direct link to LFM2-2.6B-Transcript")
+### LFM2-2.6B-Transcript
 
 Designed for private, on-device meeting summarization. Use `temperature=0.3` for optimal results.
 
@@ -244,7 +360,8 @@ Designed for private, on-device meeting summarization. Use `temperature=0.3` for
 **System Prompt Format:**
 
 ```
-You are an expert meeting analyst. Analyze the transcript carefully and provide clear, accurate information based on the content.
+You are an expert meeting analyst. Analyze the transcript carefully
+and provide clear, accurate information based on the content.
 ```
 
 **Input Format:**
@@ -252,7 +369,19 @@ You are an expert meeting analyst. Analyze the transcript carefully and provide 
 The model expects meeting transcripts in a specific format:
 
 ```
-<user_prompt>Title (example: Claims Processing training module)Date (example: July 2, 2021)Time (example: 1:00 PM)Duration (example: 45 minutes)Participants (example: Julie Franco (Training Facilitator), Amanda Newman (Subject Matter Expert))----------**Speaker 1**: Message 1 (example: **Julie Franco**: Good morning, everyone. Thanks for joining me today.)**Speaker 2**: Message 2 (example: **Amanda Newman**: Good morning, Julie. Happy to be here.)etc.
+<user_prompt>
+
+Title (example: Claims Processing training module)
+Date (example: July 2, 2021)
+Time (example: 1:00 PM)
+Duration (example: 45 minutes)
+Participants (example: Julie Franco (Training Facilitator), Amanda Newman (Subject Matter Expert))
+
+----------
+
+**Speaker 1**: Message 1 (example: **Julie Franco**: Good morning, everyone. Thanks for joining me today.)
+**Speaker 2**: Message 2 (example: **Amanda Newman**: Good morning, Julie. Happy to be here.)
+etc.
 ```
 
 Replace `<user_prompt>` with one of the following summary types, or combine multiple prompts:
@@ -280,24 +409,43 @@ Replace `<user_prompt>` with one of the following summary types, or combine mult
   **System Prompt:**
 
   ```
-  You are an expert meeting analyst. Analyze the transcript carefully and provide clear, accurate information based on the content.
+  You are an expert meeting analyst. Analyze the transcript carefully
+  and provide clear, accurate information based on the content.
   ```
 
   **User Prompt:**
 
   ```
-  Provide a detailed summary of the transcript, covering all major topics, discussions, and outcomes in paragraph form.Title: Budget Planning MeetingDate: March 15, 2024Time: 2:00 PMDuration: 60 minutesParticipants: Sarah Chen (Finance Director), Mike Johnson (Operations Manager), Lisa Park (HR Manager)----------**Sarah Chen**: Good afternoon everyone. Let's start by reviewing our Q1 budget performance.**Mike Johnson**: Thanks Sarah. Operations came in 5% under budget this quarter.**Lisa Park**: HR expenses were slightly over due to the new hiring initiative, but we're on track for Q2.**Sarah Chen**: That's good to hear. For Q2, we need to allocate additional funds for the expansion project.**Mike Johnson**: I can provide a detailed breakdown by next week.**Lisa Park**: I'll coordinate with Mike on staffing needs for the expansion.
+  Provide a detailed summary of the transcript, covering all major topics,
+  discussions, and outcomes in paragraph form.
+
+  Title: Budget Planning Meeting
+  Date: March 15, 2024
+  Time: 2:00 PM
+  Duration: 60 minutes
+  Participants: Sarah Chen (Finance Director), Mike Johnson (Operations Manager), Lisa Park (HR Manager)
+
+  ----------
+
+  **Sarah Chen**: Good afternoon everyone. Let's start by reviewing our Q1 budget performance.
+  **Mike Johnson**: Thanks Sarah. Operations came in 5% under budget this quarter.
+  **Lisa Park**: HR expenses were slightly over due to the new hiring initiative, but we're on track for Q2.
+  **Sarah Chen**: That's good to hear. For Q2, we need to allocate additional funds for the expansion project.
+  **Mike Johnson**: I can provide a detailed breakdown by next week.
+  **Lisa Park**: I'll coordinate with Mike on staffing needs for the expansion.
   ```
 
   **Assistant Response:**
 
   ```
-  The Budget Planning Meeting on March 15, 2024, reviewed Q1 financial performance and planned for Q2. Operations performed well, coming in 5% under budget, while HR expenses were slightly over due to new hiring. The team discussed allocating additional funds for an expansion project in Q2, with Mike Johnson committing to provide a detailed breakdown by next week and Lisa Park coordinating staffing needs.
+  The Budget Planning Meeting on March 15, 2024, reviewed Q1 financial performance
+  and planned for Q2. Operations performed well, coming in 5% under budget, while
+  HR expenses were slightly over due to new hiring. The team discussed allocating
+  additional funds for an expansion project in Q2, with Mike Johnson committing to
+  provide a detailed breakdown by next week and Lisa Park coordinating staffing needs.
   ```
 </Accordion>
 
 **Try it yourself:** See the [meeting summarization cookbook example](https://github.com/Liquid4All/cookbook/tree/main/examples/meeting-summarization) for a complete implementation.
 
 ⚠️ **The model is intended for single turn conversations with a specific format.**
-
-[Edit this page](https://github.com/Liquid4All/docs/tree/main/lfm/key-concepts/text-generation-and-prompting.md)
