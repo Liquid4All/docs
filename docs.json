@@ -134,29 +134,13 @@
         ]
       },
       {
-        "tab": "API Spec",
+        "tab": "SDK Reference",
         "groups": [
           {
-            "group": "Deploy to Mobile",
-            "icon": "phone",
+            "group": "Get Started",
+            "icon": "rocket",
             "pages": [
               "leap/edge-sdk/overview"
-            ]
-          },
-          {
-            "group": "Android",
-            "icon": "robot",
-            "pages": [
-              "leap/edge-sdk/android/android-quick-start-guide",
-              "leap/edge-sdk/android/getting-started",
-              "leap/edge-sdk/android/model-loading",
-              "leap/edge-sdk/android/conversation-generation",
-              "leap/edge-sdk/android/messages-content",
-              "leap/edge-sdk/android/advanced-features",
-              "leap/edge-sdk/android/utilities",
-              "leap/edge-sdk/android/cloud-ai-comparison",
-              "leap/edge-sdk/android/constrained-generation",
-              "leap/edge-sdk/android/function-calling"
             ]
           },
           {
@@ -164,7 +148,6 @@
             "icon": "apple",
             "pages": [
               "leap/edge-sdk/ios/ios-quick-start-guide",
-              "leap/edge-sdk/ios/getting-started",
               "leap/edge-sdk/ios/model-loading",
               "leap/edge-sdk/ios/conversation-generation",
               "leap/edge-sdk/ios/messages-content",
@@ -176,11 +159,25 @@
             ]
           },
           {
+            "group": "Android",
+            "icon": "robot",
+            "pages": [
+              "leap/edge-sdk/android/android-quick-start-guide",
+              "leap/edge-sdk/android/model-loading",
+              "leap/edge-sdk/android/conversation-generation",
+              "leap/edge-sdk/android/messages-content",
+              "leap/edge-sdk/android/advanced-features",
+              "leap/edge-sdk/android/utilities",
+              "leap/edge-sdk/android/cloud-ai-comparison",
+              "leap/edge-sdk/android/constrained-generation",
+              "leap/edge-sdk/android/function-calling"
+            ]
+          },
+          {
             "group": "Model Bundling Service",
             "icon": "box",
             "pages": [
               "leap/leap-bundle/quick-start",
-              "leap/leap-bundle/getting-started",
               "leap/leap-bundle/authentication",
               "leap/leap-bundle/configuration",
               "leap/leap-bundle/bundle-creation",
@@ -196,8 +193,8 @@
         "tab": "Guides",
         "groups": [
           {
-            "group": "Examples",
-            "icon": "code",
+            "group": "Get Started",
+            "icon": "rocket",
             "pages": [
               "examples/index"
             ]
