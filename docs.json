@@ -1,12 +1,24 @@
 {
   "$schema": "https://mintlify.com/docs.json",
+  "banner": {
+    "content": "🚀 New: LFM2.5-1.2B-Instruct and LFM2.5-1.2B-Thinking are now available! [Learn more →](/docs/models/text-models)",
+    "dismissible": true
+  },
   "theme": "mint",
   "name": "Liquid Docs",
   "description": "Documentation for Liquid AI Foundation Models (LFM)",
   "colors": {
     "primary": "#5603ad",
     "light": "#864bc4",
-    "dark": "#490294"
+    "dark": "#4f46e5"
+  },
+  "styling": {
+    "codeblocks": {
+      "theme": {
+        "light": "github-light",
+        "dark": "github-dark"
+      }
+    }
   },
   "favicon": "/favicon.svg",
   "logo": {
@@ -50,8 +62,7 @@
             "group": "Get Started",
             "icon": "rocket",
             "pages": [
-              "docs/getting-started/welcome",
-              "docs/getting-started/quickstart"
+              "docs/getting-started/welcome"
             ]
           },
           {
@@ -85,7 +96,7 @@
               "docs/inference/ollama",
               {
                 "group": "Other Frameworks",
-                "icon": "layers",
+                "icon": "server",
                 "pages": [
                   "docs/inference/lm-studio",
                   "docs/inference/modal-deployment",
@@ -108,13 +119,12 @@
             "group": "Frameworks",
             "icon": "boxes",
             "pages": [
-              "docs/frameworks/leap",
               "docs/frameworks/outlines"
             ]
           },
           {
             "group": "Help",
-            "icon": "circle-help",
+            "icon": "book",
             "pages": [
               "docs/help/faqs",
               "docs/help/troubleshooting",
@@ -127,71 +137,57 @@
         "tab": "API Spec",
         "groups": [
           {
-            "group": "Getting Started",
-            "icon": "rocket",
-            "pages": [
-              "leap/index",
-              "leap/find-model",
-              "leap/vibe-check-models"
-            ]
-          },
-          {
             "group": "Deploy to Mobile",
-            "icon": "smartphone",
+            "icon": "phone",
             "pages": [
-              "leap/edge-sdk/overview",
-              {
-                "group": "Android",
-                "icon": "tablet",
-                "pages": [
-                  "leap/edge-sdk/android/android-quick-start-guide",
-                  "leap/edge-sdk/android/android-api-spec",
-                  "leap/edge-sdk/android/cloud-ai-comparison",
-                  "leap/edge-sdk/android/constrained-generation",
-                  "leap/edge-sdk/android/function-calling"
-                ]
-              },
-              {
-                "group": "iOS",
-                "icon": "apple",
-                "pages": [
-                  "leap/edge-sdk/ios/ios-quick-start-guide",
-                  "leap/edge-sdk/ios/ios-api-spec",
-                  "leap/edge-sdk/ios/cloud-ai-comparison",
-                  "leap/edge-sdk/ios/constrained-generation",
-                  "leap/edge-sdk/ios/function-calling"
-                ]
-              }
+              "leap/edge-sdk/overview"
             ]
           },
           {
-            "group": "Deploy to Laptop",
-            "icon": "laptop",
+            "group": "Android",
+            "icon": "robot",
             "pages": [
-              "leap/laptop-support"
+              "leap/edge-sdk/android/android-quick-start-guide",
+              "leap/edge-sdk/android/getting-started",
+              "leap/edge-sdk/android/model-loading",
+              "leap/edge-sdk/android/conversation-generation",
+              "leap/edge-sdk/android/messages-content",
+              "leap/edge-sdk/android/advanced-features",
+              "leap/edge-sdk/android/utilities",
+              "leap/edge-sdk/android/cloud-ai-comparison",
+              "leap/edge-sdk/android/constrained-generation",
+              "leap/edge-sdk/android/function-calling"
             ]
           },
           {
-            "group": "Customize Model",
-            "icon": "settings",
+            "group": "iOS",
+            "icon": "apple",
             "pages": [
-              "leap/finetuning",
-              {
-                "group": "Model Bundling Service",
-                "icon": "package",
-                "pages": [
-                  "leap/leap-bundle/quick-start",
-                  "leap/leap-bundle/cli-spec",
-                  "leap/leap-bundle/data-privacy"
-                ]
-              }
+              "leap/edge-sdk/ios/ios-quick-start-guide",
+              "leap/edge-sdk/ios/getting-started",
+              "leap/edge-sdk/ios/model-loading",
+              "leap/edge-sdk/ios/conversation-generation",
+              "leap/edge-sdk/ios/messages-content",
+              "leap/edge-sdk/ios/advanced-features",
+              "leap/edge-sdk/ios/utilities",
+              "leap/edge-sdk/ios/cloud-ai-comparison",
+              "leap/edge-sdk/ios/constrained-generation",
+              "leap/edge-sdk/ios/function-calling"
             ]
           },
           {
-            "group": "Resources",
-            "icon": "book-open",
+            "group": "Model Bundling Service",
+            "icon": "box",
             "pages": [
-              "leap/changelog"
+              "leap/leap-bundle/quick-start",
+              "leap/leap-bundle/getting-started",
+              "leap/leap-bundle/authentication",
+              "leap/leap-bundle/configuration",
+              "leap/leap-bundle/bundle-creation",
+              "leap/leap-bundle/bundle-management",
+              "leap/leap-bundle/download",
+              "leap/leap-bundle/reference",
+              "leap/leap-bundle/data-privacy"
             ]
           }
         ]
