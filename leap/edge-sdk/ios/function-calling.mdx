@@ -1,22 +1,19 @@
 ---
+title: "Function Calling"
+description: "Function calling allows the model to make requests to call some predefined functions provided by the app to interact with the environment."
 sidebar_position: 4
 ---
 
-# Function calling
+<Warning>
+Not all models support function calling. Please check the model card before using the model for function calling.
+</Warning>
 
-Function calling allows the model to make requests to call some predefined functions provided by the app to interact with the environment.
-
-:::warning
-Not all models support function calling. Please check the model card before using the model for
-function calling.
-:::
-
-:::info
+<Info>
 Vision and audio-capable models require companion files. Bundles embed these references; GGUF
 checkpoints expect siblings such as `mmproj-*.gguf` (vision) and audio decoder/tokenizer files.
 When detected, you can attach `ChatMessageContent.image` and `ChatMessageContent.audio` parts to
 your messages and tool responses.
-:::
+</Info>
 
 ## Register functions to conversations
 

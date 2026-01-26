@@ -1,0 +1,83 @@
+---
+title: "Advanced Features"
+description: "API reference for constrained generation and function calling in the LEAP iOS SDK"
+---
+
+## `GenerationOptions`
+
+Tune generation behavior with `GenerationOptions`.
+
+```swift
+public struct GenerationOptions {
+  public var temperature: Float?
+  public var topP: Float?
+  public var minP: Float?
+  public var repetitionPenalty: Float?
+  public var jsonSchemaConstraint: String?
+  public var functionCallParser: LeapFunctionCallParserProtocol?
+
+  public init(
+    temperature: Float? = nil,
+    topP: Float? = nil,
+    minP: Float? = nil,
+    repetitionPenalty: Float? = nil,
+    jsonSchemaConstraint: String? = nil,
+    functionCallParser: LeapFunctionCallParserProtocol? = LFMFunctionCallParser()
+  )
+}
+```
+
+- Leave a field as `nil` to fall back to the defaults packaged with the model bundle.
+- `functionCallParser` controls how tool-call tokens are parsed. `LFMFunctionCallParser` (the default) handles Liquid Foundation Model Pythonic function calling. Supply `HermesFunctionCallParser()` for Hermes/Qwen3 formats, or set the parser to `nil` to receive raw tool-call text in `MessageResponse.chunk`.
+- `jsonSchemaConstraint` activates constrained generation. Use `setResponseFormat(type:)` to populate it from a type annotated with the `@Generatable` macro.
+
+```swift
+extension GenerationOptions {
+  public mutating func setResponseFormat<T: GeneratableType>(type: T.Type) throws {
+    self.jsonSchemaConstraint = try JSONSchemaGenerator.getJSONSchema(for: type)
+  }
+}
+```
+
+```swift
+var options = GenerationOptions(temperature: 0.6, topP: 0.9)
+try options.setResponseFormat(type: CityFact.self)
+
+for try await response in conversation.generateResponse(
+  message: user,
+  generationOptions: options
+) {
+  // Handle structured output
+}
+```
+
+`LiquidInferenceEngineRunner` exposes advanced utilities such as `getPromptTokensSize(messages:addBosToken:)` for applications that need to budget tokens ahead of time. These methods are backend-specific and may be elevated to the `ModelRunner` protocol in a future release.
+
+## Function Calling Types
+
+```swift
+public struct LeapFunction {
+  public let name: String
+  public let description: String
+  public let parameters: [LeapFunctionParameter]
+}
+
+public struct LeapFunctionParameter {
+  public let name: String
+  public let type: LeapFunctionParameterType
+  public let description: String
+  public let optional: Bool
+}
+
+public indirect enum LeapFunctionParameterType: Codable, Equatable {
+  case string(StringType)
+  case number(NumberType)
+  case integer(IntegerType)
+  case boolean(BooleanType)
+  case array(ArrayType)
+  case object(ObjectType)
+  case null(NullType)
+}
+```
+
+The parameter type wrappers (`StringType`, `NumberType`, etc.) let you attach descriptions and enumerations so that JSON schemas accurately describe your tools. See the [Function Calling](./function-calling) guide for in-depth usage patterns.

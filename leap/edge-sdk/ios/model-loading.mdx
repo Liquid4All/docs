@@ -1,0 +1,152 @@
+---
+title: "Model Loading"
+description: "API reference for loading models in the LEAP iOS SDK"
+---
+
+## `Leap`
+
+`Leap` is the static entry point for loading on-device models.
+
+### `Leap.load(model:quantization:options:downloadProgressHandler:)`
+
+Download a model from the LEAP Model Library and load it into memory. If the model has already been downloaded, it will be loaded from the local cache without a remote request.
+
+```swift
+public struct Leap {
+  public static func load(
+    model: String,
+    quantization: String,
+    options: LiquidInferenceEngineManifestOptions? = nil,
+    downloadProgressHandler: @escaping (_ progress: Double, _speed: Int64) -> Void
+  ) async throws -> ModelRunner
+}
+```
+
+**Arguments**
+
+| Name | Type | Required | Default | Description |
+|------|------|----------|---------|-------------|
+| `model` | `String` | Yes | - | The name of the model to load. See the [LEAP Model Library](https://leap.liquid.ai/models) for all available models. |
+| `quantization` | `String` | Yes | - | The quantization level to download for the given model. See the [LEAP Model Library](https://leap.liquid.ai/models) for all available quantization levels. |
+| `options` | `LiquidInferenceEngineManifestOptions` | No | `nil` | Override options for loading the model (recommended for advanced use cases only). |
+| `downloadProgressHandler` | `(_ progress: Double, _speed: Int64) -> Void` | No | `nil` | A callback function to receive the download progress (as a percentage in decimal form between 0 and 1) and speed (in bytes per second). |
+
+**Returns**
+
+`ModelRunner`: A [`ModelRunner`](../conversation-generation#modelrunner) instance that can be used to interact with the loaded model.
+
+<br/>
+
+### `ModelDownloader.downloadModel(model:quantization:downloadProgress:)`
+
+Download a model from the LEAP Model Library and save it to the local cache, without loading it into memory.
+
+```swift
+public class ModelDownloader {
+  public func downloadModel(
+    _ model: String,
+    quantization: String,
+    downloadProgress: @escaping (_ progress: Double, _ speed: Int64) -> Void
+  ) async throws -> DownloadedModelManifest
+}
+```
+
+**Arguments**
+
+| Name | Type | Required | Default | Description |
+|------|------|----------|---------|-------------|
+| `model` | `String` | Yes | - | The name of the model to load. See the [LEAP Model Library](https://leap.liquid.ai/models) for all available models. |
+| `quantization` | `String` | Yes | - | The quantization level to download for the given model. See the [LEAP Model Library](https://leap.liquid.ai/models) for all available quantization levels. |
+| `downloadProgressHandler` | `(_ progress: Double, _speed: Int64) -> Void` | No | `nil` | A callback function to receive the download progress (as a percentage in decimal form between 0 and 1) and speed (in bytes per second). |
+
+**Returns**
+
+`DownloadedModelManifest`: The `DownloadedModelManifest` instance that contains the metadata of the downloaded model:
+```swift
+public struct DownloadedModelManifest {
+  public let manifest: ModelManifest
+  public let localModelUrl: URL
+  public let localMultimodalProjectorURL: URL?
+  public let localAudioDecoderURL: URL?
+  public let localAudioTokenizerURL: URL?
+  public let chatTemplate: String?
+}
+```
+
+### `Leap.load(url:options:)` (Legacy)
+
+Loads a local model file (either a `.bundle` package or a `.gguf` checkpoint) and returns a `ModelRunner` instance.
+
+```swift
+public struct Leap {
+  public static func load(
+    url: URL,
+    options: LiquidInferenceEngineOptions? = nil
+  ) async throws -> ModelRunner
+}
+```
+
+- Throws `LeapError.modelLoadingFailure` if the file cannot be loaded.
+- Automatically detects companion files placed alongside your model:
+- `mmproj-*.gguf` enables multimodal vision tokens for both bundle and GGUF flows.
+- Audio decoder artifacts whose filename contains "audio" and "decoder" with a `.gguf` or `.bin` extension unlock audio input/output for compatible checkpoints.
+- Must be called from an async context (for example inside an `async` function or a `Task`). Keep the returned `ModelRunner` alive while you interact with the model.
+
+```swift
+// ExecuTorch backend via .bundle
+let bundleURL = Bundle.main.url(forResource: "qwen3-0_6b", withExtension: "bundle")!
+let runner = try await Leap.load(url: bundleURL)
+
+// llama.cpp backend via .gguf
+let ggufURL = Bundle.main.url(forResource: "qwen3-0_6b", withExtension: "gguf")!
+let ggufRunner = try await Leap.load(url: ggufURL)
+```
+
+### `LiquidInferenceEngineOptions`
+
+Pass a `LiquidInferenceEngineOptions` value when you need to override the default runtime configuration.
+
+```swift
+public struct LiquidInferenceEngineOptions {
+  public var bundlePath: String
+  public let cacheOptions: LiquidCacheOptions?
+  public let cpuThreads: UInt32?
+  public let contextSize: UInt32?
+  public let nGpuLayers: UInt32?
+  public let mmProjPath: String?
+  public let audioDecoderPath: String?
+  public let chatTemplate: String?
+  public let audioTokenizerPath: String?
+  public let extras: String?
+}
+```
+
+- `bundlePath`: Path to the model file on disk. When you call `Leap.load(url:)`, this is filled automatically.
+- `cacheOptions`: Configure persistence of KV-cache data between generations.
+- `cpuThreads`: Number of CPU threads for token generation.
+- `contextSize`: Override the default maximum context length for the model.
+- `nGpuLayers`: Number of layers to offload to GPU (for macOS/macCatalyst targets with Metal support).
+- `mmProjPath`: Optional path to an auxiliary multimodal projection model. Leave `nil` to auto-detect a sibling `mmproj-*.gguf`.
+- `audioDecoderPath`: Optional audio decoder model. Leave `nil` to auto-detect nearby decoder artifacts.
+- `chatTemplate`: Advanced override for backend chat templating.
+- `audioTokenizerPath`: Optional tokenizer for audio-capable checkpoints.
+- `extras`: Backend-specific configuration payload (advanced use only).
+
+<Info>
+Backend selection is automatic: `.bundle` files run on the ExecuTorch backend, while `.gguf`
+checkpoints use the embedded llama.cpp backend. Bundled models reference their projection data in
+metadata; GGUF checkpoints look for sibling companion files (multimodal projection, audio decoder,
+audio tokenizer) unless you override the paths through `LiquidInferenceEngineOptions`. Ensure
+these artifacts are co-located when you want vision or audio features.
+</Info>
+
+Example overriding the number of CPU threads and context size:
+
+```swift
+let options = LiquidInferenceEngineOptions(
+  bundlePath: bundleURL.path,
+  cpuThreads: 6,
+  contextSize: 8192
+)
+let runner = try await Leap.load(url: bundleURL, options: options)
+```

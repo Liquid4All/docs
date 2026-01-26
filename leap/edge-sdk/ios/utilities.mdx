@@ -1,0 +1,41 @@
+---
+title: "Utilities"
+description: "API reference for error handling and utilities in the LEAP iOS SDK"
+---
+
+## Errors
+
+Errors are surfaced as `LeapError` values. The most common cases are:
+
+- `LeapError.modelLoadingFailure`: Problems reading or validating the model bundle.
+- `LeapError.generationFailure`: Unexpected native inference errors.
+- `LeapError.promptExceedContextLengthFailure`: Prompt length exceeded the configured context size.
+- `LeapError.serializationFailure`: JSON encoding/decoding problems when working with chat history or function calls.
+
+Handle thrown errors with `do` / `catch` when using async streams, or use the `onErrorCallback` in the lower-level API.
+
+## Putting it together
+
+```swift
+let runner = try await Leap.load(url: bundleURL)
+let conversation = runner.createConversation(systemPrompt: "You are a travel assistant.")
+
+conversation.registerFunction(weatherFunction)
+
+var options = GenerationOptions(temperature: 0.8)
+try options.setResponseFormat(type: TripRecommendation.self)
+
+let userMessage = ChatMessage(
+  role: .user,
+  content: [.text("Plan a 3-day trip to Kyoto with food highlights")]
+)
+
+for try await response in conversation.generateResponse(
+  message: userMessage,
+  generationOptions: options
+) {
+  process(response)
+}
+```
+
+Refer to the [Quick Start](./ios-quick-start-guide) for end-to-end project setup, [Function Calling](./function-calling) for tool invocation, and [Constrained Generation](./constrained-generation) for structured outputs.
