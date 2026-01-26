@@ -20,11 +20,20 @@
       }
     }
   },
+  "contextual": {
+    "options": [
+      "copy",
+      "chatgpt",
+      "claude",
+      "cursor",
+      "vscode"
+    ]
+  },
   "favicon": "/favicon.svg",
   "logo": {
     "light": "/logo/light.svg",
     "dark": "/logo/dark.svg",
-    "href": "https://liquid.ai"
+    "href": "/"
   },
   "navbar": {
     "links": [
