@@ -1,0 +1,29 @@
+name: Preview
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref || github.run_id }}
+  cancel-in-progress: false
+
+env:
+  NEXT_TELEMETRY_DISABLED: 1
+  HUSKY: 0
+  CI: 1
+
+jobs:
+  deploy-preview:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger mintlify preview deployment
+        run: |
+          curl --request POST \
+            --url https://api.mintlify.com/v1/project/update/${{ secrets.MINTLIFY_PROJECT_ID }} \
+            --header 'Authorization: Bearer ${{ secrets.MINTLIFY_API_TOKEN }}'
