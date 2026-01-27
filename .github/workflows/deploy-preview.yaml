@@ -24,6 +24,14 @@ jobs:
     steps:
       - name: Trigger mintlify preview deployment
         run: |
+          BRANCH_NAME="${{ github.head_ref || github.ref_name }}"
+          SUBDOMAIN=liquidai-$(echo "$BRANCH_NAME" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9-]/-/g' | sed 's/^-+\|-+$//g')
+
           curl --request POST \
-            --url https://api.mintlify.com/v1/project/update/${{ secrets.MINTLIFY_PROJECT_ID }} \
-            --header 'Authorization: Bearer ${{ secrets.MINTLIFY_API_TOKEN }}'
+            --url https://api.mintlify.com/v1/deployment \
+            --header 'Authorization: Bearer ${{ secrets.MINTLIFY_API_TOKEN }}' \
+            --header 'Content-Type: application/json' \
+            --data "{
+              \"subdomain\": \"${SUBDOMAIN}\",
+              \"gitBranch\": \"${BRANCH_NAME}\"
+            }"
