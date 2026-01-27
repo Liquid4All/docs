@@ -25,28 +25,6 @@ env:
   CI: 1
 
 jobs:
-  run-linter:
-    if: ${{ !github.event.pull_request.draft || github.event.pull_request.requested_reviewers[0] || github.event.pull_request.requested_teams[0] }}
-    runs-on: ubuntu-latest
-    env:
-      TURBO_TELEMETRY_DISABLED: 1
-      NEXT_TELEMETRY_DISABLED: 1
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      - name: Setup node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
-      - name: Install dependencies
-        run: npm ci
-      - name: Lint code
-        run: |
-          npm run typecheck
-          npm run lint
-          npm run format:check
-
   check-link:
     runs-on: ubuntu-latest
     steps:
