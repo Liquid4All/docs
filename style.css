@@ -62,6 +62,12 @@ a[href*="discord.gg"]:hover img {
   background-color: #864bc4 !important;
 }
 
+/* Hide external link arrow on Discord card */
+a[href*="discord"] svg[class*="arrow"],
+a[href*="discord.gg"] svg[class*="arrow"] {
+  display: none !important;
+}
+
 /* Light mode LEFT sidebar - selected item styling */
 /* Target links with bg-primary-light class (Mintlify's active state) */
 :root:not(.dark) a[class*="bg-primary-light"],
