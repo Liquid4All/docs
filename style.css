@@ -1,5 +1,11 @@
 /* Custom styles for Liquid AI Documentation */
 
+/* Fix Tabs component layout - ensure tabpanel appears below tablist */
+.tabs,
+.tab-container {
+  flex-direction: column !important;
+}
+
 /* Global text color adjustments */
 /* Mintlify uses a div.antialiased wrapper with text-gray-500/dark:text-gray-400 */
 :root:not(.dark) body > div.antialiased {
@@ -409,7 +415,16 @@ table a:hover {
   background: linear-gradient(135deg, #4c1d95 0%, #5b21b6 100%) !important;
 }
 
+/* Dark mode - 6-column table header (override light mode :has() rule) */
+.dark table:has(thead th:nth-child(6):not(:nth-child(7))) thead tr {
+  background: linear-gradient(135deg, #4c1d95 0%, #5b21b6 100%) !important;
+}
+
 .dark table thead th {
+  color: #f3f4f6 !important;
+}
+
+.dark table:has(thead th:nth-child(6):not(:nth-child(7))) thead th {
   color: #f3f4f6 !important;
 }
 
@@ -417,15 +432,33 @@ table a:hover {
   border-bottom: 1px solid #374151 !important;
 }
 
+/* Dark mode section header rows with bold text */
 .dark table tbody tr:has(td:first-child strong) {
   background: linear-gradient(135deg, #4c1d95 0%, #5b21b6 100%) !important;
 }
 
+.dark table:has(thead th:nth-child(6):not(:nth-child(7))) tbody tr:has(td:first-child strong) {
+  background: linear-gradient(135deg, #4c1d95 0%, #5b21b6 100%) !important;
+}
+
+/* Dark mode sub-section rows (LFM2.5 Models, LFM2 Models labels) */
 .dark table tbody tr:has(td:nth-child(2):empty):not(:has(strong)) {
   background-color: #14532d !important;
 }
 
+.dark table:has(thead th:nth-child(6):not(:nth-child(7))) tbody tr:has(td:nth-child(2):empty):not(:has(strong)) {
+  background-color: #14532d !important;
+}
+
+.dark table:has(thead th:nth-child(6):not(:nth-child(7))) tbody tr:has(td:nth-child(2):empty):not(:has(strong)) td {
+  background-color: #14532d !important;
+}
+
 .dark table tbody tr:has(td:nth-child(2):empty):not(:has(strong)) td:first-child {
+  color: #86efac !important;
+}
+
+.dark table:has(thead th:nth-child(6):not(:nth-child(7))) tbody tr:has(td:nth-child(2):empty):not(:has(strong)) td:first-child {
   color: #86efac !important;
 }
 
@@ -498,5 +531,126 @@ img[alt*="colab"] {
   height: 20px !important;
   width: auto !important;
   max-width: 120px !important;
+}
+
+/* Tab styling - purple accent underline for selected tabs in light mode */
+/* The inner div uses text-primary with border-current, so we override the color */
+:root:not(.dark) [role="tab"][aria-selected="true"] > div {
+  color: #864bc4 !important;
+}
+
+/* Main nav tabs - purple underline for active tab in light mode */
+/* The underline is an inner div with bg-primary (black) vs bg-primary-light (purple in dark mode) */
+:root:not(.dark) .nav-tabs-item > div[class*="bg-primary"] {
+  background-color: #864bc4 !important;
+}
+
+/* TOC (Table of Contents) - purple accent for active section in light mode */
+/* Active TOC links have text-primary class which is dark in light mode, purple in dark mode */
+:root:not(.dark) .toc-item a[class*="text-primary"] {
+  color: #864bc4 !important;
+}
+
+/* Format buttons for model pages */
+.format-buttons {
+  display: flex !important;
+  gap: 0.5rem !important;
+  flex-wrap: wrap !important;
+  margin: 0.5rem 0 1.5rem 0 !important;
+}
+
+.format-buttons a {
+  display: inline-block !important;
+  padding: 0.35rem 0.7rem !important;
+  border-radius: 4px !important;
+  font-size: 0.85rem !important;
+  font-weight: 600 !important;
+  text-decoration: none !important;
+  background-image: none !important;
+}
+
+.format-buttons a:hover {
+  background-image: none !important;
+  filter: brightness(0.95) !important;
+}
+
+/* HF button - orange */
+.format-buttons a.btn-hf,
+.format-buttons a.btn-hf:hover,
+.format-buttons a.btn-hf:visited {
+  background-color: #fbbf24 !important;
+  color: #000000 !important;
+}
+
+/* GGUF button - blue */
+.format-buttons a.btn-gguf,
+.format-buttons a.btn-gguf:hover,
+.format-buttons a.btn-gguf:visited {
+  background-color: #60a5fa !important;
+  color: #000000 !important;
+}
+
+/* MLX button - purple */
+.format-buttons a.btn-mlx,
+.format-buttons a.btn-mlx:hover,
+.format-buttons a.btn-mlx:visited {
+  background-color: #c4b5fd !important;
+  color: #000000 !important;
+}
+
+/* ONNX button - green */
+.format-buttons a.btn-onnx,
+.format-buttons a.btn-onnx:hover,
+.format-buttons a.btn-onnx:visited {
+  background-color: #86efac !important;
+  color: #000000 !important;
+}
+
+/* Back button for model pages */
+.back-button {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 0.25rem !important;
+  margin-bottom: 0.75rem !important;
+  font-size: 0.85rem !important;
+  font-weight: 500 !important;
+  color: #6b7280 !important;
+  text-decoration: none !important;
+  background-image: none !important;
+}
+
+.back-button:hover {
+  color: #864bc4 !important;
+  background-image: none !important;
+}
+
+/* Arrow icon for internal model card links - matches Mintlify's external link arrow */
+.card-group a[href^="/docs/models/"]:not([href*="text-models"]):not([href*="vision-models"]):not([href*="audio-models"]):not([href*="liquid-nanos"]):not([href*="complete-library"]) {
+  position: relative !important;
+}
+
+.card-group a[href^="/docs/models/"]:not([href*="text-models"]):not([href*="vision-models"]):not([href*="audio-models"]):not([href*="liquid-nanos"]):not([href*="complete-library"])::before {
+  content: "" !important;
+  position: absolute !important;
+  top: 0.875rem !important;
+  right: 0.875rem !important;
+  width: 0.875rem !important;
+  height: 0.875rem !important;
+  background-color: #9ca3af !important;
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke-width='2' stroke='currentColor'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M4.5 19.5l15-15m0 0H8.25m11.25 0v11.25'/%3E%3C/svg%3E") !important;
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke-width='2' stroke='currentColor'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M4.5 19.5l15-15m0 0H8.25m11.25 0v11.25'/%3E%3C/svg%3E") !important;
+  -webkit-mask-size: contain !important;
+  mask-size: contain !important;
+  -webkit-mask-repeat: no-repeat !important;
+  mask-repeat: no-repeat !important;
+  transition: background-color 0.15s ease !important;
+}
+
+:root:not(.dark) .card-group a[href^="/docs/models/"]:not([href*="text-models"]):not([href*="vision-models"]):not([href*="audio-models"]):not([href*="liquid-nanos"]):not([href*="complete-library"]):hover::before {
+  background-color: #864bc4 !important;
+}
+
+.dark .card-group a[href^="/docs/models/"]:not([href*="text-models"]):not([href*="vision-models"]):not([href*="audio-models"]):not([href*="liquid-nanos"]):not([href*="complete-library"])::before {
+  background-color: #9ca3af !important;
 }
 
