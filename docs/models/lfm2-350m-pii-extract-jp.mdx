@@ -1,0 +1,110 @@
+---
+title: "LFM2-350M-PII-Extract-JP"
+description: "350M parameter model for Japanese PII detection and extraction"
+---
+
+<a href="/docs/models/liquid-nanos" className="back-button">← Back to Liquid Nanos</a>
+
+LFM2-350M-PII-Extract-JP extracts personally identifiable information (PII) from Japanese text as structured JSON. Output can be used to mask sensitive information on-device for privacy-preserving applications.
+
+<div style={{display: 'flex', gap: '0.5rem', margin: '0.5rem 0 1.5rem 0'}}>
+  <a href="https://huggingface.co/LiquidAI/LFM2-350M-PII-Extract-JP" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#fbbf24'}}><span style={{color: '#000'}}>HF</span></a>
+  <a href="https://huggingface.co/LiquidAI/LFM2-350M-PII-Extract-JP-GGUF" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#60a5fa'}}><span style={{color: '#000'}}>GGUF</span></a>
+</div>
+
+## Specifications
+
+| Property | Value |
+|----------|-------|
+| Parameters | 350M |
+| Context Length | 32K tokens |
+| Task | PII Detection |
+| Language | Japanese |
+
+<div className="use-cases">
+<CardGroup cols={3}>
+
+<Card title="Privacy Protection" icon="shield-halved">
+  On-device PII masking
+</Card>
+
+<Card title="Compliance" icon="scale-balanced">
+  Data protection compliance
+</Card>
+
+<Card title="Document Redaction" icon="eraser">
+  Automated redaction
+</Card>
+
+</CardGroup>
+</div>
+
+## Prompting Recipe
+
+<Warning>
+Use `temperature=0` (greedy decoding) for best results. This model is intended for single-turn conversations only.
+</Warning>
+
+**System Prompt Format:**
+
+```
+Extract <address>, <company_name>, <email_address>, <human_name>, <phone_number>
+```
+
+Extract specific entities by listing only what you need (e.g., `Extract <human_name>`). List categories in alphabetical order for optimal performance.
+
+**Output Format:** JSON with lists per category. Empty lists for missing entities. Outputs entities exactly as they appear (including notation variations) for exact-match masking.
+
+## Quick Start
+
+<Tabs>
+  <Tab title="Transformers">
+    **Install:**
+    ```bash
+    pip install transformers torch
+    ```
+
+    **Run:**
+    ```python
+    from transformers import AutoTokenizer, AutoModelForCausalLM
+
+    model_id = "LiquidAI/LFM2-350M-PII-Extract-JP"
+    tokenizer = AutoTokenizer.from_pretrained(model_id)
+    model = AutoModelForCausalLM.from_pretrained(model_id, device_map="auto")
+
+    system_prompt = "Extract <address>, <company_name>, <email_address>, <human_name>, <phone_number>"
+
+    user_input = """こんにちは、ラミンさんに B200 GPU を 10000 台 至急請求してください。
+    連絡先は celegans@liquid.ai (電話番号010-000-0000) で、これは C. elegans
+    線虫に着想を得たニューラルネットワークアーキテクチャを 今すぐ構築するために不可欠です。"""
+
+    messages = [
+        {"role": "system", "content": system_prompt},
+        {"role": "user", "content": user_input}
+    ]
+
+    inputs = tokenizer.apply_chat_template(messages, return_tensors="pt").to(model.device)
+    outputs = model.generate(inputs, max_new_tokens=256, temperature=0, do_sample=False)
+    response = tokenizer.decode(outputs[0], skip_special_tokens=True)
+    print(response)
+    # Output: {"address": [], "company_name": [], "email_address": ["celegans@liquid.ai"],
+    #          "human_name": ["ラミン"], "phone_number": ["010-000-0000"]}
+    ```
+  </Tab>
+
+  <Tab title="llama.cpp">
+    **Download GGUF:**
+    ```bash
+    huggingface-cli download LiquidAI/LFM2-350M-PII-Extract-JP-GGUF \
+      --local-dir ./LFM2-350M-PII-Extract-JP-GGUF
+    ```
+
+    **Run:**
+    ```bash
+    llama-cli -m ./LFM2-350M-PII-Extract-JP-GGUF/LFM2-350M-PII-Extract-JP-Q4_K_M.gguf \
+      -sys "Extract <human_name>, <phone_number>" \
+      -p "田中太郎様、電話番号は090-1234-5678です。" \
+      --temp 0
+    ```
+  </Tab>
+</Tabs>
