@@ -5,6 +5,9 @@
     "dismissible": true
   },
   "theme": "mint",
+  "appearance": {
+    "default": "light"
+  },
   "name": "Liquid Docs",
   "description": "Documentation for Liquid AI Foundation Models (LFM)",
   "colors": {
@@ -119,7 +122,6 @@
             "group": "Fine-tuning",
             "icon": "sliders",
             "pages": [
-              "docs/fine-tuning/leap-finetune",
               "docs/fine-tuning/trl",
               "docs/fine-tuning/unsloth"
             ]
