@@ -73,34 +73,34 @@ public struct DownloadedModelManifest {
 }
 ```
 
-### `Leap.load(url:options:)` (Legacy)
+<Accordion title="Legacy: Leap.load(url:options:)">
+  Loads a local model file (either a `.bundle` package or a `.gguf` checkpoint) and returns a `ModelRunner` instance.
 
-Loads a local model file (either a `.bundle` package or a `.gguf` checkpoint) and returns a `ModelRunner` instance.
+  ```swift
+  public struct Leap {
+    public static func load(
+      url: URL,
+      options: LiquidInferenceEngineOptions? = nil
+    ) async throws -> ModelRunner
+  }
+  ```
 
-```swift
-public struct Leap {
-  public static func load(
-    url: URL,
-    options: LiquidInferenceEngineOptions? = nil
-  ) async throws -> ModelRunner
-}
-```
+  - Throws `LeapError.modelLoadingFailure` if the file cannot be loaded.
+  - Automatically detects companion files placed alongside your model:
+  - `mmproj-*.gguf` enables multimodal vision tokens for both bundle and GGUF flows.
+  - Audio decoder artifacts whose filename contains "audio" and "decoder" with a `.gguf` or `.bin` extension unlock audio input/output for compatible checkpoints.
+  - Must be called from an async context (for example inside an `async` function or a `Task`). Keep the returned `ModelRunner` alive while you interact with the model.
 
-- Throws `LeapError.modelLoadingFailure` if the file cannot be loaded.
-- Automatically detects companion files placed alongside your model:
-- `mmproj-*.gguf` enables multimodal vision tokens for both bundle and GGUF flows.
-- Audio decoder artifacts whose filename contains "audio" and "decoder" with a `.gguf` or `.bin` extension unlock audio input/output for compatible checkpoints.
-- Must be called from an async context (for example inside an `async` function or a `Task`). Keep the returned `ModelRunner` alive while you interact with the model.
+  ```swift
+  // ExecuTorch backend via .bundle
+  let bundleURL = Bundle.main.url(forResource: "qwen3-0_6b", withExtension: "bundle")!
+  let runner = try await Leap.load(url: bundleURL)
 
-```swift
-// ExecuTorch backend via .bundle
-let bundleURL = Bundle.main.url(forResource: "qwen3-0_6b", withExtension: "bundle")!
-let runner = try await Leap.load(url: bundleURL)
-
-// llama.cpp backend via .gguf
-let ggufURL = Bundle.main.url(forResource: "qwen3-0_6b", withExtension: "gguf")!
-let ggufRunner = try await Leap.load(url: ggufURL)
-```
+  // llama.cpp backend via .gguf
+  let ggufURL = Bundle.main.url(forResource: "qwen3-0_6b", withExtension: "gguf")!
+  let ggufRunner = try await Leap.load(url: ggufURL)
+  ```
+</Accordion>
 
 ### `LiquidInferenceEngineOptions`
 

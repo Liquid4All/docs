@@ -109,57 +109,57 @@ data class Manifest(
 It is rarely necessary to instantiate a `Manifest` class directly. It is created internally by `LeapDownloader` to store and return metadata about downloaded models.
 </Info>
 
-## `LeapClient` (Legacy)
+<Accordion title="Legacy: LeapClient">
+  The `LeapClient` class is a legacy class that is no longer recommended for use. It is still available for backward compatibility, but it is recommended to use the new `LeapDownloader` class instead.
 
-The `LeapClient` class is a legacy class that is no longer recommended for use. It is still available for backward compatibility, but it is recommended to use the new `LeapDownloader` class instead.
+  The entrypoint of LEAP SDK. It doesn't hold any data.
 
-The entrypoint of LEAP SDK. It doesn't hold any data.
+  ```kotlin
+  object LeapClient {
+    suspend fun loadModel(path: String, options: ModelLoadingOptions? = null): ModelRunner
+    suspend fun loadModelAsResult(path: String, options: ModelLoadingOptions? = null): Result<ModelRunner>
+    suspend fun loadModel(bundlePath: String, mmprojPath: String, options: ModelLoadingOptions? = null): ModelRunner
+    suspend fun loadModel(bundlePath: String, mmprojPath: String, options: ModelLoadingOptions? = null): ModelRunner
+    suspend fun loadModel(model: AudioGenerationModelDescriptor, options: ModelLoadingOptions? = null): ModelRunner
+  }
+  ```
 
-```kotlin
-object LeapClient {
-  suspend fun loadModel(path: String, options: ModelLoadingOptions? = null): ModelRunner
-  suspend fun loadModelAsResult(path: String, options: ModelLoadingOptions? = null): Result<ModelRunner>
-  suspend fun loadModel(bundlePath: String, mmprojPath: String, options: ModelLoadingOptions? = null): ModelRunner
-  suspend fun loadModel(bundlePath: String, mmprojPath: String, options: ModelLoadingOptions? = null): ModelRunner
-  suspend fun loadModel(model: AudioGenerationModelDescriptor, options: ModelLoadingOptions? = null): ModelRunner
-}
-```
+  ### `loadModel`
 
-### `loadModel`
+  This function can be called from UI thread. The app should hold the `ModelRunner` object returned by this function until there is no need to interact with the model anymore. See [`ModelRunner`](../conversation-generation#modelrunner) for more details.
 
-This function can be called from UI thread. The app should hold the `ModelRunner` object returned by this function until there is no need to interact with the model anymore. See [`ModelRunner`](../conversation-generation#modelrunner) for more details.
+  **Arguments**
 
-**Arguments**
+  - `path`: A local path pointing to model bundle file. Both `.bundle` files and `.gguf` files are supported.
+  - `options`: Options for loading the model.
+  - `mmprojPath`: Optional multimodal projection model path. This parameter should only be filled if the model needs a separate multimodal projection model to parsing multimodal (image, audio, etc.) contents.
 
-- `path`: A local path pointing to model bundle file. Both `.bundle` files and `.gguf` files are supported.
-- `options`: Options for loading the model.
-- `mmprojPath`: Optional multimodal projection model path. This parameter should only be filled if the model needs a separate multimodal projection model to parsing multimodal (image, audio, etc.) contents.
+  <Info>
+  The function will throw `LeapModelLoadingException` if LEAP fails to load the model.
+  </Info>
 
-<Info>
-The function will throw `LeapModelLoadingException` if LEAP fails to load the model.
-</Info>
+  #### `AudioGenerationModelDescriptor`
 
-#### `AudioGenerationModelDescriptor`
+  For audio generation model, an instance of `AudioGenerationModelDescriptor` contains all components that are necessary for audio generation.
 
-For audio generation model, an instance of `AudioGenerationModelDescriptor` contains all components that are necessary for audio generation.
+  ```kotlin
+  data class AudioGenerationModelDescriptor(
+      val modelPath: String,
+      val mmprojPath: String,
+      val audioDecoderPath: String,
+      val audioTokenizerPath: String? = null,
+  )
+  ```
 
-```kotlin
-data class AudioGenerationModelDescriptor(
-    val modelPath: String,
-    val mmprojPath: String,
-    val audioDecoderPath: String,
-    val audioTokenizerPath: String? = null,
-)
-```
+  - `modelPath`: Main model path.
+  - `mmprojPath`: Multimodal projection model path.
+  - `audioDecoderPath`: Audio decoder model path.
+  - `audioTokenizerPath`: Audio tokenizer model path.
 
-- `modelPath`: Main model path.
-- `mmprojPath`: Multimodal projection model path.
-- `audioDecoderPath`: Audio decoder model path.
-- `audioTokenizerPath`: Audio tokenizer model path.
+  ### `loadModelAsResult`
 
-### `loadModelAsResult`
-
-This function can be called from UI thread. The `path` should be a local path pointing to model bundle file. This function is merely a wrapper around `loadModel` function to return a [`Result`](https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-result/).
+  This function can be called from UI thread. The `path` should be a local path pointing to model bundle file. This function is merely a wrapper around `loadModel` function to return a [`Result`](https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-result/).
+</Accordion>
 
 ## `ModelLoadingOptions`
 

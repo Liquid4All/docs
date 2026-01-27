@@ -26,48 +26,49 @@ Always test on a real device before shipping. Simulator performance is not repre
 
 Choose your preferred installation method:
 
-### Swift Package Manager (recommended)
+<Tabs>
+  <Tab title="Swift Package Manager">
+    **Recommended**
 
-1. In Xcode choose **File -> Add Package Dependencies**.
-2. Enter `https://github.com/Liquid4All/leap-ios.git`.
-3. Select the `0.9.0` release (or newer).
-4. Add the **`LeapSDK`** product to your app target.
-5. (Optional) Add **`LeapModelDownloader`** if you plan to download model bundles at runtime.
+    1. In Xcode choose **File -> Add Package Dependencies**.
+    2. Enter `https://github.com/Liquid4All/leap-ios.git`.
+    3. Select the `0.9.0` release (or newer).
+    4. Add the **`LeapSDK`** product to your app target.
+    5. (Optional) Add **`LeapModelDownloader`** if you plan to download model bundles at runtime.
+  </Tab>
+  <Tab title="CocoaPods">
+    1. Add the pod to your `Podfile`:
 
-### CocoaPods
+    ```ruby
+    pod 'Leap-SDK', '~> 0.9.0'
+    # Optional: pod 'Leap-Model-Downloader', '~> 0.9.0'
+    ```
 
-1. Add the pod to your `Podfile`:
-
-```ruby
-pod 'Leap-SDK', '~> 0.9.0'
-# Optional: pod 'Leap-Model-Downloader', '~> 0.9.0'
-```
-
-2. Run `pod install`
-3. Reopen the `.xcworkspace`.
+    2. Run `pod install`
+    3. Reopen the `.xcworkspace`.
+  </Tab>
+  <Tab title="Manual">
+    1. Download `LeapSDK.xcframework.zip` (and optionally `LeapModelDownloader.xcframework.zip`) from the [GitHub releases](https://github.com/Liquid4All/leap-ios/releases).
+    2. Unzip and drag the XCFramework(s) into Xcode.
+    3. Set the Embed setting to **Embed & Sign** for each framework.
+  </Tab>
+</Tabs>
 
 <Info>
 The constrained-generation macros (`@Generatable`, `@Guide`) ship inside the `LeapSDK` product. No additional package is required.
 </Info>
 
-### Manual installation
-
-1. Download `LeapSDK.xcframework.zip` (and optionally `LeapModelDownloader.xcframework.zip`) from the [GitHub releases](https://github.com/Liquid4All/leap-ios/releases).
-2. Unzip and drag the XCFramework(s) into Xcode.
-3. Set the Embed setting to **Embed & Sign** for each framework.
-
 ## Getting and Loading Models[​](#getting-and-loading-models "Direct link to Getting and Loading Models")
 
-The SDK supports two methods for loading models:
+The SDK uses **GGUF manifests** for loading models (recommended for all new projects due to superior inference performance and better default generation parameters).
 
-* **GGUF manifests** (recommended method for new projects due to superior inference performance and better default generation parameters)
-* **Executorch bundles** (legacy)
+<Info>
+Legacy Executorch bundle support is available in the accordion below for existing projects.
+</Info>
 
-### GGUF manifests (recommended)
+### Loading from GGUF manifest
 
 The LEAP Edge SDK supports directly downloading LEAP models in GGUF format. Given the model name and quantization method (which you can find in the [LEAP Model Library](https://leap.liquid.ai/models)), the SDK will automatically download the necessary GGUF files along with generation parameters for optimal performance.
-
-#### Loading from remote GGUF manifest (recommended)
 
 ```swift
 import LeapSDK
@@ -145,128 +146,128 @@ final class ChatViewModel: ObservableObject {
 }
 ```
 
-### Executorch bundles (legacy)
+<Accordion title="Legacy: Executorch Bundles">
+  Browse the [Leap Model Library](https://leap.liquid.ai/models) and download a `.bundle` file for the model/quantization you want. `.bundle` packages contain metadata plus assets for the ExecuTorch backend.
 
-Browse the [Leap Model Library](https://leap.liquid.ai/models) and download a `.bundle` file for the model/quantization you want. `.bundle` packages contain metadata plus assets for the ExecuTorch backend.
+  You can either:
 
-You can either:
+  * **Ship it with the app** - drag the bundle into your Xcode project and ensure it is added to the main target.
+  * **Download at runtime** - use `LeapModelDownloader` to fetch bundles on demand.
 
-* **Ship it with the app** - drag the bundle into your Xcode project and ensure it is added to the main target.
-* **Download at runtime** - use `LeapModelDownloader` to fetch bundles on demand.
+  <Accordion title="Alternative: Download at runtime">
+    ```swift
+    import LeapModelDownloader
 
-<Accordion title="Alternative: Download at runtime">
+    let model = await LeapDownloadableModel.resolve(
+      modelSlug: "lfm2-350m-enjp-mt",
+      quantizationSlug: "lfm2-350m-enjp-mt-20250904-8da4w"
+    )
+    if let model {
+      let downloader = ModelDownloader()
+      downloader.requestDownloadModel(model)
+      let status = await downloader.queryStatus(model)
+      switch status {
+      case .downloaded:
+        let bundleURL = downloader.getModelFile(model)
+        try await runModel(at: bundleURL)
+      case .downloadInProgress(let progress):
+        print("Progress: \(Int(progress * 100))%")
+      case .notOnLocal:
+        print("Waiting for download...")
+      }
+    }
+    ```
+  </Accordion>
+
+  Use `Leap.load(url:options:)` inside an async context. Passing a `.bundle` loads the model through the ExecuTorch backend.
+
+  ### Example
+
   ```swift
-  import LeapModelDownloader
+  import LeapSDK
 
-  let model = await LeapDownloadableModel.resolve(
-    modelSlug: "lfm2-350m-enjp-mt",
-    quantizationSlug: "lfm2-350m-enjp-mt-20250904-8da4w"
-  )
-  if let model {
-    let downloader = ModelDownloader()
-    downloader.requestDownloadModel(model)
-    let status = await downloader.queryStatus(model)
-    switch status {
-    case .downloaded:
-      let bundleURL = downloader.getModelFile(model)
-      try await runModel(at: bundleURL)
-    case .downloadInProgress(let progress):
-      print("Progress: \(Int(progress * 100))%")
-    case .notOnLocal:
-      print("Waiting for download...")
+  @MainActor
+  final class ChatViewModel: ObservableObject {
+    @Published var isLoading = false
+    @Published var conversation: Conversation?
+    private var modelRunner: ModelRunner?
+    private var generationTask: Task<Void, Never>?
+
+    func loadModel() async {
+      guard let bundleURL = Bundle.main.url(forResource: "LFM2-350-ENJP-MT", withExtension: "bundle") else {
+        assertionFailure("Model bundle missing")
+        return
+      }
+      isLoading = true
+      defer { isLoading = false }
+      do {
+        modelRunner = try await Leap.load(url: bundleURL)
+        conversation = modelRunner?.createConversation(systemPrompt: "You are a helpful travel assistant.")
+      } catch {
+        print("Failed to load model: \(error)")
+      }
+    }
+
+    func send(_ text: String) {
+      guard let conversation else { return }
+      generationTask?.cancel()
+      let userMessage = ChatMessage(role: .user, content: [.text(text)])
+      generationTask = Task { [weak self] in
+        do {
+          for try await response in conversation.generateResponse(
+            message: userMessage,
+            generationOptions: GenerationOptions(temperature: 0.7)
+          ) {
+            await self?.handle(response)
+          }
+        } catch {
+          print("Generation failed: \(error)")
+        }
+      }
+    }
+
+    func stopGeneration() {
+      generationTask?.cancel()
+    }
+
+    @MainActor
+    private func handle(_ response: MessageResponse) {
+      switch response {
+      case .chunk(let delta):
+        print(delta, terminator: "") // Update UI binding here
+      case .reasoningChunk(let thought):
+        print("Reasoning:", thought)
+      case .audioSample(let samples, let sr):
+        audioRenderer.enqueue(samples, sampleRate: sr)
+      case .functionCall(let calls):
+        print("Requested calls: \(calls)")
+      case .complete(let completion):
+        if let stats = completion.stats {
+          print("Finished with \(stats.totalTokens) tokens")
+        }
+        let text = completion.message.content.compactMap { part -> String? in
+          if case .text(let value) = part { return value }
+          return nil
+        }.joined()
+        print("Final response:", text)
+        // completion.message.content may also include `.audio` entries you can persist or replay
+      }
     }
   }
   ```
+
+  Need custom runtime settings (threads, context size, GPU layers)? Pass a `LiquidInferenceEngineOptions` value:
+
+  ```swift
+  let options = LiquidInferenceEngineOptions(
+    bundlePath: bundleURL.path,
+    cpuThreads: 6,
+    contextSize: 8192,
+    nGpuLayers: 8
+  )
+  let runner = try await Leap.load(url: bundleURL, options: options)
+  ```
 </Accordion>
-
-Use `Leap.load(url:options:)` inside an async context. Passing a `.bundle` loads the model through the ExecuTorch backend.
-
-#### Example with Executorch bundles (legacy)
-
-```swift
-import LeapSDK
-
-@MainActor
-final class ChatViewModel: ObservableObject {
-  @Published var isLoading = false
-  @Published var conversation: Conversation?
-  private var modelRunner: ModelRunner?
-  private var generationTask: Task<Void, Never>?
-
-  func loadModel() async {
-    guard let bundleURL = Bundle.main.url(forResource: "LFM2-350-ENJP-MT", withExtension: "bundle") else {
-      assertionFailure("Model bundle missing")
-      return
-    }
-    isLoading = true
-    defer { isLoading = false }
-    do {
-      modelRunner = try await Leap.load(url: bundleURL)
-      conversation = modelRunner?.createConversation(systemPrompt: "You are a helpful travel assistant.")
-    } catch {
-      print("Failed to load model: \(error)")
-    }
-  }
-
-  func send(_ text: String) {
-    guard let conversation else { return }
-    generationTask?.cancel()
-    let userMessage = ChatMessage(role: .user, content: [.text(text)])
-    generationTask = Task { [weak self] in
-      do {
-        for try await response in conversation.generateResponse(
-          message: userMessage,
-          generationOptions: GenerationOptions(temperature: 0.7)
-        ) {
-          await self?.handle(response)
-        }
-      } catch {
-        print("Generation failed: \(error)")
-      }
-    }
-  }
-
-  func stopGeneration() {
-    generationTask?.cancel()
-  }
-
-  @MainActor
-  private func handle(_ response: MessageResponse) {
-    switch response {
-    case .chunk(let delta):
-      print(delta, terminator: "") // Update UI binding here
-    case .reasoningChunk(let thought):
-      print("Reasoning:", thought)
-    case .audioSample(let samples, let sr):
-      audioRenderer.enqueue(samples, sampleRate: sr)
-    case .functionCall(let calls):
-      print("Requested calls: \(calls)")
-    case .complete(let completion):
-      if let stats = completion.stats {
-        print("Finished with \(stats.totalTokens) tokens")
-      }
-      let text = completion.message.content.compactMap { part -> String? in
-        if case .text(let value) = part { return value }
-        return nil
-      }.joined()
-      print("Final response:", text)
-      // completion.message.content may also include `.audio` entries you can persist or replay
-    }
-  }
-}
-```
-
-Need custom runtime settings (threads, context size, GPU layers)? Pass a `LiquidInferenceEngineOptions` value:
-
-```swift
-let options = LiquidInferenceEngineOptions(
-  bundlePath: bundleURL.path,
-  cpuThreads: 6,
-  contextSize: 8192,
-  nGpuLayers: 8
-)
-let runner = try await Leap.load(url: bundleURL, options: options)
-```
 
 ## Stream responses[​](#stream-responses "Direct link to Stream responses")
 

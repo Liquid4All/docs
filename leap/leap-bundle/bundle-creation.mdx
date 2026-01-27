@@ -24,9 +24,7 @@ leap-bundle create <input-path>
   - If neither `--parallel` nor `--sequential` is specified, the CLI will attempt parallel upload first, and fall back to sequential if it fails.
   - If both `--parallel` and `--sequential` are specified, `--parallel` takes precedence.
 - `--executorch` (deprecated): Use ExecuTorch bundling instead of GGUF. By default, the CLI uses GGUF bundling. This option may be removed in a future version.
-- `--quantization <type>`: Specify the quantization type for the model bundle.
-  - For GGUF (default): `Q4_K_M` (default), `Q8_0`, `F16`, and [other llama.cpp quantization types](https://github.com/ggml-org/llama.cpp/blob/0a0bba05e8390ab7e4a54bb8c0ed0a25da64cf62/tools/quantize/quantize.cpp#L22-L58).
-  - For ExecuTorch (deprecated): `8da4w_output_8da8w` (default), `8da8w_output_8da8w`.
+- `--quantization <type>`: Specify the quantization type for the model bundle. Options include `Q4_K_M` (default), `Q8_0`, `F16`, and [other llama.cpp quantization types](https://github.com/ggml-org/llama.cpp/blob/0a0bba05e8390ab7e4a54bb8c0ed0a25da64cf62/tools/quantize/quantize.cpp#L22-L58).
 - `--mmproj-quantization <type>`: (GGUF only) Specify the mmproj quantization type for vision-language or audio models. Valid options: `q4`, `q8` (default), `f16`.
 
 **Behavior**
@@ -66,15 +64,27 @@ leap-bundle create ./my-model-directory --json
 # Create GGUF bundle with specific quantization
 leap-bundle create ./my-model-directory --quantization Q8_0
 
-# Create ExecuTorch bundle
-leap-bundle create ./my-model-directory --executorch
-
-# Create ExecuTorch bundle with specific quantization
-leap-bundle create ./my-model-directory --executorch --quantization 8da8w_output_8da8w
-
 # Create GGUF bundle for VL model with mmproj quantization
 leap-bundle create ./my-vl-model-directory --mmproj-quantization f16
 ```
+
+<Accordion title="Legacy: ExecuTorch Bundling">
+  ExecuTorch bundling is deprecated and may be removed in a future version. Use GGUF bundling (the default) for new projects.
+
+  **ExecuTorch quantization options:** `8da4w_output_8da8w` (default), `8da8w_output_8da8w`
+
+  **Examples:**
+
+  ```sh
+  # Create ExecuTorch bundle
+  leap-bundle create ./my-model-directory --executorch
+
+  # Create ExecuTorch bundle with specific quantization
+  leap-bundle create ./my-model-directory --executorch --quantization 8da8w_output_8da8w
+  ```
+
+  ExecuTorch bundling produces `.bundle` files instead of `.gguf` files.
+</Accordion>
 
 **Validation**
 

@@ -1,24 +1,20 @@
 ---
 title: "Quick Start"
-description: "The Bundling Service helps users create and manage model bundles for Liquid Edge AI Platform (LEAP). Currently users interact with it through , a command-line interface (CLI)."
+description: "The Bundling Service helps users create and manage model bundles for Liquid Edge AI Platform (LEAP). Currently users interact with it through a command-line interface (CLI)."
 ---
 
-The CLI supports two inference engines for model bundling:
+The CLI supports two main workflows:
 
-* **GGUF (default)**: Generates `.gguf` files for llama.cpp inference
-* **ExecuTorch** (deprecated): Generates `.bundle` files for ExecuTorch inference (use `--executorch` flag). This option may be removed in a future version.
+- **GGUF Model Download**: Download pre-built models from the LEAP Model Library (no authentication required)
+- **Model Bundling**: Create bundles from your own fine-tuned models (requires authentication)
 
-The CLI also supports downloading GGUF models directly from JSON manifest files.
-
-This guide will help you quickly get started with both features.
-
-## Install[​](#install "Direct link to Install")
+## Install
 
 ```
 pip install leap-bundle
 ```
 
-## Requirements[​](#requirements "Direct link to Requirements")
+## Requirements
 
 Before using the Model Bundle Tool, ensure your system meets the following requirements:
 
@@ -30,154 +26,206 @@ Before using the Model Bundle Tool, ensure your system meets the following requi
 If model uploads fail with connectivity errors, verify that your network allows access to AWS services and that DNS resolution is working properly.
 </Info>
 
-## Quick Start for GGUF Model Download[​](#quick-start-for-gguf-model-download "Direct link to Quick Start for GGUF Model Download")
+## Quick Start
 
-```
-leap-bundle download <model-name> [--quantization <quantization>]
-```
+<Tabs>
+  <Tab title="Download LEAP Models">
+    Download GGUF models from the [LEAP Model Library](https://leap.liquid.ai/models). **No authentication required.**
 
-Example:
+    ```sh
+    leap-bundle download <model-name> [--quantization <quantization>]
+    ```
 
-```
-leap-bundle download LFM2-1.2B --quantization Q5_K_M
-```
+    Example:
 
-The command will:
+    ```sh
+    leap-bundle download LFM2-1.2B --quantization Q5_K_M
+    ```
 
-1. Resolve the appropriate manifest URL for the model/quantization.
-2. Create an output directory based on the URL or according to `--output-path` if specified.
-3. Download the JSON manifest file for the given combination of model and quantization, if it exists.
-4. Download all model files referenced in the manifest.
-5. Update the local manifest to use relative paths to the downloaded files.
+    The command will:
 
-<Info>
-Manifest downloads don't require authentication with `leap-bundle login`. They work immediately after installation.
-</Info>
+    1. Resolve the appropriate manifest URL for the model/quantization.
+    2. Create an output directory based on the URL or according to `--output-path` if specified.
+    3. Download the JSON manifest file for the given combination of model and quantization, if it exists.
+    4. Download all model files referenced in the manifest.
+    5. Update the local manifest to use relative paths to the downloaded files.
 
-## Quick Start for Model Bundling[​](#quick-start-for-model-bundling "Direct link to Quick Start for Model Bundling")
+    <Info>
+    Manifest downloads don't require authentication with `leap-bundle login`. They work immediately after installation.
+    </Info>
+  </Tab>
+  <Tab title="Bundle Custom Models">
+    Create bundles from your own fine-tuned models. **Requires authentication.**
 
-<Info>
-**Compatibility Note:** The Model Bundling Service will work with any fine-tuned model, as long as the model architecture comes from a base model that is part of the LEAP model library.
-</Info>
+    <Info>
+    **Compatibility Note:** The Model Bundling Service will work with any fine-tuned model, as long as the model architecture comes from a base model that is part of the LEAP model library.
+    </Info>
 
-If you have a custom-trained or fine-tuned model, you can create a model bundle for use with LEAP SDK. By default, the CLI generates GGUF files for llama.cpp inference. Use the `--executorch` flag to generate ExecuTorch bundles instead.
+    ### 1. Authenticate
 
-### Authenticate[​](#authenticate "Direct link to Authenticate")
+    1. Sign in on the [LEAP website](https://leap.liquid.ai/sign-in)
 
-1. Sign in on the [LEAP website](https://leap.liquid.ai/sign-in)
+    2. Click the account icon on the top right, and go to your [`profile`](https://leap.liquid.ai/profile)
 
-2. Click the account icon on the top right, and go to your [`profile`](https://leap.liquid.ai/profile)
+    3. Select the [`API keys` tab](https://leap.liquid.ai/profile#/api-keys) and create a new API key
 
-3. Select the [`API keys` tab](https://leap.liquid.ai/profile#/api-keys) and create a new API key
+    ![api-key-screenshot](/images/leap/leap-bundle/assets/images/api-keys-51242efd637d71dd5e7f4eb01555cd78.png)
 
-![api-key-screenshot](/images/leap/leap-bundle/assets/images/api-keys-51242efd637d71dd5e7f4eb01555cd78.png)
+    4. Authenticate the Model Bundling Service with your API token:
 
-4. Authenticate the Model Bundling Service with your API token:
+    ```sh
+    leap-bundle login <api-key>
+    ```
 
-```
-leap-bundle login <api-key>
-```
+    Example output:
 
-Example output:
+    ```
+    ℹ Validating API token...
+    ✓ Successfully logged in to LEAP platform!
+    ```
 
-```
-ℹ Validating API token...✓ Successfully logged in to LEAP platform!
-```
+    ### 2. Create model bundle
 
-### Create model bundle[​](#create-model-bundle "Direct link to Create model bundle")
+    1. Prepare your model checkpoint.
+    2. Create a bundle request:
 
-1. Prepare your model checkpoint.
-2. Create a bundle request:
+    ```sh
+    leap-bundle create <path-to-your-model-checkpoint>
+    ```
 
-```
-leap-bundle create <path-to-your-model-checkpoint>
-```
+    Example output:
 
-Example output:
+    ```
+    ℹ Calculating directory hash...
+    ℹ Submitting bundle request...
+    ✓ Bundle request created with ID: 1
+    ℹ Starting upload...
+    Uploading directory... ✓
+    ✓ Upload completed successfully! Request ID: 1
+    ```
 
-```
-ℹ Calculating directory hash...ℹ Submitting bundle request...✓ Bundle request created with ID: 1ℹ Starting upload...Uploading directory... ✓✓ Upload completed successfully! Request ID: 1
-```
+    3. Check request status:
 
-3. Check request status:
+    ```sh
+    leap-bundle list
+    ```
 
-```
-leap-bundle list
-```
+    Example output:
 
-Example output:
+    ```
+    Bundle Requests (50 most recent)
+    ┏━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+    ┃ ID   ┃ Input Path                      ┃ Status       ┃ Creation               ┃ Notes                       ┃
+    ┡━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┩
+    │ 1    │ /path/to/your/model/directory   │ processing   │ 2024-01-15T10:30:00Z   │ Request is being processed. │
+    └──────┴─────────────────────────────────┴──────────────┴────────────────────────┴─────────────────────────────┘
+    ✓ Found 1 bundle requests.
+    ```
 
-```
-Bundle Requests (50 most recent)┏━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓┃ ID   ┃ Input Path                      ┃ Status       ┃ Creation               ┃ Notes                       ┃┡━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┩│ 1    │ /path/to/your/model/directory   │ processing   │ 2024-01-15T10:30:00Z   │ Request is being processed. │└──────┴─────────────────────────────────┴──────────────┴────────────────────────┴─────────────────────────────┘✓ Found 1 bundle requests.
-```
+    Get details for a specific request:
 
-Get details for a specific request:
+    ```sh
+    leap-bundle list <request-id>
+    ```
 
-```
-leap-bundle list <request-id>
-```
+    Example output:
 
-Example output:
+    ```
+    ✓ Request Details:
+      ID:         1
+      Input Path: /path/to/your/model/directory
+      Status:     completed
+      Creation:   2024-01-15T10:30:00Z
+      Update:     2024-01-15T10:45:00Z
+      Notes:
+    ```
 
-```
-✓ Request Details:  ID:         1  Input Path: /path/to/your/model/directory  Status:     completed  Creation:   2024-01-15T10:30:00Z  Update:     2024-01-15T10:45:00Z  Notes:
-```
+    4. When the request is `Completed`, download the bundle:
 
-4. When the request is `Completed`, you can download the bundle:
+    ```sh
+    leap-bundle download <request-id>
+    ```
 
-```
-leap-bundle download <request-id>
-```
+    Example output:
 
-Example output:
+    ```
+    ℹ Requesting download for bundle request 1...
+    ✓ Download URL obtained for request 1
+    Downloading bundle output... ✓
+    ✓ Download completed successfully! File saved to: model-Q4_K_M.gguf
+    ```
 
-```
-ℹ Requesting download for bundle request 1...✓ Download URL obtained for request 1Downloading bundle output... ✓✓ Download completed successfully! File saved to: model-Q4_K_M.gguf
-```
+    The model files will be saved in the current directory.
 
-The model files will be saved in the current directory. GGUF bundling produces `.gguf` files, while ExecuTorch bundling produces `.bundle` files.
+    ### Complete Example
 
-### Complete Example[​](#complete-example "Direct link to Complete Example")
+    Here's a complete example showing the full workflow:
 
-Here's a complete example showing the full workflow:
+    ```sh
+    # 1. Install and authenticate
+    pip install leap-bundle
+    leap-bundle login <api-key>
+    leap-bundle whoami
 
-```
-# 1. Install and authenticatepip install leap-bundleleap-bundle login <api-key>leap-bundle whoami# 2. Create a bundle request (GGUF by default)leap-bundle create <model-directory># Or create an ExecuTorch bundleleap-bundle create <model-directory> --executorch# 3. Monitor the request (repeat until completed)leap-bundle list# 4. Download when readyleap-bundle download <request-id># 5. Your model files are now ready to use!ls -la <downloaded-model-files>
-```
+    # 2. Create a bundle request (GGUF by default)
+    leap-bundle create <model-directory>
 
-### Managing Requests[​](#managing-requests "Direct link to Managing Requests")
+    # 3. Monitor the request (repeat until completed)
+    leap-bundle list
 
-#### Cancel a Request[​](#cancel-a-request "Direct link to Cancel a Request")
+    # 4. Download when ready
+    leap-bundle download <request-id>
 
-If you need to cancel a request that's still processing:
+    # 5. Your model files are now ready to use!
+    ls -la <downloaded-model-files>
+    ```
 
-```
-leap-bundle cancel <request-id>
-```
+    ### Managing Requests
 
-Example output:
+    #### Cancel a Request
 
-```
-ℹ Cancelling bundle request 1...✓ Request cancelled successfully.
-```
+    If you need to cancel a request that's still processing:
 
-### Log out[​](#log-out "Direct link to Log out")
+    ```sh
+    leap-bundle cancel <request-id>
+    ```
 
-You can log out to clear your stored credentials:
+    Example output:
 
-```
-leap-bundle logout
-```
+    ```
+    ℹ Cancelling bundle request 1...
+    ✓ Request cancelled successfully.
+    ```
 
-Example output:
+    ### Log out
 
-```
-✓ Successfully logged out from LEAP platform!
-```
+    You can log out to clear your stored credentials:
 
-## Next Steps[​](#next-steps "Direct link to Next Steps")
+    ```sh
+    leap-bundle logout
+    ```
+
+    Example output:
+
+    ```
+    ✓ Successfully logged out from LEAP platform!
+    ```
+
+    <Accordion title="Legacy: ExecuTorch Bundling">
+      ExecuTorch bundling is deprecated and may be removed in a future version. Use GGUF bundling (the default) for new projects.
+
+      To create an ExecuTorch bundle instead of GGUF:
+
+      ```sh
+      leap-bundle create <model-directory> --executorch
+      ```
+
+      ExecuTorch bundling produces `.bundle` files instead of `.gguf` files.
+    </Accordion>
+  </Tab>
+</Tabs>
+
+## Next Steps
 
 * Visit the [LEAP Model Library](https://leap.liquid.ai/models) to explore available models.
-* Check the [CLI Spec](/leap/leap-bundle/cli-spec) for detailed command reference.
-
-[Edit this page](https://github.com/Liquid4All/docs/tree/main/leap/leap-bundle/quick-start.mdx)
+* Check the [Bundle Creation](/leap/leap-bundle/bundle-creation) page for detailed command reference.
