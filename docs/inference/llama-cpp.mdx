@@ -114,67 +114,25 @@ hf download LiquidAI/LFM2.5-1.2B-Instruct-GGUF lfm2.5-1.2b-instruct-q4_k_m.gguf 
 
 ## Basic Usage
 
-llama.cpp offers three main interfaces for running inference: `llama-cpp-python` (Python bindings), `llama-server` (OpenAI-compatible server), and `llama-cli` (interactive CLI).
+llama.cpp offers two main interfaces for running inference: `llama-server` (OpenAI-compatible server) and `llama-cli` (interactive CLI).
 
 <Tabs>
-  <Tab title="llama-cpp-python">
-    For Python applications, use the `llama-cpp-python` package.
-
-    **Installation:**
-    ```bash
-    pip install llama-cpp-python
-    ```
-
-    For GPU support:
-    ```bash
-    CMAKE_ARGS="-DLLAMA_CUDA=on" pip install llama-cpp-python
-    ```
-
-    **Model Setup:**
-    ```python
-    from llama_cpp import Llama
-
-    # Load model
-    llm = Llama(
-        model_path="lfm2.5-1.2b-instruct-q4_k_m.gguf",
-        n_ctx=4096,
-        n_threads=8
-    )
-
-    # Generate text
-    output = llm(
-        "What is artificial intelligence?",
-        max_tokens=512,
-        temperature=0.7,
-        top_p=0.9
-    )
-    print(output["choices"][0]["text"])
-    ```
-
-    **Chat Completions:**
-    ```python
-    response = llm.create_chat_completion(
-        messages=[
-            {"role": "system", "content": "You are a helpful assistant."},
-            {"role": "user", "content": "Explain quantum computing."}
-        ],
-        temperature=0.7,
-        max_tokens=512
-    )
-    print(response["choices"][0]["message"]["content"])
-    ```
-  </Tab>
-
   <Tab title="llama-server">
     llama-server provides an OpenAI-compatible API for serving models locally.
 
     **Starting the Server:**
     ```bash
+    llama-server -hf LiquidAI/LFM2.5-1.2B-Instruct-GGUF -c 4096 --port 8080
+    ```
+
+    The `-hf` flag downloads the model directly from Hugging Face. Alternatively, use a local model file:
+    ```bash
     llama-server -m lfm2.5-1.2b-instruct-q4_k_m.gguf -c 4096 --port 8080
     ```
 
     Key parameters:
-    * `-m`: Path to GGUF model file
+    * `-hf`: Hugging Face model ID (downloads automatically)
+    * `-m`: Path to local GGUF model file
     * `-c`: Context length (default: 4096)
     * `--port`: Server port (default: 8080)
     * `-ngl 99`: Offload layers to GPU (if available)
@@ -217,11 +175,17 @@ llama.cpp offers three main interfaces for running inference: `llama-cpp-python`
     llama-cli provides an interactive terminal interface for chatting with models.
 
     ```bash
+    llama-cli -hf LiquidAI/LFM2.5-1.2B-Instruct-GGUF -c 4096 --color -i
+    ```
+
+    The `-hf` flag downloads the model directly from Hugging Face. Alternatively, use a local model file:
+    ```bash
     llama-cli -m lfm2.5-1.2b-instruct-q4_k_m.gguf -c 4096 --color -i
     ```
 
     Key parameters:
-    * `-m`: Path to GGUF model file
+    * `-hf`: Hugging Face model ID (downloads automatically)
+    * `-m`: Path to local GGUF model file
     * `-c`: Context length
     * `--color`: Colored output
     * `-i`: Interactive mode
@@ -241,43 +205,6 @@ Control text generation behavior using parameters in the OpenAI-compatible API o
 * **`max_tokens`** / **`--n-predict`** (`int`): Maximum number of tokens to generate
 * **`repetition_penalty`** / **`--repeat-penalty`** (`float`, default 1.1): Penalty for repeating tokens (>1.0 = discourage repetition). Typical range: 1.0-1.5
 * **`stop`** (`str` or `list[str]`): Strings that terminate generation when encountered
-
-<Accordion title="llama-cpp-python example">
-  ```python
-  from llama_cpp import Llama
-
-  llm = Llama(
-      model_path="lfm2.5-1.2b-instruct-q4_k_m.gguf",
-      n_ctx=4096,
-      n_threads=8
-  )
-
-  # Text generation with sampling parameters
-  output = llm(
-      "What is machine learning?",
-      max_tokens=512,
-      temperature=0.7,
-      top_p=0.9,
-      top_k=40,
-      repeat_penalty=1.1,
-      stop=["<|im_end|>", "<|endoftext|>"]
-  )
-  print(output["choices"][0]["text"])
-
-  # Chat completion with sampling parameters
-  response = llm.create_chat_completion(
-      messages=[
-          {"role": "user", "content": "Explain quantum computing."}
-      ],
-      temperature=0.7,
-      top_p=0.9,
-      top_k=40,
-      max_tokens=512,
-      repeat_penalty=1.1
-  )
-  print(response["choices"][0]["message"]["content"])
-  ```
-</Accordion>
 
 <Accordion title="llama-server (OpenAI-compatible API) example">
   ```python
@@ -404,38 +331,6 @@ hf download LiquidAI/LFM2-VL-1.6B-GGUF mmproj-LFM2-VL-1.6B-Q8_0.gguf --local-dir
       max_tokens=256
   )
   print(response.choices[0].message.content)
-  ```
-</Accordion>
-
-<Accordion title="Using llama-cpp-python">
-  ```python
-  from llama_cpp import Llama
-  from llama_cpp.llama_chat_format import Llava15ChatHandler
-
-  # Initialize with vision support
-  # Note: Use the correct chat handler for your model architecture
-  chat_handler = Llava15ChatHandler(clip_model_path="mmproj-model-f16.gguf")
-
-  llm = Llama(
-      model_path="lfm2.5-vl-1.6b-q4_k_m.gguf",
-      chat_handler=chat_handler,
-      n_ctx=4096
-  )
-
-  # Generate with image
-  response = llm.create_chat_completion(
-      messages=[
-          {
-              "role": "user",
-              "content": [
-                  {"type": "image_url", "image_url": {"url": "file:///path/to/image.jpg"}},
-                  {"type": "text", "text": "Describe this image."}
-              ]
-          }
-      ],
-      max_tokens=256
-  )
-  print(response["choices"][0]["message"]["content"])
   ```
 </Accordion>
 
