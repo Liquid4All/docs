@@ -195,7 +195,8 @@
               "leap/leap-bundle/bundle-management",
               "leap/leap-bundle/download",
               "leap/leap-bundle/reference",
-              "leap/leap-bundle/data-privacy"
+              "leap/leap-bundle/data-privacy",
+              "leap/leap-bundle/changelog"
             ]
           }
         ]
