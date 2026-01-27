@@ -83,7 +83,7 @@ For GPU-accelerated inference at scale, consider using [vLLM](/docs/inference/vl
     git clone https://github.com/ggml-org/llama.cpp
     cd llama.cpp
     cmake -B build
-    cmake --build build --config Release
+    cmake --build build --config Release -j 8
     ```
 
     The compiled programs will be in `./build/bin/`.
