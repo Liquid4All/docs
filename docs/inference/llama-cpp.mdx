@@ -11,85 +11,86 @@ For GPU-accelerated inference at scale, consider using [vLLM](/docs/inference/vl
 
 ## Installation
 
-Install llama.cpp for your target operating system:
+<Tabs>
+  <Tab title="macOS/Linux">
+    Install via Homebrew:
+    ```bash
+    brew install llama.cpp
+    ```
+  </Tab>
 
-### macOS and Linux
+  <Tab title="Pre-built Binaries">
+    Download from [llama.cpp releases](https://github.com/ggml-org/llama.cpp/releases).
 
-```bash
-brew install llama.cpp
-```
+    **File naming:** `llama-<version>-bin-<os>-<feature>-<arch>.zip`
 
-### Pre-built Binaries
+    **Quick selection guide:**
+    * **Windows (CPU)**: `llama-*-bin-win-avx2-x64.zip` for Intel/AMD CPUs
+    * **Windows (NVIDIA GPU)**: `llama-*-bin-win-cu12-x64.zip` (requires CUDA drivers)
+    * **macOS (Intel)**: `llama-*-bin-macos-x64.zip`
+    * **macOS (Apple Silicon)**: `llama-*-bin-macos-arm64.zip`
+    * **Linux**: `llama-*-bin-linux-x64.zip`
 
-Download from [llama.cpp releases](https://github.com/ggml-org/llama.cpp/releases).
+    After downloading, unzip and run from that directory.
 
-**File naming:** `llama-<version>-bin-<os>-<feature>-<arch>.zip`
+    <Accordion title="Detailed Download Tables by Platform">
+      Use the tables below to determine which `llama.cpp` binary is best for your environment and download the relevant binary (version `b7075`), or browse all releases and find the latest version [here](https://github.com/ggml-org/llama.cpp/releases).
 
-**Quick selection guide:**
-* **Windows (CPU)**: `llama-*-bin-win-avx2-x64.zip` for Intel/AMD CPUs
-* **Windows (NVIDIA GPU)**: `llama-*-bin-win-cu12-x64.zip` (requires CUDA drivers)
-* **macOS (Intel)**: `llama-*-bin-macos-x64.zip`
-* **macOS (Apple Silicon)**: `llama-*-bin-macos-arm64.zip`
-* **Linux**: `llama-*-bin-linux-x64.zip`
+      **Windows**
 
-After downloading, unzip and run from that directory.
+      | Hardware                | Binary Name                           | Download Link                                                                                                   |
+      | ----------------------- | ------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+      | Nvidia GPU              | llama-b7075-bin-win-cuda-12.4-x64.zip | [Download](https://github.com/ggml-org/llama.cpp/releases/download/b7075/llama-b7075-bin-win-cuda-12.4-x64.zip) |
+      | Intel GPU               | llama-b7075-bin-win-sycl-x64.zip      | [Download](https://github.com/ggml-org/llama.cpp/releases/download/b7075/llama-b7075-bin-win-sycl-x64.zip)      |
+      | AMD GPU                 | llama-b7075-bin-win-vulkan-x64.zip    | [Download](https://github.com/ggml-org/llama.cpp/releases/download/b7075/llama-b7075-bin-win-vulkan-x64.zip)    |
+      | Other GPU               | llama-b7075-bin-win-vulkan-x64.zip    | [Download](https://github.com/ggml-org/llama.cpp/releases/download/b7075/llama-b7075-bin-win-vulkan-x64.zip)    |
+      | Qualcomm Snapdragon CPU | llama-b7075-bin-win-cpu-arm64.zip     | [Download](https://github.com/ggml-org/llama.cpp/releases/download/b7075/llama-b7075-bin-win-cpu-arm64.zip)     |
+      | Other (CPU-only)        | llama-b7075-bin-win-cpu-x64.zip       | [Download](https://github.com/ggml-org/llama.cpp/releases/download/b7075/llama-b7075-bin-win-cpu-x64.zip)       |
 
-<Accordion title="Detailed Download Tables by Platform">
-  Use the tables below to determine which `llama.cpp` binary is best for your environment and download the relevant binary (version `b7075`), or browse all releases and find the latest version [here](https://github.com/ggml-org/llama.cpp/releases).
+      **macOS**
 
-  **Windows**
+      | Hardware      | Binary Name                     | Download Link                                                                                             |
+      | ------------- | ------------------------------- | --------------------------------------------------------------------------------------------------------- |
+      | Intel         | llama-b7075-bin-macos-x64.zip   | [Download](https://github.com/ggml-org/llama.cpp/releases/download/b7075/llama-b7075-bin-macos-x64.zip)   |
+      | Apple Silicon | llama-b7075-bin-macos-arm64.zip | [Download](https://github.com/ggml-org/llama.cpp/releases/download/b7075/llama-b7075-bin-macos-arm64.zip) |
 
-  | Hardware                | Binary Name                           | Download Link                                                                                                   |
-  | ----------------------- | ------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
-  | Nvidia GPU              | llama-b7075-bin-win-cuda-12.4-x64.zip | [Download](https://github.com/ggml-org/llama.cpp/releases/download/b7075/llama-b7075-bin-win-cuda-12.4-x64.zip) |
-  | Intel GPU               | llama-b7075-bin-win-sycl-x64.zip      | [Download](https://github.com/ggml-org/llama.cpp/releases/download/b7075/llama-b7075-bin-win-sycl-x64.zip)      |
-  | AMD GPU                 | llama-b7075-bin-win-vulkan-x64.zip    | [Download](https://github.com/ggml-org/llama.cpp/releases/download/b7075/llama-b7075-bin-win-vulkan-x64.zip)    |
-  | Other GPU               | llama-b7075-bin-win-vulkan-x64.zip    | [Download](https://github.com/ggml-org/llama.cpp/releases/download/b7075/llama-b7075-bin-win-vulkan-x64.zip)    |
-  | Qualcomm Snapdragon CPU | llama-b7075-bin-win-cpu-arm64.zip     | [Download](https://github.com/ggml-org/llama.cpp/releases/download/b7075/llama-b7075-bin-win-cpu-arm64.zip)     |
-  | Other (CPU-only)        | llama-b7075-bin-win-cpu-x64.zip       | [Download](https://github.com/ggml-org/llama.cpp/releases/download/b7075/llama-b7075-bin-win-cpu-x64.zip)       |
+      **Ubuntu**
 
-  **macOS**
+      | Hardware | Binary Name                           | Download Link                                                                                                   |
+      | -------- | ------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+      | GPU      | llama-b7075-bin-ubuntu-vulkan-x64.zip | [Download](https://github.com/ggml-org/llama.cpp/releases/download/b7075/llama-b7075-bin-ubuntu-vulkan-x64.zip) |
+      | CPU-only | llama-b7075-bin-ubuntu-x64.zip        | [Download](https://github.com/ggml-org/llama.cpp/releases/download/b7075/llama-b7075-bin-ubuntu-x64.zip)        |
 
-  | Hardware      | Binary Name                     | Download Link                                                                                             |
-  | ------------- | ------------------------------- | --------------------------------------------------------------------------------------------------------- |
-  | Intel         | llama-b7075-bin-macos-x64.zip   | [Download](https://github.com/ggml-org/llama.cpp/releases/download/b7075/llama-b7075-bin-macos-x64.zip)   |
-  | Apple Silicon | llama-b7075-bin-macos-arm64.zip | [Download](https://github.com/ggml-org/llama.cpp/releases/download/b7075/llama-b7075-bin-macos-arm64.zip) |
+      **Performance Benchmarks**
 
-  **Ubuntu**
+      If you are considering investing in hardware, here are some profiling results from a variety of machines and inference backends. As it currently stands, AMD Ryzen™ machines generally have the best-in-class performance with relatively standard llama.cpp configuration settings – and with custom configurations, this advantage tends to increase.
 
-  | Hardware | Binary Name                           | Download Link                                                                                                   |
-  | -------- | ------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
-  | GPU      | llama-b7075-bin-ubuntu-vulkan-x64.zip | [Download](https://github.com/ggml-org/llama.cpp/releases/download/b7075/llama-b7075-bin-ubuntu-vulkan-x64.zip) |
-  | CPU-only | llama-b7075-bin-ubuntu-x64.zip        | [Download](https://github.com/ggml-org/llama.cpp/releases/download/b7075/llama-b7075-bin-ubuntu-x64.zip)        |
+      | Device                          | Prefill speed (tok/s) | Decode speed (tok/s) |
+      | ------------------------------- | --------------------- | -------------------- |
+      | AMD Ryzen™ AI Max+ 395          | 5476                  | 143                  |
+      | AMD Ryzen™ AI 9 HX 370          | 2680                  | 113                  |
+      | Apple Mac Mini (M4)             | 1427                  | 122                  |
+      | Qualcomm Snapdragon™ X1E-78-100 | 978                   | 125                  |
+      | Intel Core™ Ultra 9 185H        | 1310                  | 58                   |
+      | Intel Core™ Ultra 7 258V        | 1104                  | 78                   |
 
-  **Performance Benchmarks**
+      Note: for fair comparison, we conducted these benchmarks on the same model (`LFM2-1.2B-Q4_0.gguf`). For each hardware device, we also tested across all publicly available llama.cpp binaries, with different thread counts (4, 8, 12) for CPU runners, and took the best performing numbers for prefill and decode independently.
+    </Accordion>
+  </Tab>
 
-  If you are considering investing in hardware, here are some profiling results from a variety of machines and inference backends. As it currently stands, AMD Ryzen™ machines generally have the best-in-class performance with relatively standard llama.cpp configuration settings – and with custom configurations, this advantage tends to increase.
+  <Tab title="Build from Source">
+    ```bash
+    git clone https://github.com/ggml-org/llama.cpp
+    cd llama.cpp
+    cmake -B build
+    cmake --build build --config Release
+    ```
 
-  | Device                          | Prefill speed (tok/s) | Decode speed (tok/s) |
-  | ------------------------------- | --------------------- | -------------------- |
-  | AMD Ryzen™ AI Max+ 395          | 5476                  | 143                  |
-  | AMD Ryzen™ AI 9 HX 370          | 2680                  | 113                  |
-  | Apple Mac Mini (M4)             | 1427                  | 122                  |
-  | Qualcomm Snapdragon™ X1E-78-100 | 978                   | 125                  |
-  | Intel Core™ Ultra 9 185H        | 1310                  | 58                   |
-  | Intel Core™ Ultra 7 258V        | 1104                  | 78                   |
+    The compiled programs will be in `./build/bin/`.
 
-  Note: for fair comparison, we conducted these benchmarks on the same model (`LFM2-1.2B-Q4_0.gguf`). For each hardware device, we also tested across all publicly available llama.cpp binaries, with different thread counts (4, 8, 12) for CPU runners, and took the best performing numbers for prefill and decode independently.
-</Accordion>
-
-### Build from Source
-
-```bash
-git clone https://github.com/ggml-org/llama.cpp
-cd llama.cpp
-cmake -B build
-cmake --build build --config Release
-```
-
-The compiled programs will be in `./build/bin/`.
-
-For detailed build instructions including GPU support, see the [llama.cpp documentation](https://github.com/ggerganov/llama.cpp#build).
+    For detailed build instructions including GPU support, see the [llama.cpp documentation](https://github.com/ggerganov/llama.cpp#build).
+  </Tab>
+</Tabs>
 
 ## Downloading GGUF Models
 
@@ -115,119 +116,122 @@ hf download LiquidAI/LFM2.5-1.2B-Instruct-GGUF lfm2.5-1.2b-instruct-q4_k_m.gguf 
 
 llama.cpp offers three main interfaces for running inference: `llama-cpp-python` (Python bindings), `llama-server` (OpenAI-compatible server), and `llama-cli` (interactive CLI).
 
-### llama-cpp-python
+<Tabs>
+  <Tab title="llama-cpp-python">
+    For Python applications, use the `llama-cpp-python` package.
 
-For Python applications, use the `llama-cpp-python` package.
+    **Installation:**
+    ```bash
+    pip install llama-cpp-python
+    ```
 
-**Installation:**
-```bash
-pip install llama-cpp-python
-```
+    For GPU support:
+    ```bash
+    CMAKE_ARGS="-DLLAMA_CUDA=on" pip install llama-cpp-python
+    ```
 
-For GPU support:
-```bash
-CMAKE_ARGS="-DLLAMA_CUDA=on" pip install llama-cpp-python
-```
+    **Model Setup:**
+    ```python
+    from llama_cpp import Llama
 
-**Model Setup:**
-```python
-from llama_cpp import Llama
+    # Load model
+    llm = Llama(
+        model_path="lfm2.5-1.2b-instruct-q4_k_m.gguf",
+        n_ctx=4096,
+        n_threads=8
+    )
 
-# Load model
-llm = Llama(
-    model_path="lfm2.5-1.2b-instruct-q4_k_m.gguf",
-    n_ctx=4096,
-    n_threads=8
-)
+    # Generate text
+    output = llm(
+        "What is artificial intelligence?",
+        max_tokens=512,
+        temperature=0.7,
+        top_p=0.9
+    )
+    print(output["choices"][0]["text"])
+    ```
 
-# Generate text
-output = llm(
-    "What is artificial intelligence?",
-    max_tokens=512,
-    temperature=0.7,
-    top_p=0.9
-)
-print(output["choices"][0]["text"])
-```
+    **Chat Completions:**
+    ```python
+    response = llm.create_chat_completion(
+        messages=[
+            {"role": "system", "content": "You are a helpful assistant."},
+            {"role": "user", "content": "Explain quantum computing."}
+        ],
+        temperature=0.7,
+        max_tokens=512
+    )
+    print(response["choices"][0]["message"]["content"])
+    ```
+  </Tab>
 
-**Chat Completions:**
-```python
-response = llm.create_chat_completion(
-    messages=[
-        {"role": "system", "content": "You are a helpful assistant."},
-        {"role": "user", "content": "Explain quantum computing."}
-    ],
-    temperature=0.7,
-    max_tokens=512
-)
-print(response["choices"][0]["message"]["content"])
-```
+  <Tab title="llama-server">
+    llama-server provides an OpenAI-compatible API for serving models locally.
 
-### llama-server
+    **Starting the Server:**
+    ```bash
+    llama-server -m lfm2.5-1.2b-instruct-q4_k_m.gguf -c 4096 --port 8080
+    ```
 
-llama-server provides an OpenAI-compatible API for serving models locally.
+    Key parameters:
+    * `-m`: Path to GGUF model file
+    * `-c`: Context length (default: 4096)
+    * `--port`: Server port (default: 8080)
+    * `-ngl 99`: Offload layers to GPU (if available)
 
-**Starting the Server:**
-```bash
-llama-server -m lfm2.5-1.2b-instruct-q4_k_m.gguf -c 4096 --port 8080
-```
+    **Using the Server:**
 
-Key parameters:
-* `-m`: Path to GGUF model file
-* `-c`: Context length (default: 4096)
-* `--port`: Server port (default: 8080)
-* `-ngl 99`: Offload layers to GPU (if available)
+    Once running at `http://localhost:8080`, use the OpenAI Python client:
+    ```python
+    from openai import OpenAI
 
-**Using the Server:**
+    client = OpenAI(
+        base_url="http://localhost:8080/v1",
+        api_key="not-needed"
+    )
 
-Once running at `http://localhost:8080`, use the OpenAI Python client:
-```python
-from openai import OpenAI
+    response = client.chat.completions.create(
+        model="lfm2.5-1.2b-instruct",
+        messages=[
+            {"role": "user", "content": "What is machine learning?"}
+        ],
+        temperature=0.7,
+        max_tokens=512
+    )
+    print(response.choices[0].message.content)
+    ```
 
-client = OpenAI(
-    base_url="http://localhost:8080/v1",
-    api_key="not-needed"
-)
+    **Using curl:**
+    ```bash
+    curl http://localhost:8080/v1/chat/completions \
+      -H "Content-Type: application/json" \
+      -d '{
+        "model": "lfm2-1.2b",
+        "messages": [{"role": "user", "content": "Hello!"}],
+        "temperature": 0.7
+      }'
+    ```
+  </Tab>
 
-response = client.chat.completions.create(
-    model="lfm2.5-1.2b-instruct",
-    messages=[
-        {"role": "user", "content": "What is machine learning?"}
-    ],
-    temperature=0.7,
-    max_tokens=512
-)
-print(response.choices[0].message.content)
-```
+  <Tab title="llama-cli">
+    llama-cli provides an interactive terminal interface for chatting with models.
 
-**Using curl:**
-```bash
-curl http://localhost:8080/v1/chat/completions \
-  -H "Content-Type: application/json" \
-  -d '{
-    "model": "lfm2-1.2b",
-    "messages": [{"role": "user", "content": "Hello!"}],
-    "temperature": 0.7
-  }'
-```
+    ```bash
+    llama-cli -m lfm2.5-1.2b-instruct-q4_k_m.gguf -c 4096 --color -i
+    ```
 
-### llama-cli
+    Key parameters:
+    * `-m`: Path to GGUF model file
+    * `-c`: Context length
+    * `--color`: Colored output
+    * `-i`: Interactive mode
+    * `-ngl 99`: Offload layers to GPU (if available)
 
-llama-cli provides an interactive terminal interface for chatting with models.
-```bash
-llama-cli -m lfm2.5-1.2b-instruct-q4_k_m.gguf -c 4096 --color -i
-```
+    Press Ctrl+C to exit.
+  </Tab>
+</Tabs>
 
-Key parameters:
-* `-m`: Path to GGUF model file
-* `-c`: Context length
-* `--color`: Colored output
-* `-i`: Interactive mode
-* `-ngl 99`: Offload layers to GPU (if available)
-
-Press Ctrl+C to exit.
-
-### Generation Parameters
+## Generation Parameters
 
 Control text generation behavior using parameters in the OpenAI-compatible API or command-line flags. Key parameters:
 
@@ -301,28 +305,44 @@ For command-line tools (`llama-cli`), use flags like `--temperature`, `--top-p`,
 
 ## Vision Models
 
-<Warning>
-LFM Vision Model support in llama.cpp requires a specific version of `llama-cpp-python` that includes changes not yet merged upstream. You must install from a custom source to use vision models. See installation instructions below.
-</Warning>
+LFM2-VL GGUF models can be used for multimodal inference with llama.cpp.
 
-LFM2-VL GGUF models can also be used for multimodal inference with llama.cpp. Vision models require both the main model and a multimodal projector (mmproj) file.
+### Quick Start with llama-cli
 
-### Installation for Vision Models
-
-To use LFM Vision Models with llama-cpp-python, install the custom version:
+Download llama.cpp binaries and run vision inference directly:
 
 ```bash
-pip install git+https://github.com/LiquidAI/llama-cpp-python.git@lfm-vision-support
+wget https://github.com/ggml-org/llama.cpp/releases/download/b7633/llama-b7633-bin-ubuntu-x64.tar.gz
+tar -xzf llama-b7633-bin-ubuntu-x64.tar.gz
 ```
 
-For GPU support:
+Download a test image:
+
+```python
+import requests
+
+image_url = "https://cdn.britannica.com/61/93061-050-99147DCE/Statue-of-Liberty-Island-New-York-Bay.jpg"
+img_data = requests.get(image_url).content
+with open("test_image.jpg", "wb") as f:
+    f.write(img_data)
+```
+
+Run inference (works on CPU):
+
 ```bash
-CMAKE_ARGS="-DLLAMA_CUDA=on" pip install git+https://github.com/LiquidAI/llama-cpp-python.git@lfm-vision-support
+llama-b7633/llama-cli \
+    -hf LiquidAI/LFM2.5-VL-1.6B-GGUF:Q4_0 \
+    --image test_image.jpg \
+    --image-max-tokens 64 \
+    -p "What's in this image?" \
+    -n 128
 ```
 
-This fork includes the necessary changes for LFM Vision Model support. Once these changes are merged upstream, you'll be able to use the standard `llama-cpp-python` installation.
+The `-hf` flag downloads the model directly from Hugging Face. Use `--image-max-tokens` to control image token budget.
 
-**Download the model and projector:**
+### Alternative: Manual Model Download
+
+If you prefer to download models manually:
 
 ```bash
 pip install huggingface-hub

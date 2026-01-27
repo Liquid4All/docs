@@ -179,58 +179,64 @@ vLLM support for LFM Vision Models requires a specific version that includes cha
 
 ### Installation for Vision Models
 
-To use LFM Vision Models with vLLM, install the custom version from the Liquid AI fork:
+To use LFM Vision Models with vLLM, install the precompiled wheel along with the required transformers version:
 
 ```bash
-pip install git+https://github.com/LiquidAI/vllm.git@lfm-vision-support
+VLLM_PRECOMPILED_WHEEL_COMMIT=72506c98349d6bcd32b4e33eec7b5513453c1502 VLLM_USE_PRECOMPILED=1 pip install git+https://github.com/vllm-project/vllm.git
 ```
 
-This fork includes the necessary changes for LFM Vision Model support. Once these changes are merged upstream, you'll be able to use the standard vLLM installation.
+```bash
+pip install git+https://github.com/huggingface/transformers.git@3c2517727ce28a30f5044e01663ee204deb1cdbe pillow
+```
+
+This installs vLLM with the necessary changes for LFM Vision Model support. Once these changes are merged upstream, you'll be able to use the standard vLLM installation.
 
 ### Basic Usage
 
-Initialize a vision model and process images:
+Initialize a vision model and process text and image inputs:
 
 ```python
 from vllm import LLM, SamplingParams
-from PIL import Image
-import base64
-from io import BytesIO
 
-# Initialize the vision model
-llm = LLM(model="LiquidAI/LFM2.5-VL-1.6B")
+def build_messages(parts):
+    content = []
+    for item in parts:
+        if item["type"] == "text":
+            content.append({"type": "text", "text": item["value"]})
+        elif item["type"] == "image":
+            content.append({"type": "image_url", "image_url": {"url": item["value"]}})
+        else:
+            raise ValueError(f"Unknown item type: {item['type']}")
+    return [{"role": "user", "content": content}]
 
-# Define sampling parameters
-sampling_params = SamplingParams(
-    temperature=0.3,
-    min_p=0.15,
-    repetition_penalty=1.05,
-    max_tokens=512
+IMAGE_URL = "http://images.cocodataset.org/val2017/000000039769.jpg"
+
+llm = LLM(
+    model="LiquidAI/LFM2.5-VL-1.6B",
+    max_model_len=1024,
 )
 
-# Load and encode image
-image_path = "path/to/your/image.jpg"
-image = Image.open(image_path)
+sampling_params = SamplingParams(
+    temperature=0.0,
+    max_tokens=1024,
+)
 
-# Convert image to base64 for the API
-buffered = BytesIO()
-image.save(buffered, format="JPEG")
-image_base64 = base64.b64encode(buffered.getvalue()).decode()
-
-# Create a message with image content
-messages = [
-    {
-        "role": "user",
-        "content": [
-            {"type": "text", "text": "What's in this image?"},
-            {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{image_base64}"}}
-        ]
-    }
+# Batch multiple prompts - text-only and multimodal
+prompts = [
+    [{"type": "text", "value": "What is C. elegans?"}],
+    [{"type": "text", "value": "Say hi in JSON format"}],
+    [{"type": "text", "value": "Define AI in Spanish"}],
+    [
+        {"type": "image", "value": IMAGE_URL},
+        {"type": "text", "value": "Describe what you see in this image."},
+    ],
 ]
 
-# Generate response
-output = llm.chat(messages, sampling_params)
-print(output[0].outputs[0].text)
+conversations = [build_messages(p) for p in prompts]
+outputs = llm.chat(conversations, sampling_params)
+
+for output in outputs:
+    print(output.outputs[0].text)
 ```
 
 ### OpenAI-Compatible API

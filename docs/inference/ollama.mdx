@@ -11,39 +11,39 @@ Ollama uses GGUF models and supports GPU acceleration (CUDA, Metal, ROCm).
 
 ## Installation
 
-### macOS and Windows
+<Tabs>
+  <Tab title="macOS and Windows">
+    Download directly from [ollama.com/download](https://ollama.com/download).
+  </Tab>
+  <Tab title="Linux">
+    ```bash
+    curl -fsSL https://ollama.com/install.sh | sh
+    ```
+  </Tab>
+  <Tab title="Docker">
+    Run Ollama with GPU acceleration inside Docker containers:
 
-Download directly from [ollama.com/download](https://ollama.com/download).
+    **CPU only:**
 
-### Linux
+    ```bash
+    docker run -d -v ollama:/root/.ollama -p 11434:11434 --name ollama ollama/ollama
+    ```
 
-```bash
-curl -fsSL https://ollama.com/install.sh | sh
-```
+    **NVIDIA GPU:**
 
-### Docker
+    ```bash
+    docker run -d --gpus=all -v ollama:/root/.ollama -p 11434:11434 --name ollama ollama/ollama
+    ```
 
-Run Ollama with GPU acceleration inside Docker containers:
+    Then run a model:
 
-**CPU only:**
+    ```bash
+    docker exec -it ollama ollama run hf.co/LiquidAI/LFM2.5-1.2B-Instruct-GGUF
+    ```
 
-```bash
-docker run -d -v ollama:/root/.ollama -p 11434:11434 --name ollama ollama/ollama
-```
-
-**NVIDIA GPU:**
-
-```bash
-docker run -d --gpus=all -v ollama:/root/.ollama -p 11434:11434 --name ollama ollama/ollama
-```
-
-Then run a model:
-
-```bash
-docker exec -it ollama ollama run hf.co/LiquidAI/LFM2.5-1.2B-Instruct-GGUF
-```
-
-See the [Ollama Docker documentation](https://ollama.com/blog/ollama-is-now-available-as-an-official-docker-image) for more details.
+    See the [Ollama Docker documentation](https://ollama.com/blog/ollama-is-now-available-as-an-official-docker-image) for more details.
+  </Tab>
+</Tabs>
 
 ## Using LFM2 Models
 
