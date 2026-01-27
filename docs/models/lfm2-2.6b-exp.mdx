@@ -1,0 +1,102 @@
+---
+title: "LFM2-2.6B-Exp"
+description: "RL-only post-trained 2.6B model with improved math and reasoning capabilities"
+---
+
+<a href="/docs/models/text-models" className="back-button">← Back to Text Models</a>
+
+LFM2-2.6B-Exp is an experimental checkpoint of LFM2-2.6B with RL-only post-training, delivering improved performance on math and reasoning benchmarks. Use this model when you need stronger analytical capabilities.
+
+<div style={{display: 'flex', gap: '0.5rem', margin: '0.5rem 0 1.5rem 0'}}>
+  <a href="https://huggingface.co/LiquidAI/LFM2-2.6B-Exp" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#fbbf24'}}><span style={{color: '#000'}}>HF</span></a>
+  <a href="https://huggingface.co/LiquidAI/LFM2-2.6B-Exp-GGUF" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#60a5fa'}}><span style={{color: '#000'}}>GGUF</span></a>
+</div>
+
+## Specifications
+
+| Property | Value |
+|----------|-------|
+| Parameters | 2.6B |
+| Context Length | 32K tokens |
+| Architecture | LFM2 (Dense) |
+
+<div className="use-cases">
+<CardGroup cols={3}>
+
+<Card title="Math & Logic" icon="calculator">
+  Strong arithmetic and logical reasoning
+</Card>
+
+<Card title="On-Device" icon="mobile">
+  Runs on phones and laptops
+</Card>
+
+<Card title="Fine-tunable" icon="sliders">
+  TRL compatible (SFT, DPO, GRPO)
+</Card>
+
+</CardGroup>
+</div>
+
+## Quick Start
+
+<Tabs>
+  <Tab title="Transformers">
+    **Install:**
+    ```bash
+    pip install transformers torch
+    ```
+
+    **Download & Run:**
+    ```python
+    from transformers import AutoModelForCausalLM, AutoTokenizer
+
+    model = AutoModelForCausalLM.from_pretrained("LiquidAI/LFM2-2.6B-Exp", device_map="auto")
+    tokenizer = AutoTokenizer.from_pretrained("LiquidAI/LFM2-2.6B-Exp")
+
+    input_ids = tokenizer.apply_chat_template(
+        [{"role": "user", "content": "What is 15% of 240?"}],
+        add_generation_prompt=True, return_tensors="pt"
+    ).to(model.device)
+
+    output = model.generate(input_ids, max_new_tokens=256)
+    print(tokenizer.decode(output[0], skip_special_tokens=True))
+    ```
+  </Tab>
+
+  <Tab title="llama.cpp">
+    **Install:**
+    ```bash
+    brew install llama.cpp
+    pip install huggingface-hub
+    ```
+
+    **Download:**
+    ```bash
+    huggingface-cli download LiquidAI/LFM2-2.6B-Exp-GGUF \
+      lfm2-2.6b-exp-q4_k_m.gguf --local-dir .
+    ```
+
+    **Run:**
+    ```bash
+    llama-cli -m lfm2-2.6b-exp-q4_k_m.gguf \
+      -p "What is 15% of 240?" -n 256
+    ```
+  </Tab>
+
+  <Tab title="vLLM">
+    **Install:**
+    ```bash
+    pip install vllm
+    ```
+
+    **Run:**
+    ```python
+    from vllm import LLM, SamplingParams
+
+    llm = LLM(model="LiquidAI/LFM2-2.6B-Exp")
+    output = llm.chat("What is 15% of 240?", SamplingParams(max_tokens=256))
+    print(output[0].outputs[0].text)
+    ```
+  </Tab>
+</Tabs>

@@ -1,0 +1,102 @@
+---
+title: "LFM2-700M"
+description: "Mid-sized 700M parameter model for deploying on most devices"
+---
+
+<a href="/docs/models/text-models" className="back-button">← Back to Text Models</a>
+
+LFM2-700M is a compact model balancing capability and efficiency. Suitable for deployment on a wide range of devices including phones, tablets, and laptops with limited resources.
+
+<div style={{display: 'flex', gap: '0.5rem', margin: '0.5rem 0 1.5rem 0'}}>
+  <a href="https://huggingface.co/LiquidAI/LFM2-700M" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#fbbf24'}}><span style={{color: '#000'}}>HF</span></a>
+  <a href="https://huggingface.co/LiquidAI/LFM2-700M-GGUF" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#60a5fa'}}><span style={{color: '#000'}}>GGUF</span></a>
+</div>
+
+## Specifications
+
+| Property | Value |
+|----------|-------|
+| Parameters | 700M |
+| Context Length | 32K tokens |
+| Architecture | LFM2 (Dense) |
+
+<div className="use-cases">
+<CardGroup cols={3}>
+
+<Card title="Edge Deployment" icon="microchip">
+  Optimized for resource-constrained devices
+</Card>
+
+<Card title="Low Latency" icon="bolt">
+  Fast inference for real-time applications
+</Card>
+
+<Card title="Fine-tunable" icon="sliders">
+  TRL compatible (SFT, DPO, GRPO)
+</Card>
+
+</CardGroup>
+</div>
+
+## Quick Start
+
+<Tabs>
+  <Tab title="Transformers">
+    **Install:**
+    ```bash
+    pip install transformers torch
+    ```
+
+    **Download & Run:**
+    ```python
+    from transformers import AutoModelForCausalLM, AutoTokenizer
+
+    model = AutoModelForCausalLM.from_pretrained("LiquidAI/LFM2-700M", device_map="auto")
+    tokenizer = AutoTokenizer.from_pretrained("LiquidAI/LFM2-700M")
+
+    input_ids = tokenizer.apply_chat_template(
+        [{"role": "user", "content": "What is machine learning?"}],
+        add_generation_prompt=True, return_tensors="pt"
+    ).to(model.device)
+
+    output = model.generate(input_ids, max_new_tokens=256)
+    print(tokenizer.decode(output[0], skip_special_tokens=True))
+    ```
+  </Tab>
+
+  <Tab title="llama.cpp">
+    **Install:**
+    ```bash
+    brew install llama.cpp
+    pip install huggingface-hub
+    ```
+
+    **Download:**
+    ```bash
+    huggingface-cli download LiquidAI/LFM2-700M-GGUF \
+      lfm2-700m-q4_k_m.gguf --local-dir .
+    ```
+
+    **Run:**
+    ```bash
+    llama-cli -m lfm2-700m-q4_k_m.gguf \
+      -p "What is machine learning?" -n 256
+    ```
+  </Tab>
+
+  <Tab title="vLLM">
+    **Install:**
+    ```bash
+    pip install vllm
+    ```
+
+    **Run:**
+    ```python
+    from vllm import LLM, SamplingParams
+
+    llm = LLM(model="LiquidAI/LFM2-700M")
+    output = llm.chat("What is machine learning?", SamplingParams(max_tokens=256))
+    print(output[0].outputs[0].text)
+    ```
+  </Tab>
+</Tabs>
