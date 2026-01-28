@@ -2,20 +2,19 @@
 * @Paulescu
 
 # Domain owners
-/docs/fine-tuning @Liquid4All/fine-tuning-team
-
-/docs/frameworks/leap* @dbhathena
-/docs/frameworks/outlines* @Liquid4All/inference-team
+/docs/fine-tuning/ @Liquid4All/fine-tuning-team
 
 /docs/inference @Liquid4All/inference-team
-/docs/inference/*-deployment* @tuliren
+/docs/inference/*-deployment.mdx @tuliren
 
 /docs/key-concepts/ @mlabonne
+/docs/models/audio-models.mdx @haerski
+/docs/models/vision-models.mdx @ankke
 /docs/models/ @mlabonne
 
 /leap/ @dbhathena
 /leap/edge-sdk/ @iamstuffed
 /leap/leap-bundle/ @tuliren
-/leap/finetuning* @Liquid4All/fine-tuning-team
+/leap/finetuning.mdx @Liquid4All/fine-tuning-team
 
-/.github/workflows @tuliren
+/.github/workflows/ @tuliren
