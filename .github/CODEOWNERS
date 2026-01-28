@@ -5,7 +5,7 @@
 /docs/fine-tuning @Liquid4All/fine-tuning-team
 
 /docs/frameworks/leap* @dbhathena
-/docs/frameworks/outlines* @Paulescu # TODO: unknown owner
+/docs/frameworks/outlines* @Liquid4All/inference-team
 
 /docs/inference @Liquid4All/inference-team
 /docs/inference/*-deployment* @tuliren
