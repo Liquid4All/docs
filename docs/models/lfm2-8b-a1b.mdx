@@ -45,8 +45,15 @@ LFM2-8B-A1B is Liquid AI's Mixture-of-Experts model, combining 8B total paramete
   <Tab title="Transformers">
     **Install:**
     ```bash
+    pip install "transformers>=5.0.0" torch
+    ```
+
+    <Note>
+    Transformers v5 is newly released. If you encounter issues, fall back to the pinned git source:
+    ```bash
     pip install git+https://github.com/huggingface/transformers.git@0c9a72e4576fe4c84077f066e585129c97bfd4e6 torch
     ```
+    </Note>
 
     **Download & Run:**
     ```python

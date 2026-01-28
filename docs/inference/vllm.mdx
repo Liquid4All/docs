@@ -186,8 +186,15 @@ VLLM_PRECOMPILED_WHEEL_COMMIT=72506c98349d6bcd32b4e33eec7b5513453c1502 VLLM_USE_
 ```
 
 ```bash
+pip install "transformers>=5.0.0" pillow
+```
+
+<Note>
+Transformers v5 is newly released. If you encounter issues, fall back to the pinned git source:
+```bash
 pip install git+https://github.com/huggingface/transformers.git@3c2517727ce28a30f5044e01663ee204deb1cdbe pillow
 ```
+</Note>
 
 This installs vLLM with the necessary changes for LFM Vision Model support. Once these changes are merged upstream, you'll be able to use the standard vLLM installation.
 

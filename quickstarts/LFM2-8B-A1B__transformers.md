@@ -11,8 +11,13 @@ Perfect for research, prototyping, and quick experimentation in Jupyter notebook
 ## Install Python dependencies
 
 ```shell
-pip install git+https://github.com/huggingface/transformers.git@0c9a72e4576fe4c84077f066e585129c97bfd4e6 bitsandbytes
+pip install "transformers>=5.0.0" bitsandbytes
 ```
+
+> **Note:** Transformers v5 is newly released. If you encounter issues, fall back to the pinned git source:
+> ```shell
+> pip install git+https://github.com/huggingface/transformers.git@0c9a72e4576fe4c84077f066e585129c97bfd4e6 bitsandbytes
+> ```
 
 ## Run inference
 

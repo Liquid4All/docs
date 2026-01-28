@@ -14,8 +14,13 @@ Transformers provides the most flexibility for model development and is ideal fo
 Install the required dependencies:
 
 ```bash
-pip install transformers>=4.57.1 torch>=2.6
+pip install "transformers>=5.0.0" torch
 ```
+
+> **Note:** Transformers v5 is newly released. If you encounter issues, fall back to the pinned git source:
+> ```bash
+> pip install git+https://github.com/huggingface/transformers.git@0c9a72e4576fe4c84077f066e585129c97bfd4e6 torch
+> ```
 
 GPU is recommended for faster inference.
 

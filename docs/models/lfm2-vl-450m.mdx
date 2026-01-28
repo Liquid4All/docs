@@ -45,8 +45,15 @@ LFM2-VL-450M is Liquid AI's smallest vision-language model, designed for edge de
   <Tab title="Transformers">
     **Install:**
     ```bash
+    pip install "transformers>=5.0.0" pillow torch
+    ```
+
+    <Note>
+    Transformers v5 is newly released. If you encounter issues, fall back to the pinned git source:
+    ```bash
     pip install git+https://github.com/huggingface/transformers.git@3c2517727ce28a30f5044e01663ee204deb1cdbe pillow torch
     ```
+    </Note>
 
     **Download & Run:**
     ```python
@@ -101,8 +108,15 @@ LFM2-VL-450M is Liquid AI's smallest vision-language model, designed for edge de
     ```
 
     ```bash
+    pip install "transformers>=5.0.0" pillow
+    ```
+
+    <Note>
+    Transformers v5 is newly released. If you encounter issues, fall back to the pinned git source:
+    ```bash
     pip install git+https://github.com/huggingface/transformers.git@3c2517727ce28a30f5044e01663ee204deb1cdbe pillow
     ```
+    </Note>
 
     **Run:**
     ```python

@@ -46,8 +46,15 @@ LFM2.5-VL-1.6B is Liquid AI's flagship vision-language model, delivering excepti
   <Tab title="Transformers">
     **Install:**
     ```bash
+    pip install "transformers>=5.0.0" pillow torch
+    ```
+
+    <Note>
+    Transformers v5 is newly released. If you encounter issues, fall back to the pinned git source:
+    ```bash
     pip install git+https://github.com/huggingface/transformers.git@3c2517727ce28a30f5044e01663ee204deb1cdbe pillow torch
     ```
+    </Note>
 
     **Download & Run:**
     ```python
@@ -102,8 +109,15 @@ LFM2.5-VL-1.6B is Liquid AI's flagship vision-language model, delivering excepti
     ```
 
     ```bash
+    pip install "transformers>=5.0.0" pillow
+    ```
+
+    <Note>
+    Transformers v5 is newly released. If you encounter issues, fall back to the pinned git source:
+    ```bash
     pip install git+https://github.com/huggingface/transformers.git@3c2517727ce28a30f5044e01663ee204deb1cdbe pillow
     ```
+    </Note>
 
     **Run:**
     ```python
