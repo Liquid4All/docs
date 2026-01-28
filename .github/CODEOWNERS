@@ -2,12 +2,12 @@
 * @Paulescu
 
 # Domain owners
-/docs/fine-tuning @fine-tuning-team
+/docs/fine-tuning @Liquid4All/fine-tuning-team
 
 /docs/frameworks/leap* @dbhathena
 /docs/frameworks/outlines* @Paulescu # TODO: unknown owner
 
-/docs/inference @inference-team
+/docs/inference @Liquid4All/inference-team
 /docs/inference/*-deployment* @tuliren
 
 /docs/key-concepts/ @mlabonne
@@ -16,6 +16,6 @@
 /leap/ @dbhathena
 /leap/edge-sdk/ @iamstuffed
 /leap/leap-bundle/ @tuliren
-/leap/finetuning* @fine-tuning-team
+/leap/finetuning* @Liquid4All/fine-tuning-team
 
 /.github/workflows @tuliren
