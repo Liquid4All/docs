@@ -113,13 +113,6 @@
             ]
           },
           {
-            "group": "Frameworks",
-            "icon": "boxes",
-            "pages": [
-              "docs/frameworks/outlines"
-            ]
-          },
-          {
             "group": "Help",
             "icon": "book",
             "pages": [
