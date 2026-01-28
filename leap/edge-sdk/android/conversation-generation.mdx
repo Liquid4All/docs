@@ -74,7 +74,7 @@ Register a function for the model to invoke. See [function calling](./function-c
 
 Export the whole conversation history into a `JSONArray`. Each element can be interpreted as a `ChatCompletionRequestMessage` instance in OpenAI API schema.
 
-See also: [Gson Support](../utilities#gson-support).
+See also: [Gson Support](./utilities#gson-support).
 
 ### Cancellation of the generation
 
@@ -129,12 +129,12 @@ Fields
 - `topP`: Nucleus sampling parameter.In nucleus sampling, the model only considers the results of the tokens with `topP` probability mass.
 - `minP`: Minimal possibility for a token to be considered in generation.
 - `repetitionPenalty`: Repetition penalty parameter. A positive value will decrease the model's likelihood to repeat the same line verbatim.
-- `jsonSchemaConstraint`: Enable constrained generation with a [JSON Schema](https://json-schema.org/). See [constrained generation](../advanced-features#constrained-generation) for more details.
+- `jsonSchemaConstraint`: Enable constrained generation with a [JSON Schema](https://json-schema.org/). See [constrained generation](./constrained-generation) for more details.
 - `functionCallParser`: Define the parser for function calling requests from the model. See [function calling](./function-calling) guide for more details.
 
 Methods
 
-- `setResponseFormatType`: Enable constrained generation with a `Generatable` data class. See [constrained generation](../advanced-features#constrained-generation) for more details.
+- `setResponseFormatType`: Enable constrained generation with a `Generatable` data class. See [constrained generation](./constrained-generation) for more details.
 
 Kotlin builder function `GenerationOptions.build` is also available. For example,
 

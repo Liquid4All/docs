@@ -70,7 +70,7 @@ title: "Changelog"
     * Added `ModelLoadingOptions` and `GenerationOptions` for more finegrained control over generation and loading options
     * Exposed model ID via `ModelRunner.modelId`
     * Exposed generation statistics via `stats` field on `MessageResponse.Complete`
-    * Added Model Downloader module to simplify model fetching in prototypes and development; see details [here](/leap/edge-sdk/android/android-api-spec#model-downloader)
+    * Added Model Downloader module to simplify model fetching in prototypes and development; see details [here](/leap/edge-sdk/android/utilities#model-downloader)
 
   * 🐛 Bug fixes
 
@@ -88,5 +88,3 @@ title: "Changelog"
 
   * 🐛 Bug fixes
     * If the generation content hits the maximum context length, `finishReason` field of `MessageResponse.Complete` will be `EXCEED_CONTEXT`. If the prompt exceeds the context length, `LeapGenerationPromptExceedContextLengthException` will be thrown.
-
-[Edit this page](https://github.com/Liquid4All/docs/tree/main/leap/changelog.mdx)

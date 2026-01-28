@@ -26,8 +26,8 @@ dependencies {
 
 The following types are supported:
 
-- [`ChatMessage`](../messages-content#chatmessage)
-- [`ChatMessageContent`](../messages-content#chatmessagecontent)
+- [`ChatMessage`](./messages-content#chatmessage)
+- [`ChatMessageContent`](./messages-content#chatmessagecontent)
 
 ### Create Gson Object
 
@@ -42,7 +42,7 @@ val gson = GsonBuilder().registerLeapAdapters().create()
 
 ### Serializing and Deserializing Conversation History
 
-With a [`Conversation`](../conversation-generation#conversation) object, simply call `Gson.toJson` to convert the chat message history into a JSON string. The returned JSON will be an array.
+With a [`Conversation`](./conversation-generation#conversation) object, simply call `Gson.toJson` to convert the chat message history into a JSON string. The returned JSON will be an array.
 
 ```kotlin
 val json = gson.toJson(conversation.history)
@@ -59,7 +59,7 @@ val chatHistory: List<ChatMessage> = gson.fromJson(json, LeapGson.messageListTyp
 ## Model Downloader (deprecated)
 
 <Warning>
-This module is deprecated and will be removed in the near future. To download models using the Edge SDK, see [`LeapDownloader`](../model-loading#leapdownloader).
+This module is deprecated and will be removed in the near future. To download models using the Edge SDK, see [`LeapDownloader`](./model-loading#leapdownloader).
 </Warning>
 
 LeapSDK Android Model Downloader module is a helper for downloading models from Leap Model Library.
