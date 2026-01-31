@@ -416,6 +416,33 @@ table a:hover {
   background-color: rgba(134, 75, 196, 0.15) !important;
 }
 
+/* Model name links (first column) - subtle text, no underline, just hover effect */
+table:has(thead th:nth-child(6):not(:nth-child(7))) td:first-child a {
+  color: inherit !important;
+  font-weight: 500 !important;
+  padding: 0.25rem 0.4rem !important;
+  margin: -0.25rem -0.4rem !important;
+  border-radius: 4px !important;
+  background-image: none !important;
+  text-decoration: none !important;
+  transition: background-color 0.15s ease, color 0.15s ease !important;
+}
+
+table:has(thead th:nth-child(6):not(:nth-child(7))) td:first-child a:hover {
+  color: #864bc4 !important;
+  background-color: rgba(134, 75, 196, 0.1) !important;
+  background-image: none !important;
+}
+
+.dark table:has(thead th:nth-child(6):not(:nth-child(7))) td:first-child a {
+  color: inherit !important;
+}
+
+.dark table:has(thead th:nth-child(6):not(:nth-child(7))) td:first-child a:hover {
+  color: #a78bfa !important;
+  background-color: rgba(167, 139, 250, 0.15) !important;
+}
+
 /* Dark mode table styling */
 .dark table thead tr {
   background: linear-gradient(135deg, #4c1d95 0%, #5b21b6 100%) !important;
