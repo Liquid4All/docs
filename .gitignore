@@ -159,3 +159,4 @@ Thumbs.db
 *.swo
 *~
 .vscode/
+.onnx-tests/

@@ -92,6 +92,7 @@
               "docs/inference/vllm",
               "docs/inference/mlx",
               "docs/inference/ollama",
+              "docs/inference/onnx",
               {
                 "group": "Other Frameworks",
                 "icon": "server",
