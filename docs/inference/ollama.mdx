@@ -9,6 +9,11 @@ description: "Ollama is a command-line tool for running LLMs locally with a simp
 
 Ollama uses GGUF models and supports GPU acceleration (CUDA, Metal, ROCm).
 
+<Warning>
+  LFM2 and LFM2.5 models currently do not work with Ollama. Our team has opened [this PR](https://github.com/ollama/ollama/pull/14069), that once merged will solve the issue.
+  Do not attempt to use Ollama with LFM2 and LFM2 models until this PR gets merged into ollama:main branch.
+</Warning>
+
 ## Installation
 
 <Tabs>
