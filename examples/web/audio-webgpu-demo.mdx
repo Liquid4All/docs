@@ -1,0 +1,121 @@
+---
+title: "LFM2.5-Audio browser demo with WebGPU"
+---
+
+<Card title="View Source Code" icon="github" href="https://github.com/Liquid4All/cookbook/tree/main/examples/audio-webgpu-demo">
+  Browse the complete example on GitHub
+</Card>
+
+This example showcases the **LFM2.5-Audio-1.5B** model running entirely within a web browser using WebGPU and ONNX Runtime Web technology. The demo provides three powerful audio processing modes: automatic speech recognition, text-to-speech synthesis, and interleaved conversations.
+
+## What's Inside?
+
+The demo provides three primary capabilities powered by LFM2.5-Audio-1.5B:
+
+- **ASR (Automatic Speech Recognition)**: Convert spoken audio into accurate text transcriptions
+- **TTS (Text-to-Speech)**: Transform written text into natural-sounding audio output
+- **Interleaved Mode**: Enable mixed conversations combining both audio and text inputs
+
+All processing happens locally in your browser - no data is sent to external servers.
+
+## Quick Start
+
+1. Clone the repository
+    ```bash
+    git clone https://github.com/Liquid4All/cookbook.git
+    cd cookbook/examples/audio-webgpu-demo
+    ```
+
+2. Verify you have npm installed on your system
+    ```bash
+    npm --version
+    ```
+
+3. Install dependencies
+    ```bash
+    npm install
+    ```
+
+4. Start the development server
+    ```bash
+    npm run dev
+    ```
+
+5. Access the application at `http://localhost:5173` in your browser
+
+## Understanding the Architecture
+
+This demo uses the **LFM2.5-Audio-1.5B** model, a 1.5 billion parameter audio model that handles both speech recognition and speech synthesis. The model has been quantized and converted to ONNX format for efficient browser-based inference.
+
+### Model Architecture
+
+The implementation uses quantized ONNX models sourced from the `LiquidAI/LFM2.5-Audio-1.5B-ONNX` repository on Hugging Face. These models are optimized to run with WebGPU acceleration, providing fast inference directly in the browser.
+
+### Three Operation Modes
+
+**1. Automatic Speech Recognition (ASR)**
+- Input: Audio file or microphone recording
+- Output: Text transcription
+- Use case: Transcribe meetings, lectures, or voice notes
+
+**2. Text-to-Speech (TTS)**
+- Input: Written text
+- Output: Natural-sounding audio
+- Use case: Create voice assistants, audiobooks, or accessibility features
+
+**3. Interleaved Mode**
+- Input: Mixed audio and text
+- Output: Conversational responses in text or audio
+- Use case: Interactive voice assistants and chatbots
+
+## System Requirements
+
+<Note>
+  **WebGPU Support Required**
+
+  This demo requires a modern web browser with WebGPU support:
+  - Chrome 113 or later (recommended)
+  - Edge 113 or later
+
+  If WebGPU is not enabled by default, you may need to manually activate it via browser flags:
+  - Chrome: `chrome://flags/#enable-unsafe-webgpu`
+  - Edge: `edge://flags/#enable-unsafe-webgpu`
+</Note>
+
+## Model Licensing
+
+<Note>
+  **LFM 1.0 License**
+
+  The model weights are distributed under the LFM 1.0 License. For complete licensing details, refer to the [official Hugging Face repository](https://huggingface.co/LiquidAI/LFM2.5-Audio-1.5B-ONNX).
+</Note>
+
+## Build for Production
+
+To create an optimized production build:
+
+```bash
+npm run build
+```
+
+The build output will be in the `dist/` directory, ready for deployment to any web server.
+
+## Further Improvements
+
+Potential enhancements for this demo:
+
+- **Streaming Inference**: Real-time processing for longer audio inputs
+- **Voice Customization**: Add controls for pitch, speed, and voice characteristics in TTS mode
+- **Noise Reduction**: Integrate preprocessing to improve ASR accuracy in noisy environments
+- **Batch Processing**: Support for processing multiple audio files simultaneously
+- **Model Caching**: Optimize initial load time with better caching strategies
+
+## Need help?
+
+<CardGroup cols={1}>
+
+<Card title="Join our Discord" icon="discord" iconType="brands" href="https://discord.gg/DFU3WQeaYD">
+  Connect with the community and ask questions about this example.
+</Card>
+
+</CardGroup>

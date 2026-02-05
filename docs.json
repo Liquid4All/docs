@@ -211,6 +211,14 @@
             ]
           },
           {
+            "group": "Web Examples",
+            "icon": "globe",
+            "pages": [
+              "examples/web/vl-webgpu-demo",
+              "examples/web/audio-webgpu-demo"
+            ]
+          },
+          {
             "group": "Model Customization",
             "icon": "sliders",
             "pages": [
