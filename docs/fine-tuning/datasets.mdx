@@ -1,0 +1,114 @@
+---
+title: "Finetuning Datasets"
+description: "Dataset formats for SFT, DPO, and VLM fine-tuning"
+---
+
+Different training methods require specific dataset formats. For the complete reference, see the [TRL Dataset Formats documentation](https://huggingface.co/docs/trl/en/dataset_formats).
+
+## Dataset Sources & File Types
+
+[Hugging Face Datasets](https://huggingface.co/datasets) is a great place to find pre-built datasets for fine-tuning. Most dataset loaders also support local files in these formats:
+
+- **JSONL** - One JSON object per line, easiest to create
+- **CSV** - Tabular format, good for simple datasets
+- **Parquet/Arrow** - More efficient for larger datasets
+
+<Tip>
+  We've curated a number of high quality, popular instruction and preference datasets [here](https://github.com/mlabonne/llm-datasets).
+</Tip>
+
+## Text Datasets
+
+### Instruction Datasets (SFT)
+
+Conversational format with a `messages` array:
+
+```json
+{
+  "messages": [
+    {"role": "system", "content": "You are a helpful assistant."},
+    {"role": "user", "content": "What is the capital of France?"},
+    {"role": "assistant", "content": "The capital of France is Paris."}
+  ]
+}
+```
+
+Roles: `system` (optional), `user`, `assistant`. Multi-turn conversations are supported by alternating user/assistant messages.
+
+**Example**: [HuggingFaceTB/smoltalk](https://huggingface.co/datasets/HuggingFaceTB/smoltalk/viewer/metamathqa-50k)
+
+You may encounter datasets in other formats (standard prompt-completion or conversational prompt-completion). Convert these to the `messages` format with `role` and `content` fields to ensure reliable generations.
+
+### Preference Datasets (DPO)
+
+Chosen and rejected completions for the same prompt. Use the **explicit** format which separates the prompt from each answer:
+
+```json
+{
+  "prompt": [{"role": "user", "content": "What is 2+2?"}],
+  "chosen": [{"role": "assistant", "content": "2+2 equals 4."}],
+  "rejected": [{"role": "assistant", "content": "2+2 equals 5."}]
+}
+```
+
+**Example**: [mlabonne/orpo-dpo-mix-40k](https://huggingface.co/datasets/mlabonne/orpo-dpo-mix-40k)
+
+Preference datasets also exist in an **implicit** format where the prompt is embedded in both chosen and rejected. The explicit format is recommended—convert implicit datasets before training. The `DPOTrainer` will automatically convert implicit to explicit if needed.
+
+### Prompt-Only Datasets (GRPO)
+
+For reinforcement learning methods like GRPO, only prompts are provided. Completions are generated during training and evaluated by reward functions:
+
+```json
+{
+  "prompt": [
+    {"role": "system", "content": "Solve the math problem step by step."},
+    {"role": "user", "content": "What is 15 * 23?"}
+  ]
+}
+```
+
+**Example**: [AI-MO/NuminaMath-TIR](https://huggingface.co/datasets/AI-MO/NuminaMath-TIR/viewer/default/train)
+
+## Vision Datasets
+
+### Vision Datasets (VLM-SFT)
+
+For vision-language models, content uses typed arrays with a separate `images` column:
+
+```json
+{
+  "messages": [
+    {"role": "user", "content": [
+      {"type": "image"},
+      {"type": "text", "text": "What is in this image?"}
+    ]},
+    {"role": "assistant", "content": [{"type": "text", "text": "A cat sitting on a couch."}]}
+  ],
+  "images": ["<PIL.Image in RGB>"]
+}
+```
+
+Images must be RGB format. The `{"type": "image"}` placeholder indicates where the image appears in the conversation.
+
+**Example**: [HuggingFaceH4/llava-instruct-mix-vsft](https://huggingface.co/datasets/HuggingFaceH4/llava-instruct-mix-vsft)
+
+<Accordion title="Loading Images with PIL">
+  You can map a preprocessing function like this to your dataset to load and prepare images for training:
+
+  ```python
+  from PIL import Image
+  import requests
+  from io import BytesIO
+
+  def load_image(sample):
+      # Load from file
+      sample["image"] = Image.open(sample["image_path"]).convert("RGB")
+      # Or load from URL
+      # response = requests.get(sample["image_url"])
+      # sample["image"] = Image.open(BytesIO(response.content)).convert("RGB")
+      return sample
+
+  dataset = dataset.map(load_image)
+  ```
+</Accordion>
