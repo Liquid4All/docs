@@ -207,6 +207,18 @@
             ]
           },
           {
+            "group": "Android Examples",
+            "icon": "robot",
+            "pages": [
+              "examples/android/leap-chat",
+              "examples/android/slogan-generator",
+              "examples/android/web-content-summarizer",
+              "examples/android/recipe-generator-constrained-output",
+              "examples/android/vision-language-model-example",
+              "examples/android/leap-koog-agent"
+            ]
+          },
+          {
             "group": "Model Customization",
             "icon": "sliders",
             "pages": [

@@ -1,0 +1,391 @@
+---
+title: "Image Understanding with Vision Language Models"
+---
+
+<Card title="View Source Code" icon="github" href="https://github.com/Liquid4All/LeapSDK-Examples/tree/main/Android/VLMExample">
+  Browse the complete example on GitHub
+</Card>
+
+This example demonstrates how to use **Vision Language Models (VLMs)** with LeapSDK on Android. VLMs combine image understanding with natural language processing, enabling your app to analyze images, answer questions about visual content, and generate detailed descriptions—all on-device.
+
+Built with **Jetpack Compose** and the **Coil** image loading library, this example shows how to create a multimodal AI application that processes both images and text locally on Android devices.
+
+## What's inside?
+
+The VLMExample showcases cutting-edge multimodal AI capabilities:
+
+- **Vision Language Models** - Analyze images and generate text descriptions
+- **Image Input Processing** - Handle image selection from gallery or camera
+- **Multimodal Understanding** - Combine visual and textual information
+- **Jetpack Compose UI** - Modern, declarative UI for image display and results
+- **Coil Integration** - Efficient image loading and rendering
+- **On-device Inference** - Complete privacy with local VLM processing
+- **Interactive Q&A** - Ask questions about images and get contextual answers
+
+This example demonstrates the **LFM2-VL-1.6B** model, a vision-language model that can understand and reason about visual content.
+
+## What are Vision Language Models?
+
+**Vision Language Models (VLMs)** are AI models that can process both images and text simultaneously, enabling them to:
+
+- **Describe images** - Generate detailed captions of what's in a photo
+- **Answer visual questions** - Respond to queries about image content ("What color is the car?")
+- **Detect objects** - Identify and describe objects, people, and scenes
+- **Read text in images** - Extract and interpret text from photos (OCR-like capabilities)
+- **Understand context** - Grasp relationships between objects and spatial arrangements
+- **Generate insights** - Provide analysis, suggestions, or interpretations of visual data
+
+**Example use cases:**
+- Accessibility tools that describe images for visually impaired users
+- Product identification and information lookup
+- Document analysis and data extraction
+- Visual search and discovery
+- Educational apps that explain diagrams and illustrations
+- Real estate apps that describe property photos
+- Medical imaging assistants for preliminary analysis
+
+## Environment setup
+
+Before running this example, ensure you have the following:
+
+<Accordion title="Android Studio Installation">
+  Download and install [Android Studio](https://developer.android.com/studio) (latest stable version recommended).
+
+  Make sure you have:
+  - Android SDK installed
+  - An Android device or emulator configured
+  - USB debugging enabled (for physical devices)
+</Accordion>
+
+<Accordion title="Minimum SDK Requirements">
+  This example requires:
+  - **Minimum SDK**: API 24 (Android 7.0)
+  - **Target SDK**: API 34 or higher
+  - **Kotlin**: 1.9.0 or higher
+
+  **Hardware recommendations:**
+  - At least 4GB RAM (6GB+ recommended for better performance)
+  - Vision models are larger and more compute-intensive than text-only models
+</Accordion>
+
+<Accordion title="VLM Model Bundle Deployment">
+  This example requires the **LFM2-VL-1.6B** vision language model bundle.
+
+  **Step 1: Obtain the model bundle**
+
+  Download the LFM2-VL-1.6B bundle from the Leap Model Library.
+
+  **Step 2: Deploy to device via ADB**
+
+  Use the Android Debug Bridge (ADB) to transfer the model to your device:
+
+  ```bash
+  # Ensure your device is connected and ADB is available
+  adb devices
+
+  # Create the directory on device
+  adb shell mkdir -p /data/local/tmp/liquid/
+
+  # Push the VLM bundle to the device
+  adb push LFM2-VL-1_6B.bundle /data/local/tmp/liquid/
+
+  # Verify the file was transferred successfully
+  adb shell ls -lh /data/local/tmp/liquid/
+  ```
+
+  **Note:** The VLM bundle is larger than text-only models (typically 1-3GB). Ensure you have sufficient storage on your device and a stable connection during transfer.
+
+  **Alternative deployment location:**
+
+  If `/data/local/tmp/` is not accessible, use device storage:
+
+  ```bash
+  # Push to internal storage
+  adb push LFM2-VL-1_6B.bundle /sdcard/Download/liquid/
+
+  # Update the model path in your app code accordingly
+  ```
+</Accordion>
+
+<Accordion title="Dependencies Setup">
+  Add the required dependencies to your app-level `build.gradle.kts`:
+
+  ```kotlin
+  dependencies {
+      // LeapSDK for VLM processing
+      implementation("ai.liquid.leap:leap-sdk:1.0.0")
+
+      // Coil for image loading
+      implementation("io.coil-kt:coil-compose:2.5.0")
+
+      // Jetpack Compose
+      implementation(platform("androidx.compose:compose-bom:2024.01.00"))
+      implementation("androidx.compose.ui:ui")
+      implementation("androidx.compose.material3:material3")
+      implementation("androidx.compose.ui:ui-tooling-preview")
+      implementation("androidx.activity:activity-compose:1.8.2")
+
+      // Image picker
+      implementation("androidx.activity:activity-ktx:1.8.2")
+
+      // ViewModel
+      implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.7.0")
+  }
+  ```
+
+  **About Coil:**
+
+  [Coil](https://coil-kt.github.io/coil/) is a Kotlin-first image loading library for Android that:
+  - Efficiently loads and caches images
+  - Integrates seamlessly with Jetpack Compose
+  - Handles image transformations and processing
+  - Provides modern coroutine-based APIs
+</Accordion>
+
+## How to run it
+
+Follow these steps to start analyzing images with VLMs:
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/Liquid4All/LeapSDK-Examples.git
+   cd LeapSDK-Examples/Android/VLMExample
+   ```
+
+2. **Deploy the VLM model bundle**
+   - Follow the ADB commands in the setup section above
+   - Ensure the bundle is accessible at `/data/local/tmp/liquid/LFM2-VL-1_6B.bundle`
+
+3. **Open in Android Studio**
+   - Launch Android Studio
+   - Select "Open an existing project"
+   - Navigate to the `VLMExample` folder and open it
+
+4. **Verify model path**
+   - Check that the model path in your code matches the deployment location
+   - Update if you used a different path
+
+5. **Run the app**
+   - Connect your Android device or start an emulator
+   - Click "Run" or press `Shift + F10`
+   - Select your target device
+
+6. **Select an image**
+   - On first launch, the app will load the VLM model (this may take 10-30 seconds)
+   - Tap the "Select Image" button
+   - Choose an image from your device's gallery
+   - Alternatively, take a photo if camera integration is enabled
+
+7. **Analyze the image**
+   - After selecting an image, it will be displayed in the app
+   - The VLM will automatically analyze the image
+   - View the generated description or ask questions about the image
+   - Try different prompts: "What's in this image?", "Describe the scene", "What colors do you see?"
+
+<Note>
+  **Performance Note**: Vision models are computationally intensive. First-time inference may take 5-15 seconds on mobile devices. Subsequent inferences on the same or similar images will be faster as the model stays loaded in memory.
+</Note>
+
+## Understanding the architecture
+
+### Image Selection Flow
+
+The app uses Android's image picker to select photos:
+
+```kotlin
+@Composable
+fun VLMScreen(viewModel: VLMViewModel) {
+    val imagePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        uri?.let { viewModel.processImage(it) }
+    }
+
+    Button(onClick = { imagePickerLauncher.launch("image/*") }) {
+        Text("Select Image")
+    }
+}
+```
+
+### VLM Integration Pattern
+
+Loading and using the vision language model:
+
+```kotlin
+class VLMViewModel : ViewModel() {
+    private lateinit var vlmModel: LeapVLModel
+
+    fun initializeModel() {
+        viewModelScope.launch(Dispatchers.Default) {
+            vlmModel = LeapSDK.loadVLModel(
+                bundlePath = "/data/local/tmp/liquid/LFM2-VL-1_6B.bundle"
+            )
+            _modelState.value = ModelState.Ready
+        }
+    }
+
+    fun processImage(imageUri: Uri) {
+        viewModelScope.launch(Dispatchers.Default) {
+            // Load image from URI
+            val bitmap = loadBitmapFromUri(imageUri)
+
+            // Generate description
+            val prompt = "Describe this image in detail."
+            val description = vlmModel.generateFromImage(
+                image = bitmap,
+                prompt = prompt,
+                maxTokens = 200
+            )
+
+            _imageAnalysis.value = ImageAnalysis(
+                imageUri = imageUri,
+                description = description
+            )
+        }
+    }
+
+    private fun loadBitmapFromUri(uri: Uri): Bitmap {
+        return context.contentResolver.openInputStream(uri)?.use { inputStream ->
+            BitmapFactory.decodeStream(inputStream)
+        } ?: throw IllegalArgumentException("Unable to load image")
+    }
+}
+```
+
+### Coil Integration for Image Display
+
+Using Coil to efficiently display selected images:
+
+```kotlin
+@Composable
+fun ImageAnalysisDisplay(analysis: ImageAnalysis) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+    ) {
+        // Display image with Coil
+        AsyncImage(
+            model = ImageRequest.Builder(LocalContext.current)
+                .data(analysis.imageUri)
+                .crossfade(true)
+                .build(),
+            contentDescription = "Selected image",
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(300.dp)
+                .clip(RoundedCornerShape(8.dp)),
+            contentScale = ContentScale.Crop
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Display AI-generated description
+        Card(
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Text(
+                    text = "Analysis",
+                    style = MaterialTheme.typography.titleMedium
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = analysis.description,
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
+        }
+    }
+}
+```
+
+### Interactive Q&A Mode
+
+Allow users to ask questions about images:
+
+```kotlin
+fun askQuestionAboutImage(bitmap: Bitmap, question: String): String {
+    return vlmModel.generateFromImage(
+        image = bitmap,
+        prompt = "Answer this question about the image: $question",
+        maxTokens = 150
+    )
+}
+
+// Example usage
+val answer1 = askQuestionAboutImage(bitmap, "What is the main object in this image?")
+val answer2 = askQuestionAboutImage(bitmap, "What colors are prominent?")
+val answer3 = askQuestionAboutImage(bitmap, "Is this indoors or outdoors?")
+```
+
+### Memory Management
+
+Vision models require more memory. Implement proper lifecycle handling:
+
+```kotlin
+override fun onStop() {
+    super.onStop()
+    // Release model when app goes to background to free memory
+    viewModel.releaseModel()
+}
+
+override fun onStart() {
+    super.onStart()
+    // Reload model when app returns to foreground
+    viewModel.initializeModel()
+}
+```
+
+## Results
+
+The VLMExample demonstrates powerful image understanding capabilities:
+
+![VLMExample Screenshot](https://raw.githubusercontent.com/Liquid4All/LeapSDK-Examples/main/Android/VLMExample/docs/screenshot.png)
+
+The interface shows:
+- Selected image displayed clearly with Coil
+- AI-generated analysis below the image
+- Smooth, responsive UI even with large images
+- Professional Material3 design
+
+**Example analysis output:**
+
+*Image: A sunset over a beach*
+```
+"The image shows a beautiful sunset scene at a beach. The sky displays
+vibrant orange and pink hues as the sun sets on the horizon. The ocean
+water reflects the warm colors of the sky. In the foreground, there are
+silhouettes of people walking along the shoreline. The overall mood is
+peaceful and serene."
+```
+
+All processing happens entirely on your Android device, ensuring complete privacy for your photos.
+
+## Further improvements
+
+Here are some ways to extend this example:
+
+- **Camera integration** - Take photos directly in-app for immediate analysis
+- **Multi-image support** - Compare and analyze multiple images simultaneously
+- **Batch processing** - Process entire photo albums with progress tracking
+- **Custom prompts** - Let users enter their own questions about images
+- **Object detection** - Highlight detected objects with bounding boxes
+- **Text extraction** - Pull out text from images (receipts, documents, signs)
+- **Image editing suggestions** - Recommend crops, filters, or enhancements
+- **Accessibility features** - Auto-generate alt text for images
+- **Favorites and history** - Save analyzed images with their descriptions
+- **Export functionality** - Share analysis results or create reports
+- **Comparison mode** - Analyze differences between two images
+- **Real-time video analysis** - Process camera frames in real-time
+- **Multilingual descriptions** - Generate descriptions in different languages
+- **Style transfer guidance** - Describe artistic styles and suggest transformations
+
+## Need help?
+
+Join the [Liquid AI Discord community](https://discord.gg/DFU3WQeaYD) to:
+- Discuss vision language model use cases
+- Share your VLM applications
+- Get help with image processing on Android
+- Learn about multimodal AI development
+- Connect with developers building visual AI experiences

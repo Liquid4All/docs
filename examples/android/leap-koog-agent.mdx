@@ -1,0 +1,463 @@
+---
+title: "Build AI Agents with Koog Framework on Android"
+---
+
+<Card title="View Source Code" icon="github" href="https://github.com/Liquid4All/LeapSDK-Examples/tree/main/Android/LeapKoogAgent">
+  Browse the complete example on GitHub
+</Card>
+
+This example demonstrates how to integrate the **Koog framework** with LeapSDK on Android to build intelligent AI agents. Koog is an open-source framework for creating AI agents that can understand natural language, invoke tools, manage context, and integrate with MCP (Model Context Protocol) servers.
+
+LeapKoogAgent shows how to bring autonomous agent capabilities to mobile devices, enabling apps that can reason, plan, and execute complex tasks on behalf of users—all running locally on Android.
+
+## What's inside?
+
+LeapKoogAgent showcases advanced AI agent capabilities:
+
+- **Koog Framework Integration** - Build structured AI agents with reasoning capabilities
+- **Natural Language Understanding** - Process user intents and commands
+- **Tool Invocation** - Enable agents to call functions and use external tools
+- **Context Management** - Maintain conversation state and agent memory
+- **Extensible Architecture** - Easily add new capabilities and tools
+- **MCP Server Integration** - Connect to Model Context Protocol servers for tool retrieval and execution
+- **Event Handling** - Respond to agent events and state changes
+- **On-device Agent Runtime** - Complete agent execution without cloud dependency
+
+This example demonstrates building production-ready AI agents that run entirely on Android devices.
+
+## What is the Koog Framework?
+
+**Koog** is an open-source framework for building AI agents. It provides a structured approach to creating agents that can:
+
+- **Reason and plan** - Break down complex tasks into steps
+- **Use tools** - Invoke functions to accomplish specific tasks (calculations, API calls, database queries)
+- **Maintain context** - Remember conversation history and user preferences
+- **Handle events** - React to user input, system events, or external triggers
+- **Execute workflows** - Chain multiple actions together to complete objectives
+- **Integrate with MCP** - Access tools and resources from Model Context Protocol servers
+
+**Key concepts:**
+
+- **Agents** - Autonomous entities that process input, reason, and take actions
+- **Tools** - Functions that agents can invoke (e.g., search, calculate, retrieve data)
+- **Context** - The agent's knowledge state including conversation history
+- **MCP (Model Context Protocol)** - A standard for exposing tools and resources to agents
+- **Events** - Notifications about agent state changes or actions
+
+**Common agent use cases:**
+- Personal assistants that manage tasks and calendars
+- Customer service bots with access to knowledge bases
+- Data analysis agents that query databases and generate reports
+- Workflow automation agents that orchestrate multiple services
+- Educational tutors that adapt to learner needs
+- Smart home controllers that understand natural language commands
+
+<Card title="Learn More About Koog" icon="book" href="https://github.com/anthropics/koog">
+  Explore the Koog framework documentation and examples
+</Card>
+
+## Environment setup
+
+Before running this example, ensure you have the following:
+
+<Accordion title="Android Studio Installation">
+  Download and install [Android Studio](https://developer.android.com/studio) (latest stable version recommended).
+
+  Make sure you have:
+  - Android SDK installed
+  - An Android device or emulator configured
+  - USB debugging enabled (for physical devices)
+</Accordion>
+
+<Accordion title="Minimum SDK Requirements">
+  This example requires:
+  - **Minimum SDK**: API 24 (Android 7.0)
+  - **Target SDK**: API 34 or higher
+  - **Kotlin**: 1.9.0 or higher
+
+  **Hardware recommendations:**
+  - At least 4GB RAM (agents require more memory for reasoning)
+  - Sufficient storage for model bundles
+</Accordion>
+
+<Accordion title="Model Bundle Deployment">
+  LeapKoogAgent requires the **LFM2-1.2B-Tool** model bundle optimized for tool use.
+
+  **Deploy via ADB:**
+
+  ```bash
+  # Ensure device is connected
+  adb devices
+
+  # Create directory
+  adb shell mkdir -p /tmp/models
+
+  # Push the model bundle
+  adb push lfm2-1.2b-tool.bundle /tmp/models/
+
+  # Verify deployment
+  adb shell ls -lh /tmp/models/
+  ```
+
+  **Note:** The path `/tmp/models` is used in this example. If you deploy to a different location, update the model path in your app code accordingly.
+</Accordion>
+
+<Accordion title="Dependencies Setup">
+  Add the required dependencies to your app-level `build.gradle.kts`:
+
+  ```kotlin
+  dependencies {
+      // LeapSDK for on-device AI
+      implementation("ai.liquid.leap:leap-sdk:1.0.0")
+
+      // Koog framework for AI agents
+      implementation("ai.anthropic:koog-core:0.1.0")
+      implementation("ai.anthropic:koog-mcp:0.1.0")
+
+      // JSON processing
+      implementation("com.google.code.gson:gson:2.10.1")
+      implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")
+
+      // Coroutines for async operations
+      implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
+
+      // Jetpack Compose
+      implementation(platform("androidx.compose:compose-bom:2024.01.00"))
+      implementation("androidx.compose.ui:ui")
+      implementation("androidx.compose.material3:material3")
+
+      // ViewModel
+      implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.7.0")
+  }
+  ```
+</Accordion>
+
+## How to run it
+
+Follow these steps to build and run AI agents on Android:
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/Liquid4All/LeapSDK-Examples.git
+   cd LeapSDK-Examples/Android/LeapKoogAgent
+   ```
+
+2. **Deploy the model bundle**
+   - Follow the ADB commands in the setup section above
+   - Ensure the bundle is at `/tmp/models/lfm2-1.2b-tool.bundle`
+
+3. **Open in Android Studio**
+   - Launch Android Studio
+   - Select "Open an existing project"
+   - Navigate to the `LeapKoogAgent` folder
+
+4. **Build the project**
+   - Wait for Gradle sync to complete
+   - Resolve any dependency issues
+
+5. **Run on device or emulator**
+   - Connect your Android device or start an emulator
+   - Click "Run" or press `Shift + F10`
+
+6. **Interact with the agent**
+   - On launch, the agent will initialize (may take 10-20 seconds)
+   - Enter a command or question in the input field
+   - Watch the agent reason, plan, and execute tasks
+   - The agent can invoke tools to accomplish complex objectives
+   - Try commands like:
+     - "Calculate the sum of 25 and 37"
+     - "What's the weather like today?" (if weather tool is configured)
+     - "Set a reminder for 3pm"
+     - "Search for information about quantum computing"
+
+## Understanding the architecture
+
+### Koog Agent Initialization
+
+Set up a Koog agent with LeapSDK backend:
+
+```kotlin
+class AgentViewModel : ViewModel() {
+    private lateinit var agent: KoogAgent
+    private lateinit var leapModel: LeapModel
+
+    fun initializeAgent() {
+        viewModelScope.launch(Dispatchers.Default) {
+            // Load LeapSDK model
+            leapModel = LeapSDK.loadModelFromBundle(
+                path = "/tmp/models/lfm2-1.2b-tool.bundle"
+            )
+
+            // Create Koog agent with Leap backend
+            agent = KoogAgent.Builder()
+                .withModel(LeapModelAdapter(leapModel))
+                .withTools(getAvailableTools())
+                .withSystemPrompt("""
+                    You are a helpful AI assistant running on an Android device.
+                    You can help users by answering questions and using available tools.
+                    Be concise and helpful in your responses.
+                """.trimIndent())
+                .build()
+
+            _agentState.value = AgentState.Ready
+        }
+    }
+}
+```
+
+### Defining Agent Tools
+
+Create tools that the agent can invoke:
+
+```kotlin
+fun getAvailableTools(): List<KoogTool> {
+    return listOf(
+        // Calculator tool
+        KoogTool(
+            name = "calculate",
+            description = "Performs mathematical calculations",
+            parameters = mapOf(
+                "expression" to ToolParameter(
+                    type = "string",
+                    description = "Mathematical expression to evaluate"
+                )
+            ),
+            handler = { params ->
+                val expression = params["expression"] as String
+                val result = evaluateExpression(expression)
+                ToolResult.success(result.toString())
+            }
+        ),
+
+        // Time/date tool
+        KoogTool(
+            name = "get_current_time",
+            description = "Gets the current date and time",
+            parameters = emptyMap(),
+            handler = {
+                val now = System.currentTimeMillis()
+                val dateTime = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
+                    .format(Date(now))
+                ToolResult.success(dateTime)
+            }
+        ),
+
+        // Device info tool
+        KoogTool(
+            name = "get_device_info",
+            description = "Returns information about the Android device",
+            parameters = emptyMap(),
+            handler = {
+                val info = """
+                    Device: ${Build.MANUFACTURER} ${Build.MODEL}
+                    Android Version: ${Build.VERSION.RELEASE}
+                    SDK Level: ${Build.VERSION.SDK_INT}
+                """.trimIndent()
+                ToolResult.success(info)
+            }
+        )
+    )
+}
+```
+
+### Processing User Input
+
+Handle user messages and agent responses:
+
+```kotlin
+fun sendMessage(userInput: String) {
+    viewModelScope.launch {
+        // Add user message to conversation
+        _messages.add(Message.User(userInput))
+
+        // Process with agent
+        _agentState.value = AgentState.Processing
+
+        try {
+            val response = agent.process(userInput)
+
+            // Handle agent response
+            when (response) {
+                is AgentResponse.Message -> {
+                    _messages.add(Message.Agent(response.content))
+                }
+                is AgentResponse.ToolCall -> {
+                    // Agent decided to use a tool
+                    _messages.add(Message.ToolUse(
+                        toolName = response.toolName,
+                        status = "Executing..."
+                    ))
+
+                    // Execute tool and get result
+                    val toolResult = agent.executeTool(response)
+
+                    // Agent processes tool result
+                    val finalResponse = agent.continueWithToolResult(toolResult)
+                    _messages.add(Message.Agent(finalResponse.content))
+                }
+                is AgentResponse.Error -> {
+                    _messages.add(Message.Error(response.message))
+                }
+            }
+
+            _agentState.value = AgentState.Ready
+
+        } catch (e: Exception) {
+            _messages.add(Message.Error("Failed to process: ${e.message}"))
+            _agentState.value = AgentState.Ready
+        }
+    }
+}
+```
+
+### MCP Server Integration
+
+Connect to MCP servers to expand agent capabilities:
+
+```kotlin
+fun connectToMCPServer(serverUrl: String) {
+    viewModelScope.launch {
+        try {
+            // Connect to MCP server
+            val mcpClient = MCPClient.connect(serverUrl)
+
+            // Retrieve available tools from server
+            val remoteTols = mcpClient.listTools()
+
+            // Add remote tools to agent
+            remoteTols.forEach { tool ->
+                agent.addTool(KoogTool(
+                    name = tool.name,
+                    description = tool.description,
+                    parameters = tool.parameters,
+                    handler = { params ->
+                        // Forward to MCP server
+                        mcpClient.executeTool(tool.name, params)
+                    }
+                ))
+            }
+
+            _mcpStatus.value = "Connected to ${remoteTols.size} tools"
+
+        } catch (e: Exception) {
+            _mcpStatus.value = "Failed to connect: ${e.message}"
+        }
+    }
+}
+```
+
+### Event Handling
+
+Listen to agent events for monitoring and debugging:
+
+```kotlin
+agent.addEventListener(object : AgentEventListener {
+    override fun onThinking(thought: String) {
+        // Agent is reasoning about the task
+        Log.d("Agent", "Thinking: $thought")
+    }
+
+    override fun onToolSelected(toolName: String, reasoning: String) {
+        // Agent decided to use a tool
+        Log.d("Agent", "Selected tool: $toolName because: $reasoning")
+    }
+
+    override fun onToolExecuted(toolName: String, result: ToolResult) {
+        // Tool execution completed
+        Log.d("Agent", "Tool $toolName returned: ${result.output}")
+    }
+
+    override fun onError(error: AgentError) {
+        // Agent encountered an error
+        Log.e("Agent", "Error: ${error.message}")
+    }
+})
+```
+
+### Context Management
+
+Maintain conversation context and agent memory:
+
+```kotlin
+// Save context for later
+val context = agent.getContext()
+preferences.edit()
+    .putString("agent_context", Json.encodeToString(context))
+    .apply()
+
+// Restore context in future session
+val savedContext = preferences.getString("agent_context", null)
+if (savedContext != null) {
+    val context = Json.decodeFromString<AgentContext>(savedContext)
+    agent.restoreContext(context)
+}
+```
+
+## Results
+
+LeapKoogAgent demonstrates powerful autonomous agent capabilities on Android:
+
+**Example interaction:**
+
+```
+User: "What's 15% of 340?"
+
+Agent: [Thinking] I need to calculate 15% of 340.
+        I'll use the calculate tool.
+
+Agent: [Using tool: calculate]
+        Expression: "340 * 0.15"
+
+Tool Result: 51.0
+
+Agent: The answer is 51. 15% of 340 equals 51.
+```
+
+**Multi-step task:**
+
+```
+User: "Calculate the average of 10, 20, and 30, then tell me what time it is"
+
+Agent: [Thinking] I need to first calculate the average, then get the current time.
+
+Agent: [Using tool: calculate]
+        Expression: "(10 + 20 + 30) / 3"
+
+Tool Result: 20.0
+
+Agent: [Using tool: get_current_time]
+
+Tool Result: 2024-02-05 14:23:17
+
+Agent: The average of 10, 20, and 30 is 20. The current time is 2:23 PM on February 5th, 2024.
+```
+
+All agent reasoning and tool execution happens entirely on your Android device.
+
+## Further improvements
+
+Here are some ways to extend this example:
+
+- **Custom tool library** - Build domain-specific tools for your app
+- **Multi-agent systems** - Create multiple specialized agents that collaborate
+- **Persistent memory** - Store long-term memories in a database
+- **Voice interaction** - Add speech-to-text and text-to-speech
+- **Proactive agents** - Trigger agents based on time, location, or events
+- **Knowledge base integration** - Connect to local or remote knowledge sources
+- **Task scheduling** - Let agents schedule and execute delayed tasks
+- **Learning capabilities** - Implement feedback loops to improve agent behavior
+- **Agent marketplace** - Allow users to install pre-built agent configurations
+- **Multi-modal inputs** - Process images, audio, and text together
+- **Security and permissions** - Implement fine-grained tool access control
+- **Agent telemetry** - Track agent performance and decision quality
+- **Offline-first design** - Ensure agents work without internet connectivity
+- **Cross-device sync** - Sync agent context across multiple devices
+
+## Need help?
+
+Join the [Liquid AI Discord community](https://discord.gg/DFU3WQeaYD) to:
+- Discuss AI agent architectures
+- Share your agent implementations
+- Get help with Koog framework integration
+- Learn about tool design best practices
+- Connect with developers building autonomous agents

@@ -1,0 +1,230 @@
+---
+title: "Product Slogan Generator with LeapSDK"
+---
+
+<Card title="View Source Code" icon="github" href="https://github.com/Liquid4All/LeapSDK-Examples/tree/main/Android/SloganApp">
+  Browse the complete example on GitHub
+</Card>
+
+This example demonstrates how to use LeapSDK for **single-turn generation** tasks on Android. The SloganApp generates creative product slogans on-device using local language models, showcasing how to integrate AI capabilities for specific product needs without requiring cloud connectivity.
+
+Built with traditional **Android Views**, this example provides a different UI approach compared to Jetpack Compose, making it ideal for teams working with legacy Android codebases.
+
+## What's inside?
+
+The SloganApp showcases:
+
+- **Single-turn Generation** - Generate creative output without maintaining conversation context
+- **Traditional Android Views UI** - Implementation using XML layouts and View-based architecture
+- **On-device Processing** - Complete privacy with local model inference
+- **Simple Integration** - Minimal setup for focused AI tasks
+- **Product-focused Prompting** - Optimized prompts for marketing and slogan generation
+
+This example is perfect for understanding how to integrate LeapSDK into existing Android applications that use the traditional View system rather than Jetpack Compose.
+
+## Environment setup
+
+Before running this example, ensure you have the following:
+
+<Accordion title="Android Studio Installation">
+  Download and install [Android Studio](https://developer.android.com/studio) (latest stable version recommended).
+
+  Make sure you have:
+  - Android SDK installed
+  - An Android device or emulator configured
+  - USB debugging enabled (for physical devices)
+</Accordion>
+
+<Accordion title="Minimum SDK Requirements">
+  This example requires:
+  - **Minimum SDK**: API 24 (Android 7.0)
+  - **Target SDK**: API 34 or higher
+  - **Kotlin**: 1.9.0 or higher
+</Accordion>
+
+<Accordion title="LeapSDK Dependency Setup">
+  Add the LeapSDK to your app-level `build.gradle.kts`:
+
+  ```kotlin
+  dependencies {
+      implementation("ai.liquid.leap:leap-sdk:1.0.0")
+
+      // Android UI components
+      implementation("androidx.appcompat:appcompat:1.6.1")
+      implementation("com.google.android.material:material:1.11.0")
+      implementation("androidx.constraintlayout:constraintlayout:2.1.4")
+  }
+  ```
+</Accordion>
+
+## How to run it
+
+Follow these steps to generate product slogans:
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/Liquid4All/LeapSDK-Examples.git
+   cd LeapSDK-Examples/Android/SloganApp
+   ```
+
+2. **Open in Android Studio**
+   - Launch Android Studio
+   - Select "Open an existing project"
+   - Navigate to the `SloganApp` folder and open it
+
+3. **Gradle sync**
+   - Wait for Gradle to sync all dependencies
+   - Resolve any dependency conflicts if prompted
+
+4. **Run the app**
+   - Connect your Android device or start an emulator
+   - Click "Run" or press `Shift + F10`
+   - Select your target device
+
+5. **Generate slogans**
+   - Enter a product name or description in the input field
+   - Tap the "Generate Slogan" button
+   - Watch as the AI creates creative marketing copy on-device
+   - Generate multiple variations by tapping again
+
+## Usage examples
+
+Try generating slogans for different products:
+
+**Example 1: Technology Product**
+```
+Input: "Wireless noise-cancelling headphones"
+Output: "Silence the world. Amplify your music."
+```
+
+**Example 2: Food Product**
+```
+Input: "Organic cold-pressed juice"
+Output: "Nature's energy, bottled fresh daily."
+```
+
+**Example 3: Service Business**
+```
+Input: "On-demand dog walking service"
+Output: "Happy paws, on your schedule."
+```
+
+**Example 4: Software Product**
+```
+Input: "AI-powered photo editing app"
+Output: "Your photos, brilliantly reimagined."
+```
+
+Each generation produces unique slogans tailored to your product description, perfect for brainstorming marketing campaigns.
+
+## Understanding the architecture
+
+### Traditional Android Views Approach
+
+Unlike the LeapChat example which uses Jetpack Compose, SloganApp demonstrates integration with the traditional Android View system:
+
+**XML Layout Structure:**
+```xml
+<!-- activity_main.xml -->
+<LinearLayout>
+    <EditText
+        android:id="@+id/productInput"
+        android:hint="Enter product name or description" />
+
+    <Button
+        android:id="@+id/generateButton"
+        android:text="Generate Slogan" />
+
+    <TextView
+        android:id="@+id/sloganOutput"
+        android:textStyle="italic" />
+</LinearLayout>
+```
+
+**Activity Implementation:**
+```kotlin
+class MainActivity : AppCompatActivity() {
+    private lateinit var leapModel: LeapModel
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_main)
+
+        // Initialize LeapSDK
+        leapModel = LeapSDK.loadModel("lfm2-700m")
+
+        // Set up UI listeners
+        generateButton.setOnClickListener {
+            val product = productInput.text.toString()
+            generateSlogan(product)
+        }
+    }
+
+    private fun generateSlogan(product: String) {
+        val prompt = """
+            Create a compelling, memorable slogan for: $product
+            Make it concise, catchy, and professional.
+        """.trimIndent()
+
+        // Single-turn generation
+        val slogan = leapModel.generate(prompt)
+        sloganOutput.text = slogan
+    }
+}
+```
+
+### Single-turn Generation Pattern
+
+This example demonstrates **single-turn generation**, where:
+- Each request is independent (no conversation history)
+- The model generates a complete response in one go
+- No need to manage conversation state or context
+- Ideal for focused tasks like slogan generation, summarization, or classification
+
+This pattern is simpler than multi-turn conversations and perfect for specific use cases where context isn't needed.
+
+### Model Selection
+
+The app uses **LFM2-700M**, a lightweight model that balances:
+- **Speed** - Fast generation for responsive UI
+- **Quality** - Creative and coherent slogans
+- **Size** - Smaller footprint suitable for mobile devices
+- **Efficiency** - Lower memory and battery consumption
+
+For more creative outputs, you could swap to larger models like LFM2-1.2B by simply changing the model identifier.
+
+## Results
+
+The SloganApp provides instant slogan generation directly on your Android device:
+
+![SloganApp Screenshot](https://raw.githubusercontent.com/Liquid4All/LeapSDK-Examples/main/Android/SloganApp/docs/screenshot.png)
+
+The interface shows:
+- Clean, simple UI with Material Design components
+- Instant feedback with loading states during generation
+- Generated slogans displayed with italic styling for emphasis
+- Ability to regenerate for multiple creative options
+
+All processing happens on-device, ensuring complete privacy for your product ideas and marketing concepts.
+
+## Further improvements
+
+Here are some ways to extend this example:
+
+- **Multiple variations** - Generate 3-5 slogan options at once for comparison
+- **Style selection** - Let users choose tone (professional, playful, luxury, etc.)
+- **Length control** - Add options for short taglines vs. longer slogans
+- **History tracking** - Save generated slogans with timestamps and product names
+- **Share functionality** - Export slogans via Android's share intent
+- **Copy to clipboard** - One-tap copy for easy paste into marketing materials
+- **Language support** - Generate slogans in multiple languages
+- **Industry templates** - Pre-configured prompts for different industries (tech, food, fashion)
+- **A/B testing mode** - Compare multiple AI-generated options side-by-side
+
+## Need help?
+
+Join the [Liquid AI Discord community](https://discord.gg/DFU3WQeaYD) to:
+- Ask questions about single-turn generation patterns
+- Share your slogan generation results
+- Learn about prompt engineering for creative tasks
+- Get integration help for Android Views projects
