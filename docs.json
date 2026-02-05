@@ -200,13 +200,6 @@
             ]
           },
           {
-            "group": "iOS Examples",
-            "icon": "apple",
-            "pages": [
-              "examples/deploy-models-on-ios/slogan-generator-app"
-            ]
-          },
-          {
             "group": "Android Examples",
             "icon": "robot",
             "pages": [
