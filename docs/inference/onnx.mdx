@@ -9,11 +9,70 @@ description: "ONNX provides a platform-agnostic inference specification that all
 
 ONNX (Open Neural Network Exchange) is a portable format that enables LFM inference across diverse hardware and runtimes. ONNX models run on CPUs, GPUs, NPUs, and in browsers via WebGPU—making them ideal for edge deployment and web applications.
 
-Many LFM models are available as pre-exported ONNX packages on Hugging Face. For models not yet available, use the [LiquidONNX](#liquidonnx-export-tool) tool to export any LFM to ONNX.
+## LiquidONNX
+
+[LiquidONNX](https://github.com/Liquid4All/onnx-export) is the official tool for exporting LFM models to ONNX and running inference.
+
+### Installation
+
+```bash
+git clone https://github.com/Liquid4All/onnx-export.git
+cd onnx-export
+uv sync
+
+# For GPU inference
+uv sync --extra gpu
+```
+
+### Supported Models
+
+| Family | Quantization Formats |
+|--------|---------------------|
+| LFM2.5, LFM2 (text) | fp32, fp16, q4, q8 |
+| LFM2.5-VL, LFM2-VL (vision) | fp32, fp16, q4, q8 |
+| LFM2-MoE | fp32, fp16, q4, q4f16 |
+| LFM2.5-Audio | fp32, fp16, q4, q8 |
+
+### Export
+
+```bash
+# Text models - export with all precisions (fp16, q4, q8)
+uv run lfm2-export LiquidAI/LFM2.5-1.2B-Instruct --precision
+
+# Vision-language models
+uv run lfm2-vl-export LiquidAI/LFM2.5-VL-1.6B --precision
+
+# MoE models
+uv run lfm2-moe-export LiquidAI/LFM2-8B-A1B --precision
+
+# Audio models
+uv run lfm2-audio-export LiquidAI/LFM2.5-Audio-1.5B --precision
+```
+
+### Inference
+
+```bash
+# Text model chat
+uv run lfm2-infer --model ./exports/LFM2.5-1.2B-Instruct-ONNX/onnx/model_q4.onnx
+
+# Vision-language with images
+uv run lfm2-vl-infer --model ./exports/LFM2.5-VL-1.6B-ONNX \
+    --images photo.jpg --prompt "Describe this image"
+
+# Audio transcription (ASR)
+uv run lfm2-audio-infer LFM2.5-Audio-1.5B-ONNX --mode asr \
+    --audio input.wav --precision q4
+
+# Text-to-speech (TTS)
+uv run lfm2-audio-infer LFM2.5-Audio-1.5B-ONNX --mode tts \
+    --prompt "Hello, how are you?" --output speech.wav --precision q4
+```
+
+For complete documentation and advanced options, see the [LiquidONNX GitHub repository](https://github.com/Liquid4All/onnx-export).
 
 ## Pre-exported Models
 
-Pre-exported ONNX models are available from [LiquidAI](https://huggingface.co/LiquidAI/models?search=onnx) and the [onnx-community](https://huggingface.co/onnx-community). Check the [Model Library](/docs/models/complete-library) for a complete list of available formats.
+Many LFM models are available as pre-exported ONNX packages from [LiquidAI](https://huggingface.co/LiquidAI/models?search=onnx) and the [onnx-community](https://huggingface.co/onnx-community). Check the [Model Library](/docs/models/complete-library) for a complete list of available formats.
 
 ### Quantization Options
 
@@ -161,90 +220,3 @@ console.log(tokenizer.decode(output[0], { skip_special_tokens: true }));
 <Note>
 WebGPU supports Q4 and FP16 precision. Q8 quantization is not available in browser environments.
 </Note>
-
-## LiquidONNX Export Tool
-
-[LiquidONNX](https://github.com/Liquid4All/onnx-export) is the official tool for exporting LFM models to ONNX. Use it to export models not yet available as pre-built packages, or to customize export settings.
-
-### Installation
-
-```bash
-git clone https://github.com/Liquid4All/onnx-export.git
-cd onnx-export
-uv sync
-
-# For GPU inference
-uv sync --extra gpu
-```
-
-### Supported Models
-
-| Family | Quantization Formats |
-|--------|---------------------|
-| LFM2.5, LFM2 (text) | fp32, fp16, q4, q8 |
-| LFM2.5-VL, LFM2-VL (vision) | fp32, fp16, q4, q8 |
-| LFM2-MoE | fp32, fp16, q4, q4f16 |
-| LFM2.5-Audio | fp32, fp16, q4, q8 |
-
-### Export Commands
-
-**Text models:**
-```bash
-# Export with all precisions (fp16, q4, q8)
-uv run lfm2-export LiquidAI/LFM2.5-1.2B-Instruct --precision
-
-# Export specific precisions
-uv run lfm2-export LiquidAI/LFM2.5-1.2B-Instruct --precision fp16 q4
-```
-
-**Vision-language models:**
-```bash
-uv run lfm2-vl-export LiquidAI/LFM2.5-VL-1.6B --precision
-
-# Alternative vision format for specific runtimes
-uv run lfm2-vl-export LiquidAI/LFM2.5-VL-1.6B --vision-format conv2d
-```
-
-**MoE models:**
-```bash
-uv run lfm2-moe-export LiquidAI/LFM2-8B-A1B --precision
-```
-
-**Audio models:**
-```bash
-uv run lfm2-audio-export LiquidAI/LFM2.5-Audio-1.5B --precision
-```
-
-### Export Options
-
-| Flag | Description |
-|------|-------------|
-| `--precision` | Output formats: `fp16`, `q4`, `q8`, or omit args for all |
-| `--output-dir` | Output base directory (default: current directory) |
-| `--skip-export` | Skip FP32 export, only run quantization on existing export |
-| `--block-size` | Block size for quantization (default: 32) |
-| `--q4-asymmetric` | Use asymmetric Q4 (default is symmetric for WebGPU) |
-| `--split-data` | Split external data into chunks in GB (default: 2.0) |
-
-### Inference with LiquidONNX
-
-LiquidONNX includes inference commands for testing exported models:
-
-```bash
-# Text model chat
-uv run lfm2-infer --model ./exports/LFM2.5-1.2B-Instruct-ONNX/onnx/model_q4.onnx
-
-# Vision-language with images
-uv run lfm2-vl-infer --model ./exports/LFM2.5-VL-1.6B-ONNX \
-    --images photo.jpg --prompt "Describe this image"
-
-# Audio transcription (ASR)
-uv run lfm2-audio-infer LFM2.5-Audio-1.5B-ONNX --mode asr \
-    --audio input.wav --precision q4
-
-# Text-to-speech (TTS)
-uv run lfm2-audio-infer LFM2.5-Audio-1.5B-ONNX --mode tts \
-    --prompt "Hello, how are you?" --output speech.wav --precision q4
-```
-
-For complete documentation and advanced options, see the [LiquidONNX GitHub repository](https://github.com/Liquid4All/onnx-export).
