@@ -9,17 +9,27 @@ description: "Transformers is a library for inference and training of pretrained
 
 Transformers provides the most flexibility for model development and is ideal for users who want direct access to model internals. For production deployments with high throughput, consider using [vLLM](/docs/inference/vllm).
 
+<div className="colab-link">
+  <a href="https://colab.research.google.com/github/Liquid4All/docs/blob/main/notebooks/LFM2_Inference_with_Transformers.ipynb" target="_blank">
+    <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open in Colab" />
+  </a>
+</div>
+
 ## Installation
+
+<Note>
+We use [uv](https://docs.astral.sh/uv/#installation) to manage packages across all our code examples. It's backwards compatible with pip.
+</Note>
 
 Install the required dependencies:
 
 ```bash
-pip install "transformers>=5.0.0" torch
+uv pip install "transformers>=5.0.0" torch accelerate
 ```
 
 > **Note:** Transformers v5 is newly released. If you encounter issues, fall back to the pinned git source:
 > ```bash
-> pip install git+https://github.com/huggingface/transformers.git@0c9a72e4576fe4c84077f066e585129c97bfd4e6 torch
+> uv pip install git+https://github.com/huggingface/transformers.git@0c9a72e4576fe4c84077f066e585129c97bfd4e6 torch accelerate
 > ```
 
 GPU is recommended for faster inference.

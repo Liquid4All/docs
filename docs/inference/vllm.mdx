@@ -9,12 +9,18 @@ description: "vLLM is a high-throughput and memory-efficient inference engine fo
 
 vLLM offers significantly higher throughput than [Transformers](/docs/inference/transformers), making it ideal for serving many concurrent requests. However, it requires a CUDA-compatible GPU. For CPU-only environments, consider using [llama.cpp](/docs/inference/llama-cpp) instead.
 
+<div className="colab-link">
+  <a href="https://colab.research.google.com/github/Liquid4All/docs/blob/main/notebooks/LFM2_Inference_with_vLLM.ipynb" target="_blank">
+    <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open in Colab" />
+  </a>
+</div>
+
 ## Installation
 
-You need to install [`vLLM`](https://github.com/vllm-project/vllm) v0.10.2 or a more recent version:
+You need to install [`vLLM`](https://github.com/vllm-project/vllm) v0.14 or a more recent version:
 
 ```bash
-pip install vllm==0.10.2 --extra-index-url https://wheels.vllm.ai/0.10.2/ --torch-backend=auto
+uv pip install vllm==0.14
 ```
 
 ## Basic Usage
@@ -182,17 +188,17 @@ vLLM support for LFM Vision Models requires a specific version that includes cha
 To use LFM Vision Models with vLLM, install the precompiled wheel along with the required transformers version:
 
 ```bash
-VLLM_PRECOMPILED_WHEEL_COMMIT=72506c98349d6bcd32b4e33eec7b5513453c1502 VLLM_USE_PRECOMPILED=1 pip install git+https://github.com/vllm-project/vllm.git
+VLLM_PRECOMPILED_WHEEL_COMMIT=72506c98349d6bcd32b4e33eec7b5513453c1502 VLLM_USE_PRECOMPILED=1 uv pip install git+https://github.com/vllm-project/vllm.git
 ```
 
 ```bash
-pip install "transformers>=5.0.0" pillow
+uv pip install "transformers>=5.0.0" pillow
 ```
 
 <Note>
 Transformers v5 is newly released. If you encounter issues, fall back to the pinned git source:
 ```bash
-pip install git+https://github.com/huggingface/transformers.git@3c2517727ce28a30f5044e01663ee204deb1cdbe pillow
+uv pip install git+https://github.com/huggingface/transformers.git@3c2517727ce28a30f5044e01663ee204deb1cdbe pillow
 ```
 </Note>
 

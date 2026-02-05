@@ -9,6 +9,16 @@ description: "Ollama is a command-line tool for running LLMs locally with a simp
 
 Ollama uses GGUF models and supports GPU acceleration (CUDA, Metal, ROCm).
 
+<Warning>
+  LFM2 and LFM2.5 VL models currently do not work with Ollama. Our team has opened [this PR](https://github.com/ollama/ollama/pull/1406), that once merged will solve the issue. Do not attempt to use Ollama with LFM2 and LFM2.5 VL models until this PR gets merged into ollama:main branch.
+</Warning>
+
+<div className="colab-link">
+  <a href="https://colab.research.google.com/github/Liquid4All/docs/blob/main/notebooks/LFM2_Inference_with_Ollama.ipynb" target="_blank">
+    <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open in Colab" />
+  </a>
+</div>
+
 ## Installation
 
 <Tabs>
@@ -62,7 +72,7 @@ See the [Models page](/docs/models/complete-library) for all available GGUF repo
 To use a local GGUF file, first download a model from Hugging Face:
 
 ```bash
-pip install huggingface-hub
+uv pip install huggingface-hub
 hf download LiquidAI/LFM2.5-1.2B-Instruct-GGUF {quantization}.gguf --local-dir .
 ```
 

@@ -9,6 +9,12 @@ description: "llama.cpp is a C++ library for efficient LLM inference with minima
 
 For GPU-accelerated inference at scale, consider using [vLLM](/docs/inference/vllm) instead.
 
+<div className="colab-link">
+  <a href="https://colab.research.google.com/github/Liquid4All/docs/blob/main/notebooks/LFM2_Inference_with_llama_cpp.ipynb" target="_blank">
+    <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open in Colab" />
+  </a>
+</div>
+
 ## Installation
 
 <Tabs>
@@ -99,7 +105,7 @@ llama.cpp uses the GGUF format, which stores quantized model weights for efficie
 You can download LFM models in GGUF format from Hugging Face as follows:
 
 ```bash
-pip install huggingface-hub
+uv pip install huggingface-hub
 hf download LiquidAI/LFM2.5-1.2B-Instruct-GGUF lfm2.5-1.2b-instruct-q4_k_m.gguf --local-dir .
 ```
 
@@ -272,7 +278,7 @@ The `-hf` flag downloads the model directly from Hugging Face. Use `--image-max-
 If you prefer to download models manually:
 
 ```bash
-pip install huggingface-hub
+uv pip install huggingface-hub
 hf download LiquidAI/LFM2-VL-1.6B-GGUF LFM2-VL-1.6B-Q8_0.gguf --local-dir .
 hf download LiquidAI/LFM2-VL-1.6B-GGUF mmproj-LFM2-VL-1.6B-Q8_0.gguf --local-dir .
 ```
