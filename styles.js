@@ -84,6 +84,20 @@
       background-color: #864bc4 !important;
     }
 
+    /* Fix GitHub icon visibility in light mode for standalone Cards (not in card-groups) */
+    /* Target all Card icons including github icons in example pages */
+    :root:not(.dark) [class*="card"] svg:not([class*="arrow"]),
+    :root:not(.dark) a[class*="block"][class*="border"] svg:not([class*="arrow"]) {
+      background-color: #864bc4 !important;
+    }
+
+    /* For mask-image based icons, also set the color property as fallback */
+    :root:not(.dark) [class*="card"] [style*="mask-image"],
+    :root:not(.dark) a[class*="block"][class*="border"] [style*="mask-image"] {
+      background-color: #864bc4 !important;
+      color: #864bc4 !important;
+    }
+
     /* Hide external link arrow on Discord card */
     a[href*="discord"] svg[class*="arrow"],
     a[href*="discord.gg"] svg[class*="arrow"] {
