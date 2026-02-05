@@ -15,9 +15,11 @@ Constrained generation is essential for building reliable AI-powered application
 The RecipeGenerator demonstrates advanced LeapSDK capabilities:
 
 - **Structured Output Generation** - Enforce JSON schema constraints on model outputs
+- **Automatic Model Downloading** - Models download automatically via `LeapDownloader` on first run
 - **Constrained Decoding** - Guide the model to produce valid, parseable data structures
 - **Schema Validation** - Ensure generated recipes follow a specific format
-- **Type Safety** - Parse AI outputs directly into Kotlin data classes
+- **Type Safety** - Parse AI outputs directly into Kotlin data classes with kotlinx.serialization
+- **@Generatable Annotation** - Use LeapSDK's annotation for simplified structured output generation
 - **Production-ready Pattern** - Integrate AI outputs with databases and business logic
 - **Practical Use Case** - Generate recipes with ingredients, steps, and metadata
 
@@ -64,44 +66,38 @@ Before running this example, ensure you have the following:
   - **Minimum SDK**: API 24 (Android 7.0)
   - **Target SDK**: API 34 or higher
   - **Kotlin**: 1.9.0 or higher
+  - **LeapSDK**: 0.9.4 or higher
+  - **Internet connectivity**: Required for first-time model download
 </Accordion>
 
-<Accordion title="Model Bundle Deployment">
-  This example requires the **LFM2-700M** model bundle to be deployed to your Android device.
+<Accordion title="Model Setup - Automatic Download">
+  This example uses **LeapSDK 0.9.4+** with automatic model downloading capabilities.
 
-  **Step 1: Download the model bundle**
+  **Automatic Model Management**
 
-  Download the LFM2-700M bundle from the Leap Model Library (or use your existing bundle file).
+  The app uses `LeapDownloader` to automatically download and cache the **LFM2-700M** model on first run:
 
-  **Step 2: Push to device via ADB**
+  - On first launch, the model downloads automatically from Leap Model Library
+  - Models are cached locally for subsequent app launches
+  - No manual ADB push or file transfer required
+  - Internet connectivity is required only for the initial download
 
-  Use the Android Debug Bridge (ADB) to transfer the model to your device:
+  **First Run Experience:**
 
-  ```bash
-  # Ensure your device is connected and ADB is installed
-  adb devices
+  1. Launch the app (internet connection required)
+  2. The model downloads automatically (may take 2-5 minutes depending on connection)
+  3. Once cached, subsequent launches work offline
+  4. The model persists across app restarts
 
-  # Create the directory on device
-  adb shell mkdir -p /data/local/tmp/liquid/
+  **Manual Deployment (Alternative)**
 
-  # Push the model bundle to the device
-  adb push LFM2-700M-8da4w_output_8da8w-seq_4096.bundle /data/local/tmp/liquid/
-
-  # Verify the file was transferred
-  adb shell ls -lh /data/local/tmp/liquid/
-  ```
-
-  **Note:** The exact bundle filename may vary. Adjust the path accordingly.
-
-  **Alternative: Use device storage**
-
-  If you don't have root access to `/data/local/tmp/`, you can push to external storage:
+  If you prefer manual deployment or need offline-first installation, you can still use ADB:
 
   ```bash
-  # Push to Downloads folder
-  adb push LFM2-700M-8da4w_output_8da8w-seq_4096.bundle /sdcard/Download/
+  # Push the model bundle to device storage
+  adb push LFM2-700M.bundle /data/local/tmp/liquid/
 
-  # Update the app code to load from this path instead
+  # Update app code to load from this path instead of using LeapDownloader
   ```
 </Accordion>
 
@@ -110,11 +106,10 @@ Before running this example, ensure you have the following:
 
   ```kotlin
   dependencies {
-      // LeapSDK for constrained generation
-      implementation("ai.liquid.leap:leap-sdk:1.0.0")
+      // LeapSDK for constrained generation (0.9.4+)
+      implementation("ai.liquid.leap:leap-sdk:0.9.7")
 
-      // JSON serialization
-      implementation("com.google.code.gson:gson:2.10.1")
+      // Kotlin serialization for type-safe parsing
       implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")
 
       // Jetpack Compose (if using Compose UI)
@@ -124,6 +119,14 @@ Before running this example, ensure you have the following:
 
       // ViewModel
       implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.7.0")
+  }
+  ```
+
+  **Also enable the Kotlin serialization plugin** in your app-level `build.gradle.kts`:
+
+  ```kotlin
+  plugins {
+      id("org.jetbrains.kotlin.plugin.serialization") version "1.9.0"
   }
   ```
 </Accordion>
@@ -138,30 +141,36 @@ Follow these steps to generate structured recipes:
    cd LeapSDK-Examples/Android/RecipeGenerator
    ```
 
-2. **Deploy the model bundle**
-   - Follow the ADB commands in the setup section above
-   - Ensure the model is accessible at the correct path
-
-3. **Open in Android Studio**
+2. **Open in Android Studio**
    - Launch Android Studio
    - Select "Open an existing project"
    - Navigate to the `RecipeGenerator` folder and open it
 
-4. **Verify model path**
-   - Open `MainActivityViewModel.kt`
-   - Check that the model path matches where you pushed the bundle
-   - Update if necessary
+3. **Gradle sync**
+   - Wait for Gradle to sync all dependencies
+   - Ensure LeapSDK 0.9.7 is downloaded
 
-5. **Run the app**
+4. **Run the app**
    - Connect your Android device or start an emulator
+   - **Ensure internet connectivity** (required for first-time model download)
    - Click "Run" or press `Shift + F10`
    - Select your target device
+
+5. **First launch - model download**
+   - On first run, the app will automatically download the LFM2-700M model
+   - This may take 2-5 minutes depending on your connection
+   - A loading indicator will show download progress
+   - The model is cached for future use
 
 6. **Generate recipes**
    - Enter ingredients or a dish name (e.g., "pasta carbonara", "chocolate chip cookies")
    - Tap "Generate Recipe"
    - The app will produce a structured recipe with ingredients, steps, and metadata
    - All output will be valid JSON conforming to the recipe schema
+
+<Note>
+  **After First Run**: The model is cached locally. Subsequent app launches work offline and start immediately without downloading.
+</Note>
 
 ## Code walkthrough
 
@@ -202,11 +211,26 @@ class MainActivityViewModel : ViewModel() {
     private lateinit var model: LeapModel
 
     fun initializeModel() {
-        // Load the model from the bundle
-        model = LeapSDK.loadModelFromBundle(
-            path = "/data/local/tmp/liquid/LFM2-700M-8da4w_output_8da8w-seq_4096.bundle"
-        )
+        viewModelScope.launch {
+            // Download and load the model automatically (LeapSDK 0.9.4+)
+            model = LeapDownloader.downloadAndLoadModel(
+                modelName = "lfm2-700m",
+                onProgress = { progress ->
+                    // Update UI with download progress
+                    _downloadProgress.value = progress
+                }
+            )
 
+            // Alternative: Load from local bundle if already cached
+            // model = LeapSDK.loadModelFromBundle(
+            //     path = "/data/local/tmp/liquid/lfm2-700m.bundle"
+            // )
+
+            configureConstraints()
+        }
+    }
+
+    private fun configureConstraints() {
         // Define the JSON schema for recipes
         val recipeSchema = """
         {
@@ -243,11 +267,12 @@ class MainActivityViewModel : ViewModel() {
         }
         """.trimIndent()
 
-        // Configure constrained generation
-        model.setConstraint(
-            type = ConstraintType.JSON_SCHEMA,
-            schema = recipeSchema
-        )
+            // Configure constrained generation
+            model.setConstraint(
+                type = ConstraintType.JSON_SCHEMA,
+                schema = recipeSchema
+            )
+        }
     }
 }
 ```
@@ -286,6 +311,38 @@ fun generateRecipe(userInput: String) {
     }
 }
 ```
+
+### Alternative: Using @Generatable Annotation
+
+LeapSDK 0.9.4+ provides the `@Generatable` annotation for simplified structured output:
+
+```kotlin
+@Generatable
+data class Recipe(
+    val name: String,
+    val description: String,
+    val servings: Int,
+    val prepTime: String,
+    val cookTime: String,
+    val difficulty: String,
+    val ingredients: List<Ingredient>,
+    val instructions: List<String>,
+    val tags: List<String>
+)
+
+// Generate directly with type inference
+fun generateRecipeSimplified(userInput: String) {
+    viewModelScope.launch {
+        val recipe = model.generate<Recipe>(
+            prompt = "Generate a recipe for: $userInput"
+        )
+        // Recipe is automatically parsed and type-safe
+        _recipeState.value = RecipeState.Success(recipe)
+    }
+}
+```
+
+The `@Generatable` annotation automatically creates the JSON schema from your Kotlin data class, eliminating manual schema definition.
 
 ### Display the Recipe
 
