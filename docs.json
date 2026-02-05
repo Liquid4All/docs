@@ -210,7 +210,6 @@
             "group": "Android Examples",
             "icon": "robot",
             "pages": [
-              "examples/android/leap-chat",
               "examples/android/slogan-generator",
               "examples/android/web-content-summarizer",
               "examples/android/recipe-generator-constrained-output",
