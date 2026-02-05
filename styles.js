@@ -70,11 +70,14 @@
     }
 
     /* Purple accent border and arrow on HOVER only in light mode */
-    :root:not(.dark) .card-group a[class*="block"][class*="border"]:hover {
+    /* Target both card-group cards AND standalone cards */
+    :root:not(.dark) .card-group a[class*="block"][class*="border"]:hover,
+    :root:not(.dark) a[class*="block"][class*="border"]:hover {
       border-color: #864bc4 !important;
     }
 
-    :root:not(.dark) .card-group a[class*="block"]:hover svg {
+    :root:not(.dark) .card-group a[class*="block"]:hover svg,
+    :root:not(.dark) a[class*="block"]:hover svg {
       color: #864bc4 !important;
     }
 
