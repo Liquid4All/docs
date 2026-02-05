@@ -2,9 +2,13 @@
 title: "Fine tuning LFM2-VL to identify car makers from images"
 ---
 
+<Card title="View Source Code" icon="github" href="https://github.com/Liquid4All/cookbook/tree/main/examples/car-maker-identification">
+  Browse the complete example on GitHub
+</Card>
+
 A step by step guide on fine tuning a Vision Language Model for image identification tasks. The task we solve in this example is to identify the car maker from an image, but the learnings transfer to any other image classification task you might be interested in.
 
-![](/images/examples/customize-models/assets/images/task-01484227e78d02da63eeb840de314523.png)
+![]()
 
 ## This is what you will learn[​](#this-is-what-you-will-learn "Direct link to This is what you will learn")
 
@@ -18,26 +22,33 @@ In this example, you will learn how to:
 
 ### 1. Clone the repository:[​](#1-clone-the-repository "Direct link to 1. Clone the repository:")
 
-```
-git clone https://github.com/Liquid4All/cookbook.gitcd cookbook/examples/car-maker-identification
+```sh
+git clone https://github.com/Liquid4All/cookbook.git
+cd cookbook/examples/car-maker-identification
 ```
 
 ### 2. Evaluate base LFM2-VL models without structured generation[​](#2-evaluate-base-lfm2-vl-models-without-structured-generation "Direct link to 2. Evaluate base LFM2-VL models without structured generation")
 
-```
-make evaluate config=eval_lfm_450M_raw_generation.yamlmake evaluate config=eval_lfm_1.6B_raw_generation.yamlmake evaluate config=eval_lfm_3B_raw_generation.yaml
+```sh
+make evaluate config=eval_lfm_450M_raw_generation.yaml
+make evaluate config=eval_lfm_1.6B_raw_generation.yaml
+make evaluate config=eval_lfm_3B_raw_generation.yaml
 ```
 
 ### 3. Evaluate base LFM2-VL models with structured generation[​](#3-evaluate-base-lfm2-vl-models-with-structured-generation "Direct link to 3. Evaluate base LFM2-VL models with structured generation")
 
-```
-make evaluate config=eval_lfm_450M_structured_generation.yamlmake evaluate config=eval_lfm_1.6B_structured_generation.yamlmake evaluate config=eval_lfm_3B_structured_generation.yaml
+```sh
+make evaluate config=eval_lfm_450M_structured_generation.yaml
+make evaluate config=eval_lfm_1.6B_structured_generation.yaml
+make evaluate config=eval_lfm_3B_structured_generation.yaml
 ```
 
 ### 4. Fine-tune base LFM2-VL models with LoRA[​](#4-fine-tune-base-lfm2-vl-models-with-lora "Direct link to 4. Fine-tune base LFM2-VL models with LoRA")
 
-```
-make fine-tune config=finetune_lfm_450M.yamlmake fine-tune config=finetune_lfm_1.6B.yamlmake fine-tune config=finetune_lfm_3B.yaml
+```sh
+make fine-tune config=finetune_lfm_450M.yaml
+make fine-tune config=finetune_lfm_1.6B.yaml
+make fine-tune config=finetune_lfm_3B.yaml
 ```
 
 ## Environment setup[​](#environment-setup "Direct link to Environment setup")
@@ -119,8 +130,10 @@ Let's go one by one.
 
 Once you have installed these tools, you can git clone the repository and create the virtual environment with the following command:
 
-```
-git clone https://github.com/Liquid4All/cookbook.gitcd cookbook/examples/car-maker-identificationuv sync
+```sh
+git clone https://github.com/Liquid4All/cookbook.git
+cd cookbook/examples/car-maker-identification
+uv sync
 ```
 
 ## Steps to fine-tune LFM2-VL for this task[​](#steps-to-fine-tune-lfm2-vl-for-this-task "Direct link to Steps to fine-tune LFM2-VL for this task")
@@ -176,7 +189,10 @@ To build a model-agnostic evaluation script, it is best practice to decouple the
 In the `configs` directory you will find the 3 YAML files we use to evaluate these 3 models on this task
 
 ```
-configs/   ├── eval_lfm_450M_raw_generation.yaml   ├── eval_lfm_1.6B_raw_generation.yaml   └── eval_lfm_3B_raw_generation.yaml
+configs/
+├── eval_lfm_450M_raw_generation.yaml
+├── eval_lfm_1.6B_raw_generation.yaml
+└── eval_lfm_3B_raw_generation.yaml
 ```
 
 These YAML configs are loaded into our Python script using the `EvaluationConfig` class in `src/car_maker_identification/config.py`, so we ensure
@@ -187,15 +203,71 @@ These YAML configs are loaded into our Python script using the `EvaluationConfig
 We use the same evaluation dataset of 100 samples, and the same system prompt and user prompt for the 3 models.
 
 <Accordion title="Click to see system and user prompts">
-  ```
-  system_prompt: |  You excel at identifying car makers from pictures.user_prompt: |  What car maker do you see in this picture?  Pick one from the following list:  - AM  - Acura  - Aston  - Audi  - BMW  - Bentley  - Bugatti  - Buick  - Cadillac  - Chevrolet  - Chrysler  - Daewoo  - Dodge  - Eagle  - FIAT  - Ferrari  - Fisker  - Ford  - GMC  - Geo  - HUMMER  - Honda  - Hyundai  - Infiniti  - Isuzu  - Jaguar  - Jeep  - Lamborghini  - Land  - Lincoln  - MINI  - Maybach  - Mazda  - McLaren  - Mercedes-Benz  - Mitsubishi  - Nissan  - Plymouth  - Porsche  - Ram  - Rolls-Royce  - Scion  - Spyker  - Suzuki  - Tesla  - Toyota  - Volkswagen  - Volvo  - smart
+  ```yaml
+  system_prompt: |
+    You excel at identifying car makers from pictures.
+
+  user_prompt: |
+    What car maker do you see in this picture?
+    Pick one from the following list:
+    - AM
+    - Acura
+    - Aston
+    - Audi
+    - BMW
+    - Bentley
+    - Bugatti
+    - Buick
+    - Cadillac
+    - Chevrolet
+    - Chrysler
+    - Daewoo
+    - Dodge
+    - Eagle
+    - FIAT
+    - Ferrari
+    - Fisker
+    - Ford
+    - GMC
+    - Geo
+    - HUMMER
+    - Honda
+    - Hyundai
+    - Infiniti
+    - Isuzu
+    - Jaguar
+    - Jeep
+    - Lamborghini
+    - Land
+    - Lincoln
+    - MINI
+    - Maybach
+    - Mazda
+    - McLaren
+    - Mercedes-Benz
+    - Mitsubishi
+    - Nissan
+    - Plymouth
+    - Porsche
+    - Ram
+    - Rolls-Royce
+    - Scion
+    - Spyker
+    - Suzuki
+    - Tesla
+    - Toyota
+    - Volkswagen
+    - Volvo
+    - smart
   ```
 </Accordion>
 
 You can run the evaluation for the 3 models with the following commands:
 
-```
-make evaluate config=eval_lfm_450M_raw_generation.yamlmake evaluate config=eval_lfm_1.6B_raw_generation.yamlmake evaluate config=eval_lfm_3B_raw_generation.yaml
+```sh
+make evaluate config=eval_lfm_450M_raw_generation.yaml
+make evaluate config=eval_lfm_1.6B_raw_generation.yaml
+make evaluate config=eval_lfm_3B_raw_generation.yaml
 ```
 
 Each evaluation run is logged as a Weights & Biases run, and you can see the results in the [WandB dashboard](https://wandb.ai/home). For each run we log 2 important metrics:
@@ -241,20 +313,41 @@ For structured generation in Python apps we recommend the [Outlines](https://git
 
 With Outlines we define the schema of the model output and Outlines integrates with the inference provider (in this case the Transformers library) during inference to make sure that at each step of the decoding process only tokens that correspond to the schema are generated.
 
-```
-class CarIdentificationOutputType(BaseModel):   pred_class: Literal[      "AM",      "Acura",      "Aston",      "Audi",      "BMW",      "Bentley",      "Bugatti",      "Buick",      ...      "Tesla",      "Toyota",      "Volkswagen",      "Volvo",      "smart",   ]
+```python
+class CarIdentificationOutputType(BaseModel):
+    pred_class: Literal[
+        "AM",
+        "Acura",
+        "Aston",
+        "Audi",
+        "BMW",
+        "Bentley",
+        "Bugatti",
+        "Buick",
+        ...
+        "Tesla",
+        "Toyota",
+        "Volkswagen",
+        "Volvo",
+        "smart",
+    ]
 ```
 
 The 3 configuration files to run evaluation of LFM2-VL models with structured generation are:
 
 ```
-configs/   ├── eval_lfm_450M_structured_generation.yaml   ├── eval_lfm_1.6B_structured_generation.yaml   └── eval_lfm_3B_structured_generation.yaml
+configs/
+├── eval_lfm_450M_structured_generation.yaml
+├── eval_lfm_1.6B_structured_generation.yaml
+└── eval_lfm_3B_structured_generation.yaml
 ```
 
 You can re-run the evaluations using structured generation as follows:
 
-```
-make evaluate config=eval_lfm_450M_structured_generation.yamlmake evaluate config=eval_lfm_1.6B_structured_generation.yamlmake evaluate config=eval_lfm_3B_structured_generation.yaml
+```sh
+make evaluate config=eval_lfm_450M_structured_generation.yaml
+make evaluate config=eval_lfm_1.6B_structured_generation.yaml
+make evaluate config=eval_lfm_3B_structured_generation.yaml
 ```
 
 ### Structured Generation Results[​](#structured-generation-results "Direct link to Structured Generation Results")
@@ -279,8 +372,10 @@ To fine-tune the model, we will use the LoRA technique. LoRA is a parameter-effi
 
 You can fine-tune each of the 3 LFM2-VL models with LoRA as follows:
 
-```
-make fine-tune config=finetune_lfm_450M.yamlmake fine-tune config=finetune_lfm_1.6B.yamlmake fine-tune config=finetune_lfm_3B.yaml
+```sh
+make fine-tune config=finetune_lfm_450M.yaml
+make fine-tune config=finetune_lfm_1.6B.yaml
+make fine-tune config=finetune_lfm_3B.yaml
 ```
 
 The train loss curves for the 3 models stabilize around very different loss values, where
@@ -322,7 +417,7 @@ So, let's go back to the evaluation step.
 
 To evaluate the fine-tuned model, we will use the `evaluate.py` script again, but this time we will use the last model checkpoint.
 
-```
+```sh
 make evaluate config=eval_lfm_3B_checkpoint_1000.yaml
 ```
 
