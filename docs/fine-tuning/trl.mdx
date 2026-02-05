@@ -9,6 +9,8 @@ description: "TRL (Transformer Reinforcement Learning) is a library for fine-tun
 
 LFM models work out-of-the-box with TRL without requiring any custom integration.
 
+Different training methods require specific dataset formats. See [Finetuning Datasets](/docs/fine-tuning/datasets) for format requirements.
+
 ## Installation[​](#installation "Direct link to Installation")
 
 Install TRL and required dependencies:
@@ -23,9 +25,9 @@ pip install trl>=0.9.0 transformers>=4.55.0 torch>=2.6 peft accelerate
 
 ## Supervised Fine-Tuning (SFT)[​](#supervised-fine-tuning-sft "Direct link to Supervised Fine-Tuning (SFT)")
 
-[![Colab link](/images/lfm/fine-tuning/production/uploads/61b8e2ba285851687028d395/vlOyMEjwHa_b_LXysEu2E.png)](https://colab.research.google.com/drive/1j5Hk_SyBb2soUsuhU0eIEA9GwLNRnElF?usp=sharing)
+[![Colab link](/images/lfm/fine-tuning/production/uploads/61b8e2ba285851687028d395/vlOyMEjwHa_b_LXysEu2E.png)](https://colab.research.google.com/github/Liquid4All/docs/blob/main/notebooks/💧_LFM2_5_SFT_with_TRL.ipynb)
 
-The `SFTTrainer` makes it easy to fine-tune LFM models on instruction-following or conversational datasets. It handles chat templates, packing, and dataset formatting automatically.
+The `SFTTrainer` makes it easy to fine-tune LFM models on instruction-following or conversational datasets. It handles chat templates, packing, and dataset formatting automatically. SFT training requires [Instruction datasets](/docs/fine-tuning/datasets#instruction-datasets-sft).
 
 ### LoRA Fine-Tuning (Recommended)[​](#lora-fine-tuning-recommended "Direct link to LoRA Fine-Tuning (Recommended)")
 
@@ -69,7 +71,7 @@ training_args = SFTConfig(
     bf16=True,
 )
 
-dataset = load_dataset("your-dataset")
+dataset = load_dataset("HuggingFaceTB/smoltalk", "all")
 
 trainer = SFTTrainer(
     model=model,
@@ -99,7 +101,7 @@ trainer.train()
   tokenizer = AutoTokenizer.from_pretrained("LiquidAI/LFM2.5-1.2B-Instruct")
 
   # Load your dataset
-  dataset = load_dataset("your-dataset")
+  dataset = load_dataset("HuggingFaceTB/smoltalk", "all")
 
   # Configure training
   training_args = SFTConfig(
@@ -126,11 +128,169 @@ trainer.train()
   ```
 </Accordion>
 
+## Vision Language Model Fine-Tuning (VLM-SFT)[​](#vision-language-model-fine-tuning-vlm-sft "Direct link to Vision Language Model Fine-Tuning (VLM-SFT)")
+
+[![Colab link](/images/lfm/fine-tuning/production/uploads/61b8e2ba285851687028d395/vlOyMEjwHa_b_LXysEu2E.png)](https://colab.research.google.com/github/Liquid4All/docs/blob/main/notebooks/💧_LFM2_5_VL_SFT_with_TRL.ipynb)
+
+The `SFTTrainer` also supports fine-tuning Vision Language Models like `LFM2.5-VL-1.6B` on image-text datasets. VLM fine-tuning requires [Vision datasets](/docs/fine-tuning/datasets#vision-datasets-vlm-sft) and a few key differences from text-only SFT:
+
+* Uses `AutoModelForImageTextToText` instead of `AutoModelForCausalLM`
+* Uses `AutoProcessor` instead of just a tokenizer
+* Requires dataset formatting with image content types
+* Needs a custom `collate_fn` for multimodal batching
+
+### VLM LoRA Fine-Tuning (Recommended)[​](#vlm-lora-fine-tuning-recommended "Direct link to VLM LoRA Fine-Tuning (Recommended)")
+
+LoRA is recommended for VLM fine-tuning due to the larger model size and multimodal complexity:
+
+```python
+from transformers import AutoModelForImageTextToText, AutoProcessor
+from trl import SFTTrainer, SFTConfig
+from peft import LoraConfig, get_peft_model
+from datasets import load_dataset
+
+model_id = "LiquidAI/LFM2.5-VL-1.6B"
+
+processor = AutoProcessor.from_pretrained(
+    model_id,
+    max_image_tokens=256,
+    trust_remote_code=True
+)
+
+model = AutoModelForImageTextToText.from_pretrained(
+    model_id,
+    torch_dtype="bfloat16",
+    device_map="auto",
+    trust_remote_code=True
+)
+
+# Format dataset for VLM (image + text)
+def format_vlm_sample(sample):
+    return [
+        {"role": "system", "content": [{"type": "text", "text": "You are a vision assistant."}]},
+        {"role": "user", "content": [
+            {"type": "image", "image": sample["image"]},
+            {"type": "text", "text": sample["question"]},
+        ]},
+        {"role": "assistant", "content": [{"type": "text", "text": sample["answer"]}]},
+    ]
+
+# Custom collate function for multimodal batching
+def collate_fn(samples):
+    batch = processor.apply_chat_template(samples, tokenize=True, return_dict=True, return_tensors="pt")
+    labels = batch["input_ids"].clone()
+    labels[labels == processor.tokenizer.pad_token_id] = -100
+    batch["labels"] = labels
+    return batch
+
+# Configure LoRA
+peft_config = LoraConfig(
+    lora_alpha=16,
+    lora_dropout=0.05,
+    r=8,
+    bias="none",
+    target_modules=["q_proj", "v_proj", "fc1", "fc2", "linear", "gate_proj", "up_proj", "down_proj"],
+    task_type="CAUSAL_LM",
+)
+
+model = get_peft_model(model, peft_config)
+
+sft_config = SFTConfig(
+    output_dir="./lfm2-vl-sft-lora",
+    num_train_epochs=1,
+    per_device_train_batch_size=1,
+    gradient_accumulation_steps=16,
+    learning_rate=5e-4,
+    gradient_checkpointing=True,
+    max_length=512,
+    dataset_kwargs={"skip_prepare_dataset": True},
+)
+
+# Load and format your dataset
+dataset = load_dataset("HuggingFaceH4/llava-instruct-mix-vsft")
+train_dataset = [format_vlm_sample(s) for s in dataset["train"]]
+
+trainer = SFTTrainer(
+    model=model,
+    args=sft_config,
+    train_dataset=train_dataset,
+    data_collator=collate_fn,
+    processing_class=processor.tokenizer,
+)
+
+trainer.train()
+```
+
+<Accordion title="Full VLM Fine-Tuning">
+  Full VLM fine-tuning updates all model parameters. Use this only when you have sufficient GPU memory.
+
+  ```python
+  from transformers import AutoModelForImageTextToText, AutoProcessor
+  from trl import SFTTrainer, SFTConfig
+  from datasets import load_dataset
+
+  model_id = "LiquidAI/LFM2.5-VL-1.6B"
+
+  processor = AutoProcessor.from_pretrained(
+      model_id,
+      max_image_tokens=256,
+      trust_remote_code=True
+  )
+
+  model = AutoModelForImageTextToText.from_pretrained(
+      model_id,
+      torch_dtype="bfloat16",
+      device_map="auto",
+      trust_remote_code=True
+  )
+
+  def format_vlm_sample(sample):
+      return [
+          {"role": "user", "content": [
+              {"type": "image", "image": sample["image"]},
+              {"type": "text", "text": sample["question"]},
+          ]},
+          {"role": "assistant", "content": [{"type": "text", "text": sample["answer"]}]},
+      ]
+
+  def collate_fn(samples):
+      batch = processor.apply_chat_template(samples, tokenize=True, return_dict=True, return_tensors="pt")
+      labels = batch["input_ids"].clone()
+      labels[labels == processor.tokenizer.pad_token_id] = -100
+      batch["labels"] = labels
+      return batch
+
+  sft_config = SFTConfig(
+      output_dir="./lfm2-vl-sft",
+      num_train_epochs=1,
+      per_device_train_batch_size=1,
+      gradient_accumulation_steps=16,
+      learning_rate=2e-5,
+      gradient_checkpointing=True,
+      max_length=512,
+      dataset_kwargs={"skip_prepare_dataset": True},
+  )
+
+  dataset = load_dataset("HuggingFaceH4/llava-instruct-mix-vsft")
+  train_dataset = [format_vlm_sample(s) for s in dataset["train"]]
+
+  trainer = SFTTrainer(
+      model=model,
+      args=sft_config,
+      train_dataset=train_dataset,
+      data_collator=collate_fn,
+      processing_class=processor.tokenizer,
+  )
+
+  trainer.train()
+  ```
+</Accordion>
+
 ## Direct Preference Optimization (DPO)[​](#direct-preference-optimization-dpo "Direct link to Direct Preference Optimization (DPO)")
 
-[![Colab link](/images/lfm/fine-tuning/production/uploads/61b8e2ba285851687028d395/vlOyMEjwHa_b_LXysEu2E.png)](https://colab.research.google.com/drive/1MQdsPxFHeZweGsNx4RH7Ia8lG8PiGE1t?usp=sharing)
+[![Colab link](/images/lfm/fine-tuning/production/uploads/61b8e2ba285851687028d395/vlOyMEjwHa_b_LXysEu2E.png)](https://colab.research.google.com/github/Liquid4All/docs/blob/main/notebooks/💧_LFM2_DPO_with_TRL.ipynb)
 
-The `DPOTrainer` implements Direct Preference Optimization, a method to align models with human preferences without requiring a separate reward model. DPO works with preference pairs (chosen vs. rejected responses).
+The `DPOTrainer` implements Direct Preference Optimization, a method to align models with human preferences without requiring a separate reward model. DPO training requires [Preference datasets](/docs/fine-tuning/datasets#preference-datasets-dpo) with chosen and rejected response pairs.
 
 ### DPO with LoRA (Recommended)[​](#dpo-with-lora-recommended "Direct link to DPO with LoRA (Recommended)")
 
@@ -167,7 +327,7 @@ training_args = DPOConfig(
     bf16=True,
 )
 
-dataset = load_dataset("your-preference-dataset")
+dataset = load_dataset("mlabonne/orpo-dpo-mix-40k")
 
 trainer = DPOTrainer(
     model=model,
@@ -198,7 +358,7 @@ trainer.train()
 
   # Load preference dataset
   # Dataset should have "prompt", "chosen", and "rejected" columns
-  dataset = load_dataset("your-preference-dataset")
+  dataset = load_dataset("mlabonne/orpo-dpo-mix-40k")
 
   # Configure DPO training
   training_args = DPOConfig(
