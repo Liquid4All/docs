@@ -166,13 +166,12 @@
       color: #e5e7eb !important;
     }
 
-    /* Make Colab button images much smaller */
+    /* Colab button sizing */
     a[href*="colab.research.google.com"] img,
     img[alt*="Colab"],
     img[alt*="colab"] {
-      height: 20px !important;
+      height: 28px !important;
       width: auto !important;
-      max-width: 120px !important;
     }
 
   `;
