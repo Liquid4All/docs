@@ -45,7 +45,7 @@ LFM2-350M-Math is a tiny reasoning model optimized for mathematical problem solv
   <Tab title="Transformers">
     **Install:**
     ```bash
-    pip install transformers torch
+    pip install "transformers>=5.0.0" torch accelerate
     ```
 
     **Run:**
@@ -70,7 +70,7 @@ LFM2-350M-Math is a tiny reasoning model optimized for mathematical problem solv
   <Tab title="llama.cpp">
     **Download GGUF:**
     ```bash
-    huggingface-cli download LiquidAI/LFM2-350M-Math-GGUF \
+    hf download LiquidAI/LFM2-350M-Math-GGUF \
       --local-dir ./LFM2-350M-Math-GGUF
     ```
 

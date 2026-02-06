@@ -64,7 +64,7 @@ Schema:
   <Tab title="Transformers">
     **Install:**
     ```bash
-    pip install transformers torch
+    pip install "transformers>=5.0.0" torch accelerate
     ```
 
     **Run:**
@@ -101,7 +101,7 @@ Schema:
   <Tab title="llama.cpp">
     **Download GGUF:**
     ```bash
-    huggingface-cli download LiquidAI/LFM2-350M-Extract-GGUF \
+    hf download LiquidAI/LFM2-350M-Extract-GGUF \
       --local-dir ./LFM2-350M-Extract-GGUF
     ```
 

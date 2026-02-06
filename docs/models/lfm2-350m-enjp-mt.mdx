@@ -58,7 +58,7 @@ This model requires a specific system prompt to specify translation direction. S
   <Tab title="Transformers">
     **Install:**
     ```bash
-    pip install transformers torch
+    pip install "transformers>=5.0.0" torch accelerate
     ```
 
     **English to Japanese:**
@@ -99,7 +99,7 @@ This model requires a specific system prompt to specify translation direction. S
   <Tab title="llama.cpp">
     **Download GGUF:**
     ```bash
-    huggingface-cli download LiquidAI/LFM2-350M-ENJP-MT-GGUF \
+    hf download LiquidAI/LFM2-350M-ENJP-MT-GGUF \
       --local-dir ./LFM2-350M-ENJP-MT-GGUF
     ```
 

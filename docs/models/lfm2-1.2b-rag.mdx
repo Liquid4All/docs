@@ -66,7 +66,7 @@ The following documents may provide you additional information to answer questio
   <Tab title="Transformers">
     **Install:**
     ```bash
-    pip install transformers torch
+    pip install "transformers>=5.0.0" torch accelerate
     ```
 
     **Run:**
@@ -105,7 +105,7 @@ The following documents may provide you additional information to answer questio
   <Tab title="llama.cpp">
     **Download GGUF:**
     ```bash
-    huggingface-cli download LiquidAI/LFM2-1.2B-RAG-GGUF \
+    hf download LiquidAI/LFM2-1.2B-RAG-GGUF \
       --local-dir ./LFM2-1.2B-RAG-GGUF
     ```
 

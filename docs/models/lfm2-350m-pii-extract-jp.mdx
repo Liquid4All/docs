@@ -61,7 +61,7 @@ Extract specific entities by listing only what you need (e.g., `Extract <human_n
   <Tab title="Transformers">
     **Install:**
     ```bash
-    pip install transformers torch
+    pip install "transformers>=5.0.0" torch accelerate
     ```
 
     **Run:**
@@ -95,7 +95,7 @@ Extract specific entities by listing only what you need (e.g., `Extract <human_n
   <Tab title="llama.cpp">
     **Download GGUF:**
     ```bash
-    huggingface-cli download LiquidAI/LFM2-350M-PII-Extract-JP-GGUF \
+    hf download LiquidAI/LFM2-350M-PII-Extract-JP-GGUF \
       --local-dir ./LFM2-350M-PII-Extract-JP-GGUF
     ```
 

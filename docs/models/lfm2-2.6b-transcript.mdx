@@ -87,7 +87,7 @@ Participants: Names (Roles)
   <Tab title="Transformers">
     **Install:**
     ```bash
-    pip install transformers torch
+    pip install "transformers>=5.0.0" torch accelerate
     ```
 
     **Run:**
@@ -131,7 +131,7 @@ Participants: Names (Roles)
   <Tab title="llama.cpp">
     **Download GGUF:**
     ```bash
-    huggingface-cli download LiquidAI/LFM2-2.6B-Transcript-GGUF \
+    hf download LiquidAI/LFM2-2.6B-Transcript-GGUF \
       --local-dir ./LFM2-2.6B-Transcript-GGUF
     ```
 
