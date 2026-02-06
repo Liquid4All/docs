@@ -3,6 +3,10 @@ title: "LFM2.5-1.2B-Instruct"
 description: "Instruction-tuned 1.2B parameter model optimized for chat and general-purpose tasks"
 ---
 
+import { TextTransformers } from "/snippets/quickstart/text-transformers.mdx";
+import { TextVllm } from "/snippets/quickstart/text-vllm.mdx";
+import { TextLlamacpp } from "/snippets/quickstart/text-llamacpp.mdx";
+
 <a href="/docs/models/text-models" className="back-button">← Back to Text Models</a>
 
 LFM2.5-1.2B-Instruct is Liquid AI's flagship instruction-tuned model, delivering exceptional performance for chat, instruction-following, and tool-calling tasks. Built on the LFM2.5 architecture with extended pre-training and reinforcement learning.
@@ -44,61 +48,12 @@ LFM2.5-1.2B-Instruct is Liquid AI's flagship instruction-tuned model, delivering
 
 <Tabs>
   <Tab title="Transformers">
-    **Install:**
-    ```bash
-    pip install transformers torch
-    ```
-
-    **Download & Run:**
-    ```python
-    from transformers import AutoModelForCausalLM, AutoTokenizer
-
-    model = AutoModelForCausalLM.from_pretrained("LiquidAI/LFM2.5-1.2B-Instruct", device_map="auto")
-    tokenizer = AutoTokenizer.from_pretrained("LiquidAI/LFM2.5-1.2B-Instruct")
-
-    input_ids = tokenizer.apply_chat_template(
-        [{"role": "user", "content": "What is machine learning?"}],
-        add_generation_prompt=True, return_tensors="pt"
-    ).to(model.device)
-
-    output = model.generate(input_ids, max_new_tokens=256)
-    print(tokenizer.decode(output[0], skip_special_tokens=True))
-    ```
+    <TextTransformers modelId="LiquidAI/LFM2.5-1.2B-Instruct"></TextTransformers>
   </Tab>
-
   <Tab title="llama.cpp">
-    **Install:**
-    ```bash
-    brew install llama.cpp
-    pip install huggingface-hub
-    ```
-
-    **Download:**
-    ```bash
-    huggingface-cli download LiquidAI/LFM2.5-1.2B-Instruct-GGUF \
-      lfm2.5-1.2b-instruct-q4_k_m.gguf --local-dir .
-    ```
-
-    **Run:**
-    ```bash
-    llama-cli -m lfm2.5-1.2b-instruct-q4_k_m.gguf \
-      -p "What is machine learning?" -n 256
-    ```
+    <TextLlamacpp ggufRepo="LiquidAI/LFM2.5-1.2B-Instruct-GGUF"></TextLlamacpp>
   </Tab>
-
   <Tab title="vLLM">
-    **Install:**
-    ```bash
-    pip install vllm
-    ```
-
-    **Run:**
-    ```python
-    from vllm import LLM, SamplingParams
-
-    llm = LLM(model="LiquidAI/LFM2.5-1.2B-Instruct")
-    output = llm.chat("What is machine learning?", SamplingParams(max_tokens=256))
-    print(output[0].outputs[0].text)
-    ```
+    <TextVllm modelId="LiquidAI/LFM2.5-1.2B-Instruct"></TextVllm>
   </Tab>
 </Tabs>

@@ -3,6 +3,10 @@ title: "LFM2-2.6B-Exp"
 description: "RL-only post-trained 2.6B model with improved math and reasoning capabilities"
 ---
 
+import { TextTransformers } from "/snippets/quickstart/text-transformers.mdx";
+import { TextVllm } from "/snippets/quickstart/text-vllm.mdx";
+import { TextLlamacpp } from "/snippets/quickstart/text-llamacpp.mdx";
+
 <a href="/docs/models/text-models" className="back-button">← Back to Text Models</a>
 
 LFM2-2.6B-Exp is an experimental checkpoint of LFM2-2.6B with RL-only post-training, delivering improved performance on math and reasoning benchmarks. Use this model when you need stronger analytical capabilities.
@@ -42,61 +46,12 @@ LFM2-2.6B-Exp is an experimental checkpoint of LFM2-2.6B with RL-only post-train
 
 <Tabs>
   <Tab title="Transformers">
-    **Install:**
-    ```bash
-    pip install transformers torch
-    ```
-
-    **Download & Run:**
-    ```python
-    from transformers import AutoModelForCausalLM, AutoTokenizer
-
-    model = AutoModelForCausalLM.from_pretrained("LiquidAI/LFM2-2.6B-Exp", device_map="auto")
-    tokenizer = AutoTokenizer.from_pretrained("LiquidAI/LFM2-2.6B-Exp")
-
-    input_ids = tokenizer.apply_chat_template(
-        [{"role": "user", "content": "What is 15% of 240?"}],
-        add_generation_prompt=True, return_tensors="pt"
-    ).to(model.device)
-
-    output = model.generate(input_ids, max_new_tokens=256)
-    print(tokenizer.decode(output[0], skip_special_tokens=True))
-    ```
+    <TextTransformers modelId="LiquidAI/LFM2-2.6B-Exp"></TextTransformers>
   </Tab>
-
   <Tab title="llama.cpp">
-    **Install:**
-    ```bash
-    brew install llama.cpp
-    pip install huggingface-hub
-    ```
-
-    **Download:**
-    ```bash
-    huggingface-cli download LiquidAI/LFM2-2.6B-Exp-GGUF \
-      lfm2-2.6b-exp-q4_k_m.gguf --local-dir .
-    ```
-
-    **Run:**
-    ```bash
-    llama-cli -m lfm2-2.6b-exp-q4_k_m.gguf \
-      -p "What is 15% of 240?" -n 256
-    ```
+    <TextLlamacpp ggufRepo="LiquidAI/LFM2-2.6B-Exp-GGUF"></TextLlamacpp>
   </Tab>
-
   <Tab title="vLLM">
-    **Install:**
-    ```bash
-    pip install vllm
-    ```
-
-    **Run:**
-    ```python
-    from vllm import LLM, SamplingParams
-
-    llm = LLM(model="LiquidAI/LFM2-2.6B-Exp")
-    output = llm.chat("What is 15% of 240?", SamplingParams(max_tokens=256))
-    print(output[0].outputs[0].text)
-    ```
+    <TextVllm modelId="LiquidAI/LFM2-2.6B-Exp"></TextVllm>
   </Tab>
 </Tabs>

@@ -3,6 +3,10 @@ title: "LFM2-8B-A1B"
 description: "8B parameter Mixture-of-Experts model with 1.5B active parameters for fast, high-quality inference"
 ---
 
+import { TextTransformers } from "/snippets/quickstart/text-transformers.mdx";
+import { TextVllm } from "/snippets/quickstart/text-vllm.mdx";
+import { TextLlamacpp } from "/snippets/quickstart/text-llamacpp.mdx";
+
 <a href="/docs/models/text-models" className="back-button">← Back to Text Models</a>
 
 LFM2-8B-A1B is Liquid AI's Mixture-of-Experts model, combining 8B total parameters with only 1.5B active parameters per forward pass. This delivers the quality of larger models with the speed and efficiency of smaller ones—ideal for on-device deployment.
@@ -44,68 +48,12 @@ LFM2-8B-A1B is Liquid AI's Mixture-of-Experts model, combining 8B total paramete
 
 <Tabs>
   <Tab title="Transformers">
-    **Install:**
-    ```bash
-    pip install "transformers>=5.0.0" torch
-    ```
-
-    <Note>
-    Transformers v5 is newly released. If you encounter issues, fall back to the pinned git source:
-    ```bash
-    pip install git+https://github.com/huggingface/transformers.git@0c9a72e4576fe4c84077f066e585129c97bfd4e6 torch
-    ```
-    </Note>
-
-    **Download & Run:**
-    ```python
-    from transformers import AutoModelForCausalLM, AutoTokenizer
-
-    model = AutoModelForCausalLM.from_pretrained("LiquidAI/LFM2-8B-A1B", device_map="auto")
-    tokenizer = AutoTokenizer.from_pretrained("LiquidAI/LFM2-8B-A1B")
-
-    input_ids = tokenizer.apply_chat_template(
-        [{"role": "user", "content": "What is machine learning?"}],
-        add_generation_prompt=True, return_tensors="pt"
-    ).to(model.device)
-
-    output = model.generate(input_ids, max_new_tokens=256)
-    print(tokenizer.decode(output[0], skip_special_tokens=True))
-    ```
+    <TextTransformers modelId="LiquidAI/LFM2-8B-A1B"></TextTransformers>
   </Tab>
-
   <Tab title="llama.cpp">
-    **Install:**
-    ```bash
-    brew install llama.cpp
-    pip install huggingface-hub
-    ```
-
-    **Download:**
-    ```bash
-    huggingface-cli download LiquidAI/LFM2-8B-A1B-GGUF \
-      lfm2-8b-a1b-q4_k_m.gguf --local-dir .
-    ```
-
-    **Run:**
-    ```bash
-    llama-cli -m lfm2-8b-a1b-q4_k_m.gguf \
-      -p "What is machine learning?" -n 256
-    ```
+    <TextLlamacpp ggufRepo="LiquidAI/LFM2-8B-A1B-GGUF"></TextLlamacpp>
   </Tab>
-
   <Tab title="vLLM">
-    **Install:**
-    ```bash
-    pip install vllm
-    ```
-
-    **Run:**
-    ```python
-    from vllm import LLM, SamplingParams
-
-    llm = LLM(model="LiquidAI/LFM2-8B-A1B")
-    output = llm.chat("What is machine learning?", SamplingParams(max_tokens=256))
-    print(output[0].outputs[0].text)
-    ```
+    <TextVllm modelId="LiquidAI/LFM2-8B-A1B"></TextVllm>
   </Tab>
 </Tabs>

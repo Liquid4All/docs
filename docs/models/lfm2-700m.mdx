@@ -3,6 +3,10 @@ title: "LFM2-700M"
 description: "Mid-sized 700M parameter model for deploying on most devices"
 ---
 
+import { TextTransformers } from "/snippets/quickstart/text-transformers.mdx";
+import { TextVllm } from "/snippets/quickstart/text-vllm.mdx";
+import { TextLlamacpp } from "/snippets/quickstart/text-llamacpp.mdx";
+
 <a href="/docs/models/text-models" className="back-button">← Back to Text Models</a>
 
 LFM2-700M is a compact model balancing capability and efficiency. Suitable for deployment on a wide range of devices including phones, tablets, and laptops with limited resources.
@@ -44,61 +48,12 @@ LFM2-700M is a compact model balancing capability and efficiency. Suitable for d
 
 <Tabs>
   <Tab title="Transformers">
-    **Install:**
-    ```bash
-    pip install transformers torch
-    ```
-
-    **Download & Run:**
-    ```python
-    from transformers import AutoModelForCausalLM, AutoTokenizer
-
-    model = AutoModelForCausalLM.from_pretrained("LiquidAI/LFM2-700M", device_map="auto")
-    tokenizer = AutoTokenizer.from_pretrained("LiquidAI/LFM2-700M")
-
-    input_ids = tokenizer.apply_chat_template(
-        [{"role": "user", "content": "What is machine learning?"}],
-        add_generation_prompt=True, return_tensors="pt"
-    ).to(model.device)
-
-    output = model.generate(input_ids, max_new_tokens=256)
-    print(tokenizer.decode(output[0], skip_special_tokens=True))
-    ```
+    <TextTransformers modelId="LiquidAI/LFM2-700M"></TextTransformers>
   </Tab>
-
   <Tab title="llama.cpp">
-    **Install:**
-    ```bash
-    brew install llama.cpp
-    pip install huggingface-hub
-    ```
-
-    **Download:**
-    ```bash
-    huggingface-cli download LiquidAI/LFM2-700M-GGUF \
-      lfm2-700m-q4_k_m.gguf --local-dir .
-    ```
-
-    **Run:**
-    ```bash
-    llama-cli -m lfm2-700m-q4_k_m.gguf \
-      -p "What is machine learning?" -n 256
-    ```
+    <TextLlamacpp ggufRepo="LiquidAI/LFM2-700M-GGUF"></TextLlamacpp>
   </Tab>
-
   <Tab title="vLLM">
-    **Install:**
-    ```bash
-    pip install vllm
-    ```
-
-    **Run:**
-    ```python
-    from vllm import LLM, SamplingParams
-
-    llm = LLM(model="LiquidAI/LFM2-700M")
-    output = llm.chat("What is machine learning?", SamplingParams(max_tokens=256))
-    print(output[0].outputs[0].text)
-    ```
+    <TextVllm modelId="LiquidAI/LFM2-700M"></TextVllm>
   </Tab>
 </Tabs>

@@ -3,6 +3,10 @@ title: "LFM2.5-1.2B-JP"
 description: "Japanese-specialized 1.2B parameter model for high-quality Japanese text generation"
 ---
 
+import { TextTransformers } from "/snippets/quickstart/text-transformers.mdx";
+import { TextVllm } from "/snippets/quickstart/text-vllm.mdx";
+import { TextLlamacpp } from "/snippets/quickstart/text-llamacpp.mdx";
+
 <a href="/docs/models/text-models" className="back-button">← Back to Text Models</a>
 
 LFM2.5-1.2B-JP is fine-tuned for Japanese language tasks, delivering high-quality Japanese text generation, translation, and conversation. Built on LFM2.5 with specialized Japanese training data.
@@ -44,61 +48,12 @@ LFM2.5-1.2B-JP is fine-tuned for Japanese language tasks, delivering high-qualit
 
 <Tabs>
   <Tab title="Transformers">
-    **Install:**
-    ```bash
-    pip install transformers torch
-    ```
-
-    **Download & Run:**
-    ```python
-    from transformers import AutoModelForCausalLM, AutoTokenizer
-
-    model = AutoModelForCausalLM.from_pretrained("LiquidAI/LFM2.5-1.2B-JP", device_map="auto")
-    tokenizer = AutoTokenizer.from_pretrained("LiquidAI/LFM2.5-1.2B-JP")
-
-    input_ids = tokenizer.apply_chat_template(
-        [{"role": "user", "content": "機械学習とは何ですか？"}],
-        add_generation_prompt=True, return_tensors="pt"
-    ).to(model.device)
-
-    output = model.generate(input_ids, max_new_tokens=256)
-    print(tokenizer.decode(output[0], skip_special_tokens=True))
-    ```
+    <TextTransformers modelId="LiquidAI/LFM2.5-1.2B-JP"></TextTransformers>
   </Tab>
-
   <Tab title="llama.cpp">
-    **Install:**
-    ```bash
-    brew install llama.cpp
-    pip install huggingface-hub
-    ```
-
-    **Download:**
-    ```bash
-    huggingface-cli download LiquidAI/LFM2.5-1.2B-JP-GGUF \
-      lfm2.5-1.2b-jp-q4_k_m.gguf --local-dir .
-    ```
-
-    **Run:**
-    ```bash
-    llama-cli -m lfm2.5-1.2b-jp-q4_k_m.gguf \
-      -p "機械学習とは何ですか？" -n 256
-    ```
+    <TextLlamacpp ggufRepo="LiquidAI/LFM2.5-1.2B-JP-GGUF"></TextLlamacpp>
   </Tab>
-
   <Tab title="vLLM">
-    **Install:**
-    ```bash
-    pip install vllm
-    ```
-
-    **Run:**
-    ```python
-    from vllm import LLM, SamplingParams
-
-    llm = LLM(model="LiquidAI/LFM2.5-1.2B-JP")
-    output = llm.chat("機械学習とは何ですか？", SamplingParams(max_tokens=256))
-    print(output[0].outputs[0].text)
-    ```
+    <TextVllm modelId="LiquidAI/LFM2.5-1.2B-JP"></TextVllm>
   </Tab>
 </Tabs>

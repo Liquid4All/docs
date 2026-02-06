@@ -3,6 +3,10 @@ title: "LFM2-350M"
 description: "Ultra-compact 350M parameter model for edge devices and low latency deployments"
 ---
 
+import { TextTransformers } from "/snippets/quickstart/text-transformers.mdx";
+import { TextVllm } from "/snippets/quickstart/text-vllm.mdx";
+import { TextLlamacpp } from "/snippets/quickstart/text-llamacpp.mdx";
+
 <a href="/docs/models/text-models" className="back-button">← Back to Text Models</a>
 
 LFM2-350M is Liquid AI's smallest text model, designed for edge devices with strict memory and compute constraints. Delivers surprisingly strong performance for its size, making it ideal for low-latency applications.
@@ -44,61 +48,12 @@ LFM2-350M is Liquid AI's smallest text model, designed for edge devices with str
 
 <Tabs>
   <Tab title="Transformers">
-    **Install:**
-    ```bash
-    pip install transformers torch
-    ```
-
-    **Download & Run:**
-    ```python
-    from transformers import AutoModelForCausalLM, AutoTokenizer
-
-    model = AutoModelForCausalLM.from_pretrained("LiquidAI/LFM2-350M", device_map="auto")
-    tokenizer = AutoTokenizer.from_pretrained("LiquidAI/LFM2-350M")
-
-    input_ids = tokenizer.apply_chat_template(
-        [{"role": "user", "content": "What is machine learning?"}],
-        add_generation_prompt=True, return_tensors="pt"
-    ).to(model.device)
-
-    output = model.generate(input_ids, max_new_tokens=256)
-    print(tokenizer.decode(output[0], skip_special_tokens=True))
-    ```
+    <TextTransformers modelId="LiquidAI/LFM2-350M"></TextTransformers>
   </Tab>
-
   <Tab title="llama.cpp">
-    **Install:**
-    ```bash
-    brew install llama.cpp
-    pip install huggingface-hub
-    ```
-
-    **Download:**
-    ```bash
-    huggingface-cli download LiquidAI/LFM2-350M-GGUF \
-      lfm2-350m-q4_k_m.gguf --local-dir .
-    ```
-
-    **Run:**
-    ```bash
-    llama-cli -m lfm2-350m-q4_k_m.gguf \
-      -p "What is machine learning?" -n 256
-    ```
+    <TextLlamacpp ggufRepo="LiquidAI/LFM2-350M-GGUF"></TextLlamacpp>
   </Tab>
-
   <Tab title="vLLM">
-    **Install:**
-    ```bash
-    pip install vllm
-    ```
-
-    **Run:**
-    ```python
-    from vllm import LLM, SamplingParams
-
-    llm = LLM(model="LiquidAI/LFM2-350M")
-    output = llm.chat("What is machine learning?", SamplingParams(max_tokens=256))
-    print(output[0].outputs[0].text)
-    ```
+    <TextVllm modelId="LiquidAI/LFM2-350M"></TextVllm>
   </Tab>
 </Tabs>
