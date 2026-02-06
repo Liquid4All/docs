@@ -1,0 +1,57 @@
+export const VlVllm = ({ modelId }) => (
+<div>
+<Warning>
+vLLM support for LFM Vision Models requires a specific version. Install from the custom source below.
+</Warning>
+<p><strong>Install:</strong></p>
+<pre className="shiki shiki-themes github-light github-dark" style={{backgroundColor: '#fff', '--shiki-dark-bg': '#24292e', color: '#24292e', '--shiki-dark': '#e1e4e8'}} language="bash">
+<code language="bash">
+{`VLLM_PRECOMPILED_WHEEL_COMMIT=72506c98349d6bcd32b4e33eec7b5513453c1502 \\
+  VLLM_USE_PRECOMPILED=1 \\
+  pip install git+https://github.com/vllm-project/vllm.git`.split('\n').map((line, i) => <span key={i} className="line">{line}{'\n'}</span>)}
+</code>
+</pre>
+<pre className="shiki shiki-themes github-light github-dark" style={{backgroundColor: '#fff', '--shiki-dark-bg': '#24292e', color: '#24292e', '--shiki-dark': '#e1e4e8'}} language="bash">
+<code language="bash">
+{`pip install "transformers>=5.0.0" pillow`.split('\n').map((line, i) => <span key={i} className="line">{line}{'\n'}</span>)}
+</code>
+</pre>
+<Note>
+Transformers v5 is newly released. If you encounter issues, fall back to the pinned git source:
+<pre className="shiki shiki-themes github-light github-dark" style={{backgroundColor: '#fff', '--shiki-dark-bg': '#24292e', color: '#24292e', '--shiki-dark': '#e1e4e8', marginTop: '0.5rem'}} language="bash">
+<code language="bash">
+{`pip install git+https://github.com/huggingface/transformers.git@3c2517727ce28a30f5044e01663ee204deb1cdbe pillow`.split('\n').map((line, i) => <span key={i} className="line">{line}{'\n'}</span>)}
+</code>
+</pre>
+</Note>
+<p><strong>Run:</strong></p>
+<pre className="shiki shiki-themes github-light github-dark" style={{backgroundColor: '#fff', '--shiki-dark-bg': '#24292e', color: '#24292e', '--shiki-dark': '#e1e4e8'}} language="python">
+<code language="python">
+{`from vllm import LLM, SamplingParams
+
+IMAGE_URL = "http://images.cocodataset.org/val2017/000000039769.jpg"
+
+llm = LLM(
+    model="${modelId}",
+    max_model_len=1024,
+)
+
+sampling_params = SamplingParams(
+    temperature=0.0,
+    max_tokens=256,
+)
+
+messages = [{
+    "role": "user",
+    "content": [
+        {"type": "image_url", "image_url": {"url": IMAGE_URL}},
+        {"type": "text", "text": "Describe what you see in this image."},
+    ],
+}]
+
+outputs = llm.chat(messages, sampling_params)
+print(outputs[0].outputs[0].text)`.split('\n').map((line, i) => <span key={i} className="line">{line}{'\n'}</span>)}
+</code>
+</pre>
+</div>
+);

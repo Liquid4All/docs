@@ -1,0 +1,24 @@
+export const VlLlamacpp = ({ ggufRepo }) => (
+<div>
+<p>llama.cpp enables efficient CPU inference for vision models.</p>
+<p><strong>Install:</strong></p>
+<pre className="shiki shiki-themes github-light github-dark" style={{backgroundColor: '#fff', '--shiki-dark-bg': '#24292e', color: '#24292e', '--shiki-dark': '#e1e4e8'}} language="bash">
+<code language="bash">
+{`brew install llama.cpp`.split('\n').map((line, i) => <span key={i} className="line">{line}{'\n'}</span>)}
+</code>
+</pre>
+<p>Or download pre-built binaries from <a href="https://github.com/ggml-org/llama.cpp/releases">llama.cpp releases</a>.</p>
+<p><strong>Run:</strong></p>
+<pre className="shiki shiki-themes github-light github-dark" style={{backgroundColor: '#fff', '--shiki-dark-bg': '#24292e', color: '#24292e', '--shiki-dark': '#e1e4e8'}} language="bash">
+<code language="bash">
+{`llama-cli \\
+    -hf ${ggufRepo}:Q4_0 \\
+    --image test_image.jpg \\
+    -p "What's in this image?" \\
+    -n 128`.split('\n').map((line, i) => <span key={i} className="line">{line}{'\n'}</span>)}
+</code>
+</pre>
+<p>The <code>-hf</code> flag downloads the model directly from Hugging Face. Use <code>--image-max-tokens</code> to control image token budget.</p>
+<p>For server deployment and advanced usage, see the <a href="/docs/inference/llama-cpp#vision-models">llama.cpp guide</a>.</p>
+</div>
+);

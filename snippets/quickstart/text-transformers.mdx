@@ -1,0 +1,35 @@
+export const TextTransformers = ({ modelId }) => (
+<div>
+<p><strong>Install:</strong></p>
+<pre className="shiki shiki-themes github-light github-dark" style={{backgroundColor: '#fff', '--shiki-dark-bg': '#24292e', color: '#24292e', '--shiki-dark': '#e1e4e8'}} language="bash">
+<code language="bash">
+{`pip install "transformers>=5.0.0" torch accelerate`.split('\n').map((line, i) => <span key={i} className="line">{line}{'\n'}</span>)}
+</code>
+</pre>
+<p><strong>Download & Run:</strong></p>
+<pre className="shiki shiki-themes github-light github-dark" style={{backgroundColor: '#fff', '--shiki-dark-bg': '#24292e', color: '#24292e', '--shiki-dark': '#e1e4e8'}} language="python">
+<code language="python">
+{`from transformers import AutoModelForCausalLM, AutoTokenizer
+
+model_id = "${modelId}"
+model = AutoModelForCausalLM.from_pretrained(
+    model_id,
+    device_map="auto",
+    dtype="bfloat16",
+)
+tokenizer = AutoTokenizer.from_pretrained(model_id)
+
+input_ids = tokenizer.apply_chat_template(
+    [{"role": "user", "content": "What is machine learning?"}],
+    add_generation_prompt=True,
+    return_tensors="pt",
+    tokenize=True,
+).to(model.device)
+
+output = model.generate(input_ids, max_new_tokens=512)
+response = tokenizer.decode(output[0][len(input_ids[0]):], skip_special_tokens=True)
+print(response)`.split('\n').map((line, i) => <span key={i} className="line">{line}{'\n'}</span>)}
+</code>
+</pre>
+</div>
+);

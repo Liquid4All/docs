@@ -1,0 +1,17 @@
+export const TextLlamacpp = ({ ggufRepo }) => (
+<div>
+<p><strong>Install:</strong></p>
+<pre className="shiki shiki-themes github-light github-dark" style={{backgroundColor: '#fff', '--shiki-dark-bg': '#24292e', color: '#24292e', '--shiki-dark': '#e1e4e8'}} language="bash">
+<code language="bash">
+{`brew install llama.cpp`.split('\n').map((line, i) => <span key={i} className="line">{line}{'\n'}</span>)}
+</code>
+</pre>
+<p><strong>Run:</strong></p>
+<pre className="shiki shiki-themes github-light github-dark" style={{backgroundColor: '#fff', '--shiki-dark-bg': '#24292e', color: '#24292e', '--shiki-dark': '#e1e4e8'}} language="bash">
+<code language="bash">
+{`llama-cli -hf ${ggufRepo} -c 4096 --color -i`.split('\n').map((line, i) => <span key={i} className="line">{line}{'\n'}</span>)}
+</code>
+</pre>
+<p>The <code>-hf</code> flag downloads the model directly from Hugging Face. For other installation methods and advanced usage, see the <a href="/docs/inference/llama-cpp">llama.cpp guide</a>.</p>
+</div>
+);
