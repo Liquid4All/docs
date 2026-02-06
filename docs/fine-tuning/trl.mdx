@@ -48,7 +48,7 @@ from datasets import load_dataset
 
 model = AutoModelForCausalLM.from_pretrained(
     "LiquidAI/LFM2.5-1.2B-Instruct",
-    torch_dtype="auto",
+    dtype="auto",
     device_map="auto"
 )
 tokenizer = AutoTokenizer.from_pretrained("LiquidAI/LFM2.5-1.2B-Instruct")
@@ -95,7 +95,7 @@ trainer.train()
   # Load model and tokenizer
   model = AutoModelForCausalLM.from_pretrained(
       "LiquidAI/LFM2.5-1.2B-Instruct",
-      torch_dtype="auto",
+      dtype="auto",
       device_map="auto"
   )
   tokenizer = AutoTokenizer.from_pretrained("LiquidAI/LFM2.5-1.2B-Instruct")
@@ -159,7 +159,7 @@ processor = AutoProcessor.from_pretrained(
 
 model = AutoModelForImageTextToText.from_pretrained(
     model_id,
-    torch_dtype="bfloat16",
+    dtype="bfloat16",
     device_map="auto",
     trust_remote_code=True
 )
@@ -239,7 +239,7 @@ trainer.train()
 
   model = AutoModelForImageTextToText.from_pretrained(
       model_id,
-      torch_dtype="bfloat16",
+      dtype="bfloat16",
       device_map="auto",
       trust_remote_code=True
   )
@@ -304,7 +304,7 @@ from datasets import load_dataset
 
 model = AutoModelForCausalLM.from_pretrained(
     "LiquidAI/LFM2.5-1.2B-Instruct",
-    torch_dtype="auto",
+    dtype="auto",
     device_map="auto"
 )
 tokenizer = AutoTokenizer.from_pretrained("LiquidAI/LFM2.5-1.2B-Instruct")
@@ -351,7 +351,7 @@ trainer.train()
   # Load model and tokenizer
   model = AutoModelForCausalLM.from_pretrained(
       "LiquidAI/LFM2.5-1.2B-Instruct",
-      torch_dtype="auto",
+      dtype="auto",
       device_map="auto"
   )
   tokenizer = AutoTokenizer.from_pretrained("LiquidAI/LFM2.5-1.2B-Instruct")
