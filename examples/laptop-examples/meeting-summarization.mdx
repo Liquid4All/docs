@@ -1,0 +1,125 @@
+---
+title: "Meeting summarization CLI"
+---
+
+<Card title="View Source Code" icon="github" href="https://github.com/Liquid4All/cookbook/tree/main/examples/meeting-summarization">
+  Browse the complete example on GitHub
+</Card>
+
+![Meeting summarization CLI](https://github.com/Liquid4All/cookbook/raw/main/examples/meeting-summarization/media/demo.gif)
+
+This example is a 100% local meeting summarization tool, that runs on your machine thanks to:
+
+- [`LiquidAI/LFM2-2.6B-Transcript`](https://huggingface.co/LiquidAI/LFM2-2.6B-Transcript) - a small language model specialized in summarizing meeting transcripts.
+
+- [`llama.cpp`](https://github.com/ggerganov/llama.cpp) - a fast inference engine with a minimal setup and state-of-the-art performance on a wide range of hardware, both locally and in the cloud.
+
+This tool can be piped with an audio transcription model to map audio files to their corresponding transcripts, and transform the transcripts into summaries using this tool.
+
+This 2-step pipeline can be run on your machine, without any cloud services or API keys.
+
+Isn't that beautiful?
+
+## Quick Start
+
+### Install uv
+
+<Accordion title="Click to see installation instructions for uv">
+  **macOS/Linux:**
+  ```bash
+  curl -LsSf https://astral.sh/uv/install.sh | sh
+  ```
+
+  **Windows:**
+  ```powershell
+  powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+  ```
+</Accordion>
+
+### Run the Tool
+
+1. Run the tool without cloning the repository using a `uv run` one-liner:
+
+   ```bash
+   uv run https://raw.githubusercontent.com/Liquid4All/cookbook/refs/heads/main/examples/meeting-summarization/summarize.py
+   ```
+
+   The previous command uses [this default transcript file](https://raw.githubusercontent.com/Liquid4All/cookbook/refs/heads/main/examples/meeting-summarization/transcripts/example_1.txt) to summarize the meeting.
+
+2. If you want to use a different transcript file, you can pass the `--transcript-file` argument explicitly, either as a local file path or as an HTTP/HTTPS URL, and the tool will automatically download and use it.
+
+   For example, to use [this other file](https://raw.githubusercontent.com/Liquid4All/cookbook/refs/heads/main/examples/meeting-summarization/transcripts/example_2.txt) you can run:
+
+   ```bash
+   uv run https://raw.githubusercontent.com/Liquid4All/cookbook/refs/heads/main/examples/meeting-summarization/summarize.py \
+     --transcript-file https://raw.githubusercontent.com/Liquid4All/cookbook/refs/heads/main/examples/meeting-summarization/transcripts/example_2.txt
+   ```
+
+3. If you want to dig deeper into the code, experiment with it, and modify it, you can clone the repository:
+
+   ```bash
+   git clone https://github.com/Liquid4All/cookbook.git
+   cd cookbook/examples/meeting-summarization
+   ```
+
+   and run the summarization CLI using the following command:
+
+   ```bash
+   uv run summarize.py \
+     --model LiquidAI/LFM2-2.6B-Transcript-GGUF \
+     --hf-model-file LFM2-2.6B-Transcript-1-GGUF.gguf \
+     --transcript-file transcripts/example_1.txt
+   ```
+
+## How does it work?
+
+The CLI uses the llama.cpp Python bindings to download and build the llama.cpp binary for your platform automatically, so you don't need to worry about it. The build is optimized for your platform, so you can use it on your machine without any other setup.
+
+Then, it uses the `LiquidAI/LFM2-2.6B-Transcript` model to summarize the transcript.
+
+```python
+model = Llama(
+    model_path="LiquidAI/LFM2-2.6B-Transcript-GGUF",
+    n_ctx=8192,
+    n_threads=4,
+    verbose=False,
+)
+```
+
+Tokens are streamed to the console as they are generated, so you can see the summary being generated in real-time.
+
+```python
+stream = model.create_chat_completion(
+    messages=[
+        {"role": "system", "content": system_prompt},
+        {"role": "user", "content": transcript}
+    ],
+    max_tokens=2048,
+    temperature=0.0,
+    top_p=0.9,
+    stream=True,  # Enable streaming
+)
+
+for chunk in stream:
+    delta = chunk['choices'][0]['delta']
+    if 'content' in delta:
+        token = delta['content']
+        summary_text += token
+        console.print(token, end='', highlight=False)
+```
+
+## Next Steps
+
+- Integrate the CLI into a 2-step pipeline that transcribes audio files to transcripts and then summarizes them.
+
+## Need help?
+
+<CardGroup cols={1}>
+
+<Card title="Join our Discord" icon="discord" iconType="brands" href="https://discord.gg/DFU3WQeaYD">
+  Connect with the community and ask questions about this example.
+</Card>
+
+</CardGroup>
+
+[Edit this page](https://github.com/Liquid4All/docs/tree/main/examples/laptop-examples/meeting-summarization.mdx)

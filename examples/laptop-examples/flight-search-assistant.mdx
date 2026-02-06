@@ -1,0 +1,78 @@
+---
+title: "Flight search assistant with tool calling"
+---
+
+<Card title="View Source Code" icon="github" href="https://github.com/Liquid4All/cookbook/tree/main/examples/flight-search-assistant">
+  Browse the complete example on GitHub
+</Card>
+
+This project demonstrates a Python CLI that leverages the LFM2.5-1.2B-Thinking model to help users find and book plane tickets through multi-step reasoning and tool calling.
+
+## Key Features
+
+The system enables complex queries like "Book the cheapest flight from Barcelona to Belgrade on 2026-01-31" by combining two primary capabilities:
+
+1. **search_flights** - Retrieves flight information
+2. **book_flight** - Executes booking transactions
+
+## Technical Approach
+
+The model works through an iterative cycle: it generates responses with potential tool calls, executes those calls, then regenerates responses based on results. The solution runs locally using llama.cpp, emphasizing edge-device compatibility.
+
+## Getting Started
+
+### Install uv
+
+<Accordion title="Click to see installation instructions for uv">
+  **macOS/Linux:**
+  ```bash
+  curl -LsSf https://astral.sh/uv/install.sh | sh
+  ```
+
+  **Windows:**
+  ```powershell
+  powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+  ```
+</Accordion>
+
+### Setup and Usage
+
+1. Clone the repository and navigate to the project directory:
+   ```bash
+   git clone https://github.com/Liquid4All/cookbook.git
+   cd cookbook/examples/flight-search-assistant
+   ```
+
+2. Install dependencies:
+   ```bash
+   uv sync
+   ```
+
+3. Execute queries via command line:
+   ```bash
+   uv run flight_search.py --query "Book the cheapest flight from Barcelona to Belgrade on 2026-01-31"
+   ```
+
+<Note>
+  The implementation uses mocked flight data for demonstration purposes, though it supports integration with real APIs like Amadeus, Skyscanner, or Kiwi for production deployment.
+</Note>
+
+## Future Development
+
+The roadmap includes:
+
+- Adding evaluation datasets
+- Implementing performance improvements through GRPO fine-tuning with verifiable rewards
+- Expanding the community through the Liquid AI Discord server
+
+## Need help?
+
+<CardGroup cols={1}>
+
+<Card title="Join our Discord" icon="discord" iconType="brands" href="https://discord.gg/DFU3WQeaYD">
+  Connect with the community and ask questions about this example.
+</Card>
+
+</CardGroup>
+
+[Edit this page](https://github.com/Liquid4All/docs/tree/main/examples/laptop-examples/flight-search-assistant.mdx)
