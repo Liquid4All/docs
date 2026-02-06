@@ -156,3 +156,9 @@ grep -r '/>' --include="*.mdx" --include="*.md" .
 2. Try adding `!important`
 3. Check if you need to target light/dark mode specifically
 4. For icons using mask-image, set `background-color` instead of `color`
+
+## Git Commits
+
+- Never create a single monolithic commit for multi-step work. Break commits into logical units (e.g., infrastructure/scaffolding, feature A, feature B, fixes).
+- Each commit should be independently meaningful — a reviewer should understand each one on its own.
+- When committing multi-file changes, unstage everything first (`git reset HEAD .`) then stage and commit files in logical groups.
