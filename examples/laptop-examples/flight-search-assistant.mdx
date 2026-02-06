@@ -6,52 +6,55 @@ title: "Flight search assistant with tool calling"
   Browse the complete example on GitHub
 </Card>
 
-This project demonstrates a Python CLI that leverages the LFM2.5-1.2B-Thinking model to help users find and book plane tickets through multi-step reasoning and tool calling.
+This project demonstrates a Python CLI that leverages the [LFM2.5-1.2B-Thinking](/docs/models/lfm25-1.2b-thinking) model to help users find and book plane tickets through multi-step reasoning and tool calling.
 
-## Key Features
+![Flight Search Assistant Demo](https://raw.githubusercontent.com/Liquid4All/cookbook/main/examples/flight-search-assistant/media/demo.gif)
 
-The system enables complex queries like "Book the cheapest flight from Barcelona to Belgrade on 2026-01-31" by combining two primary capabilities:
+## Quickstart
 
-1. **search_flights** - Retrieves flight information
-2. **book_flight** - Executes booking transactions
+### 1. Verify uv installation
 
-## Technical Approach
+Check that you have `uv` available on your system:
 
-The model works through an iterative cycle: it generates responses with potential tool calls, executes those calls, then regenerates responses based on results. The solution runs locally using llama.cpp, emphasizing edge-device compatibility.
+```bash
+uv --version
+```
 
-## Getting Started
+If this fails, [install `uv` following these instructions](https://docs.astral.sh/uv/getting-started/installation/).
 
-### Install uv
+### 2. Clone and build the project
 
-<Accordion title="Click to see installation instructions for uv">
-  **macOS/Linux:**
-  ```bash
-  curl -LsSf https://astral.sh/uv/install.sh | sh
-  ```
+Clone the repository and install dependencies:
 
-  **Windows:**
-  ```powershell
-  powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
-  ```
-</Accordion>
+```bash
+git clone https://github.com/Liquid4All/cookbook.git
+cd cookbook/examples/flight-search-assistant
+uv sync
+```
 
-### Setup and Usage
+### 3. Run example queries
 
-1. Clone the repository and navigate to the project directory:
-   ```bash
-   git clone https://github.com/Liquid4All/cookbook.git
-   cd cookbook/examples/flight-search-assistant
-   ```
+The assistant accepts natural language requests through the command-line interface:
 
-2. Install dependencies:
-   ```bash
-   uv sync
-   ```
+**Simple flight availability search:**
+```bash
+uv run flight_search.py --query "What flights are available from New York to Paris on 2026-01-19?"
+```
 
-3. Execute queries via command line:
-   ```bash
-   uv run flight_search.py --query "Book the cheapest flight from Barcelona to Belgrade on 2026-01-31"
-   ```
+**Direct booking request:**
+```bash
+uv run flight_search.py --query "Book flight AA495 for 2026-02-04"
+```
+
+**Multi-step workflow (search then book):**
+```bash
+uv run flight_search.py --query "Book the cheapest flight from Barcelona to Belgrade on 2026-01-31"
+```
+
+**Complex reasoning task:**
+```bash
+uv run flight_search.py --query "Book the cheapest flight from Barcelona to a US city on the East Coast that is not NYC on 2026-02-14"
+```
 
 <Note>
   The implementation uses mocked flight data for demonstration purposes, though it supports integration with real APIs like Amadeus, Skyscanner, or Kiwi for production deployment.
@@ -63,7 +66,6 @@ The roadmap includes:
 
 - Adding evaluation datasets
 - Implementing performance improvements through GRPO fine-tuning with verifiable rewards
-- Expanding the community through the Liquid AI Discord server
 
 ## Need help?
 
