@@ -3,6 +3,10 @@ title: "LFM2.5-VL-1.6B"
 description: "Best-in-class 1.6B vision-language model for multimodal understanding"
 ---
 
+import { VlTransformers } from "/snippets/quickstart/vl-transformers.mdx";
+import { VlVllm } from "/snippets/quickstart/vl-vllm.mdx";
+import { VlLlamacpp } from "/snippets/quickstart/vl-llamacpp.mdx";
+
 <a href="/docs/models/vision-models" className="back-button">← Back to Vision Models</a>
 
 LFM2.5-VL-1.6B is Liquid AI's flagship vision-language model, delivering exceptional performance on image understanding, visual reasoning, and multimodal tasks. Built on LFM2.5 with a dynamic SigLIP2 image encoder.
@@ -44,131 +48,12 @@ LFM2.5-VL-1.6B is Liquid AI's flagship vision-language model, delivering excepti
 
 <Tabs>
   <Tab title="Transformers">
-    **Install:**
-    ```bash
-    pip install "transformers>=5.0.0" pillow torch
-    ```
-
-    <Note>
-    Transformers v5 is newly released. If you encounter issues, fall back to the pinned git source:
-    ```bash
-    pip install git+https://github.com/huggingface/transformers.git@3c2517727ce28a30f5044e01663ee204deb1cdbe pillow torch
-    ```
-    </Note>
-
-    **Download & Run:**
-    ```python
-    from transformers import AutoProcessor, AutoModelForImageTextToText
-    from transformers.image_utils import load_image
-
-    model_id = "LiquidAI/LFM2.5-VL-1.6B"
-    model = AutoModelForImageTextToText.from_pretrained(
-        model_id,
-        device_map="auto",
-        torch_dtype="bfloat16"
-    )
-    processor = AutoProcessor.from_pretrained(model_id)
-
-    url = "https://cdn.britannica.com/61/93061-050-99147DCE/Statue-of-Liberty-Island-New-York-Bay.jpg"
-    image = load_image(url)
-
-    conversation = [
-        {
-            "role": "user",
-            "content": [
-                {"type": "image", "image": image},
-                {"type": "text", "text": "What is in this image?"},
-            ],
-        },
-    ]
-
-    inputs = processor.apply_chat_template(
-        conversation,
-        add_generation_prompt=True,
-        return_tensors="pt",
-        return_dict=True,
-        tokenize=True,
-    ).to(model.device)
-
-    outputs = model.generate(**inputs, max_new_tokens=256)
-    response = processor.batch_decode(outputs, skip_special_tokens=True)[0]
-    print(response)
-    ```
+    <VlTransformers modelId="LiquidAI/LFM2.5-VL-1.6B"></VlTransformers>
   </Tab>
-
   <Tab title="vLLM">
-    <Warning>
-    vLLM support for LFM Vision Models requires a specific version. Install from the custom source below.
-    </Warning>
-
-    **Install:**
-    ```bash
-    VLLM_PRECOMPILED_WHEEL_COMMIT=72506c98349d6bcd32b4e33eec7b5513453c1502 \
-      VLLM_USE_PRECOMPILED=1 \
-      pip install git+https://github.com/vllm-project/vllm.git
-    ```
-
-    ```bash
-    pip install "transformers>=5.0.0" pillow
-    ```
-
-    <Note>
-    Transformers v5 is newly released. If you encounter issues, fall back to the pinned git source:
-    ```bash
-    pip install git+https://github.com/huggingface/transformers.git@3c2517727ce28a30f5044e01663ee204deb1cdbe pillow
-    ```
-    </Note>
-
-    **Run:**
-    ```python
-    from vllm import LLM, SamplingParams
-
-    IMAGE_URL = "http://images.cocodataset.org/val2017/000000039769.jpg"
-
-    llm = LLM(
-        model="LiquidAI/LFM2.5-VL-1.6B",
-        max_model_len=1024,
-    )
-
-    sampling_params = SamplingParams(
-        temperature=0.0,
-        max_tokens=256,
-    )
-
-    messages = [{
-        "role": "user",
-        "content": [
-            {"type": "image_url", "image_url": {"url": IMAGE_URL}},
-            {"type": "text", "text": "Describe what you see in this image."},
-        ],
-    }]
-
-    outputs = llm.chat(messages, sampling_params)
-    print(outputs[0].outputs[0].text)
-    ```
+    <VlVllm modelId="LiquidAI/LFM2.5-VL-1.6B"></VlVllm>
   </Tab>
-
   <Tab title="llama.cpp">
-    llama.cpp enables efficient CPU inference for vision models.
-
-    **Install:**
-    ```bash
-    brew install llama.cpp
-    ```
-
-    Or download pre-built binaries from [llama.cpp releases](https://github.com/ggml-org/llama.cpp/releases).
-
-    **Run:**
-    ```bash
-    llama-cli \
-        -hf LiquidAI/LFM2.5-VL-1.6B-GGUF:Q4_0 \
-        --image test_image.jpg \
-        -p "What's in this image?" \
-        -n 128
-    ```
-
-    The `-hf` flag downloads the model directly from Hugging Face. Use `--image-max-tokens` to control image token budget.
-
-    For server deployment and advanced usage, see the [llama.cpp guide](/docs/inference/llama-cpp#vision-models).
+    <VlLlamacpp ggufRepo="LiquidAI/LFM2.5-VL-1.6B-GGUF"></VlLlamacpp>
   </Tab>
 </Tabs>
