@@ -1,0 +1,68 @@
+name: Notebooks Check
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'notebooks/**'
+      - '.github/workflows/notebooks-check.yaml'
+  pull_request:
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - ready_for_review
+    branches:
+      - main
+    paths:
+      - 'notebooks/**'
+      - '.github/workflows/notebooks-check.yaml'
+  workflow_dispatch:
+
+jobs:
+  lint-and-typecheck:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: notebooks
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+
+      - name: Install dependencies
+        run: |
+          uv sync --extra dev
+
+      - name: Run Ruff linter on notebooks
+        run: |
+          echo "🔍 Running Ruff linter on notebooks..."
+          echo "Checks: syntax errors, undefined variables, import errors"
+          echo ""
+          uv run nbqa ruff . --output-format=github
+          echo ""
+          echo "✅ Ruff checks passed!"
+
+      - name: Run mypy type checker on notebooks
+        continue-on-error: true
+        run: |
+          echo ""
+          echo "🔍 Running mypy type checker on notebooks..."
+          echo "Note: Type checking errors are informational and won't fail the build"
+          echo ""
+          uv run nbqa mypy .
+
+      - name: Summary
+        if: success()
+        run: |
+          echo ""
+          echo "✅ All required checks passed!"
+          echo "📊 Validated $(find . -name '*.ipynb' | wc -l) notebooks"

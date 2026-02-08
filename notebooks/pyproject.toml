@@ -1,0 +1,37 @@
+[project]
+name = "docs-notebooks"
+version = "0.1.0"
+description = "Documentation and notebooks"
+requires-python = ">=3.12"
+dependencies = []
+
+[project.optional-dependencies]
+dev = [
+    "nbqa>=1.9.1",
+    "ruff>=0.8.5",
+    "mypy>=1.14.1",
+]
+
+[tool.ruff]
+# Exclude certain directories
+extend-exclude = ["runnable-examples"]
+
+[tool.ruff.lint]
+# Select rules to check - focus on correctness, not style
+select = [
+    "F",   # pyflakes (undefined names, unused imports, syntax errors)
+    "E9",  # Subset of pycodestyle errors (syntax errors, invalid syntax)
+]
+
+# Ignore rules that are problematic for notebooks
+ignore = [
+    "F401",  # Imported but unused (notebooks often import for demonstration)
+    "F841",  # Local variable assigned but never used (common in notebooks for intermediate results)
+]
+
+[tool.mypy]
+# Type checking configuration
+ignore_missing_imports = true  # Don't fail on missing type stubs
+check_untyped_defs = false     # Don't require type annotations (notebooks are often exploratory)
+warn_return_any = false        # Don't warn about returning Any
+warn_unused_ignores = false    # Don't warn about unused type ignores
