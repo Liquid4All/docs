@@ -55,3 +55,138 @@ public enum ChatMessageContent {
 ```
 
 Provide JPEG-encoded bytes for `.image` and WAV data for `.audio`. Helper initializers such as `ChatMessageContent.fromUIImage`, `ChatMessageContent.fromNSImage`, `ChatMessageContent.fromWAVData`, and `ChatMessageContent.fromFloatSamples(_:sampleRate:channelCount:)` simplify interop with platform-native buffers. On the wire, image parts are encoded as OpenAI-style `image_url` payloads and audio parts as `input_audio` arrays with Base64 data.
+
+### Audio Format Requirements
+
+The LEAP inference engine requires **WAV-encoded audio** with specific format requirements:
+
+| Property | Required Value | Notes |
+|----------|---------------|-------|
+| **Format** | WAV (RIFF) | Only WAV format is supported |
+| **Sample Rate** | 16000 Hz (16 kHz) recommended | Other sample rates are automatically resampled to 16 kHz |
+| **Encoding** | PCM (various bit depths) | Supports Float32, Int16, Int24, Int32 |
+| **Channels** | Mono (1 channel) | **Required** - stereo audio will be rejected |
+| **Byte Order** | Little-endian | Standard WAV format |
+
+**Supported PCM Encodings:**
+- **Float32**: 32-bit floating point, normalized to [-1.0, 1.0]
+- **Int16**: 16-bit signed integer, range [-32768, 32767] (recommended)
+- **Int24**: 24-bit signed integer, range [-8388608, 8388607]
+- **Int32**: 32-bit signed integer, range [-2147483648, 2147483647]
+
+<Warning>
+The inference engine **only accepts WAV format**. M4A, MP3, AAC, or other compressed formats are not supported and will cause errors. Audio must be converted to WAV before sending to the model.
+</Warning>
+
+<Info>
+**Automatic Resampling**: The inference engine automatically resamples audio to 16 kHz if provided at a different sample rate. However, for best performance and quality, provide audio at 16 kHz to avoid resampling overhead.
+</Info>
+
+<Warning>
+**Mono Channel Required**: The inference engine strictly requires single-channel (mono) audio. Multi-channel or stereo WAV files will be rejected with an error. Convert stereo audio to mono before sending.
+</Warning>
+
+#### Creating Audio Content from WAV Files
+
+```swift
+import LeapSDK
+
+// Load WAV file
+let wavURL = Bundle.main.url(forResource: "audio", withExtension: "wav")!
+let wavData = try Data(contentsOf: wavURL)
+
+let message = ChatMessage(
+    role: .user,
+    content: [
+        .text("What is being said in this audio?"),
+        .audio(wavData)
+    ]
+)
+```
+
+#### Creating Audio Content from Raw PCM Samples
+
+Use the `fromFloatSamples` helper to create WAV-encoded data from raw audio samples:
+
+```swift
+import AVFoundation
+
+// Float samples normalized to -1.0 to 1.0
+let samples: [Float] = [0.1, 0.2, 0.15, -0.3, ...]
+
+// Create WAV-encoded Data
+let audioContent = ChatMessageContent.fromFloatSamples(
+    samples,
+    sampleRate: 16000,
+    channelCount: 1
+)
+
+let message = ChatMessage(
+    role: .user,
+    content: [
+        .text("Transcribe this audio"),
+        audioContent
+    ]
+)
+```
+
+#### Recording Audio on iOS
+
+When recording audio from the device microphone, configure `AVAudioRecorder` with the correct settings:
+
+```swift
+import AVFoundation
+
+let audioURL = FileManager.default.temporaryDirectory
+    .appendingPathComponent("recording.wav")
+
+let settings: [String: Any] = [
+    AVFormatIDKey: kAudioFormatLinearPCM,           // Linear PCM
+    AVSampleRateKey: 16000.0,                       // 16 kHz
+    AVNumberOfChannelsKey: 1,                       // Mono
+    AVLinearPCMBitDepthKey: 16,                     // 16-bit
+    AVLinearPCMIsFloatKey: false,                   // Integer samples
+    AVLinearPCMIsBigEndianKey: false                // Little-endian
+]
+
+let audioRecorder = try AVAudioRecorder(url: audioURL, settings: settings)
+audioRecorder.record()
+
+// ... wait for user to finish speaking ...
+
+audioRecorder.stop()
+
+// Read the WAV file
+let wavData = try Data(contentsOf: audioURL)
+let audioContent: ChatMessageContent = .audio(wavData)
+```
+
+#### Audio Duration Considerations
+
+- **Minimum duration**: At least 1 second of audio is recommended for reliable speech recognition
+- **Maximum duration**: Limited by the model's context window (typically several minutes)
+- **Silence**: Trim excessive silence from the beginning and end for better results
+
+#### Audio Output from Models
+
+When generating audio responses (e.g., with `LFM2.5-Audio-1.5B`), the model outputs audio at **24 kHz sample rate**:
+
+```swift
+for try await response in conversation.generateResponse(message: userMessage) {
+    switch response {
+    case .audioSample(let samples, let sampleRate):
+        // samples: [Float] (32-bit float PCM, normalized -1.0 to 1.0)
+        // sampleRate: Int (typically 24000 Hz for audio generation models)
+
+        // Accumulate samples or play immediately
+        audioPlayer.enqueue(samples: samples, sampleRate: sampleRate)
+
+    default:
+        break
+    }
+}
+```
+
+<Info>
+**Note**: Audio **input** should be 16 kHz, but audio **output** from generation models is typically 24 kHz. Make sure your audio playback code supports the correct sample rate.
+</Info>

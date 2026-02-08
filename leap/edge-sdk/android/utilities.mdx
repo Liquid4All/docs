@@ -12,96 +12,163 @@ All errors are thrown as `LeapException`, which has following subclasses:
 - `LeapGenerationPromptExceedContextLengthException`: the prompt text exceeds the maximum context length so no content will be generated
 - `LeapSerializationException` : error in serializing / deserializing data.
 
-## Gson Support
+## Serialization Support
 
-Leap Android SDK also has [Gson](https://github.com/google/gson) support. The Gson support has the same behaviors as the existing `org.json` implementation.
+The LEAP SDK uses [kotlinx.serialization](https://github.com/Kotlin/kotlinx.serialization) for JSON serialization and deserialization. This is built into the core SDK and requires no additional dependencies.
 
-The `leap_gson` package should be imported to enable Gson to serialize and deserialize Leap objects.
-
-```kotlin
-dependencies {
-  implementation("ai.liquid.leap:leap-gson:0.2.0")
-}
-```
-
-The following types are supported:
+The following types are `@Serializable`:
 
 - [`ChatMessage`](./messages-content#chatmessage)
 - [`ChatMessageContent`](./messages-content#chatmessagecontent)
-
-### Create Gson Object
-
-To create a Gson object that supports Leap objects, call `registerLeapAdapters` on the `GsonBuilder` before creating the Gson object.
-
-```kotlin
-import ai.liquid.leap.gson.registerLeapAdapters
-import com.google.gson.GsonBuilder
-
-val gson = GsonBuilder().registerLeapAdapters().create()
-```
+- [`LeapFunctionCall`](./function-calling)
+- [`Manifest`](./model-loading#manifest)
 
 ### Serializing and Deserializing Conversation History
 
-With a [`Conversation`](./conversation-generation#conversation) object, simply call `Gson.toJson` to convert the chat message history into a JSON string. The returned JSON will be an array.
+**Add kotlinx.serialization to your project:**
 
 ```kotlin
-val json = gson.toJson(conversation.history)
+// app/build.gradle.kts
+plugins {
+    id("org.jetbrains.kotlin.plugin.serialization") version "2.3.10"
+}
+
+dependencies {
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")
+}
 ```
 
-To deserialize the conversation history from a JSON array, use `LeapGson.messageListTypeToken` as the type hint for Gson.
+**Save conversation history:**
 
 ```kotlin
-import ai.liquid.leap.gson.LeapGson
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.encodeToString
 
-val chatHistory: List<ChatMessage> = gson.fromJson(json, LeapGson.messageListTypeToken)
+val json = Json { ignoreUnknownKeys = true }
+
+// Serialize to JSON string
+val jsonString = json.encodeToString(conversation.history)
+
+// Save to SharedPreferences, file, database, etc.
+sharedPreferences.edit().putString("conversation_history", jsonString).apply()
 ```
 
-## Model Downloader (deprecated)
+**Restore conversation history:**
 
-<Warning>
-This module is deprecated and will be removed in the near future. To download models using the Edge SDK, see [`LeapDownloader`](./model-loading#leapdownloader).
-</Warning>
+```kotlin
+import kotlinx.serialization.decodeFromString
 
-LeapSDK Android Model Downloader module is a helper for downloading models from Leap Model Library.
-While it is good for early prototyping and demos, you may want to build your own model downloaders to support private
-models and have sophisticated authentication mechanisms.
+// Load from storage
+val jsonString = sharedPreferences.getString("conversation_history", null)
 
-Model downloader runs as a [foreground service](https://developer.android.com/develop/background-work/services/fgs),
-which is required to show a notification visible to the users when the service is running. As a result, you will need
-to request the permission to show notifications. Please follow [Android official documents on notifications](https://developer.android.com/develop/ui/views/notifications)
-for more details. Here is only a simple code snippet of end-to-end usage of this module.
+if (jsonString != null) {
+    val history = json.decodeFromString<List<ChatMessage>>(jsonString)
+    val restoredConversation = modelRunner.createConversationFromHistory(history)
+}
+```
+
+**Serialize single message:**
+
+```kotlin
+val message = ChatMessage(
+    role = ChatMessage.Role.USER,
+    content = listOf(ChatMessageContent.Text("Hello"))
+)
+
+val messageJson = json.encodeToString(message)
+```
+
+## LeapModelDownloader (Android)
+
+<Info>
+`LeapModelDownloader` is the **recommended** option for Android applications. It provides background downloads with WorkManager, foreground service notifications, and robust handling of network interruptions.
+</Info>
+
+The LeapSDK Android Model Downloader module is a production-ready helper for downloading models from the LEAP Model Library on Android. It runs as a [foreground service](https://developer.android.com/develop/background-work/services/fgs) and displays notifications to users during downloads.
+
+### Permission Setup
+
+The model downloader requires notification permissions to display download progress. You need to:
+
+1. **Add permissions to AndroidManifest.xml**:
+```xml
+<uses-permission android:name="android.permission.INTERNET" />
+<uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+<uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+<uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+```
+
+2. **Request notification permission at runtime** (Android 13+):
+```kotlin
+// In your Activity
+private val requestPermissionLauncher = registerForActivityResult(
+    ActivityResultContracts.RequestPermission()
+) { isGranted: Boolean ->
+    if (isGranted) {
+        Log.d(TAG, "Notification permission granted")
+        // Proceed with download
+    } else {
+        Log.w(TAG, "Notification permission denied")
+        // Handle permission denial
+    }
+}
+
+// Before downloading
+if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+    if (ContextCompat.checkSelfPermission(
+            this,
+            android.Manifest.permission.POST_NOTIFICATIONS
+        ) != PackageManager.PERMISSION_GRANTED
+    ) {
+        requestPermissionLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+    }
+}
+```
+
+### Installation
 
 ```kotlin
 // In build.gradle.kts
 dependencies {
-  implementation("ai.liquid.leap:leap-model-downloader:0.2.0")
-}
-
-// in onCreate() of the activity
-val requestPermissionLauncher =
-      registerForActivityResult(
-        ActivityResultContracts.RequestPermission(),
-      ) {}
-modelDownloader = LeapModelDownloader(context)
-
-// When the model downloading is requested
-if (ContextCompat.checkSelfPermission(
-      context,
-      android.Manifest.permission.POST_NOTIFICATIONS,
-     ) != PackageManager.PERMISSION_GRANTED
-   ) {
-    requestPermissionLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
-  }
-
-lifecycleScope.launch {
-  val modelToUse = LeapDownloadableModel.resolve("lfm2-1.2b", "lfm2-1.2b-20250710-8da4w")
-  if (modelToUse == null) {
-    Log.e(TAG, "Failed to retrieve LFM2 1.2B model")
-    return@launch
-  }
-  modelDownloader.requestDownloadModel(modelToUse)
+  implementation("ai.liquid.leap:leap-sdk:0.9.7")
+  implementation("ai.liquid.leap:leap-model-downloader:0.9.7")
 }
 ```
+
+### Basic Usage
+
+```kotlin
+import ai.liquid.leap.model_downloader.LeapModelDownloader
+import ai.liquid.leap.model_downloader.LeapModelDownloaderNotificationConfig
+
+// Initialize (in onCreate or similar)
+val modelDownloader = LeapModelDownloader(
+    context,
+    notificationConfig = LeapModelDownloaderNotificationConfig.build {
+        notificationTitleDownloading = "Downloading AI model..."
+        notificationTitleDownloaded = "Model ready!"
+        notificationContentDownloading = "Please wait..."
+    }
+)
+
+// Download and load model
+lifecycleScope.launch {
+    try {
+        val modelRunner = modelDownloader.loadModel(
+            modelSlug = "LFM2-1.2B",
+            quantizationSlug = "Q5_K_M",
+            progress = { progressData ->
+                Log.d(TAG, "Progress: ${progressData.progress * 100}%")
+            }
+        )
+        // Model is ready to use
+    } catch (e: Exception) {
+        Log.e(TAG, "Failed to load model: ${e.message}")
+    }
+}
+```
+
+### API Reference
 
 ### LeapModelDownloader
 

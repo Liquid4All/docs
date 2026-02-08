@@ -74,32 +74,67 @@ Register a function for the model to invoke. See [function calling](./function-c
 
 Export the whole conversation history into a `JSONArray`. Each element can be interpreted as a `ChatCompletionRequestMessage` instance in OpenAI API schema.
 
-See also: [Gson Support](./utilities#gson-support).
+See also: [Serialization Support](./utilities#serialization-support).
 
 ### Cancellation of the generation
 
 Generation will be stopped when the coroutine job that runs the flow is canceled, but it may (no guarantee) keep going as long as the job of the flow is still active.
 
-Hence, we highly recommend the generation be started within a coroutine scope associated with a lifecycle-aware component, so that the generation can be stopped if the lifecycle-aware components are destroyed. Here is an example:
+We highly recommend using a ViewModel with `viewModelScope` to manage generation lifecycle. The generation will be automatically canceled when the ViewModel is cleared. Here is an example:
 
 ```kotlin
-job = lifecycleScope.launch {
-  conversation.generateResponse(userInput)
-  .onEach {
-     when (it) {
-       is MessageResponse.Chunk -> {
-         Log.d(TAG, it.text)
-       }
-       is MessageResponse.Complete -> {
-         Log.d(TAG, "Generation is done!")
-       }
-       else -> {}
-     }
-  }
-  .collect()
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.runBlocking
 
-// Stop the generation by cancelling the job
-job.cancel()
+class ChatViewModel(application: Application) : AndroidViewModel(application) {
+    private var conversation: Conversation? = null
+    private var modelRunner: ModelRunner? = null
+    private var generationJob: Job? = null
+
+    private val _generatedText = MutableStateFlow("")
+    val generatedText: StateFlow<String> = _generatedText.asStateFlow()
+
+    fun generateResponse(userInput: String) {
+        generationJob = viewModelScope.launch {
+            _generatedText.value = ""
+            conversation?.generateResponse(userInput)
+                ?.onEach { response ->
+                    when (response) {
+                        is MessageResponse.Chunk -> {
+                            _generatedText.value += response.text
+                        }
+                        is MessageResponse.Complete -> {
+                            Log.d(TAG, "Generation is done!")
+                        }
+                        else -> {}
+                    }
+                }
+                ?.collect()
+        }
+    }
+
+    fun stopGeneration() {
+        generationJob?.cancel()
+        generationJob = null
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        // Generation is automatically canceled when ViewModel is cleared
+        generationJob?.cancel()
+
+        // Use runBlocking to ensure model is unloaded before ViewModel is destroyed
+        // viewModelScope is cancelled during clearing, so we need a non-cancelled context
+        runBlocking(Dispatchers.IO) {
+            modelRunner?.unload()
+        }
+    }
+
+    companion object {
+        private const val TAG = "ChatViewModel"
+    }
+}
 ```
 
 ### GenerationOptions

@@ -31,7 +31,7 @@ ChatMessage.fromJSONObject(obj: JSONObject): ChatMessage
 
 Return a `JSONObject` that represents the chat message. The returned object is compatible with `ChatCompletionRequestMessage` from OpenAI API. It contains 2 fields: `role` and `content` .
 
-See also: [Gson Support](./utilities#gson-support).
+See also: [Serialization Support](./utilities#serialization-support).
 
 ### `fromJSONObject`
 
@@ -42,7 +42,7 @@ Construct a `ChatMessage` instance from a `JSONObject`. Not all JSON object vari
 message.
 </Info>
 
-See also: [Gson Support](./utilities#gson-support).
+See also: [Serialization Support](./utilities#serialization-support).
 
 ### `ChatMessage.Role`
 
@@ -121,7 +121,136 @@ models may result in unexpected outputs or errors.
 ### `ChatMessageContent.Audio`
 
 ```kotlin
-data class Audio(val wavByteArray: ByteArray) : ChatMessageContent
+data class Audio(val wavByteArray: ByteArray) : ChatMessageContent {
+  constructor(data: ByteArray) : this(inputAudio = InputAudio(data = data))
+}
 ```
 
-WAV-encoded audio content. Other audio formats are not supported yet.
+Audio content for speech recognition and audio understanding. The inference engine requires **WAV-encoded audio** with specific format requirements.
+
+#### Audio Format Requirements
+
+The LEAP inference engine expects WAV files with the following specifications:
+
+| Property | Required Value | Notes |
+|----------|---------------|-------|
+| **Format** | WAV (RIFF) | Only WAV format is supported |
+| **Sample Rate** | 16000 Hz (16 kHz) recommended | Other sample rates are automatically resampled to 16 kHz |
+| **Encoding** | PCM (various bit depths) | Supports Float32, Int16, Int24, Int32 |
+| **Channels** | Mono (1 channel) | **Required** - stereo audio will be rejected |
+| **Byte Order** | Little-endian | Standard WAV format |
+
+**Supported PCM Encodings:**
+- **Float32**: 32-bit floating point, normalized to [-1.0, 1.0]
+- **Int16**: 16-bit signed integer, range [-32768, 32767] (recommended)
+- **Int24**: 24-bit signed integer, range [-8388608, 8388607]
+- **Int32**: 32-bit signed integer, range [-2147483648, 2147483647]
+
+<Warning>
+The inference engine **only accepts WAV format**. MP3, AAC, OGG, or other compressed formats are not supported and will cause errors. Audio must be converted to WAV before sending to the model.
+</Warning>
+
+<Info>
+**Automatic Resampling**: The inference engine automatically resamples audio to 16 kHz if provided at a different sample rate. However, for best performance and quality, provide audio at 16 kHz to avoid resampling overhead.
+</Info>
+
+<Warning>
+**Mono Channel Required**: The inference engine strictly requires single-channel (mono) audio. Multi-channel or stereo WAV files will be rejected with an error. Convert stereo audio to mono before sending.
+</Warning>
+
+#### Creating Audio Content from WAV Files
+
+**From a WAV file:**
+
+```kotlin
+val audioFile = File("/path/to/audio.wav")
+val wavBytes = audioFile.readBytes()
+val audioContent = ChatMessageContent.Audio(wavBytes)
+
+val message = ChatMessage(
+    role = ChatMessage.Role.USER,
+    content = listOf(
+        ChatMessageContent.Text("What is being said in this audio?"),
+        audioContent
+    )
+)
+```
+
+#### Creating Audio Content from Raw PCM Samples
+
+If you're recording audio or have raw PCM data, use the `FloatAudioBuffer` utility to create properly formatted WAV files:
+
+```kotlin
+import ai.liquid.leap.audio.FloatAudioBuffer
+
+// Collect audio samples (32-bit float PCM, normalized to -1.0 to 1.0)
+val audioBuffer = FloatAudioBuffer(sampleRate = 16000)
+
+// Add audio chunks as they arrive
+audioBuffer.add(floatArrayOf(0.1f, 0.2f, 0.15f, ...))
+audioBuffer.add(floatArrayOf(0.3f, 0.25f, ...))
+
+// Create WAV-encoded bytes
+val wavBytes = audioBuffer.createWavBytes()
+val audioContent = ChatMessageContent.Audio(wavBytes)
+```
+
+<Info>
+`FloatAudioBuffer` automatically creates a valid WAV header and encodes the samples as 32-bit float PCM in a WAV container, which is compatible with the inference engine.
+</Info>
+
+#### Recording Audio on Android
+
+When recording audio from the device microphone, configure `AudioRecord` or use a library like `WaveRecorder` with the correct settings:
+
+```kotlin
+import com.github.squti.androidwaverecorder.WaveRecorder
+
+val waveRecorder = WaveRecorder(outputFilePath)
+waveRecorder.configureWaveSettings {
+    sampleRate = 16000                                      // 16 kHz
+    channels = android.media.AudioFormat.CHANNEL_IN_MONO    // Mono
+    audioEncoding = android.media.AudioFormat.ENCODING_PCM_16BIT  // 16-bit PCM
+}
+
+waveRecorder.startRecording()
+// ... wait for user to finish speaking ...
+waveRecorder.stopRecording()
+
+// Read the WAV file
+val audioFile = File(outputFilePath)
+val wavBytes = audioFile.readBytes()
+val audioContent = ChatMessageContent.Audio(wavBytes)
+```
+
+#### Audio Duration Considerations
+
+- **Minimum duration**: At least 1 second of audio is recommended for reliable speech recognition
+- **Maximum duration**: Limited by the model's context window (typically several minutes)
+- **Silence**: Trim excessive silence from the beginning and end for better results
+
+#### Audio Output from Models
+
+When generating audio responses (e.g., with `LFM2.5-Audio-1.5B`), the model outputs audio at **24 kHz sample rate**:
+
+```kotlin
+conversation.generateResponse(userMessage)
+    .onEach { response ->
+        when (response) {
+            is MessageResponse.AudioSample -> {
+                // samples: FloatArray (32-bit float PCM)
+                // sampleRate: Int (typically 24000 Hz for audio generation models)
+                val samples = response.samples
+                val sampleRate = response.sampleRate
+
+                // Accumulate or play audio samples
+                audioBuffer.add(samples)
+            }
+        }
+    }
+    .collect()
+```
+
+<Info>
+**Note**: Audio **input** should be 16 kHz, but audio **output** from generation models is typically 24 kHz. Make sure your audio playback code supports the correct sample rate.
+</Info>

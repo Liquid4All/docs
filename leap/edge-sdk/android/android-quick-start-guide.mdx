@@ -3,19 +3,23 @@ title: "Quick Start Guide"
 description: "Get up and running with the LEAP Android SDK in minutes. Install the SDK, load models, and start generating content."
 ---
 
-Latest version: `v0.9.2`
+Latest version: `v0.9.7`
+
+<Info>
+The LEAP SDK is now a **Kotlin Multiplatform** library supporting Android, iOS, macOS, and JVM. While Android is well-tested and production-ready, other platforms are currently in testing.
+</Info>
 
 ## 1. Prerequisites[​](#1-prerequisites "Direct link to 1. Prerequisites")
 
 You should already have:
 
 - An Android project created in Android Studio. You may create an empty project with the wizard. LEAP Android SDK is Kotlin-first. We recommend to work with the SDK only in Kotlin.
-- Leap Android SDK needs [Kotlin Android plugin](https://kotlinlang.org/docs/releases.html#update-to-a-new-kotlin-version) v2.2.0 or above and [Android Gradle Plugin](https://developer.android.com/build/releases/gradle-plugin) v8.12.0 or above to build. Declare it in `build.gradle.kts` as
+- Leap Android SDK needs [Kotlin Android plugin](https://kotlinlang.org/docs/releases.html#update-to-a-new-kotlin-version) v2.3.0 or above and [Android Gradle Plugin](https://developer.android.com/build/releases/gradle-plugin) v8.13.0 or above to build. Declare it in your root `build.gradle.kts` as:
   ```kotlin
   plugins {
-   id("com.android.application") version "8.13.2" apply false
-   id("com.android.library") version "8.13.2" apply false
-   id("org.jetbrains.kotlin.android") version "2.3.0" apply false
+      id("com.android.application") version "8.13.2" apply false
+      id("com.android.library") version "8.13.2" apply false
+      id("org.jetbrains.kotlin.android") version "2.3.10" apply false
   }
   ```
 * A working Android device that supports `arm64-v8a` ABI with [developer mode enabled](https://developer.android.com/studio/debug/dev-options). We recommend having 3GB+ of RAM to run the models.
@@ -25,22 +29,72 @@ You should already have:
   ```
 
 <Warning>
-The SDK may crash on loading model bundles on simulators. A physical Android device is recommended.
+The SDK may crash on loading model bundles on emulators. A physical Android device is recommended.
 </Warning>
 
-## 2. Import the LeapSDK[​](#2-import-the-leapsdk "Direct link to 2. Import the LeapSDK")
+## 2. Configure Permissions[​](#2-configure-permissions "Direct link to 2. Configure Permissions")
+
+The `LeapModelDownloader` runs as a foreground service and displays notifications during downloads. You need to add the following permissions to your `AndroidManifest.xml`:
+
+```xml
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+
+    <application ...>
+        <!-- Your activities -->
+    </application>
+</manifest>
+```
+
+<Info>
+The `POST_NOTIFICATIONS` permission requires a runtime permission request on Android 13 (API 33) and above. See the code example in step 3 for how to request this permission.
+</Info>
+
+## 3. Import the LeapSDK[​](#3-import-the-leapsdk "Direct link to 3. Import the LeapSDK")
 
 Add the following dependencies into `$PROJECT_ROOT/app/build.gradle.kts`:
 
+**Option A: Direct dependency declaration**
+
 ```kotlin
 dependencies {
-  implementation("ai.liquid.leap:leap-sdk:0.9.2")
+  implementation("ai.liquid.leap:leap-sdk:0.9.7")
+  implementation("ai.liquid.leap:leap-model-downloader:0.9.7") // Android-specific model downloader
+}
+```
+
+**Option B: Version catalog (recommended)**
+
+In `gradle/libs.versions.toml`:
+
+```toml
+[versions]
+leapSdk = "0.9.7"
+
+[libraries]
+leap-sdk = { module = "ai.liquid.leap:leap-sdk", version.ref = "leapSdk" }
+leap-model-downloader = { module = "ai.liquid.leap:leap-model-downloader", version.ref = "leapSdk" }
+```
+
+Then in `app/build.gradle.kts`:
+
+```kotlin
+dependencies {
+  implementation(libs.leap.sdk)
+  implementation(libs.leap.model.downloader)
 }
 ```
 
 Then perform a project sync in Android Studio to fetch the LeapSDK artifacts.
 
-## 3. Getting and Loading Models[​](#3-getting-and-loading-models "Direct link to 3. Getting and Loading Models")
+<Info>
+For Android, we recommend using the `leap-model-downloader` module which provides background downloads with WorkManager and notification support. Other platforms (iOS, macOS, JVM) should use the `LeapDownloader` class from the core `leap-sdk` module.
+</Info>
+
+## 4. Getting and Loading Models[​](#4-getting-and-loading-models "Direct link to 4. Getting and Loading Models")
 
 The SDK uses **GGUF manifests** for loading models (recommended for all new projects due to superior inference performance and better default generation parameters).
 
@@ -52,23 +106,187 @@ Legacy Executorch bundle support is available in the accordion below for existin
 
 The LEAP Edge SDK supports directly downloading LEAP models in GGUF format. Given the model name and quantization method (which you can find in the [LEAP Model Library](https://leap.liquid.ai/models)), the SDK will automatically download the necessary GGUF files along with generation parameters for optimal performance.
 
-The `LeapDownloader.loadModel` suspend function loads a model and returns a model runner instance for invoking the model. This function takes some time to finish as loading the model is a heavy I/O operation, but it is safe to call on the main thread. The function should be executed in a coroutine scope.
+### Android: Using LeapModelDownloader (Recommended)
+
+For Android, `LeapModelDownloader` provides the best experience with background downloads, WorkManager integration, and notification support. This function takes some time to finish as loading the model is a heavy I/O operation, but it is safe to call on the main thread. The function should be executed in a coroutine scope.
+
+**ViewModel**
 
 ```kotlin
-try {
-  val baseDir = File(context.filesDir, "model_files").absolutePath
-  val modelDownloader = LeapDownloader(config = LeapDownloaderConfig(saveDir = baseDir))
-  val modelRunner = modelDownloader.loadModel(
-      modelSlug = "LFM2-1.2B",
-      quantizationSlug = "Q5_K_M"
-  )
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.viewModelScope
+import ai.liquid.leap.Conversation
+import ai.liquid.leap.ModelRunner
+import ai.liquid.leap.model_downloader.LeapModelDownloader
+import ai.liquid.leap.model_downloader.LeapModelDownloaderNotificationConfig
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+
+class ChatViewModel(application: Application) : AndroidViewModel(application) {
+    private val modelDownloader = LeapModelDownloader(
+        application,
+        notificationConfig = LeapModelDownloaderNotificationConfig.build {
+            notificationTitleDownloading = "Downloading AI model..."
+            notificationTitleDownloaded = "Model ready!"
+            notificationContentDownloading = "Please wait while the model downloads"
+        }
+    )
+
+    private var modelRunner: ModelRunner? = null
+    private var conversation: Conversation? = null
+
+    private val _isLoading = MutableStateFlow(false)
+    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
+
+    private val _downloadProgress = MutableStateFlow(0f)
+    val downloadProgress: StateFlow<Float> = _downloadProgress.asStateFlow()
+
+    private val _errorMessage = MutableStateFlow<String?>(null)
+    val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
+
+    fun loadModel() {
+        viewModelScope.launch {
+            _isLoading.value = true
+            _errorMessage.value = null
+            try {
+                modelRunner = modelDownloader.loadModel(
+                    modelSlug = "LFM2-1.2B",
+                    quantizationSlug = "Q5_K_M",
+                    progress = { progressData ->
+                        _downloadProgress.value = progressData.progress
+                    }
+                )
+                conversation = modelRunner?.createConversation()
+                _isLoading.value = false
+            } catch (e: Exception) {
+                _errorMessage.value = "Failed to load model: ${e.message}"
+                _isLoading.value = false
+            }
+        }
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        // Use runBlocking to ensure model is unloaded before ViewModel is destroyed
+        // viewModelScope is cancelled during clearing, so we need a non-cancelled context
+        runBlocking(Dispatchers.IO) {
+            modelRunner?.unload()
+        }
+    }
 }
-catch (e: LeapModelLoadingException) {
-  Log.e(TAG, "Failed to load the model. Error message: ${e.message}")
+```
+
+**Activity**
+
+```kotlin
+import android.os.Build
+import android.os.Bundle
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.viewModels
+import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
+import androidx.lifecycle.lifecycleScope
+import android.content.pm.PackageManager
+import kotlinx.coroutines.launch
+
+class MainActivity : AppCompatActivity() {
+    private val viewModel: ChatViewModel by viewModels()
+
+    // Permission launcher for POST_NOTIFICATIONS
+    private val requestPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted: Boolean ->
+        if (isGranted) {
+            // Permission granted
+            viewModel.loadModel()
+        } else {
+            // Permission denied - downloads will work but without notifications
+            viewModel.loadModel()
+        }
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_main)
+
+        // Observe loading state and download progress
+        lifecycleScope.launch {
+            viewModel.isLoading.collect { isLoading ->
+                // Update UI loading indicator
+            }
+        }
+
+        lifecycleScope.launch {
+            viewModel.downloadProgress.collect { progress ->
+                // Update download progress UI (0.0 to 1.0)
+            }
+        }
+
+        lifecycleScope.launch {
+            viewModel.errorMessage.collect { error ->
+                error?.let {
+                    // Show error message to user
+                }
+            }
+        }
+
+        // Request notification permission and load model
+        checkPermissionsAndLoadModel()
+    }
+
+    private fun checkPermissionsAndLoadModel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            when {
+                ContextCompat.checkSelfPermission(
+                    this,
+                    android.Manifest.permission.POST_NOTIFICATIONS
+                ) == PackageManager.PERMISSION_GRANTED -> {
+                    // Permission already granted
+                    viewModel.loadModel()
+                }
+                else -> {
+                    // Request permission
+                    requestPermissionLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+                }
+            }
+        } else {
+            // No permission needed for Android 12 and below
+            viewModel.loadModel()
+        }
+    }
 }
 ```
 
 The SDK will automatically download the required GGUF files to the device's cache and load the model with the appropriate generation parameters specified in the manifest.
+
+<Accordion title="Alternative: Using LeapDownloader (Cross-Platform)">
+  For cross-platform projects or if you don't need Android-specific features, you can use the `LeapDownloader` class from the core `leap-sdk` module:
+
+  ```kotlin
+  import ai.liquid.leap.LeapDownloader
+  import ai.liquid.leap.LeapDownloaderConfig
+
+  lifecycleScope.launch {
+    try {
+      val baseDir = File(context.filesDir, "model_files").absolutePath
+      val modelDownloader = LeapDownloader(config = LeapDownloaderConfig(saveDir = baseDir))
+      val modelRunner = modelDownloader.loadModel(
+          modelSlug = "LFM2-1.2B",
+          quantizationSlug = "Q5_K_M"
+      )
+    } catch (e: LeapModelLoadingException) {
+      Log.e(TAG, "Failed to load the model. Error message: ${e.message}")
+    }
+  }
+  ```
+
+  This approach works on all platforms (Android, iOS, macOS, JVM) but doesn't provide Android-specific features like background downloads or notifications.
+</Accordion>
 
 <Accordion title="Legacy: Executorch Bundles">
   Browse the [Leap Model Library](https://leap.liquid.ai/models) to find and download a model bundle that matches your needs.
@@ -98,33 +316,137 @@ The SDK will automatically download the required GGUF files to the device's cach
   ```
 </Accordion>
 
-## 4. Generate content with the model[​](#4-generate-content-with-the-model "Direct link to 4. Generate content with the model")
+## 5. Generate content with the model[​](#5-generate-content-with-the-model "Direct link to 5. Generate content with the model")
 
-To generate content, a conversation object should be created from the model runner:
+To generate content, use the conversation object created in the ViewModel. The `Conversation.generateResponse` function returns a Kotlin asynchronous flow of `MessageResponse`, which can be processed with Kotlin flow operators.
 
+**Updated ViewModel with generation**
+
+```kotlin
+import ai.liquid.leap.MessageResponse
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.onCompletion
+import kotlinx.coroutines.flow.onEach
+
+class ChatViewModel(application: Application) : AndroidViewModel(application) {
+    // ... previous code ...
+
+    private val _responseText = MutableStateFlow("")
+    val responseText: StateFlow<String> = _responseText.asStateFlow()
+
+    private val _isGenerating = MutableStateFlow(false)
+    val isGenerating: StateFlow<Boolean> = _isGenerating.asStateFlow()
+
+    private var generationJob: Job? = null
+
+    fun generateResponse(userMessage: String) {
+        // Cancel any ongoing generation
+        generationJob?.cancel()
+
+        viewModelScope.launch {
+            _isGenerating.value = true
+            _responseText.value = ""
+            _errorMessage.value = null
+
+            conversation?.generateResponse(userMessage)
+                ?.onEach { response ->
+                    when (response) {
+                        is MessageResponse.Chunk -> {
+                            // Append text chunk to response
+                            _responseText.value += response.text
+                        }
+                        is MessageResponse.ReasoningChunk -> {
+                            // Handle reasoning/thinking chunks separately
+                            Log.d(TAG, "Reasoning: ${response.text}")
+                        }
+                        is MessageResponse.Complete -> {
+                            // Generation completed
+                            Log.d(TAG, "Generation done. Stats: ${response.stats}")
+                        }
+                        else -> {
+                            // Handle other response types (FunctionCalls, AudioSample, etc.)
+                        }
+                    }
+                }
+                ?.onCompletion {
+                    _isGenerating.value = false
+                    Log.d(TAG, "Generation completed")
+                }
+                ?.catch { exception ->
+                    _errorMessage.value = "Generation failed: ${exception.message}"
+                    _isGenerating.value = false
+                }
+                ?.collect()
+        }.also { job ->
+            generationJob = job
+        }
+    }
+
+    fun stopGeneration() {
+        generationJob?.cancel()
+        _isGenerating.value = false
+    }
+
+    companion object {
+        private const val TAG = "ChatViewModel"
+    }
+}
 ```
-val conversation = modelRunner.createConversation()
+
+**Activity UI Integration**
+
+```kotlin
+class MainActivity : AppCompatActivity() {
+    private val viewModel: ChatViewModel by viewModels()
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_main)
+
+        // ... previous code ...
+
+        // Observe response text
+        lifecycleScope.launch {
+            viewModel.responseText.collect { text ->
+                // Update UI with generated text
+                textView.text = text
+            }
+        }
+
+        // Observe generation state
+        lifecycleScope.launch {
+            viewModel.isGenerating.collect { isGenerating ->
+                // Update UI: disable send button, show progress, etc.
+                sendButton.isEnabled = !isGenerating
+            }
+        }
+
+        // Send message when button clicked
+        sendButton.setOnClickListener {
+            val userInput = inputEditText.text.toString()
+            if (userInput.isNotBlank()) {
+                viewModel.generateResponse(userInput)
+                inputEditText.text.clear()
+            }
+        }
+
+        // Stop generation when stop button clicked
+        stopButton.setOnClickListener {
+            viewModel.stopGeneration()
+        }
+    }
+}
 ```
 
-With user input text, we can use `Conversation.generateResponse` function to invoke the generation. Its return value is a Kotlin asynchronous flow of `MessageResponse`, which can be processed with Kotlin flow operators:
+In this pattern:
 
-```
-val input = "Here is a user message!"val generationJob = lifecycleScope.launch {  conversation.generateResponse(input).onEach {    when (it) {      is MessageResponse.Chunk -> {        Log.d(TAG, "text chunk: ${it.text}")      }      is MessageResponse.ReasoningChunk -> {        Log.d(TAG, "reasoning chunk: ${it.text}")      }      else -> {        // ignore other response      }    }  }  .onCompletion {     Log.d(TAG, "Generation done!")  }  .catch { exception ->    Log.e(TAG, "Error in generation: $exception")  }  .collect()}
-```
+* `onEach` is called when the model generates a chunk of content
+* `onCompletion` is called when generation finishes - at this point, `conversation.history` contains the complete conversation
+* `catch` handles any exceptions during generation
+* Call `stopGeneration()` to cancel an ongoing generation
 
-In this code snippet:
-
-* `onEach` callback will be called when the model generates a chunk of content.
-* `onCompletion` callback will be called when the generation is done. At this time point, `conversation.history` will have the latest message generated by the model.
-* `catch` callback will be called if an exception is thrown from the generation.
-
-To interrupt the generation, simply cancel the generation job returned from the coroutine scope `launch` method:
-
-```
-generationJob.cancel()
-```
-
-## 5. Examples[​](#5-examples "Direct link to 5. Examples")
+## 6. Examples[​](#6-examples "Direct link to 6. Examples")
 
 See [LeapSDK-Examples](https://github.com/Liquid4All/LeapSDK-Examples) for complete example apps using LeapSDK.
 

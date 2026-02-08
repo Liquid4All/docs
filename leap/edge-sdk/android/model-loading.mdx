@@ -1,11 +1,112 @@
 ---
 title: "Model Loading"
-description: "API reference for loading models in the LEAP Android SDK"
+description: "API reference for loading models in the LEAP SDK"
 ---
 
-## `LeapDownloader`
+<Info>
+The LEAP SDK is now **Kotlin Multiplatform** and provides two model loading options:
+- **`LeapModelDownloader`** - Android-specific, recommended for Android apps (background downloads, notifications, WorkManager)
+- **`LeapDownloader`** - Cross-platform (Android, iOS, macOS, JVM), use for non-Android platforms or cross-platform code
+</Info>
 
-The `LeapDownloader` class is the recommended entrypoint for loading models. It is a wrapper around the LEAP SDK that provides a simple and convenient way to download and load models.
+## `LeapModelDownloader` (Android)
+
+The `LeapModelDownloader` class is the **recommended option for Android applications**. It provides Android-specific features including background downloads using WorkManager, foreground service notifications, and robust handling of network interruptions.
+
+```kotlin
+class LeapModelDownloader(
+    private val context: Context,
+    modelFileDir: File? = null,
+    private val extraHTTPRequestHeaders: Map<String, String> = mapOf(),
+    private val notificationConfig: LeapModelDownloaderNotificationConfig = LeapModelDownloaderNotificationConfig(),
+)
+```
+
+<Info>
+This class is part of the `ai.liquid.leap:leap-model-downloader` module, which is Android-specific. For other platforms, see [`LeapDownloader`](#leapdownloader-cross-platform) below.
+</Info>
+
+### Constructor Parameters
+
+| Field | Type | Required | Default | Description |
+|-------|------|----------|---------|-------------|
+| `context` | `Context` | Yes | - | Android context (Activity or Application context) |
+| `modelFileDir` | `File` | No | `null` | Directory to save models. If null, uses app's external files directory. |
+| `extraHTTPRequestHeaders` | `Map<String, String>` | No | `mapOf()` | Additional HTTP headers for download requests |
+| `notificationConfig` | `LeapModelDownloaderNotificationConfig` | No | `LeapModelDownloaderNotificationConfig()` | Notification configuration for the foreground service |
+
+### `loadModel`
+
+Download and load a model in one operation. If the model is already cached, it will be loaded directly without downloading.
+
+**Arguments**
+
+| Name | Type | Required | Default | Description |
+|------|------|----------|---------|-------------|
+| `modelSlug` | `String` | Yes | - | The name of the model to load (e.g., "LFM2-1.2B"). See the [LEAP Model Library](https://leap.liquid.ai/models) for available models. |
+| `quantizationSlug` | `String` | Yes | - | The quantization level (e.g., "Q4_K_M", "Q5_K_M"). See the [LEAP Model Library](https://leap.liquid.ai/models) for options. |
+| `modelLoadingOptions` | `ModelLoadingOptions` | No | `null` | Options for loading the model. See [`ModelLoadingOptions`](#modelloadingoptions) for details. |
+| `generationTimeParameters` | `GenerationTimeParameters` | No | `null` | Parameters to control model generation. See [`GenerationTimeParameters`](#generationtimeparameters) for details. |
+| `progress` | `(ProgressData) -> Unit` | No | `{}` | Callback for download progress updates |
+
+**Returns**
+
+`ModelRunner`: A [`ModelRunner`](./conversation-generation#modelrunner) instance for interacting with the loaded model.
+
+### `downloadModel`
+
+Download a model without loading it into memory. Useful for pre-downloading models in the background.
+
+**Arguments**
+
+| Name | Type | Required | Default | Description |
+|------|------|----------|---------|-------------|
+| `modelSlug` | `String` | Yes | - | The model name |
+| `quantizationSlug` | `String` | Yes | - | The quantization level |
+| `progress` | `(ProgressData) -> Unit` | No | `{}` | Callback for download progress |
+
+**Returns**
+
+`Manifest`: Metadata about the downloaded model
+
+### Example Usage
+
+```kotlin
+import ai.liquid.leap.model_downloader.LeapModelDownloader
+import ai.liquid.leap.model_downloader.LeapModelDownloaderNotificationConfig
+
+// Initialize downloader
+val modelDownloader = LeapModelDownloader(
+    context,
+    notificationConfig = LeapModelDownloaderNotificationConfig.build {
+        notificationTitleDownloading = "Downloading AI model..."
+        notificationTitleDownloaded = "Model ready!"
+    }
+)
+
+// Load model (downloads if needed)
+lifecycleScope.launch {
+    val modelRunner = modelDownloader.loadModel(
+        modelSlug = "LFM2-1.2B",
+        quantizationSlug = "Q5_K_M",
+        progress = { progressData ->
+            println("Progress: ${progressData.progress * 100}%")
+        }
+    )
+    // Use modelRunner...
+}
+```
+
+<br/>
+
+## `LeapDownloader` (Cross-Platform)
+
+The `LeapDownloader` class is a **cross-platform** model loader available in the core `leap-sdk` module. It works on Android, iOS, macOS, and JVM platforms. Use this for:
+- iOS and macOS applications
+- JVM/Desktop applications
+- Cross-platform Kotlin Multiplatform code
+- Android apps that don't need background download features
+
 ```kotlin
 class LeapDownloader(config: LeapDownloaderConfig = LeapDownloaderConfig())
 ```
