@@ -1,0 +1,922 @@
+---
+title: "AI Agent Usage Guide"
+description: "Complete reference for using the LEAP Android SDK"
+---
+
+## Core Architecture
+
+```
+LeapModelDownloader (Android)
+    ↓
+ModelRunner
+    ↓
+Conversation
+    ↓
+MessageResponse (streaming)
+```
+
+## Installation
+
+### Gradle Dependencies
+
+**Recommended**: Use version catalog for dependency management.
+
+```toml
+# gradle/libs.versions.toml
+[versions]
+leapSdk = "0.9.7"
+
+[libraries]
+leap-sdk = { module = "ai.liquid.leap:leap-sdk", version.ref = "leapSdk" }
+leap-model-downloader = { module = "ai.liquid.leap:leap-model-downloader", version.ref = "leapSdk" }
+```
+
+```kotlin
+// app/build.gradle.kts
+dependencies {
+    implementation(libs.leap.sdk)
+    implementation(libs.leap.model.downloader)  // For Android notifications & background downloads
+}
+```
+
+**Alternative**: Direct dependencies
+
+```kotlin
+// app/build.gradle.kts
+dependencies {
+    implementation("ai.liquid.leap:leap-sdk:0.9.7")
+    implementation("ai.liquid.leap:leap-model-downloader:0.9.7")
+}
+```
+
+### Required Permissions
+
+Add to `AndroidManifest.xml`:
+
+```xml
+<uses-permission android:name="android.permission.INTERNET" />
+<uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+<uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+<uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+```
+
+### Runtime Permissions (Android 13+)
+
+Request notification permission before downloading:
+
+```kotlin
+// In Activity
+private val permissionLauncher = registerForActivityResult(
+    ActivityResultContracts.RequestPermission()
+) { isGranted ->
+    if (isGranted) {
+        // Permission granted, proceed with download
+    } else {
+        // Permission denied, handle gracefully
+    }
+}
+
+// Before downloading
+if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+    if (ContextCompat.checkSelfPermission(this, POST_NOTIFICATIONS) != PERMISSION_GRANTED) {
+        permissionLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+    }
+}
+```
+
+## Loading Models
+
+### Method 1: Automatic Download and Load (Recommended)
+
+The simplest approach - specify model name and quantization, SDK handles download and loading:
+
+```kotlin
+import ai.liquid.leap.downloader.LeapModelDownloader
+import ai.liquid.leap.downloader.LeapModelDownloaderNotificationConfig
+
+class ChatViewModel(application: Application) : AndroidViewModel(application) {
+    private val downloader = LeapModelDownloader(
+        application,
+        notificationConfig = LeapModelDownloaderNotificationConfig.build {
+            notificationTitleDownloading = "Downloading AI model..."
+            notificationTitleDownloaded = "Model ready!"
+        }
+    )
+
+    private var modelRunner: ModelRunner? = null
+
+    fun loadModel() {
+        viewModelScope.launch {
+            try {
+                // Downloads if not cached, then loads
+                modelRunner = downloader.loadModel(
+                    modelSlug = "LFM2.5-1.2B-Instruct",
+                    quantizationSlug = "Q4_K_M",
+                    progress = { progressData ->
+                        // progressData.progress: Float (0.0 to 1.0)
+                        Log.d(TAG, "Progress: ${(progressData.progress * 100).toInt()}%")
+                    }
+                )
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to load model", e)
+            }
+        }
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+
+        // Unload model asynchronously to avoid ANR
+        // Do NOT use runBlocking - it blocks the main thread and can cause ANRs
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                modelRunner?.unload()
+            } catch (e: Exception) {
+                Log.e(TAG, "Error unloading model", e)
+            }
+        }
+    }
+}
+```
+
+Available models and quantizations: [LEAP Model Library](https://leap.liquid.ai/models)
+
+### Method 2: Download Without Loading
+
+Separate download from loading for better control:
+
+```kotlin
+import ai.liquid.leap.downloader.LeapModelDownloader
+
+class ChatViewModel(application: Application) : AndroidViewModel(application) {
+    private val downloader = LeapModelDownloader(application)
+    private var modelRunner: ModelRunner? = null
+
+    // Step 1: Download model to cache (doesn't load into memory)
+    suspend fun downloadModel() {
+        try {
+            downloader.downloadModel(
+                modelSlug = "LFM2.5-1.2B-Instruct",
+                quantizationSlug = "Q4_K_M",
+                progress = { progressData ->
+                    Log.d(TAG, "Download: ${(progressData.progress * 100).toInt()}%")
+                }
+            )
+            // Model is now cached locally
+        } catch (e: Exception) {
+            Log.e(TAG, "Download failed", e)
+        }
+    }
+
+    // Step 2: Later, load from cache (no download)
+    suspend fun loadCachedModel() {
+        try {
+            modelRunner = downloader.loadModel(
+                modelSlug = "LFM2.5-1.2B-Instruct",
+                quantizationSlug = "Q4_K_M"
+            )
+            // Loads immediately from cache, no network request
+        } catch (e: Exception) {
+            Log.e(TAG, "Load failed", e)
+        }
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        runBlocking(Dispatchers.IO) {
+            modelRunner?.unload()
+        }
+    }
+}
+```
+
+**Use Cases:**
+- Pre-download models during app onboarding
+- Download on Wi-Fi, load later on mobile data
+- Manage storage before loading heavy models
+
+### Method 3: Cross-Platform LeapDownloader
+
+For Kotlin Multiplatform projects (iOS, macOS, JVM, Android):
+
+```kotlin
+import ai.liquid.leap.LeapDownloader
+import ai.liquid.leap.LeapDownloaderConfig
+
+val downloader = LeapDownloader(
+    config = LeapDownloaderConfig(saveDir = "/path/to/models")
+)
+
+// Load model (downloads if not cached)
+val modelRunner = downloader.loadModel(
+    modelSlug = "LFM2.5-1.2B-Instruct",
+    quantizationSlug = "Q4_K_M"
+)
+```
+
+**Note:** `LeapDownloader` doesn't provide Android-specific features like notifications or WorkManager integration. Use `LeapModelDownloader` for better UX on Android.
+
+## Model Download Management
+
+Query download status, check available storage, and manage cached models:
+
+### Check Download Status
+
+```kotlin
+import ai.liquid.leap.downloader.LeapModelDownloader
+
+val downloader = LeapModelDownloader(application)
+
+// Query status for a specific model
+viewModelScope.launch {
+    val status = downloader.queryStatus(
+        modelSlug = "LFM2.5-1.2B-Instruct",
+        quantizationSlug = "Q4_K_M"
+    )
+
+    when (status) {
+        is ModelDownloadStatus.NotOnLocal -> {
+            Log.d(TAG, "Model not downloaded")
+        }
+        is ModelDownloadStatus.DownloadInProgress -> {
+            val progressPercent = (status.progress * 100).toInt()
+            Log.d(TAG, "Downloading: $progressPercent%")
+        }
+        is ModelDownloadStatus.Downloaded -> {
+            Log.d(TAG, "Model ready to load")
+        }
+    }
+}
+```
+
+### Get Model Information
+
+```kotlin
+// Get total model size before downloading
+viewModelScope.launch {
+    try {
+        val totalBytes = downloader.getModelSize(
+            modelSlug = "LFM2.5-1.2B-Instruct",
+            quantizationSlug = "Q4_K_M"
+        )
+        val totalMB = totalBytes / (1024 * 1024)
+        Log.d(TAG, "Model total size: $totalMB MB")
+
+        // Check if we have enough storage
+        val availableGB = getAvailableStorageGB()
+        val requiredGB = totalBytes / (1024 * 1024 * 1024)
+
+        if (availableGB >= requiredGB) {
+            // Safe to download
+            Log.d(TAG, "Sufficient storage available")
+        } else {
+            Log.w(TAG, "Insufficient storage: need ${requiredGB}GB, have ${availableGB}GB")
+        }
+    } catch (e: Exception) {
+        Log.e(TAG, "Failed to get model size", e)
+    }
+}
+
+// Get local file path for a model
+val modelFile = downloader.getModelFile(
+    modelSlug = "LFM2.5-1.2B-Instruct",
+    quantizationSlug = "Q4_K_M"
+)
+Log.d(TAG, "Model path: ${modelFile.absolutePath}")
+
+// Check if model exists locally
+val isDownloaded = modelFile.exists()
+```
+
+### Remove Downloaded Models
+
+```kotlin
+// Remove a specific model from cache
+viewModelScope.launch {
+    try {
+        downloader.removeModel(
+            modelSlug = "LFM2.5-1.2B-Instruct",
+            quantizationSlug = "Q4_K_M"
+        )
+        Log.d(TAG, "Model removed successfully")
+    } catch (e: Exception) {
+        Log.e(TAG, "Failed to remove model", e)
+    }
+}
+```
+
+### Cancel Ongoing Download
+
+```kotlin
+// Cancel an in-progress download
+downloader.cancelDownload(
+    modelSlug = "LFM2.5-1.2B-Instruct",
+    quantizationSlug = "Q4_K_M"
+)
+```
+
+### Check Available Storage
+
+```kotlin
+import android.os.Environment
+import android.os.StatFs
+
+fun getAvailableStorageGB(): Long {
+    val path = Environment.getDataDirectory()
+    val stat = StatFs(path.path)
+    val availableBytes = stat.availableBlocksLong * stat.blockSizeLong
+    return availableBytes / (1024 * 1024 * 1024) // Convert to GB
+}
+
+// Check before downloading
+fun shouldDownloadModel(): Boolean {
+    val availableGB = getAvailableStorageGB()
+    val requiredGB = 2L // Most models need 1-2GB
+
+    return if (availableGB >= requiredGB) {
+        true
+    } else {
+        Log.w(TAG, "Insufficient storage: ${availableGB}GB available, ${requiredGB}GB required")
+        false
+    }
+}
+```
+
+### Complete Download Management Example
+
+```kotlin
+class ModelManagementViewModel(application: Application) : AndroidViewModel(application) {
+    private val downloader = LeapModelDownloader(application)
+
+    private val _downloadStatus = MutableStateFlow<ModelDownloadStatus>(ModelDownloadStatus.NotOnLocal)
+    val downloadStatus: StateFlow<ModelDownloadStatus> = _downloadStatus.asStateFlow()
+
+    private val _errorMessage = MutableStateFlow<String?>(null)
+    val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
+
+    // Check if model is already downloaded
+    suspend fun checkModelStatus(modelSlug: String, quantizationSlug: String) {
+        val status = downloader.queryStatus(modelSlug, quantizationSlug)
+        _downloadStatus.value = status
+    }
+
+    // Download model if not cached
+    fun downloadIfNeeded(modelSlug: String, quantizationSlug: String) {
+        viewModelScope.launch {
+            try {
+                val status = downloader.queryStatus(modelSlug, quantizationSlug)
+
+                if (status is ModelDownloadStatus.Downloaded) {
+                    Log.d(TAG, "Model already downloaded")
+                    return@launch
+                }
+
+                // Check storage before downloading
+                if (getAvailableStorageGB() < 2) {
+                    _errorMessage.value = "Insufficient storage space"
+                    return@launch
+                }
+
+                // Start download
+                downloader.downloadModel(
+                    modelSlug = modelSlug,
+                    quantizationSlug = quantizationSlug,
+                    progress = { progressData ->
+                        _downloadStatus.value = ModelDownloadStatus.DownloadInProgress(
+                            progress = progressData.progress
+                        )
+                    }
+                )
+
+                _downloadStatus.value = ModelDownloadStatus.Downloaded
+
+            } catch (e: Exception) {
+                _errorMessage.value = "Download failed: ${e.message}"
+                Log.e(TAG, "Download error", e)
+            }
+        }
+    }
+
+    // Remove model to free up space
+    fun removeModel(modelSlug: String, quantizationSlug: String) {
+        viewModelScope.launch {
+            try {
+                downloader.removeModel(modelSlug, quantizationSlug)
+                _downloadStatus.value = ModelDownloadStatus.NotOnLocal
+                Log.d(TAG, "Model removed")
+            } catch (e: Exception) {
+                _errorMessage.value = "Failed to remove model: ${e.message}"
+            }
+        }
+    }
+
+    // Cancel download
+    fun cancelDownload(modelSlug: String, quantizationSlug: String) {
+        downloader.cancelDownload(modelSlug, quantizationSlug)
+        _downloadStatus.value = ModelDownloadStatus.NotOnLocal
+    }
+
+    private fun getAvailableStorageGB(): Long {
+        val path = Environment.getDataDirectory()
+        val stat = StatFs(path.path)
+        val availableBytes = stat.availableBlocksLong * stat.blockSizeLong
+        return availableBytes / (1024 * 1024 * 1024)
+    }
+
+    companion object {
+        private const val TAG = "ModelManagement"
+    }
+}
+```
+
+### Download Status Types
+
+```kotlin
+sealed interface ModelDownloadStatus {
+    object NotOnLocal : ModelDownloadStatus
+    data class DownloadInProgress(val progress: Float) : ModelDownloadStatus  // 0.0 to 1.0
+    object Downloaded : ModelDownloadStatus
+}
+```
+
+## Core Classes
+
+### ModelRunner
+Represents a loaded model instance. Thread-safe.
+
+**Methods**:
+- `createConversation(systemPrompt: String? = null): Conversation` - Start new chat
+- `createConversationFromHistory(history: List<ChatMessage>): Conversation` - Restore chat
+- `suspend fun unload()` - Free memory (MUST call in onCleared with runBlocking)
+
+### Conversation
+Manages chat history and generation state.
+
+**Fields**:
+- `history: List<ChatMessage>` - Full message history (copy, immutable)
+- `isGenerating: Boolean` - Thread-safe generation status
+
+**Methods**:
+- `generateResponse(userTextMessage: String, options: GenerationOptions? = null): Flow<MessageResponse>`
+- `generateResponse(message: ChatMessage, options: GenerationOptions? = null): Flow<MessageResponse>`
+- `registerFunction(function: LeapFunction)` - Add tool for function calling
+- `appendToHistory(message: ChatMessage)` - Add message without generating
+
+### ChatMessage
+```kotlin
+data class ChatMessage(
+    val role: Role,              // USER, ASSISTANT, SYSTEM, TOOL
+    val content: List<ChatMessageContent>,
+    val reasoningContent: String? = null,  // From reasoning models
+    val functionCalls: List<LeapFunctionCall>? = null
+)
+
+enum class Role { USER, ASSISTANT, SYSTEM, TOOL }
+```
+
+### ChatMessageContent (Sealed Class)
+```kotlin
+ChatMessageContent.Text(text: String)
+ChatMessageContent.Image(jpegByteArray: ByteArray)  // JPEG only
+ChatMessageContent.Audio(wavByteArray: ByteArray)   // WAV only
+```
+
+**Audio Requirements** (CRITICAL):
+- Format: WAV (RIFF) - No MP3/AAC/OGG
+- Sample Rate: 16 kHz recommended (auto-resampled if different)
+- Channels: Mono (1 channel) REQUIRED - stereo rejected
+- Encoding: Float32, Int16, Int24, or Int32 PCM
+
+### MessageResponse (Sealed Interface)
+Streaming generation responses:
+
+```kotlin
+MessageResponse.Chunk(text: String)                    // Text token
+MessageResponse.ReasoningChunk(reasoning: String)      // Thinking (LFM2.5-1.2B-Thinking)
+MessageResponse.FunctionCalls(functionCalls: List)     // Tool calls requested
+MessageResponse.AudioSample(samples: FloatArray, sampleRate: Int)  // Audio output (24kHz)
+MessageResponse.Complete(
+    fullMessage: ChatMessage,
+    finishReason: GenerationFinishReason,  // STOP or EXCEED_CONTEXT
+    stats: GenerationStats?                // Token counts, tokens/sec
+)
+```
+
+## Generation Pattern (REQUIRED)
+
+```kotlin
+class ChatViewModel : ViewModel() {
+    private var generationJob: Job? = null
+    private val _responseText = MutableStateFlow("")
+
+    fun generate(userInput: String) {
+        generationJob?.cancel()  // Cancel previous generation
+
+        generationJob = viewModelScope.launch {
+            conversation?.generateResponse(userInput)
+                ?.onEach { response ->
+                    when (response) {
+                        is MessageResponse.Chunk -> {
+                            _responseText.value += response.text
+                        }
+                        is MessageResponse.Complete -> {
+                            Log.d(TAG, "Tokens/sec: ${response.stats?.tokenPerSecond}")
+                        }
+                        else -> {}
+                    }
+                }
+                ?.catch { e ->
+                    // Handle error
+                }
+                ?.collect()
+        }
+    }
+
+    fun stopGeneration() {
+        generationJob?.cancel()
+    }
+}
+```
+
+## Generation Options
+
+```kotlin
+val options = GenerationOptions(
+    temperature = 0.7f,              // Randomness (0.0 = deterministic, 1.0+ = creative)
+    topP = 0.9f,                     // Nucleus sampling
+    minP = 0.05f,                    // Minimum probability
+    repetitionPenalty = 1.1f,        // Prevent repetition
+    jsonSchemaConstraint = """{"type":"object",...}""",  // Force JSON output
+    functionCallParser = LFMFunctionCallParser(),  // Enable function calling (null to disable)
+    inlineThinkingTags = false       // Emit ReasoningChunk separately (for thinking models)
+)
+
+conversation.generateResponse(userInput, options).collect { ... }
+```
+
+### Structured Output (Constrained Generation)
+
+```kotlin
+@Serializable
+@Generatable("Recipe information")
+data class Recipe(
+    val name: String,
+    val ingredients: List<String>,
+    val steps: List<String>
+)
+
+val options = GenerationOptions().apply {
+    setResponseFormatType<Recipe>()  // Auto-generates JSON schema
+}
+
+conversation.generateResponse("Generate a pasta recipe", options).collect { response ->
+    if (response is MessageResponse.Complete) {
+        val recipe = LeapJson.decodeFromString<Recipe>(response.fullMessage.content[0].text)
+    }
+}
+```
+
+## Function Calling (Tool Use)
+
+```kotlin
+// 1. Define function
+val getWeather = LeapFunction(
+    name = "get_weather",
+    description = "Get current weather for a city",
+    parameters = """
+        {
+            "type": "object",
+            "properties": {
+                "city": {"type": "string"},
+                "units": {"type": "string", "enum": ["celsius", "fahrenheit"]}
+            },
+            "required": ["city"]
+        }
+    """
+)
+
+// 2. Register function
+conversation.registerFunction(getWeather)
+
+// 3. Handle function calls
+conversation.generateResponse("What's the weather in Tokyo?").collect { response ->
+    when (response) {
+        is MessageResponse.FunctionCalls -> {
+            response.functionCalls.forEach { call ->
+                // call.name: String
+                // call.arguments: String (JSON)
+                val result = executeTool(call.name, call.arguments)
+
+                // Add result back to conversation
+                val toolMessage = ChatMessage(
+                    role = ChatMessage.Role.TOOL,
+                    content = listOf(ChatMessageContent.Text(result))
+                )
+                conversation.appendToHistory(toolMessage)
+
+                // Generate next response
+                conversation.generateResponse("").collect { ... }
+            }
+        }
+    }
+}
+```
+
+## Multimodal Input
+
+### Vision (Image + Text)
+```kotlin
+val imageBytes = File("image.jpg").readBytes()  // JPEG only
+
+val message = ChatMessage(
+    role = ChatMessage.Role.USER,
+    content = listOf(
+        ChatMessageContent.Image(imageBytes),
+        ChatMessageContent.Text("What's in this image?")
+    )
+)
+
+conversation.generateResponse(message).collect { ... }
+```
+
+### Audio Input (Speech Recognition)
+```kotlin
+import ai.liquid.leap.audio.FloatAudioBuffer
+
+// From raw PCM samples
+val audioBuffer = FloatAudioBuffer(sampleRate = 16000)
+audioBuffer.add(floatArrayOf(...))  // Float samples normalized -1.0 to 1.0
+val wavBytes = audioBuffer.createWavBytes()
+
+val message = ChatMessage(
+    role = ChatMessage.Role.USER,
+    content = listOf(
+        ChatMessageContent.Audio(wavBytes),
+        ChatMessageContent.Text("Transcribe this audio")
+    )
+)
+```
+
+### Audio Output (Text-to-Speech)
+```kotlin
+val audioSamples = mutableListOf<FloatArray>()
+
+conversation.generateResponse("Say hello").collect { response ->
+    when (response) {
+        is MessageResponse.AudioSample -> {
+            // samples: FloatArray (Float32 PCM, -1.0 to 1.0)
+            // sampleRate: Int (typically 24000 Hz)
+            audioSamples.add(response.samples)
+            playAudio(response.samples, response.sampleRate)
+        }
+    }
+}
+```
+
+## Model Selection Guide
+
+### Text Models
+- **LFM2.5-1.2B-Instruct**: General purpose (recommended)
+- **LFM2.5-1.2B-Thinking**: Extended reasoning (emits ReasoningChunk)
+- **LFM2-1.2B**: Stable version
+- **LFM2-1.2B-Tool**: Optimized for function calling
+
+### Multimodal Models
+- **LFM2.5-VL-1.6B**: Vision + text
+- **LFM2.5-Audio-1.5B**: Audio + text (TTS, ASR, voice chat)
+
+### Quantization (Speed vs Quality)
+- **Q4_0**: Fastest, smallest (lowest quality)
+- **Q4_K_M**: **Recommended** (good balance)
+- **Q5_K_M**: Better quality
+- **Q6_K**: High quality
+- **Q8_0**: Near-original quality
+- **F16**: Original quality (largest, slowest)
+
+## Error Handling
+
+```kotlin
+sealed class LeapException : Exception()
+class LeapModelLoadingException : LeapException()
+class LeapGenerationException : LeapException()
+class LeapGenerationPromptExceedContextLengthException : LeapException()
+class LeapSerializationException : LeapException()
+
+try {
+    modelRunner = downloader.loadModel(...)
+} catch (e: LeapModelLoadingException) {
+    // Model failed to load
+} catch (e: LeapGenerationPromptExceedContextLengthException) {
+    // Prompt too long
+} catch (e: Exception) {
+    // Other errors
+}
+```
+
+## Critical Best Practices
+
+### 1. Model Unloading (REQUIRED)
+```kotlin
+override fun onCleared() {
+    super.onCleared()
+
+    // Unload model asynchronously to avoid ANR
+    // NEVER use runBlocking - it blocks the main thread and causes ANRs
+    CoroutineScope(Dispatchers.IO).launch {
+        try {
+            modelRunner?.unload()
+        } catch (e: Exception) {
+            Log.e(TAG, "Error unloading model", e)
+        }
+    }
+}
+```
+
+**Why this matters:**
+- `runBlocking` blocks the main thread during ViewModel cleanup
+- If model unload takes >5 seconds, you get an ANR (Application Not Responding)
+- Using `CoroutineScope(Dispatchers.IO).launch` makes cleanup async
+- Always catch exceptions to prevent crashes during cleanup
+
+### 2. Generation Cancellation
+```kotlin
+// Generation auto-cancels when Flow collection is cancelled
+generationJob?.cancel()
+
+// Or when viewModelScope is cleared (ViewModel destroyed)
+```
+
+### 3. Thread Safety
+- All SDK operations are main-thread safe
+- Use `viewModelScope.launch` for all suspend functions
+- Callbacks run on main thread
+
+### 4. History Management
+```kotlin
+// conversation.history returns a COPY
+val history = conversation.history  // Safe to read
+
+// To restore conversation
+val newConversation = modelRunner.createConversationFromHistory(savedHistory)
+```
+
+### 5. Serialization
+```kotlin
+// Save conversation
+val json = LeapJson.encodeToString(conversation.history)
+
+// Restore conversation
+val history = LeapJson.decodeFromString<List<ChatMessage>>(json)
+val conversation = modelRunner.createConversationFromHistory(history)
+```
+
+## Complete ViewModel Example
+
+```kotlin
+import ai.liquid.leap.*
+import ai.liquid.leap.downloader.*
+import ai.liquid.leap.message.*
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.*
+
+class ChatViewModel(application: Application) : AndroidViewModel(application) {
+    private val downloader = LeapModelDownloader(
+        application,
+        notificationConfig = LeapModelDownloaderNotificationConfig.build {
+            notificationTitleDownloading = "Downloading model..."
+            notificationTitleDownloaded = "Model ready!"
+        }
+    )
+
+    private var modelRunner: ModelRunner? = null
+    private var conversation: Conversation? = null
+    private var generationJob: Job? = null
+
+    private val _messages = MutableStateFlow<List<ChatMessage>>(emptyList())
+    val messages: StateFlow<List<ChatMessage>> = _messages.asStateFlow()
+
+    private val _isLoading = MutableStateFlow(false)
+    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
+
+    private val _isGenerating = MutableStateFlow(false)
+    val isGenerating: StateFlow<Boolean> = _isGenerating.asStateFlow()
+
+    private val _currentResponse = MutableStateFlow("")
+    val currentResponse: StateFlow<String> = _currentResponse.asStateFlow()
+
+    fun loadModel() {
+        viewModelScope.launch {
+            _isLoading.value = true
+            try {
+                modelRunner = downloader.loadModel(
+                    modelSlug = "LFM2.5-1.2B-Instruct",
+                    quantizationSlug = "Q4_K_M"
+                )
+                conversation = modelRunner?.createConversation(
+                    systemPrompt = "Explain it to me like I'm 5 years old"
+                )
+            } catch (e: Exception) {
+                // Handle error
+            } finally {
+                _isLoading.value = false
+            }
+        }
+    }
+
+    fun sendMessage(text: String) {
+        generationJob?.cancel()
+        _currentResponse.value = ""
+
+        generationJob = viewModelScope.launch {
+            _isGenerating.value = true
+            try {
+                conversation?.generateResponse(text)
+                    ?.onEach { response ->
+                        when (response) {
+                            is MessageResponse.Chunk -> {
+                                _currentResponse.value += response.text
+                            }
+                            is MessageResponse.Complete -> {
+                                _messages.value = conversation?.history ?: emptyList()
+                                _currentResponse.value = ""
+                            }
+                            else -> {}
+                        }
+                    }
+                    ?.catch { e ->
+                        // Handle generation error
+                    }
+                    ?.collect()
+            } finally {
+                _isGenerating.value = false
+            }
+        }
+    }
+
+    fun stopGeneration() {
+        generationJob?.cancel()
+        _isGenerating.value = false
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        generationJob?.cancel()
+        runBlocking(Dispatchers.IO) {
+            modelRunner?.unload()
+        }
+    }
+}
+```
+
+## Imports Reference
+
+### Android (LeapModelDownloader)
+```kotlin
+import ai.liquid.leap.Conversation
+import ai.liquid.leap.ModelRunner
+import ai.liquid.leap.downloader.LeapModelDownloader
+import ai.liquid.leap.downloader.LeapModelDownloaderNotificationConfig
+import ai.liquid.leap.message.ChatMessage
+import ai.liquid.leap.message.ChatMessageContent
+import ai.liquid.leap.message.MessageResponse
+import ai.liquid.leap.generation.GenerationOptions
+import ai.liquid.leap.LeapException
+```
+
+### Cross-Platform (LeapDownloader)
+```kotlin
+import ai.liquid.leap.Conversation
+import ai.liquid.leap.ModelRunner
+import ai.liquid.leap.LeapDownloader
+import ai.liquid.leap.LeapDownloaderConfig
+import ai.liquid.leap.message.ChatMessage
+import ai.liquid.leap.message.ChatMessageContent
+import ai.liquid.leap.message.MessageResponse
+import ai.liquid.leap.generation.GenerationOptions
+```
+
+## Troubleshooting
+
+### Model won't load
+- Check internet connection (first download)
+- Verify minSdk = 31 in build.gradle.kts
+- Use physical device (emulators may crash)
+- Check storage space (models: 500MB-2GB)
+
+### Generation fails
+- Check prompt length vs context window
+- Verify model supports feature (e.g., vision, audio, function calling)
+- Check `isGenerating` before new generation
+
+### Audio input fails
+- Verify WAV format (not MP3/AAC)
+- Ensure mono channel (stereo rejected)
+- Check sample rate (16kHz recommended)
+
+### Memory issues
+- Call `modelRunner?.unload()` in onCleared
+- Don't load multiple models simultaneously
+- Use appropriate quantization (Q4_K_M recommended)

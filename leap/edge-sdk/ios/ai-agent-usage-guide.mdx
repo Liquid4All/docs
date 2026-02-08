@@ -1,0 +1,884 @@
+---
+title: "AI Agent Usage Guide"
+description: "Complete reference for using the LEAP iOS SDK"
+---
+
+## Core Architecture
+
+```
+Leap.load() (iOS/macOS)
+    ↓
+ModelRunner
+    ↓
+Conversation
+    ↓
+MessageResponse (streaming)
+```
+
+## Installation
+
+### Swift Package Manager (Recommended)
+
+```swift
+// In Xcode: File → Add Package Dependencies
+// Repository: https://github.com/Liquid4All/leap-ios.git
+// Version: 0.9.2
+
+dependencies: [
+    .package(url: "https://github.com/Liquid4All/leap-ios.git", from: "0.9.2")
+]
+
+targets: [
+    .target(
+        name: "YourApp",
+        dependencies: [
+            .product(name: "LeapSDK", package: "leap-ios"),
+            .product(name: "LeapModelDownloader", package: "leap-ios") // Optional
+        ]
+    )
+]
+```
+
+### CocoaPods
+
+```ruby
+pod 'Leap-SDK', '~> 0.9.2'
+pod 'Leap-Model-Downloader', '~> 0.9.2' # Optional
+```
+
+## Loading Models
+
+### Method 1: Automatic Download (Recommended)
+
+The simplest approach - specify model name and quantization, SDK handles everything:
+
+```swift
+import LeapSDK
+
+// Load model with automatic download and caching
+let modelRunner = try await Leap.load(
+    model: "LFM2.5-1.2B-Instruct",
+    quantization: "Q4_K_M"
+) { progress, speed in
+    // progress: Double (0.0 to 1.0)
+    // speed: Int64 (bytes per second)
+    print("Download progress: \(Int(progress * 100))% at \(speed) bytes/s")
+}
+```
+
+Available models and quantizations: [LEAP Model Library](https://leap.liquid.ai/models)
+
+### Method 2: Download Without Loading
+
+Separate download from loading for better control:
+
+```swift
+import LeapModelDownloader
+
+let downloader = ModelDownloader()
+
+// Download model to cache
+let manifest = try await downloader.downloadModel(
+    "LFM2.5-1.2B-Instruct",
+    quantization: "Q4_K_M"
+) { progress, speed in
+    print("Progress: \(Int(progress * 100))%")
+}
+
+// Later, load from cache (no download)
+let modelRunner = try await Leap.load(
+    model: "LFM2.5-1.2B-Instruct",
+    quantization: "Q4_K_M"
+)
+```
+
+### Method 3: Custom Manifest URL
+
+Load from a custom manifest:
+
+```swift
+let manifestURL = URL(string: "https://your-server.com/model-manifest.json")!
+
+let modelRunner = try await Leap.load(
+    manifestURL: manifestURL,
+    downloadProgressHandler: { progress, speed in
+        print("Progress: \(Int(progress * 100))%")
+    }
+)
+```
+
+### Method 4: Local Bundle (Legacy)
+
+Load from a local .bundle or .gguf file:
+
+```swift
+guard let bundleURL = Bundle.main.url(forResource: "model", withExtension: "bundle") else {
+    fatalError("Model bundle not found")
+}
+
+let modelRunner = try await Leap.load(
+    url: bundleURL,
+    options: LiquidInferenceEngineOptions(
+        bundlePath: bundleURL.path,
+        cpuThreads: 6,
+        contextSize: 8192,
+        nGpuLayers: 8  // Metal GPU acceleration on macOS
+    )
+)
+```
+
+## Core Classes
+
+### `ModelRunner`
+
+The loaded model instance. Create conversations from this:
+
+```swift
+protocol ModelRunner {
+    func createConversation(systemPrompt: String?) -> Conversation
+    func createConversationFromHistory(history: [ChatMessage]) -> Conversation
+}
+```
+
+**Usage:**
+
+```swift
+let conversation = modelRunner.createConversation(
+    systemPrompt: "Explain it to me like I'm 5 years old"
+)
+
+// Or restore from saved history
+let savedHistory: [ChatMessage] = loadHistoryFromDisk()
+let conversation = modelRunner.createConversationFromHistory(history: savedHistory)
+```
+
+### `Conversation`
+
+Manages chat history and generation:
+
+```swift
+class Conversation {
+    let modelRunner: ModelRunner
+    private(set) var history: [ChatMessage]
+    private(set) var isGenerating: Bool
+
+    func generateResponse(
+        message: ChatMessage,
+        generationOptions: GenerationOptions?
+    ) -> AsyncThrowingStream<MessageResponse, Error>
+
+    func generateResponse(
+        userTextMessage: String,
+        generationOptions: GenerationOptions?
+    ) -> AsyncThrowingStream<MessageResponse, Error>
+
+    func registerFunction(_ function: LeapFunction)
+    func exportToJSON() throws -> [[String: Any]]
+}
+```
+
+**Properties:**
+
+- `history` - Array of `ChatMessage` objects representing the conversation
+- `isGenerating` - Boolean indicating if generation is in progress
+
+**Key Methods:**
+
+- `generateResponse(message:generationOptions:)` - Start generation, returns async stream
+- `registerFunction(_:)` - Register functions for function calling
+- `exportToJSON()` - Export conversation history to JSON
+
+### `ChatMessage`
+
+Represents a single message in the conversation:
+
+```swift
+struct ChatMessage {
+    var role: ChatMessageRole  // .system, .user, .assistant, .tool
+    var content: [ChatMessageContent]
+    var reasoningContent: String?  // For reasoning models
+    var functionCalls: [LeapFunctionCall]?
+}
+
+enum ChatMessageRole: String {
+    case user = "user"
+    case system = "system"
+    case assistant = "assistant"
+    case tool = "tool"
+}
+```
+
+**Creating Messages:**
+
+```swift
+// Text message
+let message = ChatMessage(
+    role: .user,
+    content: [.text("Hello, how are you?")]
+)
+
+// Multimodal message with image
+let message = ChatMessage(
+    role: .user,
+    content: [
+        .text("Describe this image:"),
+        .image(jpegData)  // Data containing JPEG bytes
+    ]
+)
+
+// Audio message
+let message = ChatMessage(
+    role: .user,
+    content: [
+        .text("Transcribe this audio:"),
+        .audio(wavData)  // Data containing WAV bytes (16kHz mono)
+    ]
+)
+```
+
+### `ChatMessageContent`
+
+Content types supported in messages:
+
+```swift
+enum ChatMessageContent {
+    case text(String)
+    case image(Data)  // JPEG encoded
+    case audio(Data)  // WAV encoded (16kHz, mono, PCM)
+}
+```
+
+**Audio Requirements:**
+- Format: WAV only
+- Sample Rate: 16 kHz (mono channel required)
+- Encoding: PCM (Float32, Int16, Int24, or Int32)
+- Channels: Mono (1 channel) - stereo will be rejected
+
+**Creating Audio Content:**
+
+```swift
+// From WAV file
+let wavData = try Data(contentsOf: audioFileURL)
+let audioContent = ChatMessageContent.audio(wavData)
+
+// From float samples
+let samples: [Float] = [0.1, 0.2, 0.15, ...]  // Normalized to -1.0 to 1.0
+let audioContent = ChatMessageContent.fromFloatSamples(samples, sampleRate: 16000)
+```
+
+### `MessageResponse`
+
+Streaming response types from generation:
+
+```swift
+enum MessageResponse {
+    case chunk(String)  // Text chunk
+    case reasoningChunk(String)  // Reasoning text (thinking models only)
+    case audioSample(samples: [Float], sampleRate: Int)  // Audio output (24kHz typically)
+    case functionCall([LeapFunctionCall])  // Function call requests
+    case complete(MessageCompletion)  // Generation complete
+}
+```
+
+**`MessageCompletion` Fields:**
+
+```swift
+struct MessageCompletion {
+    let message: ChatMessage  // Complete assistant message
+    let finishReason: GenerationFinishReason  // .stop or .exceed_context
+    let stats: GenerationStats?  // Token counts and speed
+}
+
+struct GenerationStats {
+    var promptTokens: UInt64
+    var completionTokens: UInt64
+    var totalTokens: UInt64
+    var tokenPerSecond: Float
+}
+```
+
+### `GenerationOptions`
+
+Control generation behavior:
+
+```swift
+struct GenerationOptions {
+    var temperature: Float?  // Randomness (0.0 to 2.0)
+    var topP: Float?  // Nucleus sampling
+    var minP: Float?  // Minimum probability
+    var repetitionPenalty: Float?  // Reduce repetition
+    var rngSeed: UInt64?  // Seed for deterministic output
+    var jsonSchemaConstraint: String?  // JSON schema for structured output
+    var functionCallParser: LeapFunctionCallParserProtocol?
+    var resetHistory: Bool  // Default true
+    var sequenceLength: UInt32?  // Override context length
+    var maxOutputTokens: UInt32?  // Limit output length
+    var enableThinking: Bool  // Surface <think> blocks
+    var cacheControl: CacheControl?
+}
+```
+
+**Example:**
+
+```swift
+var options = GenerationOptions(
+    temperature: 0.7,
+    maxOutputTokens: 512,
+    enableThinking: false
+)
+
+// For structured output
+try options.setResponseFormat(type: MyStruct.self)
+```
+
+## Generation Patterns
+
+### Basic Text Generation
+
+```swift
+import LeapSDK
+
+@MainActor
+final class ChatViewModel: ObservableObject {
+    @Published var messages: [ChatMessage] = []
+    @Published var isGenerating = false
+    @Published var currentResponse = ""
+
+    private var modelRunner: ModelRunner?
+    private var conversation: Conversation?
+    private var generationTask: Task<Void, Never>?
+
+    func loadModel() async {
+        do {
+            modelRunner = try await Leap.load(
+                model: "LFM2.5-1.2B-Instruct",
+                quantization: "Q4_K_M"
+            ) { progress, _ in
+                print("Loading: \(Int(progress * 100))%")
+            }
+            conversation = modelRunner?.createConversation(
+                systemPrompt: "Explain it to me like I'm 5 years old"
+            )
+        } catch {
+            print("Failed to load model: \(error)")
+        }
+    }
+
+    func send(_ text: String) {
+        guard let conversation else { return }
+
+        // Cancel any ongoing generation
+        generationTask?.cancel()
+
+        let userMessage = ChatMessage(role: .user, content: [.text(text)])
+        currentResponse = ""
+        isGenerating = true
+
+        generationTask = Task {
+            do {
+                for try await response in conversation.generateResponse(
+                    message: userMessage,
+                    generationOptions: GenerationOptions(temperature: 0.7)
+                ) {
+                    await handleResponse(response)
+                }
+            } catch {
+                print("Generation error: \(error)")
+            }
+            isGenerating = false
+        }
+    }
+
+    func stopGeneration() {
+        generationTask?.cancel()
+        generationTask = nil
+        isGenerating = false
+    }
+
+    @MainActor
+    private func handleResponse(_ response: MessageResponse) {
+        switch response {
+        case .chunk(let text):
+            currentResponse += text
+
+        case .reasoningChunk(let reasoning):
+            print("Thinking: \(reasoning)")
+
+        case .audioSample(let samples, let sampleRate):
+            // Handle audio output (typically 24kHz)
+            playAudio(samples: samples, sampleRate: sampleRate)
+
+        case .functionCall(let calls):
+            // Handle function calls
+            handleFunctionCalls(calls)
+
+        case .complete(let completion):
+            if let stats = completion.stats {
+                print("Generated \(stats.completionTokens) tokens at \(stats.tokenPerSecond) tok/s")
+            }
+            // Final message is already in conversation.history
+            messages = conversation?.history ?? []
+            currentResponse = ""
+        }
+    }
+}
+```
+
+### Multimodal Input (Vision)
+
+```swift
+func sendImageMessage(image: UIImage, prompt: String) {
+    guard let jpegData = image.jpegData(compressionQuality: 0.8) else { return }
+
+    let message = ChatMessage(
+        role: .user,
+        content: [
+            .text(prompt),
+            .image(jpegData)
+        ]
+    )
+
+    Task {
+        for try await response in conversation.generateResponse(message: message) {
+            await handleResponse(response)
+        }
+    }
+}
+```
+
+### Audio Input
+
+```swift
+import AVFoundation
+
+func transcribeAudio(audioFileURL: URL) async {
+    // Load WAV file (must be 16kHz, mono, PCM)
+    guard let wavData = try? Data(contentsOf: audioFileURL) else { return }
+
+    let message = ChatMessage(
+        role: .user,
+        content: [
+            .text("Transcribe this audio:"),
+            .audio(wavData)
+        ]
+    )
+
+    Task {
+        for try await response in conversation.generateResponse(message: message) {
+            await handleResponse(response)
+        }
+    }
+}
+
+// Recording audio with AVAudioRecorder
+class AudioRecorder {
+    private var audioRecorder: AVAudioRecorder?
+
+    func startRecording(to url: URL) throws {
+        let settings: [String: Any] = [
+            AVFormatIDKey: Int(kAudioFormatLinearPCM),
+            AVSampleRateKey: 16000.0,  // 16 kHz required
+            AVNumberOfChannelsKey: 1,  // Mono required
+            AVEncoderBitDepthKey: 16,  // 16-bit PCM
+            AVEncoderAudioQualityKey: AVAudioQuality.high.rawValue
+        ]
+
+        audioRecorder = try AVAudioRecorder(url: url, settings: settings)
+        audioRecorder?.record()
+    }
+
+    func stopRecording() -> URL? {
+        audioRecorder?.stop()
+        return audioRecorder?.url
+    }
+}
+```
+
+## Function Calling
+
+Register functions for the model to invoke:
+
+```swift
+// Define function
+let weatherFunction = LeapFunction(
+    name: "get_weather",
+    description: "Get the current weather for a location",
+    parameters: [
+        LeapFunctionParameter(
+            name: "location",
+            description: "City name",
+            type: .string,
+            required: true
+        ),
+        LeapFunctionParameter(
+            name: "unit",
+            description: "Temperature unit",
+            type: .string,
+            required: false,
+            enumValues: ["celsius", "fahrenheit"]
+        )
+    ]
+)
+
+// Register with conversation
+conversation.registerFunction(weatherFunction)
+
+// Handle function calls in response
+func handleResponse(_ response: MessageResponse) {
+    switch response {
+    case .functionCall(let calls):
+        for call in calls {
+            if call.name == "get_weather" {
+                let location = call.arguments["location"] as? String ?? "Unknown"
+                let result = getWeather(location: location)
+
+                // Add tool result back to conversation
+                let toolMessage = ChatMessage(
+                    role: .tool,
+                    content: [.text(result)]
+                )
+
+                // Create new conversation with updated history
+                let updatedHistory = conversation.history + [toolMessage]
+                conversation = modelRunner.createConversationFromHistory(
+                    history: updatedHistory
+                )
+            }
+        }
+    default:
+        break
+    }
+}
+```
+
+## Structured Output
+
+Use `@Generatable` macro for type-safe JSON output:
+
+```swift
+import LeapSDK
+
+@Generatable
+struct Recipe {
+    let name: String
+    let ingredients: [String]
+    let steps: [String]
+    let cookingTime: Int
+}
+
+// Configure generation
+var options = GenerationOptions()
+try options.setResponseFormat(type: Recipe.self)
+
+// Generate
+for try await response in conversation.generateResponse(
+    message: ChatMessage(role: .user, content: [.text("Give me a pasta recipe")]),
+    generationOptions: options
+) {
+    if case .complete(let completion) = response {
+        // Parse JSON response into Recipe struct
+        if case .text(let json) = completion.message.content.first {
+            let recipe = try JSONDecoder().decode(Recipe.self, from: json.data(using: .utf8)!)
+            print("Recipe: \(recipe.name)")
+        }
+    }
+}
+```
+
+## Conversation Persistence
+
+Save and restore conversation history:
+
+```swift
+import Foundation
+
+// Save conversation
+func saveConversation() throws {
+    let jsonArray = try conversation.exportToJSON()
+    let data = try JSONSerialization.data(withJSONObject: jsonArray)
+    try data.write(to: conversationFileURL)
+}
+
+// Restore conversation
+func restoreConversation() throws {
+    let data = try Data(contentsOf: conversationFileURL)
+    let jsonArray = try JSONSerialization.jsonObject(with: data) as! [[String: Any]]
+
+    let history = try jsonArray.map { json in
+        try ChatMessage(from: json)
+    }
+
+    conversation = modelRunner.createConversationFromHistory(history: history)
+}
+
+// Using Codable (alternative)
+extension ChatMessage: Codable {
+    // Already implemented in SDK
+}
+
+func saveWithCodable() throws {
+    let encoder = JSONEncoder()
+    let data = try encoder.encode(conversation.history)
+    try data.write(to: conversationFileURL)
+}
+
+func restoreWithCodable() throws {
+    let data = try Data(contentsOf: conversationFileURL)
+    let decoder = JSONDecoder()
+    let history = try decoder.decode([ChatMessage].self, from: data)
+    conversation = modelRunner.createConversationFromHistory(history: history)
+}
+```
+
+## Model Download Management
+
+Query download status and manage cached models:
+
+```swift
+import LeapModelDownloader
+
+let downloader = ModelDownloader()
+
+// Check download status
+let status = downloader.queryStatus("LFM2.5-1.2B-Instruct", quantization: "Q4_K_M")
+
+switch status {
+case .notOnLocal:
+    print("Model not downloaded")
+case .downloadInProgress(let progress):
+    print("Downloading: \(Int(progress * 100))%")
+case .downloaded:
+    print("Model ready")
+}
+
+// Get model size before downloading
+let sizeInBytes = try await downloader.getModelSize(
+    modelName: "LFM2.5-1.2B-Instruct",
+    quantization: "Q4_K_M"
+)
+print("Model size: \(sizeInBytes / 1_000_000) MB")
+
+// Remove downloaded model
+try downloader.removeModel("LFM2.5-1.2B-Instruct", quantization: "Q4_K_M")
+
+// Cancel ongoing download
+downloader.requestStopDownload(model)
+```
+
+## Complete ViewModel Example
+
+```swift
+import SwiftUI
+import LeapSDK
+import LeapModelDownloader
+
+@MainActor
+final class ChatViewModel: ObservableObject {
+    @Published var messages: [ChatMessage] = []
+    @Published var currentResponse = ""
+    @Published var isGenerating = false
+    @Published var isLoadingModel = false
+    @Published var downloadProgress: Double = 0.0
+    @Published var error: String?
+
+    private var modelRunner: ModelRunner?
+    private var conversation: Conversation?
+    private var generationTask: Task<Void, Never>?
+
+    func loadModel() async {
+        isLoadingModel = true
+        downloadProgress = 0.0
+        error = nil
+
+        do {
+            modelRunner = try await Leap.load(
+                model: "LFM2.5-1.2B-Instruct",
+                quantization: "Q4_K_M"
+            ) { [weak self] progress, speed in
+                Task { @MainActor in
+                    self?.downloadProgress = progress
+                }
+            }
+
+            conversation = modelRunner?.createConversation(
+                systemPrompt: "Explain it to me like I'm 5 years old"
+            )
+
+        } catch {
+            self.error = "Failed to load model: \(error.localizedDescription)"
+        }
+
+        isLoadingModel = false
+    }
+
+    func send(_ text: String) {
+        guard let conversation, !text.isEmpty else { return }
+
+        generationTask?.cancel()
+
+        let userMessage = ChatMessage(role: .user, content: [.text(text)])
+        messages.append(userMessage)
+        currentResponse = ""
+        isGenerating = true
+
+        generationTask = Task {
+            do {
+                for try await response in conversation.generateResponse(
+                    message: userMessage,
+                    generationOptions: GenerationOptions(
+                        temperature: 0.7,
+                        maxOutputTokens: 512
+                    )
+                ) {
+                    await handleResponse(response)
+                }
+            } catch is CancellationError {
+                // Generation was cancelled
+            } catch {
+                self.error = "Generation failed: \(error.localizedDescription)"
+            }
+
+            isGenerating = false
+        }
+    }
+
+    func stopGeneration() {
+        generationTask?.cancel()
+        generationTask = nil
+        isGenerating = false
+    }
+
+    @MainActor
+    private func handleResponse(_ response: MessageResponse) {
+        switch response {
+        case .chunk(let text):
+            currentResponse += text
+
+        case .reasoningChunk(let reasoning):
+            print("Thinking: \(reasoning)")
+
+        case .audioSample(let samples, let sampleRate):
+            // Handle audio playback
+            break
+
+        case .functionCall(let calls):
+            // Handle function calls
+            break
+
+        case .complete(let completion):
+            if let stats = completion.stats {
+                print("Stats: \(stats.totalTokens) tokens, \(stats.tokenPerSecond) tok/s")
+            }
+            messages = conversation?.history ?? []
+            currentResponse = ""
+        }
+    }
+
+    deinit {
+        generationTask?.cancel()
+    }
+}
+```
+
+## Error Handling
+
+```swift
+enum LeapError: Error {
+    case modelLoadingFailure(String, Error?)
+    case generationFailure(String, Error?)
+    case serializationFailure(String, Error?)
+    case invalidInput(String)
+}
+
+// Handling errors
+do {
+    let modelRunner = try await Leap.load(model: "LFM2.5-1.2B-Instruct", quantization: "Q4_K_M")
+} catch let error as LeapError {
+    switch error {
+    case .modelLoadingFailure(let message, _):
+        print("Model loading failed: \(message)")
+    case .generationFailure(let message, _):
+        print("Generation failed: \(message)")
+    case .serializationFailure(let message, _):
+        print("Serialization failed: \(message)")
+    case .invalidInput(let message):
+        print("Invalid input: \(message)")
+    }
+} catch {
+    print("Unexpected error: \(error)")
+}
+```
+
+## Common Imports
+
+```swift
+// Core SDK
+import LeapSDK
+
+// Optional model downloader
+import LeapModelDownloader
+
+// SwiftUI integration
+import SwiftUI
+import Combine
+
+// Audio handling
+import AVFoundation
+
+// Image processing
+import UIKit  // iOS
+import AppKit  // macOS
+```
+
+## Troubleshooting
+
+### Model Fails to Load
+
+```swift
+// Check available disk space
+let downloader = ModelDownloader()
+if let freeSpace = downloader.getAvailableDiskSpace() {
+    print("Free space: \(freeSpace / 1_000_000_000) GB")
+}
+
+// Check model size
+let modelSize = try await downloader.getModelSize(
+    modelName: "LFM2.5-1.2B-Instruct",
+    quantization: "Q4_K_M"
+)
+print("Model requires: \(modelSize / 1_000_000) MB")
+```
+
+### Generation is Slow
+
+- Test on physical device (simulator is much slower)
+- Use smaller quantization (Q4_K_M instead of Q8_0)
+- Reduce context size in options
+- For macOS: increase `nGpuLayers` for Metal acceleration
+
+### Audio Not Working
+
+- Verify WAV format (16kHz, mono, PCM)
+- Check that model supports audio (LFM2.5-Audio models)
+- For input: ensure mono channel, stereo will fail
+- For output: audio is typically 24kHz (different from input)
+
+### Memory Issues
+
+```swift
+// Explicitly unload model when done
+modelRunner = nil
+conversation = nil
+
+// Use smaller models on devices with limited RAM
+// LFM2-350M for 3GB devices
+// LFM2.5-1.2B for 6GB+ devices
+```
+
+## Platform Requirements
+
+- **iOS:** 15.0+
+- **macOS:** 12.0+
+- **Xcode:** 15.0+ with Swift 5.9+
+- **Device RAM:** 3GB minimum (6GB+ recommended for larger models)
+- **Storage:** 500MB - 2GB depending on model and quantization

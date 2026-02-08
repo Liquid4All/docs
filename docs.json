@@ -140,6 +140,7 @@
             "icon": "apple",
             "pages": [
               "leap/edge-sdk/ios/ios-quick-start-guide",
+              "leap/edge-sdk/ios/ai-agent-usage-guide",
               "leap/edge-sdk/ios/model-loading",
               "leap/edge-sdk/ios/conversation-generation",
               "leap/edge-sdk/ios/messages-content",
@@ -155,6 +156,7 @@
             "icon": "robot",
             "pages": [
               "leap/edge-sdk/android/android-quick-start-guide",
+              "leap/edge-sdk/android/ai-agent-usage-guide",
               "leap/edge-sdk/android/model-loading",
               "leap/edge-sdk/android/conversation-generation",
               "leap/edge-sdk/android/messages-content",
