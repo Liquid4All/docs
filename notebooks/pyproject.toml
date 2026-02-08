@@ -35,3 +35,5 @@ ignore_missing_imports = true  # Don't fail on missing type stubs
 check_untyped_defs = false     # Don't require type annotations (notebooks are often exploratory)
 warn_return_any = false        # Don't warn about returning Any
 warn_unused_ignores = false    # Don't warn about unused type ignores
+allow_redefinition = true      # Allow variable redefinition (common in notebooks)
+disable_error_code = ["import-untyped"]  # Don't error on imports without type stubs
