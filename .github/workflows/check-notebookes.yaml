@@ -37,22 +37,19 @@ jobs:
         run: |
           uv sync --extra dev
 
-      - name: Run Ruff linter on notebooks
+      - name: Run ruff linter
         run: |
           echo "🔍 Running Ruff linter on notebooks..."
-          echo "Checks: syntax errors, undefined variables, import errors"
-          echo ""
           uv run nbqa ruff . --output-format=github
           echo ""
           echo "✅ Ruff checks passed!"
 
-      - name: Run mypy type checker on notebooks
+      - name: Run mypy type check
         run: |
           echo ""
           echo "🔍 Running mypy type checker on notebooks..."
-          echo "Note: Type checking errors are informational and won't fail the build"
-          echo ""
           uv run nbqa mypy .
+          echo "✅ Mypy type checks passed!"
 
       - name: Summary
         if: success()
