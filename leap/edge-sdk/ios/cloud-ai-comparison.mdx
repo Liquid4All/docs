@@ -51,11 +51,14 @@ client = OpenAI()
 In LeapSDK, you need to load the model to create a model runner.
 
 ```swift
-let modelRunner = try await Leap.load(url: modelURL)
+let modelRunner = try await Leap.load(
+    model: "LFM2.5-1.2B-Instruct",
+    quantization: "Q4_K_M"
+)
 ```
 
-The parameter will be the URL to the model bundle file. This URL must be local. The return
-value is a "model runner" which plays the similar role of client object in the clould API
+The SDK will automatically download the model if needed or use a cached copy. The return
+value is a "model runner" which plays the similar role of client object in the cloud API
 except that it carries the model weights. If the model runner is released, the app has to
 reload the model before requesting new generations.
 
@@ -83,7 +86,7 @@ the model runner object contains all information about the model, we don't need 
 in the call again.
 
 ```swift
-let conversation = Conversation(modelRunner: modelRunner, history: [])
+let conversation = modelRunner.createConversation()
 let stream = conversation.generateResponse(
     message: ChatMessage(
         role: .user,
@@ -110,22 +113,25 @@ print("")
 print("Generation done!")
 ```
 
-In LeapSDK, we use a `for await` loop on the Swift AsyncStream to process the content. When the completion is done,
+In LeapSDK, we use a `for try await` loop on the Swift AsyncThrowingStream to process the content. When the completion is done,
 a `MessageResponse.complete` case will be received.
 
 ```swift
-for await response in stream {
+for try await response in stream {
     switch response {
     case .chunk(let text):
         print(text, terminator: "")
     case .reasoningChunk(let reasoning):
         // Handle reasoning content if needed
         break
-    case .complete(let usage, let reason):
+    case .complete(let completion):
         print("")
         print("Generation done!")
-        print("Usage: \(usage)")
-        print("Finish reason: \(reason)")
+        if let stats = completion.stats {
+            print("Tokens: \(stats.totalTokens), Speed: \(stats.tokenPerSecond) tok/s")
+        }
+    default:
+        break
     }
 }
 ```
@@ -138,38 +144,47 @@ You will need to use an async context to execute these functions. In iOS, we rec
 or async functions within SwiftUI views with lifecycle-aware components.
 
 ```swift
-func sendMessage(_ text: String) {
-    Task {
-        guard let modelURL = Bundle.main.url(
-            forResource: "qwen3-0_6b",
-            withExtension: "bundle"
-        ) else {
-            print("Could not find model bundle")
-            return
-        }
+@MainActor
+final class ChatViewModel: ObservableObject {
+    @Published var currentResponse = ""
+    private var modelRunner: ModelRunner?
+    private var conversation: Conversation?
 
-        let modelRunner = try await Leap.load(url: modelURL)
-        let conversation = Conversation(modelRunner: modelRunner, history: [])
-
-        let stream = conversation.generateResponse(
-            message: ChatMessage(
-                role: .user,
-                content: [.text(text)]
+    func loadModel() async {
+        do {
+            modelRunner = try await Leap.load(
+                model: "LFM2.5-1.2B-Instruct",
+                quantization: "Q4_K_M"
             )
-        )
+            conversation = modelRunner?.createConversation()
+        } catch {
+            print("Failed to load model: \(error)")
+        }
+    }
 
-        for await response in stream {
-            switch response {
-            case .chunk(let text):
-                print(text, terminator: "")
-            case .reasoningChunk(let reasoning):
-                // Handle reasoning content if needed
-                break
-            case .complete(let usage, let reason):
-                print("")
-                print("Generation done!")
-                print("Usage: \(usage)")
-                print("Finish reason: \(reason)")
+    func sendMessage(_ text: String) {
+        guard let conversation else { return }
+
+        Task {
+            do {
+                for try await response in conversation.generateResponse(
+                    message: ChatMessage(role: .user, content: [.text(text)])
+                ) {
+                    switch response {
+                    case .chunk(let text):
+                        currentResponse += text
+                    case .complete(let completion):
+                        print("Generation done!")
+                        if let stats = completion.stats {
+                            print("Tokens: \(stats.totalTokens)")
+                        }
+                        currentResponse = ""
+                    default:
+                        break
+                    }
+                }
+            } catch {
+                print("Generation error: \(error)")
             }
         }
     }

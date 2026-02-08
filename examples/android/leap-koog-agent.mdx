@@ -392,6 +392,44 @@ if (savedContext != null) {
 }
 ```
 
+### Resource Cleanup
+
+**Important:** Always clean up agent resources properly to prevent memory leaks and ANRs:
+
+```kotlin
+class AgentViewModel : ViewModel() {
+    private lateinit var agent: KoogAgent
+    private lateinit var leapModel: LeapModel
+
+    override fun onCleared() {
+        super.onCleared()
+
+        // Clean up agent resources
+        try {
+            agent.shutdown()
+        } catch (e: Exception) {
+            Log.e("AgentViewModel", "Error shutting down agent", e)
+        }
+
+        // Unload model asynchronously to avoid ANR
+        // Do NOT use runBlocking here - it blocks the main thread
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                leapModel.unload()
+            } catch (e: Exception) {
+                Log.e("AgentViewModel", "Error unloading model", e)
+            }
+        }
+    }
+}
+```
+
+**Why this matters:**
+- **Avoid `runBlocking`** in `onCleared()` - it blocks the main thread and can cause ANRs (Application Not Responding)
+- **Use `CoroutineScope(Dispatchers.IO).launch`** instead - model unloading happens asynchronously
+- **Always clean up agent resources** - prevents memory leaks and ensures proper shutdown
+- **Catch exceptions** - cleanup should never crash the app
+
 ## Results
 
 LeapKoogAgent demonstrates powerful autonomous agent capabilities on Android:

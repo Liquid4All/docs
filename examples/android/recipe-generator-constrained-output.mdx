@@ -344,6 +344,36 @@ fun generateRecipeSimplified(userInput: String) {
 
 The `@Generatable` annotation automatically creates the JSON schema from your Kotlin data class, eliminating manual schema definition.
 
+### Resource Cleanup
+
+**Important:** Always clean up model resources properly in your ViewModel:
+
+```kotlin
+class MainActivityViewModel : ViewModel() {
+    private lateinit var model: LeapModel
+
+    override fun onCleared() {
+        super.onCleared()
+
+        // Unload model asynchronously to avoid ANR
+        // Do NOT use runBlocking here - it blocks the main thread
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                model.unload()
+            } catch (e: Exception) {
+                Log.e("RecipeViewModel", "Error unloading model", e)
+            }
+        }
+    }
+}
+```
+
+**Best practices:**
+- Never use `runBlocking` in `onCleared()` - it causes ANRs (Application Not Responding)
+- Use `CoroutineScope(Dispatchers.IO).launch` for async cleanup
+- Always catch exceptions to prevent crashes during cleanup
+- This ensures smooth app shutdown without blocking the UI
+
 ### Display the Recipe
 
 The structured output can be easily rendered in the UI:

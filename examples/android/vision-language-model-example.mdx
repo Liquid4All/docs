@@ -249,8 +249,28 @@ class VLMViewModel : ViewModel() {
             BitmapFactory.decodeStream(inputStream)
         } ?: throw IllegalArgumentException("Unable to load image")
     }
+
+    override fun onCleared() {
+        super.onCleared()
+
+        // Unload VLM model asynchronously to avoid ANR
+        // Do NOT use runBlocking here - it blocks the main thread
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                vlmModel.unload()
+            } catch (e: Exception) {
+                Log.e("VLMViewModel", "Error unloading model", e)
+            }
+        }
+    }
 }
 ```
+
+**Resource cleanup best practices:**
+- Always unload models in `onCleared()` to prevent memory leaks
+- Never use `runBlocking` in `onCleared()` - it causes ANRs
+- Use async cleanup with `CoroutineScope(Dispatchers.IO).launch`
+- Catch exceptions to ensure cleanup doesn't crash the app
 
 ### Coil Integration for Image Display
 

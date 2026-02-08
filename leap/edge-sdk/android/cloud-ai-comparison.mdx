@@ -48,14 +48,25 @@ On cloud API, you need to create a API client:
 client = OpenAI()
 ```
 
-In LeapSDK, you need to load the model to create a model runner.
+In LeapSDK, you need to download and load the model to create a model runner.
 
 ```kotlin
-val modelRunner = LeapClient.loadModel(MODEL_BUNDLE_PATH)
+// Using LeapModelDownloader (Android - recommended)
+val downloader = LeapModelDownloader(context)
+val modelRunner = downloader.loadModel(
+    modelSlug = "LFM2.5-1.2B-Instruct",
+    quantizationSlug = "Q4_K_M"
+)
+
+// OR using LeapDownloader (cross-platform)
+val downloader = LeapDownloader()
+val modelRunner = downloader.loadModel(
+    modelSlug = "LFM2.5-1.2B-Instruct",
+    quantizationSlug = "Q4_K_M"
+)
 ```
 
-The parameter will be the path to the model bundle file, and must be local. The return
-value is a "model runner" which plays a similar role to the client object in the cloud API –
+The return value is a "model runner" which plays a similar role to the client object in the cloud API –
 except that it carries the model weights. If the model runner is released, the app has to
 reload the model before requesting new generations.
 
@@ -86,7 +97,7 @@ in the call again.
 val conversation = modelRunner.createConversation()
 val stream = conversation.generateResponse(
     ChatMessage(
-        ChatMessage.Role.User,
+        ChatMessage.Role.USER,
         listOf(ChatMessageContent.Text("Say 'double bubble bath' ten times fast."))
     )
 )
@@ -131,32 +142,51 @@ stream.onEach { chunk ->
 
 Hopefully by now it is clear how similar LeapSDK API is to cloud-based APIs. It is worth noting that most LeapSDK
 Android APIs are based on [Kotlin coroutine](https://kotlinlang.org/docs/coroutines-basics.html). You will need to use
-a coroutine scope to execute these functions. In Android, we recommend to use "lifecycle scope" defined on
-[lifecycle-aware components](https://developer.android.com/topic/libraries/architecture/coroutines):
+a coroutine scope to execute these functions. In Android, we recommend using `viewModelScope` in a ViewModel:
 
 ```kotlin
-lifecycleScope.launch {
-    val modelRunner = LeapClient.loadModel(MODEL_BUNDLE_PATH)
+class ChatViewModel(application: Application) : AndroidViewModel(application) {
+    private val downloader = LeapModelDownloader(application)
+    private var modelRunner: ModelRunner? = null
+    private var conversation: Conversation? = null
 
-    val conversation = modelRunner.createConversation()
-    val stream = conversation.generateResponse(
-        ChatMessage(
-            ChatMessage.Role.User,
-            listOf(ChatMessageContent.Text("Say 'double bubble bath' ten times fast."))
-        )
-    )
+    fun loadModelAndGenerate() {
+        viewModelScope.launch {
+            // Load model
+            modelRunner = downloader.loadModel(
+                modelSlug = "LFM2.5-1.2B-Instruct",
+                quantizationSlug = "Q4_K_M"
+            )
 
-    stream.onEach { chunk ->
-        when (chunk) {
-            is MessageResponse.Chunk -> {
-                print(chunk.text)
-            }
-            else -> {}
+            // Create conversation
+            conversation = modelRunner?.createConversation()
+
+            // Generate response
+            conversation?.generateResponse(
+                ChatMessage(
+                    ChatMessage.Role.USER,
+                    listOf(ChatMessageContent.Text("Say 'double bubble bath' ten times fast."))
+                )
+            )?.onEach { chunk ->
+                when (chunk) {
+                    is MessageResponse.Chunk -> {
+                        print(chunk.text)
+                    }
+                    else -> {}
+                }
+            }?.onCompletion {
+                print("")
+                print("Generation done!")
+            }?.collect()
         }
-    }.onCompletion {
-        print("")
-        print("Generation done!")
-    }.collect()
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        runBlocking(Dispatchers.IO) {
+            modelRunner?.unload()
+        }
+    }
 }
 ```
 
