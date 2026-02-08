@@ -1,4 +1,4 @@
-name: Notebooks Check
+name: Check notebooks
 
 on:
   push:
@@ -6,18 +6,13 @@ on:
       - main
     paths:
       - 'notebooks/**'
-      - '.github/workflows/notebooks-check.yaml'
+      - '.github/workflows/check-notebookes.yaml'
   pull_request:
-    types:
-      - opened
-      - reopened
-      - synchronize
-      - ready_for_review
     branches:
       - main
     paths:
       - 'notebooks/**'
-      - '.github/workflows/notebooks-check.yaml'
+      - '.github/workflows/check-notebookes.yaml'
   workflow_dispatch:
 
 jobs:
