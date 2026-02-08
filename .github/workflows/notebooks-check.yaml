@@ -36,6 +36,9 @@ jobs:
         run: |
           pip install nbformat
 
+      - name: Create output directory
+        run: mkdir -p notebook-artifacts
+
       - name: Validate notebooks
         run: |
           cat > validate_notebooks.py << 'EOF'
@@ -126,6 +129,10 @@ jobs:
               # Check if verbose mode is enabled
               verbose = '--verbose' in sys.argv or '-v' in sys.argv
 
+              # Create output directory for artifacts
+              output_dir = Path('notebook-artifacts')
+              output_dir.mkdir(exist_ok=True)
+
               print(f"Validating {len(notebooks)} notebooks...\n")
 
               all_valid = True
@@ -134,10 +141,20 @@ jobs:
 
                   if not valid:
                       all_valid = False
-                  elif verbose and script:
-                      print(f"\n--- Generated Python from {notebook.name} ---")
-                      print(script)
-                      print(f"--- End of {notebook.name} ---\n")
+                  else:
+                      # Save extracted script to file
+                      output_file = output_dir / f"{notebook.stem}.py"
+                      with open(output_file, 'w', encoding='utf-8') as f:
+                          f.write(f"# Extracted from: {notebook.name}\n")
+                          f.write(f"# This file contains Python code extracted from the notebook\n")
+                          f.write(f"# Shell commands (!), magic commands (%), and cell magics (%%) have been filtered out\n\n")
+                          f.write(script)
+                      print(f"  → Saved to {output_file}")
+
+                      if verbose and script:
+                          print(f"\n--- Generated Python from {notebook.name} ---")
+                          print(script)
+                          print(f"--- End of {notebook.name} ---\n")
 
               print(f"\n{'✅ All notebooks passed validation!' if all_valid else '❌ Some notebooks have errors'}")
               sys.exit(0 if all_valid else 1)
@@ -147,3 +164,11 @@ jobs:
           EOF
 
           python validate_notebooks.py --verbose
+
+      - name: Upload extracted notebooks as artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: extracted-notebook-scripts
+          path: notebook-artifacts/*.py
+          retention-days: 30
