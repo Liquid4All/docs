@@ -1,0 +1,131 @@
+name: Notebooks Check
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'notebooks/**'
+      - '.github/workflows/notebooks-check.yaml'
+  pull_request:
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - ready_for_review
+    branches:
+      - main
+    paths:
+      - 'notebooks/**'
+      - '.github/workflows/notebooks-check.yaml'
+  workflow_dispatch:
+
+jobs:
+  validate-notebooks:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          pip install nbformat
+
+      - name: Validate notebooks
+        run: |
+          cat > validate_notebooks.py << 'EOF'
+          #!/usr/bin/env python3
+          import sys
+          import nbformat
+          from pathlib import Path
+          import ast
+          import re
+
+          def validate_notebook(notebook_path):
+              """Validate a Jupyter notebook."""
+              try:
+                  # Load and parse the notebook
+                  with open(notebook_path, 'r', encoding='utf-8') as f:
+                      nb = nbformat.read(f, as_version=4)
+
+                  print(f"✓ {notebook_path.name}: Valid notebook structure")
+
+                  # Check each code cell for Python syntax
+                  for i, cell in enumerate(nb.cells):
+                      if cell.cell_type == 'code':
+                          source = cell.source.strip()
+
+                          if not source:
+                              continue
+
+                          # Skip cells with cell magics (%%bash, %%sh, etc.)
+                          if re.search(r'^%%', source, re.MULTILINE):
+                              continue
+
+                          # Filter out shell commands and magic commands
+                          lines = source.split('\n')
+                          filtered_lines = []
+                          skip_continuation = False
+
+                          for line in lines:
+                              stripped = line.strip()
+
+                              # If previous line was a shell command with continuation, skip this line
+                              if skip_continuation:
+                                  if line.rstrip().endswith('\\'):
+                                      continue
+                                  else:
+                                      skip_continuation = False
+                                      continue
+
+                              # Check if this is a shell command or magic
+                              if stripped.startswith('!') or stripped.startswith('%'):
+                                  if line.rstrip().endswith('\\'):
+                                      skip_continuation = True
+                                  continue
+
+                              filtered_lines.append(line)
+
+                          code = '\n'.join(filtered_lines).strip()
+
+                          if code:
+                              try:
+                                  ast.parse(code)
+                              except SyntaxError as e:
+                                  print(f"✗ {notebook_path.name}: Syntax error in cell {i+1}: {e}")
+                                  return False
+
+                  return True
+
+              except Exception as e:
+                  print(f"✗ {notebook_path.name}: Failed to parse - {e}")
+                  return False
+
+          def main():
+              notebooks_dir = Path('notebooks')
+              notebooks = list(notebooks_dir.glob('*.ipynb'))
+
+              if not notebooks:
+                  print("No notebooks found in notebooks/")
+                  sys.exit(1)
+
+              print(f"Validating {len(notebooks)} notebooks...\n")
+
+              all_valid = True
+              for notebook in sorted(notebooks):
+                  if not validate_notebook(notebook):
+                      all_valid = False
+
+              print(f"\n{'✅ All notebooks passed validation!' if all_valid else '❌ Some notebooks have errors'}")
+              sys.exit(0 if all_valid else 1)
+
+          if __name__ == '__main__':
+              main()
+          EOF
+
+          python validate_notebooks.py
