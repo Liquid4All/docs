@@ -47,7 +47,6 @@ jobs:
           echo "✅ Ruff checks passed!"
 
       - name: Run mypy type checker on notebooks
-        continue-on-error: true
         run: |
           echo ""
           echo "🔍 Running mypy type checker on notebooks..."
