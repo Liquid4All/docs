@@ -6,13 +6,17 @@ on:
       - main
     paths:
       - 'notebooks/**'
-      - '.github/workflows/check-notebookes.yaml'
+      - 'scripts/**'
+      - 'snippets/quickstart/**'
+      - '.github/workflows/check-notebooks.yaml'
   pull_request:
     branches:
       - main
     paths:
       - 'notebooks/**'
-      - '.github/workflows/check-notebookes.yaml'
+      - 'scripts/**'
+      - 'snippets/quickstart/**'
+      - '.github/workflows/check-notebooks.yaml'
   workflow_dispatch:
 
 jobs:
@@ -50,6 +54,13 @@ jobs:
           echo "🔍 Running mypy type checker on notebooks..."
           uv run nbqa mypy .
           echo "✅ Mypy type checks passed!"
+
+      - name: Check snippet freshness
+        working-directory: .
+        run: |
+          echo "🔍 Checking that generated snippets match notebook source..."
+          python3 scripts/generate_snippets.py --check
+          echo "✅ Snippets are up to date!"
 
       - name: Summary
         if: success()
