@@ -60,7 +60,9 @@
             "group": "Get Started",
             "icon": "rocket",
             "pages": [
-              "docs/getting-started/welcome"
+              "docs/getting-started/welcome",
+              "docs/getting-started/connect-to-claude-code",
+              "docs/getting-started/connect-to-cursor"
             ]
           },
           {
