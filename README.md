@@ -39,7 +39,7 @@ This is the **official documentation repository** for Liquid AI. It contains com
 
 The Model Context Protocol (MCP) is an open standard that gives AI applications a standardized way to connect to external data sources and tools. By connecting your AI coding tool to Liquid docs via MCP, you're giving it live, queryable access to the complete documentation: not a snapshot, not a cached file, but a real-time search against your published content. Every time Liquid docs update, the MCP server reflects those changes automatically.
 
-Liquid docs automatically hosts an MCP server at:
+Liquid docs hosts an MCP server at:
 
 ```
 https://docs.liquid.ai/mcp
