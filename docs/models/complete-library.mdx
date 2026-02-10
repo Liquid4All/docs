@@ -49,9 +49,9 @@ All LFM2 models are available in multiple formats for flexible deployment:
 
 Quantization reduces model size and speeds up inference with minimal quality loss. Available options by format:
 
-- **GGUF** — Supports `Q2_K`, `Q3_K_M`, `Q4_K_M`, `Q5_K_M`, `Q6_K`, and `Q8_0` quantization levels. `Q4_K_M` offers the best balance of size and quality. `Q8_0` preserves near-full precision.
-- **MLX** — Available in `4bit` and `8bit` variants. `8bit` is the default for most models.
-- **ONNX** — Supports `FP16` and `INT8` quantization. `INT8` is best for CPU inference; `FP16` for GPU acceleration.
+- **GGUF** — Supports `Q4_0`, `Q4_K_M`, `Q5_K_M`, `Q6_K`, `Q8_0`, `BF16`, and `F16`. `Q4_K_M` offers the best balance of size and quality.
+- **MLX** — Available in `3bit`, `4bit`, `5bit`, `6bit`, `8bit`, and `BF16`. `8bit` is recommended.
+- **ONNX** — Supports `FP32`, `FP16`, `Q4`, and `Q8` (MoE models also support `Q4F16`). `Q4` is recommended for most deployments.
 
 ## Model Chart
 
