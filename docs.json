@@ -133,7 +133,8 @@
             "group": "Get Started",
             "icon": "rocket",
             "pages": [
-              "leap/edge-sdk/overview"
+              "leap/edge-sdk/overview",
+              "docs/getting-started/connect-ai-tools"
             ]
           },
           {
@@ -192,7 +193,8 @@
             "group": "Get Started",
             "icon": "rocket",
             "pages": [
-              "examples/index"
+              "examples/index",
+              "docs/getting-started/connect-ai-tools"
             ]
           },
           {
