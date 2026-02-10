@@ -21,43 +21,17 @@ https://docs.liquid.ai/mcp
 
 ## Connect to Claude Code
 
-### Step 1: Open the Claude Code config file
+### Step 1: Add the MCP server
 
-Claude Code reads MCP servers from a JSON config file. Open it in your terminal:
+Run the following command in your terminal:
 
-<CodeGroup>
-
-```bash macOS / Linux
-open ~/.config/claude-code/mcp_servers.json
+```bash
+claude mcp add --transport http liquid-docs https://docs.liquid.ai/mcp
 ```
 
-```bash Windows
-notepad %APPDATA%\claude-code\mcp_servers.json
-```
+This will automatically configure Claude Code to connect to the Liquid docs MCP server.
 
-</CodeGroup>
-
-<Warning>
-If the file doesn't exist yet, create it.
-</Warning>
-
-### Step 2: Add the MCP server
-
-Paste the following into `mcp_servers.json`:
-
-```json
-{
-  "mcpServers": {
-    "liquid-docs": {
-      "url": "https://docs.liquid.ai/mcp"
-    }
-  }
-}
-```
-
-Save the file and restart Claude Code.
-
-### Step 3: Verify the connection
+### Step 2: Verify the connection
 
 In a Claude Code session, ask a question about Liquid AI:
 
