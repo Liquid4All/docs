@@ -385,23 +385,12 @@ trainer.train()
   ```
 </Accordion>
 
-## Other Training Methods[​](#other-training-methods "Direct link to Other Training Methods")
-
-TRL also provides additional trainers that work seamlessly with LFM models:
-
-* **RewardTrainer**: Train reward models for RLHF
-* **PPOTrainer**: Proximal Policy Optimization for reinforcement learning from human feedback
-* **ORPOTrainer**: Odds Ratio Preference Optimization, an alternative to DPO
-* **KTOTrainer**: Kahneman-Tversky Optimization for alignment
-
-Refer to the [TRL documentation](https://huggingface.co/docs/trl) for detailed guides on these methods.
-
 ## Tips[​](#tips "Direct link to Tips")
 
 * **Learning Rates**: SFT typically uses higher learning rates (1e-5 to 5e-5) than DPO (1e-7 to 1e-6)
 * **Batch Size**: DPO requires larger effective batch sizes; increase `gradient_accumulation_steps` if GPU memory is limited
-* **LoRA Ranks**: Start with `r=16` for experimentation; increase to `r=64` or higher for better quality
-* **DPO Beta**: The `beta` parameter controls the deviation from the reference model; typical values range from 0.1 to 0.5
+* **LoRA Ranks**: Start with `r=16`. Higher ranks increase adapter memory and parameter count. Set `lora_alpha` (`a`) to `2 * r`
+* **DPO Beta**: The `beta` parameter controls the deviation from the reference model. Start with `0.1`
 
 ***
 
