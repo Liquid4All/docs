@@ -61,7 +61,15 @@ This will automatically configure Claude Code to connect to the Liquid docs MCP 
 
 #### Step 2: Verify the connection
 
-In a Claude Code session, ask a question about Liquid AI:
+First, confirm the MCP server was added by listing all configured servers:
+
+```bash
+claude mcp list
+```
+
+You should see `liquid-docs` in the list of MCP servers.
+
+Then, in a Claude Code session, ask a question about Liquid AI:
 
 ```
 How do I run an LFM model locally with the LEAP SDK?
