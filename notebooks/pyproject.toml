@@ -12,10 +12,6 @@ dev = [
     "mypy>=1.14.1",
 ]
 
-[tool.ruff]
-# Exclude certain directories
-extend-exclude = ["runnable-examples"]
-
 [tool.ruff.lint]
 # Select rules to check - focus on correctness, not style
 select = [
