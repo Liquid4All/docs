@@ -110,6 +110,7 @@
             "group": "Fine-tuning",
             "icon": "sliders",
             "pages": [
+              "docs/fine-tuning/workbench",
               "docs/fine-tuning/datasets",
               "docs/fine-tuning/trl",
               "docs/fine-tuning/unsloth"
