@@ -36,7 +36,7 @@
   "logo": {
     "light": "/logo/light.svg",
     "dark": "/logo/dark.svg",
-    "href": "https://liquid.ai"
+    "href": "/docs/getting-started/welcome"
   },
   "navbar": {
     "links": [
