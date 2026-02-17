@@ -35,7 +35,7 @@ Once you've provided as much detail about your task as possible, click `Continue
 After creating the session, you'll be taken to the session dashboard.
 This page consists of two main sections: the prompt editor and the evaluation arena.
 
-### Prompt editor
+### Managing prompts
 
 On the left-hand side of the dashboard, you'll find the prompt editor.
 This is where you can edit both the system prompt and the user prompt that will be fed to the models during evaluation.
@@ -51,16 +51,11 @@ The prompts will be automatically generated based on the task description you pr
     This can be helpful in guiding the model to respond in a specific way.
 </Info>
 
-### Evaluation arena
+### Adding data
 
-To the right of the prompt editor is the evaluation arena. This is where the bulk of the work happens.
-Here, you can upload or enter input data, optionally provide output data, and compare model performance across a variety of dimensions.
+To the right of the prompt editor is the evaluation arena table. This is where the bulk of the work happens.
+This is where you can upload or enter input data, optionally provide output data, and compare model performance across a variety of dimensions.
 ![Screenshot of workbench evaluation arena](/images/leap/workbench/evaluation-arena.png)
-
-The arena consists of a data table split into two sections: the data samples and the model outputs.
-Each row in the table represents a single data sample that will be fed to the models for evaluation.
-
-#### Adding data
 
 You can add data to the evaluation arena by either uploading a CSV/JSONL file or entering data manually one at a time by clicking the "Add row" button.
 
@@ -72,7 +67,7 @@ Doing so will allow you to provide ground truth outputs for each sample, which w
     It is highly recommended to use real-world data wherever possible, and thoroughly vet any AI-generated outputs, before running evaluations.
 </Warning>
 
-#### Choosing models
+### Choosing models
 
 You can choose to compare up to three LFM models against each other in Workbench.
 If you're unsure which models to choose, we recommend browsing the [LEAP Model Library](https://leap.liquid.ai/models) for descriptions of model strengths and weaknesses.
@@ -82,7 +77,7 @@ If you're unsure which models to choose, we recommend browsing the [LEAP Model L
 
 The LFMs you choose to evaluate will also be compared against a frontier LLM (currently [GPT-4o](https://openai.com/index/hello-gpt-4o/)), to provide a baseline for comparison.
 
-#### Modifying judges (optional)
+### Modifying judges (optional)
 
 A suite of AI judges will be used to evaluate each model's performance.
 You can configure the evaluation judges by clicking the `Judge` button above the evaluation arena table.
