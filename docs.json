@@ -1,7 +1,7 @@
 {
   "$schema": "https://mintlify.com/docs.json",
   "banner": {
-    "content": "🚀 New: LFM2.5-1.2B-Instruct and LFM2.5-1.2B-Thinking are now available! [Learn more →](/docs/models/text-models)",
+    "content": "🚀 New: LFM2.5-1.2B-Instruct and LFM2.5-1.2B-Thinking are now available! [Learn more →](/lfm/models/text-models)",
     "dismissible": true
   },
   "theme": "mint",
@@ -36,7 +36,7 @@
   "logo": {
     "light": "/logo/light.svg",
     "dark": "/logo/dark.svg",
-    "href": "/docs/getting-started/welcome"
+    "href": "/lfm/getting-started/welcome"
   },
   "navbar": {
     "links": [
@@ -54,136 +54,161 @@
   "navigation": {
     "tabs": [
       {
-        "tab": "Documentation",
+        "tab": "LFM",
         "groups": [
           {
-            "group": "Get Started",
+            "group": "Getting Started",
             "icon": "rocket",
             "pages": [
-              "docs/getting-started/welcome",
-              "docs/getting-started/connect-ai-tools"
+              "lfm/getting-started/welcome",
+              "lfm/getting-started/connect-ai-tools"
             ]
           },
           {
             "group": "Models",
             "icon": "brain",
             "pages": [
-              "docs/models/complete-library",
-              "docs/models/text-models",
-              "docs/models/vision-models",
-              "docs/models/audio-models",
-              "docs/models/liquid-nanos"
+              "lfm/models/complete-library",
+              "lfm/models/text-models",
+              "lfm/models/vision-models",
+              "lfm/models/audio-models",
+              "lfm/models/liquid-nanos"
             ]
           },
           {
             "group": "Key Concepts",
             "icon": "lightbulb",
             "pages": [
-              "docs/key-concepts/chat-template",
-              "docs/key-concepts/text-generation-and-prompting",
-              "docs/key-concepts/tool-use"
-            ]
-          },
-          {
-            "group": "Inference",
-            "icon": "play",
-            "pages": [
-              "docs/inference/transformers",
-              "docs/inference/llama-cpp",
-              "docs/inference/vllm",
-              "docs/inference/sglang",
-              "docs/inference/mlx",
-              "docs/inference/ollama",
-              "docs/inference/onnx",
-              {
-                "group": "Other Frameworks",
-                "icon": "server",
-                "pages": [
-                  "docs/inference/lm-studio",
-                  "docs/inference/modal-deployment",
-                  "docs/inference/baseten-deployment",
-                  "docs/inference/fal-deployment"
-                ]
-              }
-            ]
-          },
-          {
-            "group": "Fine-tuning",
-            "icon": "sliders",
-            "pages": [
-              "docs/fine-tuning/workbench",
-              "docs/fine-tuning/datasets",
-              "docs/fine-tuning/trl",
-              "docs/fine-tuning/unsloth"
+              "lfm/key-concepts/chat-template",
+              "lfm/key-concepts/text-generation-and-prompting",
+              "lfm/key-concepts/tool-use"
             ]
           },
           {
             "group": "Help",
             "icon": "book",
             "pages": [
-              "docs/help/faqs",
-              "docs/help/troubleshooting",
-              "docs/help/contributing"
+              "lfm/help/faqs",
+              "lfm/help/troubleshooting",
+              "lfm/help/contributing"
             ]
           }
         ]
       },
       {
-        "tab": "SDK Reference",
+        "tab": "Customization",
         "groups": [
           {
-            "group": "Get Started",
+            "group": "Getting Started",
             "icon": "rocket",
             "pages": [
-              "leap/edge-sdk/overview",
-              "docs/getting-started/connect-ai-tools"
+              "customization/getting-started/welcome",
+              "lfm/getting-started/connect-ai-tools"
             ]
           },
           {
-            "group": "iOS",
-            "icon": "apple",
+            "group": "Tools",
+            "icon": "wrench",
             "pages": [
-              "leap/edge-sdk/ios/ios-quick-start-guide",
-              "leap/edge-sdk/ios/ai-agent-usage-guide",
-              "leap/edge-sdk/ios/model-loading",
-              "leap/edge-sdk/ios/conversation-generation",
-              "leap/edge-sdk/ios/messages-content",
-              "leap/edge-sdk/ios/advanced-features",
-              "leap/edge-sdk/ios/utilities",
-              "leap/edge-sdk/ios/cloud-ai-comparison",
-              "leap/edge-sdk/ios/constrained-generation",
-              "leap/edge-sdk/ios/function-calling"
+              "customization/tools/workbench"
             ]
           },
           {
-            "group": "Android",
-            "icon": "robot",
+            "group": "Finetuning Frameworks",
+            "icon": "sliders",
             "pages": [
-              "leap/edge-sdk/android/android-quick-start-guide",
-              "leap/edge-sdk/android/ai-agent-usage-guide",
-              "leap/edge-sdk/android/model-loading",
-              "leap/edge-sdk/android/conversation-generation",
-              "leap/edge-sdk/android/messages-content",
-              "leap/edge-sdk/android/advanced-features",
-              "leap/edge-sdk/android/utilities",
-              "leap/edge-sdk/android/cloud-ai-comparison",
-              "leap/edge-sdk/android/constrained-generation",
-              "leap/edge-sdk/android/function-calling"
+              "customization/finetuning-frameworks/datasets",
+              "customization/finetuning-frameworks/trl",
+              "customization/finetuning-frameworks/unsloth"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Deployment",
+        "groups": [
+          {
+            "group": "Getting Started",
+            "icon": "rocket",
+            "pages": [
+              "docs/getting-started/welcome",
+              "lfm/getting-started/connect-ai-tools"
             ]
           },
           {
-            "group": "Model Bundling Service",
-            "icon": "box",
+            "group": "On-Device",
+            "icon": "mobile",
             "pages": [
-              "leap/leap-bundle/quick-start",
-              "leap/leap-bundle/authentication",
-              "leap/leap-bundle/configuration",
-              "leap/leap-bundle/bundle-creation",
-              "leap/leap-bundle/bundle-management",
-              "leap/leap-bundle/download",
-              "leap/leap-bundle/reference",
-              "leap/leap-bundle/data-privacy",
-              "leap/leap-bundle/changelog"
+              {
+                "group": "iOS SDK",
+                "icon": "apple",
+                "pages": [
+                  "docs/on-device/ios/ios-quick-start-guide",
+                  "docs/on-device/ios/ai-agent-usage-guide",
+                  "docs/on-device/ios/model-loading",
+                  "docs/on-device/ios/conversation-generation",
+                  "docs/on-device/ios/messages-content",
+                  "docs/on-device/ios/advanced-features",
+                  "docs/on-device/ios/utilities",
+                  "docs/on-device/ios/cloud-ai-comparison",
+                  "docs/on-device/ios/constrained-generation",
+                  "docs/on-device/ios/function-calling"
+                ]
+              },
+              {
+                "group": "Android SDK",
+                "icon": "robot",
+                "pages": [
+                  "docs/on-device/android/android-quick-start-guide",
+                  "docs/on-device/android/ai-agent-usage-guide",
+                  "docs/on-device/android/model-loading",
+                  "docs/on-device/android/conversation-generation",
+                  "docs/on-device/android/messages-content",
+                  "docs/on-device/android/advanced-features",
+                  "docs/on-device/android/utilities",
+                  "docs/on-device/android/cloud-ai-comparison",
+                  "docs/on-device/android/constrained-generation",
+                  "docs/on-device/android/function-calling"
+                ]
+              },
+              "docs/on-device/llama-cpp",
+              "docs/on-device/lm-studio",
+              "docs/on-device/mlx",
+              "docs/on-device/onnx",
+              "docs/on-device/ollama"
+            ]
+          },
+          {
+            "group": "GPU Inference",
+            "icon": "microchip",
+            "pages": [
+              "docs/gpu-inference/transformers",
+              "docs/gpu-inference/vllm",
+              "docs/gpu-inference/sglang",
+              "docs/gpu-inference/modal",
+              "docs/gpu-inference/baseten",
+              "docs/gpu-inference/fal"
+            ]
+          },
+          {
+            "group": "Tools",
+            "icon": "toolbox",
+            "pages": [
+              {
+                "group": "Model Bundling Services",
+                "icon": "box",
+                "pages": [
+                  "docs/tools/model-bundling/quick-start",
+                  "docs/tools/model-bundling/authentication",
+                  "docs/tools/model-bundling/configuration",
+                  "docs/tools/model-bundling/bundle-creation",
+                  "docs/tools/model-bundling/bundle-management",
+                  "docs/tools/model-bundling/download",
+                  "docs/tools/model-bundling/reference",
+                  "docs/tools/model-bundling/data-privacy",
+                  "docs/tools/model-bundling/changelog"
+                ]
+              }
             ]
           }
         ]
@@ -192,11 +217,11 @@
         "tab": "Examples",
         "groups": [
           {
-            "group": "Get Started",
+            "group": "Getting Started",
             "icon": "rocket",
             "pages": [
               "examples/index",
-              "docs/getting-started/connect-ai-tools"
+              "lfm/getting-started/connect-ai-tools"
             ]
           },
           {
@@ -244,8 +269,96 @@
   },
   "redirects": [
     {
-      "source": "/lfm/:slug*",
-      "destination": "/docs/:slug*"
+      "source": "/docs/getting-started/connect-ai-tools",
+      "destination": "/lfm/getting-started/connect-ai-tools"
+    },
+    {
+      "source": "/docs/models/:slug*",
+      "destination": "/lfm/models/:slug*"
+    },
+    {
+      "source": "/docs/key-concepts/:slug*",
+      "destination": "/lfm/key-concepts/:slug*"
+    },
+    {
+      "source": "/docs/help/:slug*",
+      "destination": "/lfm/help/:slug*"
+    },
+    {
+      "source": "/docs/fine-tuning/workbench",
+      "destination": "/customization/tools/workbench"
+    },
+    {
+      "source": "/docs/fine-tuning/datasets",
+      "destination": "/customization/finetuning-frameworks/datasets"
+    },
+    {
+      "source": "/docs/fine-tuning/trl",
+      "destination": "/customization/finetuning-frameworks/trl"
+    },
+    {
+      "source": "/docs/fine-tuning/unsloth",
+      "destination": "/customization/finetuning-frameworks/unsloth"
+    },
+    {
+      "source": "/docs/inference/llama-cpp",
+      "destination": "/docs/on-device/llama-cpp"
+    },
+    {
+      "source": "/docs/inference/mlx",
+      "destination": "/docs/on-device/mlx"
+    },
+    {
+      "source": "/docs/inference/onnx",
+      "destination": "/docs/on-device/onnx"
+    },
+    {
+      "source": "/docs/inference/ollama",
+      "destination": "/docs/on-device/ollama"
+    },
+    {
+      "source": "/docs/inference/lm-studio",
+      "destination": "/docs/on-device/lm-studio"
+    },
+    {
+      "source": "/docs/inference/transformers",
+      "destination": "/docs/gpu-inference/transformers"
+    },
+    {
+      "source": "/docs/inference/vllm",
+      "destination": "/docs/gpu-inference/vllm"
+    },
+    {
+      "source": "/docs/inference/sglang",
+      "destination": "/docs/gpu-inference/sglang"
+    },
+    {
+      "source": "/docs/inference/modal-deployment",
+      "destination": "/docs/gpu-inference/modal"
+    },
+    {
+      "source": "/docs/inference/baseten-deployment",
+      "destination": "/docs/gpu-inference/baseten"
+    },
+    {
+      "source": "/docs/inference/fal-deployment",
+      "destination": "/docs/gpu-inference/fal"
+    },
+    {
+      "source": "/leap/edge-sdk/overview",
+      "destination": "/docs/on-device/ios/ios-quick-start-guide"
+    },
+    {
+      "source": "/leap/edge-sdk/ios/:slug*",
+      "destination": "/docs/on-device/ios/:slug*"
+    },
+    {
+      "source": "/leap/edge-sdk/android/:slug*",
+      "destination": "/docs/on-device/android/:slug*"
+    },
+    {
+      "source": "/leap/leap-bundle/:slug*",
+      "destination": "/docs/tools/model-bundling/:slug*"
     }
   ],
   "ai": {
