@@ -1,0 +1,125 @@
+---
+title: "LFM2-Audio-1.5B"
+description: "1.5B audio model (deprecated - use LFM2.5-Audio-1.5B instead)"
+---
+
+<a href="/lfm/models/audio-models" className="back-button">← Back to Audio Models</a>
+
+<Warning>
+This model is deprecated. Use [LFM2.5-Audio-1.5B](/lfm/models/lfm25-audio-1.5b) for improved ASR, TTS, and CPU-friendly inference.
+</Warning>
+
+LFM2-Audio-1.5B was the original fully interleaved audio/text model. It has been superseded by LFM2.5-Audio-1.5B, which features a custom LFM-based audio detokenizer and improved performance.
+
+<div style={{display: 'flex', gap: '0.5rem', margin: '0.5rem 0 1.5rem 0'}}>
+  <a href="https://huggingface.co/LiquidAI/LFM2-Audio-1.5B" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#fbbf24'}}><span style={{color: '#000'}}>HF</span></a>
+  <a href="https://huggingface.co/LiquidAI/LFM2-Audio-1.5B-GGUF" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#60a5fa'}}><span style={{color: '#000'}}>GGUF</span></a>
+</div>
+
+## Specifications
+
+| Property | Value |
+|----------|-------|
+| Parameters | 1.5B (1.2B LM + 115M audio encoder) |
+| Context Length | 32K tokens |
+| Audio Output | 24kHz (Mimi codec) |
+| Supported Language | English |
+
+## Quick Start
+
+<Tabs>
+  <Tab title="liquid-audio">
+    **Install:**
+    ```bash
+    pip install liquid-audio
+    pip install "liquid-audio[demo]"  # optional, for demo dependencies
+    pip install flash-attn --no-build-isolation  # optional, for flash attention 2
+    ```
+
+    **Gradio Demo:**
+    ```bash
+    liquid-audio-demo
+    # Starts webserver on http://localhost:7860/
+    ```
+
+    **Multi-Turn Chat:**
+    ```python
+    import torch
+    import torchaudio
+    from liquid_audio import LFM2AudioModel, LFM2AudioProcessor, ChatState
+
+    # Load models
+    HF_REPO = "LiquidAI/LFM2-Audio-1.5B"
+    processor = LFM2AudioProcessor.from_pretrained(HF_REPO).eval()
+    model = LFM2AudioModel.from_pretrained(HF_REPO).eval()
+
+    # Set up chat
+    chat = ChatState(processor)
+    chat.new_turn("system")
+    chat.add_text("Respond with interleaved text and audio.")
+    chat.end_turn()
+
+    chat.new_turn("user")
+    wav, sampling_rate = torchaudio.load("question.wav")
+    chat.add_audio(wav, sampling_rate)
+    chat.end_turn()
+
+    chat.new_turn("assistant")
+
+    # Generate text and audio tokens
+    text_out, audio_out = [], []
+    for t in model.generate_interleaved(**chat, max_new_tokens=512, audio_temperature=1.0, audio_top_k=4):
+        if t.numel() == 1:
+            print(processor.text.decode(t), end="", flush=True)
+            text_out.append(t)
+        else:
+            audio_out.append(t)
+
+    # Detokenize audio and save (Mimi returns audio at 24kHz)
+    mimi_codes = torch.stack(audio_out[:-1], 1).unsqueeze(0)
+    with torch.no_grad():
+        waveform = processor.mimi.decode(mimi_codes)[0]
+    torchaudio.save("answer.wav", waveform.cpu(), 24_000)
+    ```
+  </Tab>
+
+  <Tab title="llama.cpp">
+    **Setup:**
+    ```bash
+    export CKPT=/path/to/LFM2-Audio-1.5B-GGUF
+    export INPUT_WAV=/path/to/input.wav
+    export OUTPUT_WAV=/path/to/output.wav
+    ```
+
+    **ASR (Audio to Text):**
+    ```bash
+    ./llama-lfm2-audio -m $CKPT/LFM2-Audio-1.5B-Q8_0.gguf \
+      --mmproj $CKPT/mmproj-audioencoder-LFM2-Audio-1.5B-Q8_0.gguf \
+      -mv $CKPT/audiodecoder-LFM2-Audio-1.5B-Q8_0.gguf \
+      -sys "Perform ASR." --audio $INPUT_WAV
+    ```
+
+    **TTS (Text to Audio):**
+    ```bash
+    ./llama-lfm2-audio -m $CKPT/LFM2-Audio-1.5B-Q8_0.gguf \
+      --mmproj $CKPT/mmproj-audioencoder-LFM2-Audio-1.5B-Q8_0.gguf \
+      -mv $CKPT/audiodecoder-LFM2-Audio-1.5B-Q8_0.gguf \
+      -sys "Perform TTS." \
+      -p "What is this obsession people have with books?" \
+      --output $OUTPUT_WAV
+    ```
+
+    **Interleaved Mode:**
+    ```bash
+    ./llama-lfm2-audio -m $CKPT/LFM2-Audio-1.5B-Q8_0.gguf \
+      --mmproj $CKPT/mmproj-audioencoder-LFM2-Audio-1.5B-Q8_0.gguf \
+      -mv $CKPT/audiodecoder-LFM2-Audio-1.5B-Q8_0.gguf \
+      -sys "Respond with interleaved text and audio." \
+      --audio $INPUT_WAV --output $OUTPUT_WAV
+    ```
+
+    <Info>
+    Runners are available for macos-arm64, ubuntu-arm64, ubuntu-x64, and android-arm64.
+    </Info>
+  </Tab>
+</Tabs>

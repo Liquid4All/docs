@@ -1,0 +1,45 @@
+---
+title: "LFM2-1.2B"
+description: "1.2B parameter model (deprecated - use LFM2.5-1.2B-Instruct instead)"
+---
+
+import { TextTransformers } from "/snippets/quickstart/text-transformers.mdx";
+import { TextVllm } from "/snippets/quickstart/text-vllm.mdx";
+import { TextLlamacpp } from "/snippets/quickstart/text-llamacpp.mdx";
+
+<a href="/lfm/models/text-models" className="back-button">← Back to Text Models</a>
+
+<Warning>
+This model is deprecated. Use [LFM2.5-1.2B-Instruct](/lfm/models/lfm25-1.2b-instruct) for improved performance.
+</Warning>
+
+LFM2-1.2B was the original 1.2B parameter model in the LFM2 series. It has been superseded by LFM2.5-1.2B-Instruct, which offers better chat, instruction-following, and tool-calling performance.
+
+<div style={{display: 'flex', gap: '0.5rem', margin: '0.5rem 0 1.5rem 0'}}>
+  <a href="https://huggingface.co/LiquidAI/LFM2-1.2B" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#fbbf24'}}><span style={{color: '#000'}}>HF</span></a>
+  <a href="https://huggingface.co/LiquidAI/LFM2-1.2B-GGUF" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#60a5fa'}}><span style={{color: '#000'}}>GGUF</span></a>
+  <a href="https://huggingface.co/mlx-community/LFM2-1.2B-8bit" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#c4b5fd'}}><span style={{color: '#000'}}>MLX</span></a>
+  <a href="https://huggingface.co/onnx-community/LFM2-1.2B-ONNX" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#86efac'}}><span style={{color: '#000'}}>ONNX</span></a>
+</div>
+
+## Specifications
+
+| Property | Value |
+|----------|-------|
+| Parameters | 1.2B |
+| Context Length | 32K tokens |
+| Architecture | LFM2 (Dense) |
+
+## Quick Start
+
+<Tabs>
+  <Tab title="Transformers">
+    <TextTransformers modelId="LiquidAI/LFM2-1.2B"></TextTransformers>
+  </Tab>
+  <Tab title="llama.cpp">
+    <TextLlamacpp ggufRepo="LiquidAI/LFM2-1.2B-GGUF"></TextLlamacpp>
+  </Tab>
+  <Tab title="vLLM">
+    <TextVllm modelId="LiquidAI/LFM2-1.2B"></TextVllm>
+  </Tab>
+</Tabs>

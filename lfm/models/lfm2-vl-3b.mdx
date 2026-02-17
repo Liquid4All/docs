@@ -1,0 +1,59 @@
+---
+title: "LFM2-VL-3B"
+description: "Highest-capacity 3B vision-language model with enhanced visual reasoning"
+---
+
+import { VlTransformers } from "/snippets/quickstart/vl-transformers.mdx";
+import { VlVllm } from "/snippets/quickstart/vl-vllm.mdx";
+import { VlLlamacpp } from "/snippets/quickstart/vl-llamacpp.mdx";
+
+<a href="/lfm/models/vision-models" className="back-button">← Back to Vision Models</a>
+
+LFM2-VL-3B is Liquid AI's highest-capacity multimodal model, delivering enhanced visual reasoning and detailed image understanding. Ideal for complex vision tasks requiring deeper comprehension.
+
+<div style={{display: 'flex', gap: '0.5rem', margin: '0.5rem 0 1.5rem 0'}}>
+  <a href="https://huggingface.co/LiquidAI/LFM2-VL-3B" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#fbbf24'}}><span style={{color: '#000'}}>HF</span></a>
+  <a href="https://huggingface.co/LiquidAI/LFM2-VL-3B-GGUF" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#60a5fa'}}><span style={{color: '#000'}}>GGUF</span></a>
+  <a href="https://huggingface.co/mlx-community/LFM2-VL-3B-8bit" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#c4b5fd'}}><span style={{color: '#000'}}>MLX</span></a>
+  <a href="https://huggingface.co/onnx-community/LFM2-VL-3B-ONNX" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#86efac'}}><span style={{color: '#000'}}>ONNX</span></a>
+</div>
+
+## Specifications
+
+| Property | Value |
+|----------|-------|
+| Parameters | 3B |
+| Context Length | 32K tokens |
+| Architecture | LFM2-VL (Dense) |
+
+<div className="use-cases">
+<CardGroup cols={3}>
+
+<Card title="Advanced Reasoning" icon="brain">
+  Complex visual logic and analysis
+</Card>
+
+<Card title="Document Understanding" icon="file-lines">
+  Detailed document and chart parsing
+</Card>
+
+<Card title="Multi-Image" icon="images">
+  Compare and reason across images
+</Card>
+
+</CardGroup>
+</div>
+
+## Quick Start
+
+<Tabs>
+  <Tab title="Transformers">
+    <VlTransformers modelId="LiquidAI/LFM2-VL-3B"></VlTransformers>
+  </Tab>
+  <Tab title="vLLM">
+    <VlVllm modelId="LiquidAI/LFM2-VL-3B"></VlVllm>
+  </Tab>
+  <Tab title="llama.cpp">
+    <VlLlamacpp ggufRepo="LiquidAI/LFM2-VL-3B-GGUF"></VlLlamacpp>
+  </Tab>
+</Tabs>

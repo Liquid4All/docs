@@ -1,0 +1,59 @@
+---
+title: "LFM2.5-1.2B-Thinking"
+description: "Reasoning-focused 1.2B parameter model with enhanced math and logical problem-solving"
+---
+
+import { TextTransformers } from "/snippets/quickstart/text-transformers.mdx";
+import { TextVllm } from "/snippets/quickstart/text-vllm.mdx";
+import { TextLlamacpp } from "/snippets/quickstart/text-llamacpp.mdx";
+
+<a href="/lfm/models/text-models" className="back-button">← Back to Text Models</a>
+
+LFM2.5-1.2B-Thinking is optimized for reasoning tasks, delivering strong performance on math, logic, and multi-step problem-solving. Built on the LFM2.5 architecture with specialized training for chain-of-thought reasoning.
+
+<div style={{display: 'flex', gap: '0.5rem', margin: '0.5rem 0 1.5rem 0'}}>
+  <a href="https://huggingface.co/LiquidAI/LFM2.5-1.2B-Thinking" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#fbbf24'}}><span style={{color: '#000'}}>HF</span></a>
+  <a href="https://huggingface.co/LiquidAI/LFM2.5-1.2B-Thinking-GGUF" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#60a5fa'}}><span style={{color: '#000'}}>GGUF</span></a>
+  <a href="https://huggingface.co/LiquidAI/LFM2.5-1.2B-Thinking-MLX-8bit" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#c4b5fd'}}><span style={{color: '#000'}}>MLX</span></a>
+  <a href="https://huggingface.co/LiquidAI/LFM2.5-1.2B-Thinking-ONNX" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#86efac'}}><span style={{color: '#000'}}>ONNX</span></a>
+</div>
+
+## Specifications
+
+| Property | Value |
+|----------|-------|
+| Parameters | 1.2B |
+| Context Length | 32K tokens |
+| Architecture | LFM2.5 (Dense) |
+
+<div className="use-cases">
+<CardGroup cols={3}>
+
+<Card title="Math & Logic" icon="calculator">
+  Strong arithmetic and logical reasoning
+</Card>
+
+<Card title="Chain-of-Thought" icon="diagram-project">
+  Step-by-step problem decomposition
+</Card>
+
+<Card title="Fine-tunable" icon="sliders">
+  TRL compatible (SFT, DPO, GRPO)
+</Card>
+
+</CardGroup>
+</div>
+
+## Quick Start
+
+<Tabs>
+  <Tab title="Transformers">
+    <TextTransformers modelId="LiquidAI/LFM2.5-1.2B-Thinking"></TextTransformers>
+  </Tab>
+  <Tab title="llama.cpp">
+    <TextLlamacpp ggufRepo="LiquidAI/LFM2.5-1.2B-Thinking-GGUF"></TextLlamacpp>
+  </Tab>
+  <Tab title="vLLM">
+    <TextVllm modelId="LiquidAI/LFM2.5-1.2B-Thinking"></TextVllm>
+  </Tab>
+</Tabs>

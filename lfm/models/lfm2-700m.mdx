@@ -1,0 +1,59 @@
+---
+title: "LFM2-700M"
+description: "Mid-sized 700M parameter model for deploying on most devices"
+---
+
+import { TextTransformers } from "/snippets/quickstart/text-transformers.mdx";
+import { TextVllm } from "/snippets/quickstart/text-vllm.mdx";
+import { TextLlamacpp } from "/snippets/quickstart/text-llamacpp.mdx";
+
+<a href="/lfm/models/text-models" className="back-button">← Back to Text Models</a>
+
+LFM2-700M is a compact model balancing capability and efficiency. Suitable for deployment on a wide range of devices including phones, tablets, and laptops with limited resources.
+
+<div style={{display: 'flex', gap: '0.5rem', margin: '0.5rem 0 1.5rem 0'}}>
+  <a href="https://huggingface.co/LiquidAI/LFM2-700M" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#fbbf24'}}><span style={{color: '#000'}}>HF</span></a>
+  <a href="https://huggingface.co/LiquidAI/LFM2-700M-GGUF" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#60a5fa'}}><span style={{color: '#000'}}>GGUF</span></a>
+  <a href="https://huggingface.co/mlx-community/LFM2-700M-8bit" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#c4b5fd'}}><span style={{color: '#000'}}>MLX</span></a>
+  <a href="https://huggingface.co/onnx-community/LFM2-700M-ONNX" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#86efac'}}><span style={{color: '#000'}}>ONNX</span></a>
+</div>
+
+## Specifications
+
+| Property | Value |
+|----------|-------|
+| Parameters | 700M |
+| Context Length | 32K tokens |
+| Architecture | LFM2 (Dense) |
+
+<div className="use-cases">
+<CardGroup cols={3}>
+
+<Card title="Edge Deployment" icon="microchip">
+  Optimized for resource-constrained devices
+</Card>
+
+<Card title="Low Latency" icon="bolt">
+  Fast inference for real-time applications
+</Card>
+
+<Card title="Fine-tunable" icon="sliders">
+  TRL compatible (SFT, DPO, GRPO)
+</Card>
+
+</CardGroup>
+</div>
+
+## Quick Start
+
+<Tabs>
+  <Tab title="Transformers">
+    <TextTransformers modelId="LiquidAI/LFM2-700M"></TextTransformers>
+  </Tab>
+  <Tab title="llama.cpp">
+    <TextLlamacpp ggufRepo="LiquidAI/LFM2-700M-GGUF"></TextLlamacpp>
+  </Tab>
+  <Tab title="vLLM">
+    <TextVllm modelId="LiquidAI/LFM2-700M"></TextVllm>
+  </Tab>
+</Tabs>

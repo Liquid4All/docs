@@ -1,0 +1,96 @@
+---
+title: "Liquid Nanos"
+description: "A library of low-latency, task-specific models fine-tuned on Liquid's multimodal LFM base models. Nanos deliver high accuracy on narrow tasks while remaining small enough to deploy on-device or serve economically at high volume."
+icon: "sparkles"
+---
+
+<div className="use-cases" style={{marginTop: '-0.5rem'}}>
+<CardGroup cols={2}>
+
+<Card title="Extraction" icon="brackets-curly">
+  Structured data extraction from unstructured documents into JSON.
+</Card>
+
+<Card title="Summarization" icon="align-left">
+  Meeting transcripts, document summaries, and content distillation.
+</Card>
+
+<Card title="RAG & Retrieval" icon="magnifying-glass">
+  Context-grounded Q&A and fast multi-language document retrieval.
+</Card>
+
+<Card title="Translation" icon="language">
+  Low-latency bidirectional translation for short-to-medium text.
+</Card>
+
+</CardGroup>
+</div>
+
+## LFM2 Nanos
+
+<Note>Many Nanos require specific prompting formats to work correctly. See each model's page for usage guidelines.</Note>
+
+<CardGroup cols={3}>
+
+<Card title="LFM2-1.2B-Extract" href="/lfm/models/lfm2-1.2b-extract">
+  1.2B · <Badge shape="pill" color="blue">Extraction</Badge>
+
+  Extract structured JSON from unstructured documents.
+</Card>
+
+<Card title="LFM2-350M-Extract" href="/lfm/models/lfm2-350m-extract">
+  350M · <Badge shape="pill" color="blue">Extraction</Badge>
+
+  Fastest extraction model for edge deployment.
+</Card>
+
+<Card title="LFM2-350M-PII-Extract-JP" href="/lfm/models/lfm2-350m-pii-extract-jp">
+  350M · <Badge shape="pill" color="blue">Extraction</Badge>
+
+  Japanese PII detection into structured JSON.
+</Card>
+
+<Card title="LFM2-2.6B-Transcript" href="/lfm/models/lfm2-2.6b-transcript">
+  2.6B · <Badge shape="pill" color="purple">Summarization</Badge>
+
+  Private, on-device meeting summarization from transcripts.
+</Card>
+
+<Card title="LFM2-1.2B-RAG" href="/lfm/models/lfm2-1.2b-rag">
+  1.2B · <Badge shape="pill" color="green">RAG</Badge>
+
+  Answer questions grounded in provided context documents.
+</Card>
+
+<Card title="LFM2-ColBERT-350M" href="/lfm/models/lfm2-colbert-350m">
+  350M · <Badge shape="pill" color="orange">Retrieval</Badge>
+
+  Multi-language document embeddings for retrieval and reranking.
+</Card>
+
+<Card title="LFM2-350M-ENJP-MT" href="/lfm/models/lfm2-350m-enjp-mt">
+  350M · <Badge shape="pill" color="red">Translation</Badge>
+
+  Near real-time bidirectional Japanese/English translation.
+</Card>
+
+<Card title="LFM2-350M-Math" href="/lfm/models/lfm2-350m-math">
+  350M · <Badge shape="pill" color="yellow">Reasoning</Badge>
+
+  Tiny reasoning model for math problem solving.
+</Card>
+
+<Card title="LFM2-1.2B-Tool" href="/lfm/models/lfm2-1.2b-tool">
+  1.2B · <Badge shape="pill" color="gray">Deprecated</Badge>
+
+  Use LFM2.5-1.2B-Instruct for tool calling instead.
+</Card>
+
+</CardGroup>
+
+<Panel>
+  - [Liquid Playground](https://playground.liquid.ai/chat?model=cmk0wefde000204jp2knb2qr8)
+  - [HuggingFace Collections](https://huggingface.co/LiquidAI/collections)
+  - [OpenRouter API](https://openrouter.ai/liquid)
+  - [LEAP Model Library](https://leap.liquid.ai/models)
+</Panel>

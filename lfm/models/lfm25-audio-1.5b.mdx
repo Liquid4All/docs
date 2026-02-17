@@ -1,0 +1,148 @@
+---
+title: "LFM2.5-Audio-1.5B"
+description: "1.5B fully interleaved audio/text model for TTS, ASR, and voice chat"
+---
+
+<a href="/lfm/models/audio-models" className="back-button">← Back to Audio Models</a>
+
+LFM2.5-Audio-1.5B is Liquid AI's flagship audio model, featuring a custom LFM-based audio detokenizer. It delivers natural speech synthesis, multilingual speech recognition, and fully interleaved voice chat with reasoning capabilities in a single compact model.
+
+<div style={{display: 'flex', gap: '0.5rem', margin: '0.5rem 0 1.5rem 0'}}>
+  <a href="https://huggingface.co/LiquidAI/LFM2.5-Audio-1.5B" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#fbbf24'}}><span style={{color: '#000'}}>HF</span></a>
+  <a href="https://huggingface.co/LiquidAI/LFM2.5-Audio-1.5B-GGUF" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#60a5fa'}}><span style={{color: '#000'}}>GGUF</span></a>
+  <a href="https://huggingface.co/LiquidAI/LFM2.5-Audio-1.5B-ONNX" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#86efac'}}><span style={{color: '#000'}}>ONNX</span></a>
+</div>
+
+## Specifications
+
+| Property | Value |
+|----------|-------|
+| Parameters | 1.5B (1.2B LM + 115M audio encoder) |
+| Context Length | 32K tokens |
+| Audio Output | 24kHz |
+| Supported Language | English |
+
+<div className="use-cases">
+<CardGroup cols={3}>
+
+<Card title="Text-to-Speech" icon="volume-high">
+  Natural speech synthesis
+</Card>
+
+<Card title="Speech Recognition" icon="ear-listen">
+  Multilingual ASR
+</Card>
+
+<Card title="Voice Chat" icon="waveform">
+  Interleaved audio/text
+</Card>
+
+</CardGroup>
+</div>
+
+## Quick Start
+
+<Tabs>
+  <Tab title="liquid-audio">
+    **Install:**
+    ```bash
+    pip install liquid-audio
+    pip install "liquid-audio[demo]"  # optional, for demo dependencies
+    pip install flash-attn --no-build-isolation  # optional, for flash attention 2
+    ```
+
+    **Gradio Demo:**
+    ```bash
+    liquid-audio-demo
+    # Starts webserver on http://localhost:7860/
+    ```
+
+    **Multi-Turn Chat:**
+    ```python
+    import torch
+    import torchaudio
+    from liquid_audio import LFM2AudioModel, LFM2AudioProcessor, ChatState
+
+    # Load models
+    HF_REPO = "LiquidAI/LFM2.5-Audio-1.5B"
+    processor = LFM2AudioProcessor.from_pretrained(HF_REPO).eval()
+    model = LFM2AudioModel.from_pretrained(HF_REPO).eval()
+
+    # Set up chat
+    chat = ChatState(processor)
+    chat.new_turn("system")
+    chat.add_text("Respond with interleaved text and audio.")
+    chat.end_turn()
+
+    chat.new_turn("user")
+    wav, sampling_rate = torchaudio.load("question.wav")
+    chat.add_audio(wav, sampling_rate)
+    chat.end_turn()
+
+    chat.new_turn("assistant")
+
+    # Generate text and audio tokens
+    text_out, audio_out = [], []
+    for t in model.generate_interleaved(**chat, max_new_tokens=512, audio_temperature=1.0, audio_top_k=4):
+        if t.numel() == 1:
+            print(processor.text.decode(t), end="", flush=True)
+            text_out.append(t)
+        else:
+            audio_out.append(t)
+
+    # Detokenize audio and save
+    audio_codes = torch.stack(audio_out[:-1], 1).unsqueeze(0)
+    waveform = processor.decode(audio_codes)
+    torchaudio.save("answer.wav", waveform.cpu(), 24_000)
+    ```
+  </Tab>
+
+  <Tab title="llama.cpp">
+    **Setup:**
+    ```bash
+    export CKPT=/path/to/LFM2.5-Audio-1.5B-GGUF
+    export INPUT_WAV=/path/to/input.wav
+    export OUTPUT_WAV=/path/to/output.wav
+    ```
+
+    **ASR (Audio to Text):**
+    ```bash
+    ./llama-liquid-audio-cli -m $CKPT/LFM2.5-Audio-1.5B-Q4_0.gguf \
+      -mm $CKPT/mmproj-LFM2.5-Audio-1.5B-Q4_0.gguf \
+      -mv $CKPT/vocoder-LFM2.5-Audio-1.5B-Q4_0.gguf \
+      --tts-speaker-file $CKPT/tokenizer-LFM2.5-Audio-1.5B-Q4_0.gguf \
+      -sys "Perform ASR." --audio $INPUT_WAV
+    ```
+
+    **TTS (Text to Audio):**
+    ```bash
+    ./llama-liquid-audio-cli -m $CKPT/LFM2.5-Audio-1.5B-Q4_0.gguf \
+      -mm $CKPT/mmproj-LFM2.5-Audio-1.5B-Q4_0.gguf \
+      -mv $CKPT/vocoder-LFM2.5-Audio-1.5B-Q4_0.gguf \
+      --tts-speaker-file $CKPT/tokenizer-LFM2.5-Audio-1.5B-Q4_0.gguf \
+      -sys "Perform TTS." -p "Hi, how are you?" --output $OUTPUT_WAV
+    ```
+
+    **Interleaved Mode:**
+    ```bash
+    ./llama-liquid-audio-cli -m $CKPT/LFM2.5-Audio-1.5B-Q4_0.gguf \
+      -mm $CKPT/mmproj-LFM2.5-Audio-1.5B-Q4_0.gguf \
+      -mv $CKPT/vocoder-LFM2.5-Audio-1.5B-Q4_0.gguf \
+      --tts-speaker-file $CKPT/tokenizer-LFM2.5-Audio-1.5B-Q4_0.gguf \
+      -sys "Respond with interleaved text and audio." \
+      --audio $INPUT_WAV --output $OUTPUT_WAV
+    ```
+
+    **Server Mode:**
+    ```bash
+    ./llama-liquid-audio-server -m $CKPT/LFM2.5-Audio-1.5B-Q4_0.gguf \
+      -mm $CKPT/mmproj-LFM2.5-Audio-1.5B-Q4_0.gguf \
+      -mv $CKPT/vocoder-LFM2.5-Audio-1.5B-Q4_0.gguf \
+      --tts-speaker-file $CKPT/tokenizer-LFM2.5-Audio-1.5B-Q4_0.gguf
+    ```
+
+    <Info>
+    Runners are available for macos-arm64, ubuntu-arm64, ubuntu-x64, and android-arm64.
+    </Info>
+  </Tab>
+</Tabs>

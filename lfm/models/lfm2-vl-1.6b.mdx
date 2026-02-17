@@ -1,0 +1,45 @@
+---
+title: "LFM2-VL-1.6B"
+description: "1.6B vision-language model (deprecated - use LFM2.5-VL-1.6B instead)"
+---
+
+import { VlTransformers } from "/snippets/quickstart/vl-transformers.mdx";
+import { VlVllm } from "/snippets/quickstart/vl-vllm.mdx";
+import { VlLlamacpp } from "/snippets/quickstart/vl-llamacpp.mdx";
+
+<a href="/lfm/models/vision-models" className="back-button">← Back to Vision Models</a>
+
+<Warning>
+This model is deprecated. Use [LFM2.5-VL-1.6B](/lfm/models/lfm25-vl-1.6b) for improved performance.
+</Warning>
+
+LFM2-VL-1.6B was the original 1.6B vision-language model. It has been superseded by LFM2.5-VL-1.6B, which offers better visual understanding and reasoning through extended reinforcement learning.
+
+<div style={{display: 'flex', gap: '0.5rem', margin: '0.5rem 0 1.5rem 0'}}>
+  <a href="https://huggingface.co/LiquidAI/LFM2-VL-1.6B" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#fbbf24'}}><span style={{color: '#000'}}>HF</span></a>
+  <a href="https://huggingface.co/LiquidAI/LFM2-VL-1.6B-GGUF" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#60a5fa'}}><span style={{color: '#000'}}>GGUF</span></a>
+  <a href="https://huggingface.co/mlx-community/LFM2-VL-1.6B-8bit" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#c4b5fd'}}><span style={{color: '#000'}}>MLX</span></a>
+  <a href="https://huggingface.co/onnx-community/LFM2-VL-1.6B-ONNX" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#86efac'}}><span style={{color: '#000'}}>ONNX</span></a>
+</div>
+
+## Specifications
+
+| Property | Value |
+|----------|-------|
+| Parameters | 1.6B |
+| Context Length | 32K tokens |
+| Architecture | LFM2-VL (Dense) |
+
+## Quick Start
+
+<Tabs>
+  <Tab title="Transformers">
+    <VlTransformers modelId="LiquidAI/LFM2-VL-1.6B"></VlTransformers>
+  </Tab>
+  <Tab title="vLLM">
+    <VlVllm modelId="LiquidAI/LFM2-VL-1.6B"></VlVllm>
+  </Tab>
+  <Tab title="llama.cpp">
+    <VlLlamacpp ggufRepo="LiquidAI/LFM2-VL-1.6B-GGUF"></VlLlamacpp>
+  </Tab>
+</Tabs>
