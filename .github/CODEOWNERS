@@ -2,19 +2,21 @@
 * @Paulescu
 
 # Domain owners
-/docs/fine-tuning/ @Liquid4All/fine-tuning-team
+/customization/ @Liquid4All/fine-tuning-team
 
-/docs/inference @Liquid4All/inference-team
-/docs/inference/*-deployment.mdx @tuliren
+/docs/gpu-inference/ @Liquid4All/inference-team
+/docs/gpu-inference/baseten.mdx @tuliren
+/docs/gpu-inference/fal.mdx @tuliren
+/docs/gpu-inference/modal.mdx @tuliren
+/docs/on-device/ @Liquid4All/inference-team
 
-/docs/key-concepts/ @mlabonne
-/docs/models/audio-models.mdx @haerski
-/docs/models/vision-models.mdx @ankke
-/docs/models/ @mlabonne
+/lfm/key-concepts/ @mlabonne
+/lfm/models/audio-models.mdx @haerski
+/lfm/models/vision-models.mdx @ankke
+/lfm/models/ @mlabonne
 
-/leap/ @dbhathena
-/leap/edge-sdk/ @iamstuffed
-/leap/leap-bundle/ @tuliren
-/leap/finetuning.mdx @Liquid4All/fine-tuning-team
+/docs/on-device/ios/ @iamstuffed
+/docs/on-device/android/ @iamstuffed
+/docs/tools/model-bundling/ @tuliren
 
 /.github/workflows/ @tuliren
