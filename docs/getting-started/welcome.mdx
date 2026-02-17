@@ -1,62 +1,60 @@
 ---
-title: "Welcome to LFM Docs!"
-description: "Liquid Foundation Models are a new generation of hybrid models developed by Liquid AI, designed for efficient deployment anywhere."
+title: "Deployment Options"
+description: "Deploy Liquid Foundation Models on any platform — from mobile devices to GPU clusters."
 ---
 
-<img
-  src="/logo/liquiddocs.png"
-  alt="Liquid Foundation Models Documentation"
-  style={{
-    width: "100%",
-    height: "190px",
-    objectFit: "cover",
-    objectPosition: "center",
-    borderRadius: "12px"
-  }}
-/>
+LFM models are designed for efficient deployment across a wide range of platforms. Run models on-device for privacy and low latency, or scale up with GPU inference for production workloads.
 
-## Why LFM2?
-
-Built on a new hybrid architecture, LFM2 sets a new standard in quality, speed, and memory efficiency.
-
-<div className="space-y-3 mt-4">
-  <div className="flex items-start gap-3">
-    <Icon icon="zap" size={18} className="mt-1 text-primary" />
-    <span><strong>3x Faster Training</strong> — New hybrid architecture accelerates training and inference</span>
-  </div>
-  <div className="flex items-start gap-3">
-    <Icon icon="trophy" size={18} className="mt-1 text-primary" />
-    <span><strong>State-of-the-art Quality</strong> — Outperforms similar-sized models on benchmarks</span>
-  </div>
-  <div className="flex items-start gap-3">
-    <Icon icon="hard-drive" size={18} className="mt-1 text-primary" />
-    <span><strong>Memory Efficient</strong> — Optimized for resource-constrained environments</span>
-  </div>
-  <div className="flex items-start gap-3">
-    <Icon icon="globe" size={18} className="mt-1 text-primary" />
-    <span><strong>Deploy Anywhere</strong> — Compatible with major inference frameworks and platforms</span>
-  </div>
-</div>
-
-[Learn more about the architecture →](https://www.liquid.ai/blog/liquid-foundation-models-v2-our-second-series-of-generative-ai-models)
-
-## Get Started
+## On-Device
 
 <CardGroup cols={3}>
-  <Card title="Explore Models" icon="brain" href="/docs/models/complete-library">
-    Browse our collection of language models and their capabilities
+  <Card title="iOS SDK" icon="apple" href="/docs/on-device/ios/ios-quick-start-guide">
+    Deploy models natively on iPhone and iPad
   </Card>
-  <Card title="Inference Guides" icon="play" href="/docs/inference/transformers">
-    Learn how to run models for different use cases and platforms
+  <Card title="Android SDK" icon="robot" href="/docs/on-device/android/android-quick-start-guide">
+    Deploy models natively on Android devices
   </Card>
-  <Card title="Fine-tuning" icon="sliders" href="/docs/fine-tuning/trl">
-    Customize models for your specific requirements
+  <Card title="llama.cpp" icon="terminal" href="/docs/on-device/llama-cpp">
+    CPU-first inference with cross-platform support
+  </Card>
+  <Card title="MLX" icon="microchip" href="/docs/on-device/mlx">
+    Optimized inference on Apple Silicon
+  </Card>
+  <Card title="ONNX" icon="cube" href="/docs/on-device/onnx">
+    Cross-platform inference with ONNX Runtime
+  </Card>
+  <Card title="Ollama" icon="download" href="/docs/on-device/ollama">
+    Easy local deployment and model management
   </Card>
 </CardGroup>
 
-<Panel>
-  - [Liquid Playground](https://playground.liquid.ai/chat?model=cmk0wefde000204jp2knb2qr8)
-  - [HuggingFace Collections](https://huggingface.co/LiquidAI/collections)
-  - [OpenRouter API](https://openrouter.ai/liquid)
-  - [LEAP Model Library](https://leap.liquid.ai/models)
-</Panel>
+## GPU Inference
+
+<CardGroup cols={3}>
+  <Card title="Transformers" icon="code" href="/docs/gpu-inference/transformers">
+    Flexible inference with Hugging Face Transformers
+  </Card>
+  <Card title="vLLM" icon="bolt" href="/docs/gpu-inference/vllm">
+    High-throughput production serving
+  </Card>
+  <Card title="SGLang" icon="server" href="/docs/gpu-inference/sglang">
+    Structured generation and fast serving
+  </Card>
+  <Card title="Modal" icon="cloud" href="/docs/gpu-inference/modal">
+    Serverless GPU deployment
+  </Card>
+  <Card title="Baseten" icon="cloud" href="/docs/gpu-inference/baseten">
+    Production model inference platform
+  </Card>
+  <Card title="Fal" icon="cloud" href="/docs/gpu-inference/fal">
+    Fast inference API platform
+  </Card>
+</CardGroup>
+
+## Tools
+
+<CardGroup cols={1}>
+  <Card title="Model Bundling Services" icon="box" href="/docs/tools/model-bundling/quick-start">
+    Package and distribute optimized model bundles for edge deployment
+  </Card>
+</CardGroup>
