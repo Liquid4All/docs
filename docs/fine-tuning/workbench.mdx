@@ -5,7 +5,7 @@ description: "Customize models to your task and data with LEAP Workbench"
 
 [Workbench](https://workbench.liquid.ai) bridges the gap between domain expertise and model customization, enabling rapid model improvement and evaluation without the heavy technical overhead.
 
-# What is Workbench?
+## What is Workbench?
 
 Small language models, including LFMs, can be extremely powerful for a variety of tasks.
 Unlike bigger LLMs, however, they do require careful customization to achieve the best performance on a specific task.
@@ -16,12 +16,12 @@ Using Workbench, developers, solutions engineers, and domain experts can rapidly
 2. Custom data upload and generation
 3. Automated model evaluation and comparison across a variety of dimensions
 
-# Using Workbench
+## Using Workbench
 
 Getting started with Workbench is easy. Simply visit [workbench.liquid.ai](https://workbench.liquid.ai) and sign in with your LEAP account to access the tool's dashboard.
 From there, you can create a new evaluation session or choose from an example template.
 
-## 1. Describe your task
+### 1. Describe your task
 
 To create a new evaluation session, you'll first need to provide a description of your task.
 The more detail you can provide about the task, the better - details such as data source and distribution, edge cases, input/output formats, etc. are all helpful.
@@ -30,12 +30,12 @@ You can also specify whether the output should follow a specific JSON format. (I
 ![Screenshot of workbench json editor](/images/leap/workbench/schema-editor.png)
 Once you've provided as much detail about your task as possible, click `Continue` to create the session.
 
-## 2. Set up evaluation runs
+### 2. Set up evaluation runs
 
 After creating the session, you'll be taken to the session dashboard.
 This page consists of two main sections: the prompt editor and the evaluation arena.
 
-### Managing prompts
+#### Managing prompts
 
 On the left-hand side of the dashboard, you'll find the prompt editor.
 This is where you can edit both the system prompt and the user prompt that will be fed to the models during evaluation.
@@ -51,7 +51,7 @@ The prompts will be automatically generated based on the task description you pr
     This can be helpful in guiding the model to respond in a specific way.
 </Info>
 
-### Adding data
+#### Adding data
 
 To the right of the prompt editor is the evaluation arena table. This is where the bulk of the work happens.
 This is where you can upload or enter input data, optionally provide output data, and compare model performance across a variety of dimensions.
@@ -67,7 +67,7 @@ Doing so will allow you to provide ground truth outputs for each sample, which w
     It is highly recommended to use real-world data wherever possible, and thoroughly vet any AI-generated outputs, before running evaluations.
 </Warning>
 
-### Choosing models
+#### Choosing models
 
 You can choose to compare up to three LFM models against each other in Workbench.
 If you're unsure which models to choose, we recommend browsing the [LEAP Model Library](https://leap.liquid.ai/models) for descriptions of model strengths and weaknesses.
@@ -77,7 +77,7 @@ If you're unsure which models to choose, we recommend browsing the [LEAP Model L
 
 The LFMs you choose to evaluate will also be compared against a frontier LLM (currently [GPT-4o](https://openai.com/index/hello-gpt-4o/)), to provide a baseline for comparison.
 
-### Modifying judges (optional)
+#### Modifying judges (optional)
 
 A suite of AI judges will be used to evaluate each model's performance.
 You can configure the evaluation judges by clicking the `Judge` button above the evaluation arena table.
@@ -87,12 +87,12 @@ You can configure the evaluation judges by clicking the `Judge` button above the
 You can also add your own **custom judges** if there are specific dimensions of model performance that you'd like to evaluate.
 We recommend creating individual and specific judges to focus on each aspect of the model outputs so that it is easier to identify and address where improvements can be made.
 
-## 3. Run evaluations
+### 3. Run evaluations
 
 Once you have provided the platform with your evaluation data, you are ready to kick off your first evaluation run!
 Click the `Run Evaluations` button and wait for the results to appear - this may take a few minutes, depending on the size of your evaluation dataset.
 
-## 4. Analyze results and iterate
+### 4. Analyze results and iterate
 
 Once your evaluation run is complete, you will see the results in the evaluation arena table.
 Each model will have an aggregate score, which is an average of the scores from each judge on each data sample.
@@ -110,7 +110,7 @@ You can auto-apply these changes, make manual adjustments, or ignore them entire
 Once you've made any necessary adjustments, kick off another evaluation run to see the results of your changes.
 Repeat this process until you are satisfied with your model performance and are ready to deploy!
 
-## 5. Deploy your model
+### 5. Deploy your model
 
 Once you are satisfied with the performance of your best model, you can deploy it to your production environment of choice using the Edge SDK or one-click cloud deployments.
 Access your deployment options with the button in the top right corner of the dashboard.
@@ -118,9 +118,9 @@ Access your deployment options with the button in the top right corner of the da
 You can also deploy any single model using the dropdown menu next to the model name in the evaluation arena table.
 ![Screenshot of workbench model deployment dropdown](/images/leap/workbench/model-deployment-dropdown.png)
 
-# Additional features
+## Additional features
 
-## Custom model upload
+### Custom model upload
 
 By default, Workbench has a set of pre-trained LFMs available for you to use.
 If you'd like to upload a custom model for usage within Workbench, you can do so within the [Model Deployments](https://workbench.liquid.ai/model-deployments) page.
@@ -131,7 +131,7 @@ Using custom models enables you to use fine-tuned checkpoints or even other mode
     We currently only guarantee support of text-only LFM architectures within the platform. Non-LFM architectures may work, but are not officially supported.
 </Note>
 
-## Organization management
+### Organization management
 
 When you log in to Workbench for the first time, you will automatically be added as a member of your own personal account.
 If you'd like to collaborate with others within an organization, you can create a new organization via the organization dropdown menu in the top left corner of the nav bar.
@@ -139,7 +139,7 @@ You are able to name your organization, invite and manage other members, and col
 
 Sessions belong to the organization they are created in – to move a session to a different organization, choose the "Change organization" option in the session dropdown menu in the "Browse recent evaluations" table on the [main dashboard page](https://workbench.liquid.ai/dashboard).
 
-## Session sharing
+### Session sharing
 
 New evaluation sessions are private by default, and only accessible to you as the creator and owner.
 You can change the session sharing settings by selecting "Share" from the session dropdown menu in the "Browse recent evaluations" table on the [main dashboard page](https://workbench.liquid.ai/dashboard).
@@ -153,18 +153,18 @@ Note that sharing a session will provide full edit access to anyone with access 
     Please use caution when editing shared sessions.
 </Danger>
 
-## Prompt version control
+### Prompt version control
 
 Workbench supports lightweight version control for both the system and user prompts.
 If you make changes to your prompts, you can access and revert to previous versions using the History icon above the prompt editor.
 ![Screenshot of history icon](/images/leap/workbench/prompt-history.png)
 
-## Statistics
+### Statistics
 
 As you use workbench and run multiple rounds of evaluations, Workbench logs the performance of each model over time and provides a breakdown of these results.
 To view these statistics, click the `Stats` button above the evaluation arena table.
 
-## Model sampling parameters
+### Model sampling parameters
 
 In addition to the system prompt and user prompt, you can also specify the sampling parameters to use during model generation.
 To do so, click the `Model Params` button above the evaluation arena table.
@@ -174,7 +174,7 @@ This is considered advanced usage – the default sampling parameters are genera
     The same sampling parameters are provided to all models in a session – there is currently no support for setting model-specific sampling parameters.
 </Note>
 
-# Provide feedback
+## Provide feedback
 
 Workbench is still in open beta.
 Your feedback is highly valuable to us as we continue to actively improve the platform.
