@@ -7,7 +7,7 @@ description: "SGLang is a fast serving framework for large language models. It f
   Use SGLang for ultra-low latency, high-throughput production serving with many concurrent requests.
 </Tip>
 
-SGLang requires a CUDA-compatible GPU. For CPU-only environments, consider using [llama.cpp](/docs/inference/llama-cpp) instead.
+SGLang requires a CUDA-compatible GPU. For CPU-only environments, consider using [llama.cpp](/docs/on-device/llama-cpp) instead.
 
 ## Supported Models
 
@@ -18,7 +18,7 @@ SGLang requires a CUDA-compatible GPU. For CPU-only environments, consider using
 | Vision models | Not yet supported | LFM2-VL |
 
 <Note>
-MoE model support has been merged into SGLang but is not yet included in a stable release — [install from main](#install-from-main-moe-support) to use MoE models now. Vision models are not yet supported in SGLang — use [Transformers](/docs/inference/transformers) for vision workloads.
+MoE model support has been merged into SGLang but is not yet included in a stable release — [install from main](#install-from-main-moe-support) to use MoE models now. Vision models are not yet supported in SGLang — use [Transformers](/docs/gpu-inference/transformers) for vision workloads.
 </Note>
 
 ## Installation
@@ -119,7 +119,7 @@ response = client.chat.completions.create(
 print(response.choices[0].message)
 ```
 
-For more details on tool use with LFM models, see [Tool Use](/docs/key-concepts/tool-use).
+For more details on tool use with LFM models, see [Tool Use](/lfm/key-concepts/tool-use).
 
 <Accordion title="Curl request example">
   ```bash
