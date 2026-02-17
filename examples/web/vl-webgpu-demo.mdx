@@ -6,7 +6,7 @@ title: "Real-time video captioning with LFM2.5-VL-1.6B and WebGPU"
   Browse the complete example on GitHub
 </Card>
 
-This example demonstrates how to run a vision-language model directly in your web browser using WebGPU acceleration. The demo showcases real-time video captioning with the [LFM2.5-VL-1.6B](/docs/models/lfm25-vl-1.6b) model, eliminating the need for cloud-based inference services.
+This example demonstrates how to run a vision-language model directly in your web browser using WebGPU acceleration. The demo showcases real-time video captioning with the [LFM2.5-VL-1.6B](/lfm/models/lfm25-vl-1.6b) model, eliminating the need for cloud-based inference services.
 
 ## Key Features
 
@@ -43,7 +43,7 @@ This example demonstrates how to run a vision-language model directly in your we
 
 ## Understanding the Architecture
 
-This demo uses the **[LFM2.5-VL-1.6B](/docs/models/lfm25-vl-1.6b)** model, a 1.6 billion parameter vision-language model that has been quantized for efficient browser-based inference. The model runs entirely client-side using ONNX Runtime Web with WebGPU acceleration.
+This demo uses the **[LFM2.5-VL-1.6B](/lfm/models/lfm25-vl-1.6b)** model, a 1.6 billion parameter vision-language model that has been quantized for efficient browser-based inference. The model runs entirely client-side using ONNX Runtime Web with WebGPU acceleration.
 
 ### Remote vs. Local Inference
 
@@ -57,7 +57,7 @@ With WebGPU and local inference, everything runs directly in your browser:
 
 ### Technical Stack
 
-- **Model**: [LFM2.5-VL-1.6B](/docs/models/lfm25-vl-1.6b) (quantized ONNX format)
+- **Model**: [LFM2.5-VL-1.6B](/lfm/models/lfm25-vl-1.6b) (quantized ONNX format)
 - **Inference Engine**: ONNX Runtime Web with WebGPU backend
 - **Build Tool**: Vite for fast development and optimized production builds
 - **Browser Requirements**: WebGPU-compatible browser (Chrome, Edge)

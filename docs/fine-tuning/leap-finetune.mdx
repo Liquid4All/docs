@@ -20,10 +20,10 @@ LEAP Finetune will provide:
 While LEAP Finetune is in development, you can fine-tune models using:
 
 <CardGroup cols={2}>
-  <Card title="TRL" icon="graduation-cap" href="/docs/fine-tuning/trl">
+  <Card title="TRL" icon="graduation-cap" href="/customization/finetuning-frameworks/trl">
     Hugging Face's training library with LoRA/QLoRA support
   </Card>
-  <Card title="Unsloth" icon="zap" href="/docs/fine-tuning/unsloth">
+  <Card title="Unsloth" icon="zap" href="/customization/finetuning-frameworks/unsloth">
     Memory-efficient fine-tuning with 2x faster training
   </Card>
 </CardGroup>
@@ -33,8 +33,8 @@ While LEAP Finetune is in development, you can fine-tune models using:
 After fine-tuning with TRL or Unsloth, prepare your model for edge deployment:
 
 1. **Fine-tune** your model using TRL or Unsloth
-2. **Convert** to edge-optimized format using the [Model Bundling Service](/leap/leap-bundle/quick-start)
-3. **Deploy** to mobile devices using the [LEAP SDK](/leap/edge-sdk/overview)
+2. **Convert** to edge-optimized format using the [Model Bundling Service](/docs/tools/model-bundling/quick-start)
+3. **Deploy** to mobile devices using the [LEAP SDK](/docs/on-device/ios/ios-quick-start-guide)
 
 ```bash
 # Example: Bundle a fine-tuned model for edge deployment
