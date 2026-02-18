@@ -8,7 +8,7 @@ description: "Liquid Foundation Models (LFMs) are a new class of multimodal arch
 All of our models share the following capabilities:
 
 - 32k token context length for extended conversations and document processing
-- Designed for fast inference with [Transformers](/docs/gpu-inference/transformers), [llama.cpp](/docs/on-device/llama-cpp), [vLLM](/docs/gpu-inference/vllm), [MLX](/docs/on-device/mlx), [Ollama](/docs/on-device/ollama), and [LEAP](/docs/on-device/ios/ios-quick-start-guide)
+- Designed for fast inference with [Transformers](/deployment/gpu-inference/transformers), [llama.cpp](/deployment/on-device/llama-cpp), [vLLM](/deployment/gpu-inference/vllm), [MLX](/deployment/on-device/mlx), [Ollama](/deployment/on-device/ollama), and [LEAP](/deployment/on-device/ios/ios-quick-start-guide)
 - Trainable via SFT, DPO, and GRPO with [TRL](/customization/finetuning-frameworks/trl) and [Unsloth](/customization/finetuning-frameworks/unsloth)
 
 </div>
@@ -41,8 +41,8 @@ All of our models share the following capabilities:
 
 All LFM2 models are available in multiple formats for flexible deployment:
 
-- **GGUF** — Best for local CPU/GPU inference on any platform. Use with [llama.cpp](/docs/on-device/llama-cpp), [LM Studio](/docs/on-device/lm-studio), or [Ollama](/docs/on-device/ollama). Append `-GGUF` to any model name.
-- **MLX** — Best for Mac users with Apple Silicon. Leverages unified memory for fast inference via [MLX](/docs/on-device/mlx). Browse at [mlx-community](https://huggingface.co/mlx-community/collections?search=LFM).
+- **GGUF** — Best for local CPU/GPU inference on any platform. Use with [llama.cpp](/deployment/on-device/llama-cpp), [LM Studio](/deployment/on-device/lm-studio), or [Ollama](/deployment/on-device/ollama). Append `-GGUF` to any model name.
+- **MLX** — Best for Mac users with Apple Silicon. Leverages unified memory for fast inference via [MLX](/deployment/on-device/mlx). Browse at [mlx-community](https://huggingface.co/mlx-community/collections?search=LFM).
 - **ONNX** — Best for production deployments and edge devices. Cross-platform with ONNX Runtime across CPUs, GPUs, and accelerators. Append `-ONNX` to any model name.
 
 ### Quantization

@@ -4,19 +4,19 @@
 # Domain owners
 /customization/ @Liquid4All/fine-tuning-team
 
-/docs/gpu-inference/ @Liquid4All/inference-team
-/docs/gpu-inference/baseten.mdx @tuliren
-/docs/gpu-inference/fal.mdx @tuliren
-/docs/gpu-inference/modal.mdx @tuliren
-/docs/on-device/ @Liquid4All/inference-team
+/deployment/gpu-inference/ @Liquid4All/inference-team
+/deployment/gpu-inference/baseten.mdx @tuliren
+/deployment/gpu-inference/fal.mdx @tuliren
+/deployment/gpu-inference/modal.mdx @tuliren
+/deployment/on-device/ @Liquid4All/inference-team
 
 /lfm/key-concepts/ @mlabonne
 /lfm/models/audio-models.mdx @haerski
 /lfm/models/vision-models.mdx @ankke
 /lfm/models/ @mlabonne
 
-/docs/on-device/ios/ @iamstuffed
-/docs/on-device/android/ @iamstuffed
-/docs/tools/model-bundling/ @tuliren
+/deployment/on-device/ios/ @iamstuffed
+/deployment/on-device/android/ @iamstuffed
+/deployment/tools/model-bundling/ @tuliren
 
 /.github/workflows/ @tuliren

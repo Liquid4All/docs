@@ -131,7 +131,7 @@
             "group": "Getting Started",
             "icon": "rocket",
             "pages": [
-              "docs/getting-started/welcome",
+              "deployment/getting-started/welcome",
               "lfm/getting-started/connect-ai-tools"
             ]
           },
@@ -143,51 +143,51 @@
                 "group": "iOS SDK",
                 "icon": "apple",
                 "pages": [
-                  "docs/on-device/ios/ios-quick-start-guide",
-                  "docs/on-device/ios/ai-agent-usage-guide",
-                  "docs/on-device/ios/model-loading",
-                  "docs/on-device/ios/conversation-generation",
-                  "docs/on-device/ios/messages-content",
-                  "docs/on-device/ios/advanced-features",
-                  "docs/on-device/ios/utilities",
-                  "docs/on-device/ios/cloud-ai-comparison",
-                  "docs/on-device/ios/constrained-generation",
-                  "docs/on-device/ios/function-calling"
+                  "deployment/on-device/ios/ios-quick-start-guide",
+                  "deployment/on-device/ios/ai-agent-usage-guide",
+                  "deployment/on-device/ios/model-loading",
+                  "deployment/on-device/ios/conversation-generation",
+                  "deployment/on-device/ios/messages-content",
+                  "deployment/on-device/ios/advanced-features",
+                  "deployment/on-device/ios/utilities",
+                  "deployment/on-device/ios/cloud-ai-comparison",
+                  "deployment/on-device/ios/constrained-generation",
+                  "deployment/on-device/ios/function-calling"
                 ]
               },
               {
                 "group": "Android SDK",
                 "icon": "robot",
                 "pages": [
-                  "docs/on-device/android/android-quick-start-guide",
-                  "docs/on-device/android/ai-agent-usage-guide",
-                  "docs/on-device/android/model-loading",
-                  "docs/on-device/android/conversation-generation",
-                  "docs/on-device/android/messages-content",
-                  "docs/on-device/android/advanced-features",
-                  "docs/on-device/android/utilities",
-                  "docs/on-device/android/cloud-ai-comparison",
-                  "docs/on-device/android/constrained-generation",
-                  "docs/on-device/android/function-calling"
+                  "deployment/on-device/android/android-quick-start-guide",
+                  "deployment/on-device/android/ai-agent-usage-guide",
+                  "deployment/on-device/android/model-loading",
+                  "deployment/on-device/android/conversation-generation",
+                  "deployment/on-device/android/messages-content",
+                  "deployment/on-device/android/advanced-features",
+                  "deployment/on-device/android/utilities",
+                  "deployment/on-device/android/cloud-ai-comparison",
+                  "deployment/on-device/android/constrained-generation",
+                  "deployment/on-device/android/function-calling"
                 ]
               },
-              "docs/on-device/llama-cpp",
-              "docs/on-device/lm-studio",
-              "docs/on-device/mlx",
-              "docs/on-device/onnx",
-              "docs/on-device/ollama"
+              "deployment/on-device/llama-cpp",
+              "deployment/on-device/lm-studio",
+              "deployment/on-device/mlx",
+              "deployment/on-device/onnx",
+              "deployment/on-device/ollama"
             ]
           },
           {
             "group": "GPU Inference",
             "icon": "microchip",
             "pages": [
-              "docs/gpu-inference/transformers",
-              "docs/gpu-inference/vllm",
-              "docs/gpu-inference/sglang",
-              "docs/gpu-inference/modal",
-              "docs/gpu-inference/baseten",
-              "docs/gpu-inference/fal"
+              "deployment/gpu-inference/transformers",
+              "deployment/gpu-inference/vllm",
+              "deployment/gpu-inference/sglang",
+              "deployment/gpu-inference/modal",
+              "deployment/gpu-inference/baseten",
+              "deployment/gpu-inference/fal"
             ]
           },
           {
@@ -198,15 +198,15 @@
                 "group": "Model Bundling Services",
                 "icon": "box",
                 "pages": [
-                  "docs/tools/model-bundling/quick-start",
-                  "docs/tools/model-bundling/authentication",
-                  "docs/tools/model-bundling/configuration",
-                  "docs/tools/model-bundling/bundle-creation",
-                  "docs/tools/model-bundling/bundle-management",
-                  "docs/tools/model-bundling/download",
-                  "docs/tools/model-bundling/reference",
-                  "docs/tools/model-bundling/data-privacy",
-                  "docs/tools/model-bundling/changelog"
+                  "deployment/tools/model-bundling/quick-start",
+                  "deployment/tools/model-bundling/authentication",
+                  "deployment/tools/model-bundling/configuration",
+                  "deployment/tools/model-bundling/bundle-creation",
+                  "deployment/tools/model-bundling/bundle-management",
+                  "deployment/tools/model-bundling/download",
+                  "deployment/tools/model-bundling/reference",
+                  "deployment/tools/model-bundling/data-privacy",
+                  "deployment/tools/model-bundling/changelog"
                 ]
               }
             ]
@@ -269,6 +269,10 @@
   },
   "redirects": [
     {
+      "source": "/docs/getting-started/welcome",
+      "destination": "/lfm/getting-started/welcome"
+    },
+    {
       "source": "/docs/getting-started/connect-ai-tools",
       "destination": "/lfm/getting-started/connect-ai-tools"
     },
@@ -302,63 +306,63 @@
     },
     {
       "source": "/docs/inference/llama-cpp",
-      "destination": "/docs/on-device/llama-cpp"
+      "destination": "/deployment/on-device/llama-cpp"
     },
     {
       "source": "/docs/inference/mlx",
-      "destination": "/docs/on-device/mlx"
+      "destination": "/deployment/on-device/mlx"
     },
     {
       "source": "/docs/inference/onnx",
-      "destination": "/docs/on-device/onnx"
+      "destination": "/deployment/on-device/onnx"
     },
     {
       "source": "/docs/inference/ollama",
-      "destination": "/docs/on-device/ollama"
+      "destination": "/deployment/on-device/ollama"
     },
     {
       "source": "/docs/inference/lm-studio",
-      "destination": "/docs/on-device/lm-studio"
+      "destination": "/deployment/on-device/lm-studio"
     },
     {
       "source": "/docs/inference/transformers",
-      "destination": "/docs/gpu-inference/transformers"
+      "destination": "/deployment/gpu-inference/transformers"
     },
     {
       "source": "/docs/inference/vllm",
-      "destination": "/docs/gpu-inference/vllm"
+      "destination": "/deployment/gpu-inference/vllm"
     },
     {
       "source": "/docs/inference/sglang",
-      "destination": "/docs/gpu-inference/sglang"
+      "destination": "/deployment/gpu-inference/sglang"
     },
     {
       "source": "/docs/inference/modal-deployment",
-      "destination": "/docs/gpu-inference/modal"
+      "destination": "/deployment/gpu-inference/modal"
     },
     {
       "source": "/docs/inference/baseten-deployment",
-      "destination": "/docs/gpu-inference/baseten"
+      "destination": "/deployment/gpu-inference/baseten"
     },
     {
       "source": "/docs/inference/fal-deployment",
-      "destination": "/docs/gpu-inference/fal"
+      "destination": "/deployment/gpu-inference/fal"
     },
     {
       "source": "/leap/edge-sdk/overview",
-      "destination": "/docs/on-device/ios/ios-quick-start-guide"
+      "destination": "/deployment/on-device/ios/ios-quick-start-guide"
     },
     {
       "source": "/leap/edge-sdk/ios/:slug*",
-      "destination": "/docs/on-device/ios/:slug*"
+      "destination": "/deployment/on-device/ios/:slug*"
     },
     {
       "source": "/leap/edge-sdk/android/:slug*",
-      "destination": "/docs/on-device/android/:slug*"
+      "destination": "/deployment/on-device/android/:slug*"
     },
     {
       "source": "/leap/leap-bundle/:slug*",
-      "destination": "/docs/tools/model-bundling/:slug*"
+      "destination": "/deployment/tools/model-bundling/:slug*"
     }
   ],
   "ai": {
