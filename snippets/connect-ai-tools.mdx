@@ -1,0 +1,115 @@
+## What is MCP?
+
+The Model Context Protocol (MCP) is an open standard that gives AI applications a standardized way to connect to external data sources and tools. By connecting your AI coding tool to Liquid docs via MCP, you're giving it live, queryable access to the complete documentation: not a snapshot, not a cached file, but a real-time search against our official documentation.
+
+Every time Liquid docs update, the MCP server reflects those changes automatically.
+
+<Note>
+Liquid docs automatically hosts an MCP server at:
+
+```
+https://docs.liquid.ai/mcp
+```
+</Note>
+
+---
+
+## Connect to Claude Code
+
+### Step 1: Add the MCP server
+
+Run the following command in your terminal:
+
+```bash
+claude mcp add --transport http liquid-docs https://docs.liquid.ai/mcp
+```
+
+This will automatically configure Claude Code to connect to the Liquid docs MCP server.
+
+### Step 2: Verify the connection
+
+First, confirm the MCP server was added by listing all configured servers:
+
+```bash
+claude mcp list
+```
+
+You should see `liquid-docs` in the list of MCP servers.
+
+Then, in a Claude Code session, ask a question about Liquid AI:
+
+```
+How do I deploy an LFM model to Android using the LEAP SDK?
+```
+
+Claude Code will query your MCP server and return an answer grounded in Liquid docs.
+
+<Check>
+You're all set! Claude Code now has real-time access to Liquid AI documentation.
+</Check>
+
+---
+
+## Connect to Cursor
+
+### Option A: One-click install from Liquid docs (fastest)
+
+1. Open any page on the Liquid docs site.
+2. Click the contextual AI menu icon (✨) in the top-right corner of the page.
+3. Select **Connect to Cursor**.
+4. Cursor will open and prompt you to confirm. Click **Allow**.
+
+<Check>
+Done - no manual configuration needed.
+</Check>
+
+### Option B: Manual setup via the Command Palette
+
+**Step 1: Open the Command Palette**
+
+Press `Cmd+Shift+P` on macOS or `Ctrl+Shift+P` on Windows.
+
+**Step 2: Search for MCP Settings**
+
+Type **Open MCP settings** and select it.
+
+**Step 3: Add a custom MCP server**
+
+Click **Add custom MCP**. This opens the `mcp.json` file.
+
+**Step 4: Add the configuration**
+
+Paste the following:
+
+```json
+{
+  "mcpServers": {
+    "liquid-docs": {
+      "url": "https://docs.liquid.ai/mcp"
+    }
+  }
+}
+```
+
+Save the file and restart Cursor.
+
+**Step 5: Verify the connection**
+
+Open a Cursor chat and ask something about Liquid AI. Cursor will query your MCP server and use Liquid docs as context when generating responses.
+
+<Check>
+You're all set! Cursor now has real-time access to Liquid AI documentation.
+</Check>
+
+---
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Explore Models" icon="brain" href="/lfm/models/complete-library">
+    Browse our collection of language models
+  </Card>
+  <Card title="Quick Start" icon="rocket" href="/deployment/on-device/ios/ios-quick-start-guide">
+    Get started with the LEAP SDK
+  </Card>
+</CardGroup>

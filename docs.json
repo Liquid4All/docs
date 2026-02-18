@@ -103,7 +103,7 @@
             "icon": "rocket",
             "pages": [
               "customization/getting-started/welcome",
-              "lfm/getting-started/connect-ai-tools"
+              "customization/getting-started/connect-ai-tools"
             ]
           },
           {
@@ -132,7 +132,7 @@
             "icon": "rocket",
             "pages": [
               "deployment/getting-started/welcome",
-              "lfm/getting-started/connect-ai-tools"
+              "deployment/getting-started/connect-ai-tools"
             ]
           },
           {
@@ -221,7 +221,7 @@
             "icon": "rocket",
             "pages": [
               "examples/index",
-              "lfm/getting-started/connect-ai-tools"
+              "examples/connect-ai-tools"
             ]
           },
           {
