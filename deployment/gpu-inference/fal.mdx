@@ -42,7 +42,7 @@ curl https://fal.run/<org-id>/<app-id>/v1/models -H "Authorization: Key $FAL_API
 # Query the deployed LFM model
 curl -X POST https://fal.run/<org-id>/<app-id>/v1/chat/completions \
   -H "Authorization: Key $FAL_API_KEY" \
-  --json '{
+  -d '{
     "model": "LiquidAI/LFM2-8B-A1B",
     "messages": [
       {
