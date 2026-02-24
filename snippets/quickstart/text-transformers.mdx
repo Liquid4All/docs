@@ -19,15 +19,16 @@ model = AutoModelForCausalLM.from_pretrained(
 )
 tokenizer = AutoTokenizer.from_pretrained(model_id)
 
-input_ids = tokenizer.apply_chat_template(
+inputs = tokenizer.apply_chat_template(
     [{"role": "user", "content": "What is machine learning?"}],
     add_generation_prompt=True,
     return_tensors="pt",
-    tokenize=True,
+    return_dict=True,
 ).to(model.device)
 
-output = model.generate(input_ids, ${samplingParams}max_new_tokens=512)
-response = tokenizer.decode(output[0][len(input_ids[0]):], skip_special_tokens=True)
+output = model.generate(**inputs, ${samplingParams}max_new_tokens=512)
+input_length = inputs["input_ids"].shape[1]
+response = tokenizer.decode(output[0][input_length:], skip_special_tokens=True)
 print(response)`.split('\n').map((line, i) => <span key={i} className="line">{line}{'\n'}</span>)}
 </code>
 </pre>

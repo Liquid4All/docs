@@ -53,17 +53,18 @@ tokenizer = AutoTokenizer.from_pretrained(model_id)
 
 # Generate answer
 prompt = "What is C. elegans?"
-input_ids = tokenizer.apply_chat_template(
+inputs = tokenizer.apply_chat_template(
     [{"role": "user", "content": prompt}],
     add_generation_prompt=True,
     return_tensors="pt",
-    tokenize=True,
+    return_dict=True,
 ).to(model.device)
 
-output = model.generate(input_ids, do_sample=True, temperature=0.1, top_k=50, repetition_penalty=1.05, max_new_tokens=512)
+output = model.generate(**inputs, do_sample=True, temperature=0.1, top_k=50, repetition_penalty=1.05, max_new_tokens=512)
 
 # Decode only the newly generated tokens (excluding the input prompt)
-response = tokenizer.decode(output[0][len(input_ids[0]):], skip_special_tokens=True)
+input_length = inputs["input_ids"].shape[1]
+response = tokenizer.decode(output[0][input_length:], skip_special_tokens=True)
 print(response)
 # C. elegans, also known as Caenorhabditis elegans, is a small, free-living
 # nematode worm (roundworm) that belongs to the phylum Nematoda.
@@ -135,7 +136,7 @@ generation_config = GenerationConfig(
 )
 
 # Use it in generate()
-output = model.generate(input_ids, generation_config=generation_config)
+output = model.generate(**inputs, generation_config=generation_config)
 ```
 
 For a complete list of parameters, see the [GenerationConfig documentation](https://huggingface.co/docs/transformers/v4.57.1/en/main_classes/text_generation#transformers.GenerationConfig).
@@ -149,15 +150,15 @@ from transformers import AutoModelForCausalLM, AutoTokenizer, TextStreamer
 
 # Use the model and tokenizer setup from Basic Usage above
 prompt = "Tell me a story about space exploration."
-input_ids = tokenizer.apply_chat_template(
+inputs = tokenizer.apply_chat_template(
     [{"role": "user", "content": prompt}],
     add_generation_prompt=True,
     return_tensors="pt",
-    tokenize=True,
+    return_dict=True,
 ).to(model.device)
 
 streamer = TextStreamer(tokenizer, skip_prompt=True, skip_special_tokens=True)
-output = model.generate(input_ids, do_sample=True, temperature=0.1, top_k=50, repetition_penalty=1.05, streamer=streamer, max_new_tokens=512)
+output = model.generate(**inputs, do_sample=True, temperature=0.1, top_k=50, repetition_penalty=1.05, streamer=streamer, max_new_tokens=512)
 ```
 
 ## Batch Generation
@@ -184,12 +185,12 @@ batch = tokenizer.apply_chat_template(
     prompts,
     add_generation_prompt=True,
     return_tensors="pt",
-    tokenize=True,
+    return_dict=True,
     padding=True,
 ).to(model.device)
 
 # Generate for all prompts in batch
-outputs = model.generate(batch, do_sample=True, temperature=0.1, top_k=50, repetition_penalty=1.05, max_new_tokens=512)
+outputs = model.generate(**batch, do_sample=True, temperature=0.1, top_k=50, repetition_penalty=1.05, max_new_tokens=512)
 
 # Decode outputs
 for output in outputs:
@@ -211,6 +212,9 @@ model = AutoModelForImageTextToText.from_pretrained(
     device_map="auto",
     dtype="bfloat16"
 )
+# IMPORTANT: tie lm_head to input embeddings (transformers v5 bug)
+model.lm_head.weight = model.get_input_embeddings().weight
+
 processor = AutoProcessor.from_pretrained(model_id)
 
 # Load image and create conversation

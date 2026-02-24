@@ -26,6 +26,9 @@ model = AutoModelForImageTextToText.from_pretrained(
     device_map="auto",
     dtype="bfloat16",
 )
+# IMPORTANT: tie lm_head to input embeddings (transformers v5 bug)
+model.lm_head.weight = model.get_input_embeddings().weight
+
 processor = AutoProcessor.from_pretrained(model_id)
 
 url = "https://cdn.britannica.com/61/93061-050-99147DCE/Statue-of-Liberty-Island-New-York-Bay.jpg"
