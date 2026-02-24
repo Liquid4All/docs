@@ -1,0 +1,59 @@
+---
+title: "LFM2-24B-A2B"
+description: "24B parameter Mixture-of-Experts model with 2B active parameters — our largest model for laptops and single-GPU applications"
+---
+
+import { TextTransformers } from "/snippets/quickstart/text-transformers.mdx";
+import { TextVllm } from "/snippets/quickstart/text-vllm.mdx";
+import { TextLlamacpp } from "/snippets/quickstart/text-llamacpp.mdx";
+
+<a href="/lfm/models/text-models" className="back-button">← Back to Text Models</a>
+
+LFM2-24B-A2B is Liquid AI's largest Mixture-of-Experts model, combining 24B total parameters with only 2B active parameters per forward pass. This delivers the quality of much larger models with the efficiency needed for laptops and single-GPU deployments.
+
+<div style={{display: 'flex', gap: '0.5rem', margin: '0.5rem 0 1.5rem 0'}}>
+  <a href="https://huggingface.co/LiquidAI/LFM2-24B-A2B" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#fbbf24'}}><span style={{color: '#000'}}>HF</span></a>
+  <a href="https://huggingface.co/LiquidAI/LFM2-24B-A2B-GGUF" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#60a5fa'}}><span style={{color: '#000'}}>GGUF</span></a>
+  <a href="https://huggingface.co/LiquidAI/LFM2-24B-A2B-MLX-8bit" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#c4b5fd'}}><span style={{color: '#000'}}>MLX</span></a>
+  <a href="https://huggingface.co/LiquidAI/LFM2-24B-A2B-ONNX" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#86efac'}}><span style={{color: '#000'}}>ONNX</span></a>
+</div>
+
+## Specifications
+
+| Property | Value |
+|----------|-------|
+| Parameters | 24B (2B active) |
+| Context Length | 32K tokens |
+| Architecture | LFM2 (MoE) |
+
+<div className="use-cases">
+<CardGroup cols={3}>
+
+<Card title="MoE Efficiency" icon="microchip">
+  24B quality, 2B inference cost
+</Card>
+
+<Card title="Laptop-Ready" icon="laptop">
+  Runs on laptops and single GPUs
+</Card>
+
+<Card title="Tool Calling" icon="wrench">
+  Native function calling support
+</Card>
+
+</CardGroup>
+</div>
+
+## Quick Start
+
+<Tabs>
+  <Tab title="Transformers">
+    <TextTransformers modelId="LiquidAI/LFM2-24B-A2B"></TextTransformers>
+  </Tab>
+  <Tab title="llama.cpp">
+    <TextLlamacpp ggufRepo="LiquidAI/LFM2-24B-A2B-GGUF"></TextLlamacpp>
+  </Tab>
+  <Tab title="vLLM">
+    <TextVllm modelId="LiquidAI/LFM2-24B-A2B"></TextVllm>
+  </Tab>
+</Tabs>
