@@ -220,10 +220,7 @@ Control text generation behavior using parameters in the OpenAI-compatible API o
 * **`repetition_penalty`** / **`--repeat-penalty`** (`float`): Penalty for repeating tokens (>1.0 = discourage repetition). Typical range: 1.0-1.5
 * **`stop`** (`str` or `list[str]`): Strings that terminate generation when encountered
 
-See the [Prompting Guide](/lfm/key-concepts/text-generation-and-prompting#text-models) for model-specific recommended settings.
-
 <Accordion title="llama-server (OpenAI-compatible API) example">
-  Using LFM2.5-1.2B-Instruct recommended settings:
 
   ```python
   from openai import OpenAI

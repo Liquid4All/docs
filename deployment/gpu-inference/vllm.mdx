@@ -50,9 +50,7 @@ print(output[0].outputs[0].text)
 
 ### Sampling Parameters
 
-Control text generation behavior using [`SamplingParams`](https://docs.vllm.ai/en/v0.4.1/dev/sampling_params.html). See the [Prompting Guide](/lfm/key-concepts/text-generation-and-prompting#text-models) for model-specific recommended settings.
-
-Key parameters:
+Control text generation behavior using [`SamplingParams`](https://docs.vllm.ai/en/v0.4.1/dev/sampling_params.html). Key parameters:
 
 * **`temperature`** (`float`, default 1.0): Controls randomness (0.0 = deterministic, higher = more random). Typical range: 0.1-2.0
 * **`top_p`** (`float`, default 1.0): Nucleus sampling - limits to tokens with cumulative probability ≤ top\_p. Typical range: 0.1-1.0
@@ -172,7 +170,7 @@ for chunk in stream:
   curl http://localhost:8000/v1/chat/completions \
     -H "Content-Type: application/json" \
     -d '{
-      "model": "LiquidAI/LFM2-1.2B",
+      "model": "LiquidAI/LFM2.5-1.2B-Instruct",
       "messages": [
         {"role": "user", "content": "What is AI?"}
       ],

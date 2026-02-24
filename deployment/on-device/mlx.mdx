@@ -60,6 +60,7 @@ response = generate(
     tokenizer,
     prompt=prompt,
     temperature=0.3,
+    min_p=0.15,
     repetition_penalty=1.05,
     max_tokens=512
 )
@@ -110,7 +111,7 @@ response = client.chat.completions.create(
     ],
     temperature=0.3,
     max_tokens=512,
-    extra_body={"repetition_penalty": 1.05},
+    extra_body={"min_p": 0.15, "repetition_penalty": 1.05},
 )
 print(response.choices[0].message.content)
 ```
@@ -125,6 +126,7 @@ You can also use curl to interact with the server:
       "model": "mlx-community/LFM2-1.2B-8bit",
       "messages": [{"role": "user", "content": "Hello!"}],
       "temperature": 0.3,
+      "min_p": 0.15,
       "repetition_penalty": 1.05
     }'
   ```
