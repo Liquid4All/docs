@@ -48,12 +48,12 @@ LFM2-24B-A2B is Liquid AI's largest Mixture-of-Experts model, combining 24B tota
 
 <Tabs>
   <Tab title="Transformers">
-    <TextTransformers modelId="LiquidAI/LFM2-24B-A2B"></TextTransformers>
+    <TextTransformers modelId="LiquidAI/LFM2-24B-A2B" samplingParams="do_sample=True, temperature=0.1, top_k=50, repetition_penalty=1.05, "></TextTransformers>
   </Tab>
   <Tab title="llama.cpp">
-    <TextLlamacpp ggufRepo="LiquidAI/LFM2-24B-A2B-GGUF"></TextLlamacpp>
+    <TextLlamacpp ggufRepo="LiquidAI/LFM2-24B-A2B-GGUF" samplingFlags="--temp 0.1 --top-k 50 --repeat-penalty 1.05"></TextLlamacpp>
   </Tab>
   <Tab title="vLLM">
-    <TextVllm modelId="LiquidAI/LFM2-24B-A2B"></TextVllm>
+    <TextVllm modelId="LiquidAI/LFM2-24B-A2B" samplingParams="temperature=0.1, top_k=50, repetition_penalty=1.05, "></TextVllm>
   </Tab>
 </Tabs>
