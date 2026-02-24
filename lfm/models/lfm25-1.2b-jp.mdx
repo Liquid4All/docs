@@ -51,7 +51,7 @@ LFM2.5-1.2B-JP is fine-tuned for Japanese language tasks, delivering high-qualit
     <TextTransformers modelId="LiquidAI/LFM2.5-1.2B-JP"></TextTransformers>
   </Tab>
   <Tab title="llama.cpp">
-    <TextLlamacpp ggufRepo="LiquidAI/LFM2.5-1.2B-JP-GGUF"></TextLlamacpp>
+    <TextLlamacpp ggufRepo="LiquidAI/LFM2.5-1.2B-JP-GGUF" samplingFlags="--temp 0.3 --min-p 0.15 --repeat-penalty 1.05"></TextLlamacpp>
   </Tab>
   <Tab title="vLLM">
     <TextVllm modelId="LiquidAI/LFM2.5-1.2B-JP"></TextVllm>

@@ -159,8 +159,10 @@ llama.cpp offers two main interfaces for running inference: `llama-server` (Open
         messages=[
             {"role": "user", "content": "What is machine learning?"}
         ],
-        temperature=0.7,
-        max_tokens=512
+        temperature=0.1,
+        top_p=0.1,
+        max_tokens=512,
+        extra_body={"top_k": 50, "repetition_penalty": 1.05},
     )
     print(response.choices[0].message.content)
     ```
@@ -170,9 +172,12 @@ llama.cpp offers two main interfaces for running inference: `llama-server` (Open
     curl http://localhost:8080/v1/chat/completions \
       -H "Content-Type: application/json" \
       -d '{
-        "model": "lfm2-1.2b",
+        "model": "lfm2.5-1.2b-instruct",
         "messages": [{"role": "user", "content": "Hello!"}],
-        "temperature": 0.7
+        "temperature": 0.1,
+        "top_p": 0.1,
+        "top_k": 50,
+        "repetition_penalty": 1.05
       }'
     ```
   </Tab>
@@ -181,12 +186,14 @@ llama.cpp offers two main interfaces for running inference: `llama-server` (Open
     llama-cli provides an interactive terminal interface for chatting with models.
 
     ```bash
-    llama-cli -hf LiquidAI/LFM2.5-1.2B-Instruct-GGUF -c 4096 --color -i
+    llama-cli -hf LiquidAI/LFM2.5-1.2B-Instruct-GGUF -c 4096 --color -i \
+        --temp 0.1 --top-k 50 --top-p 0.1 --repeat-penalty 1.05
     ```
 
     The `-hf` flag downloads the model directly from Hugging Face. Alternatively, use a local model file:
     ```bash
-    llama-cli -m lfm2.5-1.2b-instruct-q4_k_m.gguf -c 4096 --color -i
+    llama-cli -m lfm2.5-1.2b-instruct-q4_k_m.gguf -c 4096 --color -i \
+        --temp 0.1 --top-k 50 --top-p 0.1 --repeat-penalty 1.05
     ```
 
     Key parameters:
@@ -205,14 +212,19 @@ llama.cpp offers two main interfaces for running inference: `llama-server` (Open
 
 Control text generation behavior using parameters in the OpenAI-compatible API or command-line flags. Key parameters:
 
-* **`temperature`** (`float`, default 1.0): Controls randomness (0.0 = deterministic, higher = more random). Typical range: 0.1-2.0
-* **`top_p`** (`float`, default 1.0): Nucleus sampling - limits to tokens with cumulative probability ≤ top\_p. Typical range: 0.1-1.0
-* **`top_k`** (`int`, default 40): Limits to top-k most probable tokens. Typical range: 1-100
+* **`temperature`** (`float`): Controls randomness (0.0 = deterministic, higher = more random). Typical range: 0.1-2.0
+* **`top_p`** (`float`): Nucleus sampling - limits to tokens with cumulative probability ≤ top\_p. Typical range: 0.1-1.0
+* **`top_k`** (`int`): Limits to top-k most probable tokens. Typical range: 1-100
+* **`min_p`** (`float`): Filters tokens below `min_p * max_probability`. Typical range: 0.05-0.3
 * **`max_tokens`** / **`--n-predict`** (`int`): Maximum number of tokens to generate
-* **`repetition_penalty`** / **`--repeat-penalty`** (`float`, default 1.1): Penalty for repeating tokens (>1.0 = discourage repetition). Typical range: 1.0-1.5
+* **`repetition_penalty`** / **`--repeat-penalty`** (`float`): Penalty for repeating tokens (>1.0 = discourage repetition). Typical range: 1.0-1.5
 * **`stop`** (`str` or `list[str]`): Strings that terminate generation when encountered
 
+See the [Prompting Guide](/lfm/key-concepts/text-generation-and-prompting#text-models) for model-specific recommended settings.
+
 <Accordion title="llama-server (OpenAI-compatible API) example">
+  Using LFM2.5-1.2B-Instruct recommended settings:
+
   ```python
   from openai import OpenAI
 
@@ -224,17 +236,16 @@ Control text generation behavior using parameters in the OpenAI-compatible API o
   response = client.chat.completions.create(
       model="lfm2.5-1.2b-instruct",
       messages=[{"role": "user", "content": "What is machine learning?"}],
-      temperature=0.7,
-      top_p=0.9,
-      top_k=40,
+      temperature=0.1,
+      top_p=0.1,
       max_tokens=512,
-      repetition_penalty=1.1,
+      extra_body={"top_k": 50, "repetition_penalty": 1.05},
   )
   print(response.choices[0].message.content)
   ```
 </Accordion>
 
-For command-line tools (`llama-cli`), use flags like `--temperature`, `--top-p`, `--top-k`, `--repeat-penalty`, and `--n-predict`.
+For command-line tools (`llama-cli`), use flags like `--temp`, `--top-p`, `--top-k`, `--min-p`, `--repeat-penalty`, and `--n-predict`.
 
 ## Vision Models
 
@@ -268,7 +279,8 @@ llama-b7633/llama-cli \
     --image test_image.jpg \
     --image-max-tokens 64 \
     -p "What's in this image?" \
-    -n 128
+    -n 128 \
+    --temp 0.1 --min-p 0.15 --repeat-penalty 1.05
 ```
 
 The `-hf` flag downloads the model directly from Hugging Face. Use `--image-max-tokens` to control image token budget.
@@ -334,7 +346,9 @@ hf download LiquidAI/LFM2-VL-1.6B-GGUF mmproj-LFM2-VL-1.6B-Q8_0.gguf --local-dir
               ]
           }
       ],
-      max_tokens=256
+      temperature=0.1,
+      max_tokens=256,
+      extra_body={"min_p": 0.15, "repetition_penalty": 1.05},
   )
   print(response.choices[0].message.content)
   ```

@@ -1,4 +1,4 @@
-export const VlLlamacpp = ({ ggufRepo }) => (
+export const VlLlamacpp = ({ ggufRepo, samplingFlags }) => (
 <div>
 <p>llama.cpp enables efficient CPU inference for vision models.</p>
 <p><strong>Install:</strong></p>
@@ -15,7 +15,8 @@ export const VlLlamacpp = ({ ggufRepo }) => (
     -hf ${ggufRepo}:Q4_0 \\
     --image test_image.jpg \\
     -p "What's in this image?" \\
-    -n 128`.split('\n').map((line, i) => <span key={i} className="line">{line}{'\n'}</span>)}
+    -n 128 \\
+    ${samplingFlags}`.split('\n').map((line, i) => <span key={i} className="line">{line}{'\n'}</span>)}
 </code>
 </pre>
 <p>The <code>-hf</code> flag downloads the model directly from Hugging Face. Use <code>--image-max-tokens</code> to control image token budget.</p>

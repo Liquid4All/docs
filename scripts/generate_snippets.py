@@ -65,7 +65,7 @@ SNIPPET_CONFIG = {
     },
     "text-llamacpp": {
         "component_name": "TextLlamacpp",
-        "props": "{ ggufRepo }",
+        "props": "{ ggufRepo, samplingFlags }",
         "replacement_group": "text",
         "source": "config",
         "sections": [
@@ -74,7 +74,7 @@ SNIPPET_CONFIG = {
              "code": "brew install llama.cpp"},
             {"type": "label", "text": "Run:"},
             {"type": "code_block", "language": "bash",
-             "code": "llama-cli -hf ${ggufRepo} -c 4096 --color -i"},
+             "code": "llama-cli -hf ${ggufRepo} -c 4096 --color -i \\\n    ${samplingFlags}"},
             {"type": "raw_html",
              "html": '<p>The <code>-hf</code> flag downloads the model directly from Hugging Face. For other installation methods and advanced usage, see the <a href="/docs/inference/llama-cpp">llama.cpp guide</a>.</p>'},
         ],
@@ -123,7 +123,7 @@ SNIPPET_CONFIG = {
     },
     "vl-llamacpp": {
         "component_name": "VlLlamacpp",
-        "props": "{ ggufRepo }",
+        "props": "{ ggufRepo, samplingFlags }",
         "replacement_group": "vl",
         "source": "config",
         "sections": [
@@ -136,7 +136,7 @@ SNIPPET_CONFIG = {
              "html": '<p>Or download pre-built binaries from <a href="https://github.com/ggml-org/llama.cpp/releases">llama.cpp releases</a>.</p>'},
             {"type": "label", "text": "Run:"},
             {"type": "code_block", "language": "bash",
-             "code": "llama-cli \\\n    -hf ${ggufRepo}:Q4_0 \\\n    --image test_image.jpg \\\n    -p \"What's in this image?\" \\\n    -n 128"},
+             "code": "llama-cli \\\n    -hf ${ggufRepo}:Q4_0 \\\n    --image test_image.jpg \\\n    -p \"What's in this image?\" \\\n    -n 128 \\\n    ${samplingFlags}"},
             {"type": "raw_html",
              "html": '<p>The <code>-hf</code> flag downloads the model directly from Hugging Face. Use <code>--image-max-tokens</code> to control image token budget.</p>'},
             {"type": "raw_html",

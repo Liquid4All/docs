@@ -49,7 +49,7 @@ LFM2-2.6B-Exp is an experimental checkpoint of LFM2-2.6B with RL-only post-train
     <TextTransformers modelId="LiquidAI/LFM2-2.6B-Exp"></TextTransformers>
   </Tab>
   <Tab title="llama.cpp">
-    <TextLlamacpp ggufRepo="LiquidAI/LFM2-2.6B-Exp-GGUF"></TextLlamacpp>
+    <TextLlamacpp ggufRepo="LiquidAI/LFM2-2.6B-Exp-GGUF" samplingFlags="--temp 0.3 --min-p 0.15 --repeat-penalty 1.05"></TextLlamacpp>
   </Tab>
   <Tab title="vLLM">
     <TextVllm modelId="LiquidAI/LFM2-2.6B-Exp"></TextVllm>
