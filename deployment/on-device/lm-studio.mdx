@@ -44,11 +44,11 @@ Via the OpenAI-compatible API:
 response = client.chat.completions.create(
     model="local-model",
     messages=[{"role": "user", "content": "What is machine learning?"}],
-    temperature=0.7,
-    top_p=0.9,
-    top_k=40,
+    temperature=0.1,
+    top_p=0.1,
+    top_k=50,
     max_tokens=512,
-    repetition_penalty=1.1,
+    repetition_penalty=1.05,
 )
 ```
 
@@ -75,8 +75,10 @@ response = client.chat.completions.create(
     messages=[
         {"role": "user", "content": "What is machine learning?"}
     ],
-    temperature=0.7,
-    max_tokens=512
+    temperature=0.1,
+    top_p=0.1,
+    max_tokens=512,
+    extra_body={"top_k": 50, "repetition_penalty": 1.05},
 )
 print(response.choices[0].message.content)
 ```
@@ -104,7 +106,10 @@ for chunk in stream:
     -d '{
       "model": "local-model",
       "messages": [{"role": "user", "content": "Hello!"}],
-      "temperature": 0.7
+      "temperature": 0.1,
+      "top_p": 0.1,
+      "top_k": 50,
+      "repetition_penalty": 1.05
     }'
   ```
 </Accordion>

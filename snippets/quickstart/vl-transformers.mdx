@@ -49,7 +49,7 @@ inputs = processor.apply_chat_template(
     tokenize=True,
 ).to(model.device)
 
-outputs = model.generate(**inputs, max_new_tokens=256)
+outputs = model.generate(**inputs, do_sample=True, temperature=0.1, min_p=0.15, repetition_penalty=1.05, max_new_tokens=256)
 response = processor.batch_decode(outputs, skip_special_tokens=True)[0]
 print(response)`.split('\n').map((line, i) => <span key={i} className="line">{line}{'\n'}</span>)}
 </code>

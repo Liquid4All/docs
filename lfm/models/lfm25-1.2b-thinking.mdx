@@ -48,12 +48,12 @@ LFM2.5-1.2B-Thinking is optimized for reasoning tasks, delivering strong perform
 
 <Tabs>
   <Tab title="Transformers">
-    <TextTransformers modelId="LiquidAI/LFM2.5-1.2B-Thinking"></TextTransformers>
+    <TextTransformers modelId="LiquidAI/LFM2.5-1.2B-Thinking" samplingParams="do_sample=True, temperature=0.1, top_k=50, top_p=0.1, repetition_penalty=1.05, "></TextTransformers>
   </Tab>
   <Tab title="llama.cpp">
     <TextLlamacpp ggufRepo="LiquidAI/LFM2.5-1.2B-Thinking-GGUF" samplingFlags="--temp 0.1 --top-k 50 --top-p 0.1 --repeat-penalty 1.05"></TextLlamacpp>
   </Tab>
   <Tab title="vLLM">
-    <TextVllm modelId="LiquidAI/LFM2.5-1.2B-Thinking"></TextVllm>
+    <TextVllm modelId="LiquidAI/LFM2.5-1.2B-Thinking" samplingParams="temperature=0.1, top_k=50, top_p=0.1, repetition_penalty=1.05, "></TextVllm>
   </Tab>
 </Tabs>

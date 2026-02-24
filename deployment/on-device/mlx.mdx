@@ -60,9 +60,8 @@ response = generate(
     tokenizer,
     prompt=prompt,
     temperature=0.3,
-    top_p=0.9,
-    max_tokens=512,
-    repetition_penalty=1.05
+    repetition_penalty=1.05,
+    max_tokens=512
 )
 ```
 
@@ -109,8 +108,9 @@ response = client.chat.completions.create(
     messages=[
         {"role": "user", "content": "Explain quantum computing."}
     ],
-    temperature=0.7,
-    max_tokens=512
+    temperature=0.3,
+    max_tokens=512,
+    extra_body={"repetition_penalty": 1.05},
 )
 print(response.choices[0].message.content)
 ```
@@ -124,7 +124,8 @@ You can also use curl to interact with the server:
     -d '{
       "model": "mlx-community/LFM2-1.2B-8bit",
       "messages": [{"role": "user", "content": "Hello!"}],
-      "temperature": 0.7
+      "temperature": 0.3,
+      "repetition_penalty": 1.05
     }'
   ```
 </Accordion>

@@ -39,28 +39,60 @@ REPLACEMENTS = {
 SNIPPET_CONFIG = {
     "text-transformers": {
         "component_name": "TextTransformers",
-        "props": "{ modelId }",
+        "props": "{ modelId, samplingParams }",
         "replacement_group": "text",
-        "source": "notebook",
+        "source": "config",
         "sections": [
             {"type": "label", "text": "Install:"},
             {"type": "code_block", "language": "bash",
              "code": 'pip install "transformers>=5.0.0" torch accelerate'},
             {"type": "label", "text": "Download & Run:"},
-            {"type": "notebook_code", "language": "python"},
+            {"type": "code_block", "language": "python",
+             "code": (
+                 "from transformers import AutoModelForCausalLM, AutoTokenizer\n"
+                 "\n"
+                 'model_id = "${modelId}"\n'
+                 "model = AutoModelForCausalLM.from_pretrained(\n"
+                 "    model_id,\n"
+                 '    device_map="auto",\n'
+                 '    dtype="bfloat16",\n'
+                 ")\n"
+                 "tokenizer = AutoTokenizer.from_pretrained(model_id)\n"
+                 "\n"
+                 "input_ids = tokenizer.apply_chat_template(\n"
+                 '    [{"role": "user", "content": "What is machine learning?"}],\n'
+                 "    add_generation_prompt=True,\n"
+                 '    return_tensors="pt",\n'
+                 "    tokenize=True,\n"
+                 ").to(model.device)\n"
+                 "\n"
+                 "output = model.generate(input_ids, ${samplingParams}max_new_tokens=512)\n"
+                 "response = tokenizer.decode(output[0][len(input_ids[0]):], skip_special_tokens=True)\n"
+                 "print(response)"
+             )},
         ],
     },
     "text-vllm": {
         "component_name": "TextVllm",
-        "props": "{ modelId }",
+        "props": "{ modelId, samplingParams }",
         "replacement_group": "text",
-        "source": "notebook",
+        "source": "config",
         "sections": [
             {"type": "label", "text": "Install:"},
             {"type": "code_block", "language": "bash",
              "code": "pip install vllm==0.14"},
             {"type": "label", "text": "Run:"},
-            {"type": "notebook_code", "language": "python"},
+            {"type": "code_block", "language": "python",
+             "code": (
+                 "from vllm import LLM, SamplingParams\n"
+                 "\n"
+                 'llm = LLM(model="${modelId}")\n'
+                 "\n"
+                 "sampling_params = SamplingParams(${samplingParams}max_tokens=512)\n"
+                 "\n"
+                 'output = llm.chat("What is machine learning?", sampling_params)\n'
+                 "print(output[0].outputs[0].text)"
+             )},
         ],
     },
     "text-llamacpp": {

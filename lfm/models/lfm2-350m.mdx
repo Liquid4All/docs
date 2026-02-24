@@ -48,12 +48,12 @@ LFM2-350M is Liquid AI's smallest text model, designed for edge devices with str
 
 <Tabs>
   <Tab title="Transformers">
-    <TextTransformers modelId="LiquidAI/LFM2-350M"></TextTransformers>
+    <TextTransformers modelId="LiquidAI/LFM2-350M" samplingParams="do_sample=True, temperature=0.3, min_p=0.15, repetition_penalty=1.05, "></TextTransformers>
   </Tab>
   <Tab title="llama.cpp">
     <TextLlamacpp ggufRepo="LiquidAI/LFM2-350M-GGUF" samplingFlags="--temp 0.3 --min-p 0.15 --repeat-penalty 1.05"></TextLlamacpp>
   </Tab>
   <Tab title="vLLM">
-    <TextVllm modelId="LiquidAI/LFM2-350M"></TextVllm>
+    <TextVllm modelId="LiquidAI/LFM2-350M" samplingParams="temperature=0.3, min_p=0.15, repetition_penalty=1.05, "></TextVllm>
   </Tab>
 </Tabs>

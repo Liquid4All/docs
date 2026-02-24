@@ -37,7 +37,9 @@ llm = LLM(
 )
 
 sampling_params = SamplingParams(
-    temperature=0.0,
+    temperature=0.1,
+    min_p=0.15,
+    repetition_penalty=1.05,
     max_tokens=256,
 )
 

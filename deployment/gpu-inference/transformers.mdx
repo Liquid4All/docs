@@ -60,7 +60,7 @@ input_ids = tokenizer.apply_chat_template(
     tokenize=True,
 ).to(model.device)
 
-output = model.generate(input_ids, max_new_tokens=512)
+output = model.generate(input_ids, do_sample=True, temperature=0.1, top_k=50, top_p=0.1, repetition_penalty=1.05, max_new_tokens=512)
 
 # Decode only the newly generated tokens (excluding the input prompt)
 response = tokenizer.decode(output[0][len(input_ids[0]):], skip_special_tokens=True)
@@ -128,8 +128,9 @@ from transformers import GenerationConfig
 # Create a generation config
 generation_config = GenerationConfig(
     do_sample=True,
-    temperature=0.3,
-    min_p=0.15,
+    temperature=0.1,
+    top_k=50,
+    top_p=0.1,
     repetition_penalty=1.05,
     max_new_tokens=512,
 )
@@ -139,6 +140,8 @@ output = model.generate(input_ids, generation_config=generation_config)
 ```
 
 For a complete list of parameters, see the [GenerationConfig documentation](https://huggingface.co/docs/transformers/v4.57.1/en/main_classes/text_generation#transformers.GenerationConfig).
+
+See the [Prompting Guide](/lfm/key-concepts/text-generation-and-prompting#text-models) for model-specific recommended settings.
 
 ## Streaming Generation
 
@@ -157,7 +160,7 @@ input_ids = tokenizer.apply_chat_template(
 ).to(model.device)
 
 streamer = TextStreamer(tokenizer, skip_prompt=True, skip_special_tokens=True)
-output = model.generate(input_ids, streamer=streamer, max_new_tokens=512)
+output = model.generate(input_ids, do_sample=True, temperature=0.1, top_k=50, top_p=0.1, repetition_penalty=1.05, streamer=streamer, max_new_tokens=512)
 ```
 
 ## Batch Generation
@@ -189,7 +192,7 @@ batch = tokenizer.apply_chat_template(
 ).to(model.device)
 
 # Generate for all prompts in batch
-outputs = model.generate(batch, max_new_tokens=512)
+outputs = model.generate(batch, do_sample=True, temperature=0.1, top_k=50, top_p=0.1, repetition_penalty=1.05, max_new_tokens=512)
 
 # Decode outputs
 for output in outputs:
@@ -236,7 +239,7 @@ inputs = processor.apply_chat_template(
     tokenize=True,
 ).to(model.device)
 
-outputs = model.generate(**inputs, max_new_tokens=64)
+outputs = model.generate(**inputs, do_sample=True, temperature=0.1, min_p=0.15, repetition_penalty=1.05, max_new_tokens=256)
 response = processor.batch_decode(outputs, skip_special_tokens=True)[0]
 print(response)
 ```
@@ -269,7 +272,7 @@ print(response)
       tokenize=True,
   ).to(model.device)
 
-  outputs = model.generate(**inputs, max_new_tokens=256)
+  outputs = model.generate(**inputs, do_sample=True, temperature=0.1, min_p=0.15, repetition_penalty=1.05, max_new_tokens=256)
   response = processor.batch_decode(outputs, skip_special_tokens=True)[0]
   print(response)
   ```

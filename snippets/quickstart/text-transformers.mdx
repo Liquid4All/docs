@@ -1,4 +1,4 @@
-export const TextTransformers = ({ modelId }) => (
+export const TextTransformers = ({ modelId, samplingParams }) => (
 <div>
 <p><strong>Install:</strong></p>
 <pre className="shiki shiki-themes github-light github-dark" style={{backgroundColor: '#fff', '--shiki-dark-bg': '#24292e', color: '#24292e', '--shiki-dark': '#e1e4e8'}} language="bash">
@@ -26,7 +26,7 @@ input_ids = tokenizer.apply_chat_template(
     tokenize=True,
 ).to(model.device)
 
-output = model.generate(input_ids, max_new_tokens=512)
+output = model.generate(input_ids, ${samplingParams}max_new_tokens=512)
 response = tokenizer.decode(output[0][len(input_ids[0]):], skip_special_tokens=True)
 print(response)`.split('\n').map((line, i) => <span key={i} className="line">{line}{'\n'}</span>)}
 </code>

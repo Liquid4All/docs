@@ -1,4 +1,4 @@
-export const TextVllm = ({ modelId }) => (
+export const TextVllm = ({ modelId, samplingParams }) => (
 <div>
 <p><strong>Install:</strong></p>
 <pre className="shiki shiki-themes github-light github-dark" style={{backgroundColor: '#fff', '--shiki-dark-bg': '#24292e', color: '#24292e', '--shiki-dark': '#e1e4e8'}} language="bash">
@@ -13,12 +13,7 @@ export const TextVllm = ({ modelId }) => (
 
 llm = LLM(model="${modelId}")
 
-sampling_params = SamplingParams(
-    temperature=0.3,
-    min_p=0.15,
-    repetition_penalty=1.05,
-    max_tokens=512,
-)
+sampling_params = SamplingParams(${samplingParams}max_tokens=512)
 
 output = llm.chat("What is machine learning?", sampling_params)
 print(output[0].outputs[0].text)`.split('\n').map((line, i) => <span key={i} className="line">{line}{'\n'}</span>)}

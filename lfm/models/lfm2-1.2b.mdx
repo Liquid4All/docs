@@ -34,12 +34,12 @@ LFM2-1.2B was the original 1.2B parameter model in the LFM2 series. It has been 
 
 <Tabs>
   <Tab title="Transformers">
-    <TextTransformers modelId="LiquidAI/LFM2-1.2B"></TextTransformers>
+    <TextTransformers modelId="LiquidAI/LFM2-1.2B" samplingParams="do_sample=True, temperature=0.3, min_p=0.15, repetition_penalty=1.05, "></TextTransformers>
   </Tab>
   <Tab title="llama.cpp">
     <TextLlamacpp ggufRepo="LiquidAI/LFM2-1.2B-GGUF" samplingFlags="--temp 0.3 --min-p 0.15 --repeat-penalty 1.05"></TextLlamacpp>
   </Tab>
   <Tab title="vLLM">
-    <TextVllm modelId="LiquidAI/LFM2-1.2B"></TextVllm>
+    <TextVllm modelId="LiquidAI/LFM2-1.2B" samplingParams="temperature=0.3, min_p=0.15, repetition_penalty=1.05, "></TextVllm>
   </Tab>
 </Tabs>
