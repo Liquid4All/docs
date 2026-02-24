@@ -1,7 +1,7 @@
 {
   "$schema": "https://mintlify.com/docs.json",
   "banner": {
-    "content": "🚀 New: LFM2.5-1.2B-Instruct and LFM2.5-1.2B-Thinking are now available! [Learn more →](/lfm/models/text-models)",
+    "content": "🚀 New: LFM2-24B-A2B — our largest model is now available! [Learn more →](/lfm/models/lfm2-24b-a2b)",
     "dismissible": true
   },
   "theme": "mint",
@@ -363,6 +363,46 @@
     {
       "source": "/leap/leap-bundle/:slug*",
       "destination": "/deployment/tools/model-bundling/:slug*"
+    },
+    {
+      "source": "/lfm/inference/transformers",
+      "destination": "/deployment/gpu-inference/transformers"
+    },
+    {
+      "source": "/lfm/inference/vllm",
+      "destination": "/deployment/gpu-inference/vllm"
+    },
+    {
+      "source": "/lfm/inference/mlx",
+      "destination": "/deployment/on-device/mlx"
+    },
+    {
+      "source": "/lfm/inference/lm-studio",
+      "destination": "/deployment/on-device/lm-studio"
+    },
+    {
+      "source": "/lfm/inference/llama-cpp",
+      "destination": "/deployment/on-device/llama-cpp"
+    },
+    {
+      "source": "/lfm/inference/ollama",
+      "destination": "/deployment/on-device/ollama"
+    },
+    {
+      "source": "/lfm/fine-tuning/trl",
+      "destination": "/customization/finetuning-frameworks/trl"
+    },
+    {
+      "source": "/lfm/fine-tuning/unsloth",
+      "destination": "/customization/finetuning-frameworks/unsloth"
+    },
+    {
+      "source": "/lfm/inference",
+      "destination": "/deployment/getting-started/welcome"
+    },
+    {
+      "source": "/lfm/fine-tuning",
+      "destination": "/customization/getting-started/welcome"
     }
   ],
   "ai": {
