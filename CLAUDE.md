@@ -136,6 +136,29 @@ color: #864bc4;
 border-color: #864bc4;
 ```
 
+## Sampling Parameters
+
+Every inference example must use the correct sampling params from the upstream HF model cards. Do not use placeholder values like `temperature=0.7`. For new models not listed below, check the model card on Hugging Face (huggingface.co/LiquidAI) for recommended settings.
+
+| Model Family | temp | top_k | top_p | min_p | repeat_penalty |
+|---|---|---|---|---|---|
+| LFM2.5 text (Instruct, Thinking) | 0.1 | 50 | 0.1 | — | 1.05 |
+| LFM2 text + LFM2.5-JP | 0.3 | — | — | 0.15 | 1.05 |
+| All VL models | 0.1 | — | — | 0.15 | 1.05 |
+
+### Engine-specific field names
+
+- **Transformers, vLLM, llama-server, MLX**: `repetition_penalty`
+- **Ollama, LM Studio**: `repeat_penalty`
+
+### OpenAI Python client
+
+Non-standard params (`top_k`, `min_p`, `repetition_penalty`/`repeat_penalty`) must go in `extra_body`, not as direct kwargs:
+
+```python
+extra_body={"top_k": 50, "repetition_penalty": 1.05}
+```
+
 ## Debugging
 
 ### Build Errors
