@@ -59,12 +59,14 @@ SNIPPET_CONFIG = {
                  ")\n"
                  "tokenizer = AutoTokenizer.from_pretrained(model_id)\n"
                  "\n"
-                 "input_ids = tokenizer.apply_chat_template(\n"
+                 "inputs = tokenizer.apply_chat_template(\n"
                  '    [{"role": "user", "content": "What is machine learning?"}],\n'
                  "    add_generation_prompt=True,\n"
                  '    return_tensors="pt",\n'
                  "    tokenize=True,\n"
-                 ").to(model.device)\n"
+                 "    return_dict=True,\n"
+                 ")\n"
+                 'input_ids = inputs["input_ids"].to(model.device)\n'
                  "\n"
                  "output = model.generate(input_ids, ${samplingParams}max_new_tokens=512)\n"
                  "response = tokenizer.decode(output[0][len(input_ids[0]):], skip_special_tokens=True)\n"

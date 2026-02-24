@@ -53,12 +53,14 @@ tokenizer = AutoTokenizer.from_pretrained(model_id)
 
 # Generate answer
 prompt = "What is C. elegans?"
-input_ids = tokenizer.apply_chat_template(
+inputs = tokenizer.apply_chat_template(
     [{"role": "user", "content": prompt}],
     add_generation_prompt=True,
     return_tensors="pt",
     tokenize=True,
-).to(model.device)
+    return_dict=True,
+)
+input_ids = inputs["input_ids"].to(model.device)
 
 output = model.generate(input_ids, do_sample=True, temperature=0.1, top_k=50, repetition_penalty=1.05, max_new_tokens=512)
 
@@ -149,12 +151,14 @@ from transformers import AutoModelForCausalLM, AutoTokenizer, TextStreamer
 
 # Use the model and tokenizer setup from Basic Usage above
 prompt = "Tell me a story about space exploration."
-input_ids = tokenizer.apply_chat_template(
+inputs = tokenizer.apply_chat_template(
     [{"role": "user", "content": prompt}],
     add_generation_prompt=True,
     return_tensors="pt",
     tokenize=True,
-).to(model.device)
+    return_dict=True,
+)
+input_ids = inputs["input_ids"].to(model.device)
 
 streamer = TextStreamer(tokenizer, skip_prompt=True, skip_special_tokens=True)
 output = model.generate(input_ids, do_sample=True, temperature=0.1, top_k=50, repetition_penalty=1.05, streamer=streamer, max_new_tokens=512)
@@ -180,16 +184,18 @@ prompts = [
 ]
 
 # Apply chat templates and tokenize
-batch = tokenizer.apply_chat_template(
+inputs = tokenizer.apply_chat_template(
     prompts,
     add_generation_prompt=True,
     return_tensors="pt",
     tokenize=True,
     padding=True,
-).to(model.device)
+    return_dict=True,
+)
+inputs = {k: v.to(model.device) for k, v in inputs.items()}
 
 # Generate for all prompts in batch
-outputs = model.generate(batch, do_sample=True, temperature=0.1, top_k=50, repetition_penalty=1.05, max_new_tokens=512)
+outputs = model.generate(**inputs, do_sample=True, temperature=0.1, top_k=50, repetition_penalty=1.05, max_new_tokens=512)
 
 # Decode outputs
 for output in outputs:
