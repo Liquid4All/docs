@@ -37,7 +37,6 @@ llm = LLM(model="LiquidAI/LFM2.5-1.2B-Instruct")
 sampling_params = SamplingParams(
     temperature=0.1,
     top_k=50,
-    top_p=0.1,
     repetition_penalty=1.05,
     max_tokens=512
 )
@@ -68,7 +67,6 @@ from vllm import SamplingParams
 sampling_params = SamplingParams(
     temperature=0.1,
     top_k=50,
-    top_p=0.1,
     repetition_penalty=1.05,
     max_tokens=512,
 )
@@ -88,7 +86,6 @@ llm = LLM(model="LiquidAI/LFM2.5-1.2B-Instruct")
 sampling_params = SamplingParams(
     temperature=0.1,
     top_k=50,
-    top_p=0.1,
     repetition_penalty=1.05,
     max_tokens=512
 )
@@ -145,7 +142,6 @@ response = client.chat.completions.create(
         {"role": "user", "content": "What is machine learning?"}
     ],
     temperature=0.1,
-    top_p=0.1,
     max_tokens=512,
     extra_body={"top_k": 50, "repetition_penalty": 1.05}
 )
@@ -175,7 +171,6 @@ for chunk in stream:
         {"role": "user", "content": "What is AI?"}
       ],
       "temperature": 0.1,
-      "top_p": 0.1,
       "top_k": 50,
       "repetition_penalty": 1.05,
       "max_tokens": 256

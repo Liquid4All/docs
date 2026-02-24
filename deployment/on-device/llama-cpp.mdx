@@ -160,7 +160,6 @@ llama.cpp offers two main interfaces for running inference: `llama-server` (Open
             {"role": "user", "content": "What is machine learning?"}
         ],
         temperature=0.1,
-        top_p=0.1,
         max_tokens=512,
         extra_body={"top_k": 50, "repetition_penalty": 1.05},
     )
@@ -175,7 +174,6 @@ llama.cpp offers two main interfaces for running inference: `llama-server` (Open
         "model": "lfm2.5-1.2b-instruct",
         "messages": [{"role": "user", "content": "Hello!"}],
         "temperature": 0.1,
-        "top_p": 0.1,
         "top_k": 50,
         "repetition_penalty": 1.05
       }'
@@ -187,13 +185,13 @@ llama.cpp offers two main interfaces for running inference: `llama-server` (Open
 
     ```bash
     llama-cli -hf LiquidAI/LFM2.5-1.2B-Instruct-GGUF -c 4096 --color -i \
-        --temp 0.1 --top-k 50 --top-p 0.1 --repeat-penalty 1.05
+        --temp 0.1 --top-k 50 --repeat-penalty 1.05
     ```
 
     The `-hf` flag downloads the model directly from Hugging Face. Alternatively, use a local model file:
     ```bash
     llama-cli -m lfm2.5-1.2b-instruct-q4_k_m.gguf -c 4096 --color -i \
-        --temp 0.1 --top-k 50 --top-p 0.1 --repeat-penalty 1.05
+        --temp 0.1 --top-k 50 --repeat-penalty 1.05
     ```
 
     Key parameters:
@@ -234,7 +232,6 @@ Control text generation behavior using parameters in the OpenAI-compatible API o
       model="lfm2.5-1.2b-instruct",
       messages=[{"role": "user", "content": "What is machine learning?"}],
       temperature=0.1,
-      top_p=0.1,
       max_tokens=512,
       extra_body={"top_k": 50, "repetition_penalty": 1.05},
   )

@@ -60,7 +60,7 @@ input_ids = tokenizer.apply_chat_template(
     tokenize=True,
 ).to(model.device)
 
-output = model.generate(input_ids, do_sample=True, temperature=0.1, top_k=50, top_p=0.1, repetition_penalty=1.05, max_new_tokens=512)
+output = model.generate(input_ids, do_sample=True, temperature=0.1, top_k=50, repetition_penalty=1.05, max_new_tokens=512)
 
 # Decode only the newly generated tokens (excluding the input prompt)
 response = tokenizer.decode(output[0][len(input_ids[0]):], skip_special_tokens=True)
@@ -130,7 +130,6 @@ generation_config = GenerationConfig(
     do_sample=True,
     temperature=0.1,
     top_k=50,
-    top_p=0.1,
     repetition_penalty=1.05,
     max_new_tokens=512,
 )
@@ -158,7 +157,7 @@ input_ids = tokenizer.apply_chat_template(
 ).to(model.device)
 
 streamer = TextStreamer(tokenizer, skip_prompt=True, skip_special_tokens=True)
-output = model.generate(input_ids, do_sample=True, temperature=0.1, top_k=50, top_p=0.1, repetition_penalty=1.05, streamer=streamer, max_new_tokens=512)
+output = model.generate(input_ids, do_sample=True, temperature=0.1, top_k=50, repetition_penalty=1.05, streamer=streamer, max_new_tokens=512)
 ```
 
 ## Batch Generation
@@ -190,7 +189,7 @@ batch = tokenizer.apply_chat_template(
 ).to(model.device)
 
 # Generate for all prompts in batch
-outputs = model.generate(batch, do_sample=True, temperature=0.1, top_k=50, top_p=0.1, repetition_penalty=1.05, max_new_tokens=512)
+outputs = model.generate(batch, do_sample=True, temperature=0.1, top_k=50, repetition_penalty=1.05, max_new_tokens=512)
 
 # Decode outputs
 for output in outputs:

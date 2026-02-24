@@ -142,7 +142,8 @@ Every inference example must use the correct sampling params from the upstream H
 
 | Model Family | temp | top_k | top_p | min_p | repeat_penalty |
 |---|---|---|---|---|---|
-| LFM2.5 text (Instruct, Thinking) | 0.1 | 50 | 0.1 | — | 1.05 |
+| LFM2.5-1.2B-Instruct | 0.1 | 50 | — | — | 1.05 |
+| LFM2.5-1.2B-Thinking | 0.1 | 50 | 0.1 | — | 1.05 |
 | LFM2 text + LFM2.5-JP | 0.3 | — | — | 0.15 | 1.05 |
 | All VL models | 0.1 | — | — | 0.15 | 1.05 |
 

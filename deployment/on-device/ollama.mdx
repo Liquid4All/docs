@@ -101,7 +101,6 @@ ollama run /path/to/model.gguf
   """
 
   PARAMETER temperature 0.1
-  PARAMETER top_p 0.1
   PARAMETER top_k 50
   PARAMETER repeat_penalty 1.05
   PARAMETER stop "<|im_end|>"
@@ -161,7 +160,6 @@ response = client.chat.completions.create(
         {"role": "user", "content": "Explain quantum computing."}
     ],
     temperature=0.1,
-    top_p=0.1,
     extra_body={"top_k": 50, "repeat_penalty": 1.05},
 )
 print(response.choices[0].message.content)
