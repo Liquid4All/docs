@@ -162,7 +162,7 @@ response = client.chat.completions.create(
     ],
     temperature=0.1,
     top_p=0.1,
-    extra_body={"top_k": 50, "repetition_penalty": 1.05},
+    extra_body={"top_k": 50, "repeat_penalty": 1.05},
 )
 print(response.choices[0].message.content)
 ```
