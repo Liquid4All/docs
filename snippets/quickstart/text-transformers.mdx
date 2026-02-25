@@ -25,8 +25,7 @@ inputs = tokenizer.apply_chat_template(
     return_tensors="pt",
     tokenize=True,
     return_dict=True,
-)
-input_ids = inputs["input_ids"].to(model.device)
+).to(model.device)
 
 output = model.generate(**inputs, ${samplingParams}max_new_tokens=512)
 input_length = inputs["input_ids"].shape[1]

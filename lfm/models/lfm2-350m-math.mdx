@@ -60,8 +60,8 @@ LFM2-350M-Math is a tiny reasoning model optimized for mathematical problem solv
         {"role": "user", "content": "If a train travels at 60 mph for 2.5 hours, how far does it travel?"}
     ]
 
-    inputs = tokenizer.apply_chat_template(messages, return_tensors="pt").to(model.device)
-    outputs = model.generate(inputs, max_new_tokens=256)
+    inputs = tokenizer.apply_chat_template(messages, return_tensors="pt", return_dict=True).to(model.device)
+    outputs = model.generate(**inputs, max_new_tokens=256)
     response = tokenizer.decode(outputs[0], skip_special_tokens=True)
     print(response)
     ```

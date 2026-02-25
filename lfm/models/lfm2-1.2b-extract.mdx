@@ -93,8 +93,8 @@ If no system prompt is provided, defaults to JSON. Specify format (JSON, XML, or
         {"role": "user", "content": user_input}
     ]
 
-    inputs = tokenizer.apply_chat_template(messages, return_tensors="pt").to(model.device)
-    outputs = model.generate(inputs, max_new_tokens=256, temperature=0, do_sample=False)
+    inputs = tokenizer.apply_chat_template(messages, return_tensors="pt", return_dict=True).to(model.device)
+    outputs = model.generate(**inputs, max_new_tokens=256, temperature=0, do_sample=False)
     response = tokenizer.decode(outputs[0], skip_special_tokens=True)
     print(response)
     ```

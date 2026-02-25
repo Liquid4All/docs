@@ -59,8 +59,7 @@ inputs = tokenizer.apply_chat_template(
     return_tensors="pt",
     tokenize=True,
     return_dict=True,
-)
-input_ids = inputs["input_ids"].to(model.device)
+).to(model.device)
 
 output = model.generate(**inputs, do_sample=True, temperature=0.1, top_k=50, repetition_penalty=1.05, max_new_tokens=512)
 
@@ -158,8 +157,7 @@ inputs = tokenizer.apply_chat_template(
     return_tensors="pt",
     tokenize=True,
     return_dict=True,
-)
-input_ids = inputs["input_ids"].to(model.device)
+).to(model.device)
 
 streamer = TextStreamer(tokenizer, skip_prompt=True, skip_special_tokens=True)
 output = model.generate(**inputs, do_sample=True, temperature=0.1, top_k=50, repetition_penalty=1.05, streamer=streamer, max_new_tokens=512)
@@ -189,11 +187,10 @@ inputs = tokenizer.apply_chat_template(
     prompts,
     add_generation_prompt=True,
     return_tensors="pt",
-    return_dict=True,
+    tokenize=True,
     padding=True,
     return_dict=True,
-)
-inputs = {k: v.to(model.device) for k, v in inputs.items()}
+).to(model.device)
 
 # Generate for all prompts in batch
 outputs = model.generate(**inputs, do_sample=True, temperature=0.1, top_k=50, repetition_penalty=1.05, max_new_tokens=512)

@@ -94,8 +94,8 @@ The following documents may provide you additional information to answer questio
         {"role": "user", "content": user_input}
     ]
 
-    inputs = tokenizer.apply_chat_template(messages, return_tensors="pt").to(model.device)
-    outputs = model.generate(inputs, max_new_tokens=256, temperature=0, do_sample=False)
+    inputs = tokenizer.apply_chat_template(messages, return_tensors="pt", return_dict=True).to(model.device)
+    outputs = model.generate(**inputs, max_new_tokens=256, temperature=0, do_sample=False)
     response = tokenizer.decode(outputs[0], skip_special_tokens=True)
     print(response)
     # Output: The library serves 48 scientists and 85 technicians, along with many visiting staff and students.

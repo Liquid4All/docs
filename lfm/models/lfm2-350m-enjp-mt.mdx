@@ -74,8 +74,8 @@ This model requires a specific system prompt to specify translation direction. S
         {"role": "user", "content": "What is C. elegans?"}
     ]
 
-    inputs = tokenizer.apply_chat_template(messages, return_tensors="pt").to(model.device)
-    outputs = model.generate(inputs, max_new_tokens=256)
+    inputs = tokenizer.apply_chat_template(messages, return_tensors="pt", return_dict=True).to(model.device)
+    outputs = model.generate(**inputs, max_new_tokens=256)
     response = tokenizer.decode(outputs[0], skip_special_tokens=True)
     print(response)
     # Output: C. elegansとは何ですか？
@@ -88,8 +88,8 @@ This model requires a specific system prompt to specify translation direction. S
         {"role": "user", "content": "今日は天気がいいですね。"}
     ]
 
-    inputs = tokenizer.apply_chat_template(messages, return_tensors="pt").to(model.device)
-    outputs = model.generate(inputs, max_new_tokens=256)
+    inputs = tokenizer.apply_chat_template(messages, return_tensors="pt", return_dict=True).to(model.device)
+    outputs = model.generate(**inputs, max_new_tokens=256)
     response = tokenizer.decode(outputs[0], skip_special_tokens=True)
     print(response)
     # Output: The weather is nice today.
