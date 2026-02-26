@@ -3,7 +3,7 @@ export const TextTransformers = ({ modelId, samplingParams }) => (
 <p><strong>Install:</strong></p>
 <pre className="shiki shiki-themes github-light github-dark" style={{backgroundColor: '#fff', '--shiki-dark-bg': '#24292e', color: '#24292e', '--shiki-dark': '#e1e4e8'}} language="bash">
 <code language="bash">
-{`pip install "transformers>=5.0.0" torch accelerate`.split('\n').map((line, i) => <span key={i} className="line">{line}{'\n'}</span>)}
+{`uv pip install "transformers>=5.0.0" torch accelerate`.split('\n').map((line, i) => <span key={i} className="line">{line}{'\n'}</span>)}
 </code>
 </pre>
 <p><strong>Download & Run:</strong></p>

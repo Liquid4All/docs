@@ -3,14 +3,14 @@ export const VlTransformers = ({ modelId }) => (
 <p><strong>Install:</strong></p>
 <pre className="shiki shiki-themes github-light github-dark" style={{backgroundColor: '#fff', '--shiki-dark-bg': '#24292e', color: '#24292e', '--shiki-dark': '#e1e4e8'}} language="bash">
 <code language="bash">
-{`pip install "transformers>=5.0.0" pillow torch`.split('\n').map((line, i) => <span key={i} className="line">{line}{'\n'}</span>)}
+{`uv pip install "transformers>=5.0.0" pillow torch`.split('\n').map((line, i) => <span key={i} className="line">{line}{'\n'}</span>)}
 </code>
 </pre>
 <Note>
 Transformers v5 is newly released. If you encounter issues, fall back to the pinned git source:
 <pre className="shiki shiki-themes github-light github-dark" style={{backgroundColor: '#fff', '--shiki-dark-bg': '#24292e', color: '#24292e', '--shiki-dark': '#e1e4e8', marginTop: '0.5rem'}} language="bash">
 <code language="bash">
-{`pip install git+https://github.com/huggingface/transformers.git@3c2517727ce28a30f5044e01663ee204deb1cdbe pillow torch`.split('\n').map((line, i) => <span key={i} className="line">{line}{'\n'}</span>)}
+{`uv pip install git+https://github.com/huggingface/transformers.git@3c2517727ce28a30f5044e01663ee204deb1cdbe pillow torch`.split('\n').map((line, i) => <span key={i} className="line">{line}{'\n'}</span>)}
 </code>
 </pre>
 </Note>

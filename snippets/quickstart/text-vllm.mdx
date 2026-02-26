@@ -3,7 +3,7 @@ export const TextVllm = ({ modelId, samplingParams }) => (
 <p><strong>Install:</strong></p>
 <pre className="shiki shiki-themes github-light github-dark" style={{backgroundColor: '#fff', '--shiki-dark-bg': '#24292e', color: '#24292e', '--shiki-dark': '#e1e4e8'}} language="bash">
 <code language="bash">
-{`pip install vllm==0.14`.split('\n').map((line, i) => <span key={i} className="line">{line}{'\n'}</span>)}
+{`uv pip install vllm==0.14`.split('\n').map((line, i) => <span key={i} className="line">{line}{'\n'}</span>)}
 </code>
 </pre>
 <p><strong>Run:</strong></p>

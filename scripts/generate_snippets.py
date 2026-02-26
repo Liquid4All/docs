@@ -45,7 +45,7 @@ SNIPPET_CONFIG = {
         "sections": [
             {"type": "label", "text": "Install:"},
             {"type": "code_block", "language": "bash",
-             "code": 'pip install "transformers>=5.0.0" torch accelerate'},
+             "code": 'uv pip install "transformers>=5.0.0" torch accelerate'},
             {"type": "label", "text": "Download & Run:"},
             {"type": "code_block", "language": "python",
              "code": (
@@ -82,7 +82,7 @@ SNIPPET_CONFIG = {
         "sections": [
             {"type": "label", "text": "Install:"},
             {"type": "code_block", "language": "bash",
-             "code": "pip install vllm==0.14"},
+             "code": "uv pip install vllm==0.14"},
             {"type": "label", "text": "Run:"},
             {"type": "code_block", "language": "python",
              "code": (
@@ -121,12 +121,12 @@ SNIPPET_CONFIG = {
         "sections": [
             {"type": "label", "text": "Install:"},
             {"type": "code_block", "language": "bash",
-             "code": 'pip install "transformers>=5.0.0" pillow torch'},
+             "code": 'uv pip install "transformers>=5.0.0" pillow torch'},
             {"type": "note", "children": [
                 {"type": "text",
                  "text": "Transformers v5 is newly released. If you encounter issues, fall back to the pinned git source:"},
                 {"type": "code_block_margin", "language": "bash",
-                 "code": "pip install git+https://github.com/huggingface/transformers.git@3c2517727ce28a30f5044e01663ee204deb1cdbe pillow torch"},
+                 "code": "uv pip install git+https://github.com/huggingface/transformers.git@3c2517727ce28a30f5044e01663ee204deb1cdbe pillow torch"},
             ]},
             {"type": "label", "text": "Download & Run:"},
             {"type": "notebook_code", "language": "python"},
@@ -142,14 +142,14 @@ SNIPPET_CONFIG = {
              "text": "vLLM support for LFM Vision Models requires a specific version. Install from the custom source below."},
             {"type": "label", "text": "Install:"},
             {"type": "code_block", "language": "bash",
-             "code": "VLLM_PRECOMPILED_WHEEL_COMMIT=72506c98349d6bcd32b4e33eec7b5513453c1502 \\\n  VLLM_USE_PRECOMPILED=1 \\\n  pip install git+https://github.com/vllm-project/vllm.git"},
+             "code": "VLLM_PRECOMPILED_WHEEL_COMMIT=72506c98349d6bcd32b4e33eec7b5513453c1502 \\\n  VLLM_USE_PRECOMPILED=1 \\\n  uv pip install git+https://github.com/vllm-project/vllm.git"},
             {"type": "code_block", "language": "bash",
-             "code": 'pip install "transformers>=5.0.0" pillow'},
+             "code": 'uv pip install "transformers>=5.0.0" pillow'},
             {"type": "note", "children": [
                 {"type": "text",
                  "text": "Transformers v5 is newly released. If you encounter issues, fall back to the pinned git source:"},
                 {"type": "code_block_margin", "language": "bash",
-                 "code": "pip install git+https://github.com/huggingface/transformers.git@3c2517727ce28a30f5044e01663ee204deb1cdbe pillow"},
+                 "code": "uv pip install git+https://github.com/huggingface/transformers.git@3c2517727ce28a30f5044e01663ee204deb1cdbe pillow"},
             ]},
             {"type": "label", "text": "Run:"},
             {"type": "notebook_code", "language": "python"},
