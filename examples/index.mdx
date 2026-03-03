@@ -2,58 +2,92 @@
 title: "Examples Library"
 ---
 
+## Laptop
+
 <CardGroup cols={2}>
-  <Card title="Invoice Extractor Tool" icon="file-invoice" href="/examples/laptop-examples/invoice-extractor-tool-with-liquid-nanos">
-    Turn invoices into structured JSON using a lightweight Vision Language Model. 100% local, no API costs.
-  </Card>
 
-  <Card title="Audio Transcription in Real-Time" icon="microphone" href="/examples/laptop-examples/audio-to-text-in-real-time">
-    Build a real-time audio transcription CLI using LFM2-Audio-1.5B with llama.cpp. 100% local processing without internet connection.
-  </Card>
+<Card title="Invoice Extractor Tool" icon="file-invoice" href="/examples/laptop-examples/invoice-extractor-tool-with-liquid-nanos">
+  Turn invoices into structured JSON using a lightweight Vision Language Model. 100% local, no API costs.
+</Card>
 
-  <Card title="Car Maker Identification" icon="car" href="/examples/customize-models/car-maker-identification">
-    Fine-tune LFM2-VL to identify car makers from images. Learn structured generation with Outlines and parameter-efficient fine-tuning with LoRA.
-  </Card>
+<Card title="Audio Transcription in Real-Time" icon="microphone" href="/examples/laptop-examples/audio-to-text-in-real-time">
+  Build a real-time audio transcription CLI using LFM2-Audio-1.5B with llama.cpp. 100% local processing without internet connection.
+</Card>
 
-  <Card title="English-Korean Translation" icon="globe" href="/examples/laptop-examples/lfm2-english-to-korean">
-    Efficient bidirectional translation system powered by LFM2 1.2B fine-tuned for Korean-English translation with automatic language detection.
-  </Card>
+<Card title="English-Korean Translation" icon="globe" href="/examples/laptop-examples/lfm2-english-to-korean">
+  Efficient bidirectional translation system powered by LFM2 1.2B fine-tuned for Korean-English translation with automatic language detection.
+</Card>
 
-  <Card title="Flight Search Assistant" icon="plane-departure" href="/examples/laptop-examples/flight-search-assistant">
-    Python CLI leveraging LFM2.5-1.2B-Thinking for multi-step reasoning and tool calling to find and book flights.
-  </Card>
+<Card title="Flight Search Assistant" icon="plane-departure" href="/examples/laptop-examples/flight-search-assistant">
+  Python CLI leveraging LFM2.5-1.2B-Thinking for multi-step reasoning and tool calling to find and book flights.
+</Card>
 
-  <Card title="Audio Car Cockpit Demo" icon="car" href="/examples/laptop-examples/audio-car-cockpit">
-    Voice-controlled car cockpit interface combining LFM2.5-Audio-1.5B in TTS/STT modes with LFM2-1.2B-Tool. Real-time local processing.
-  </Card>
+<Card title="Audio Car Cockpit Demo" icon="car" href="/examples/laptop-examples/audio-car-cockpit">
+  Voice-controlled car cockpit interface combining LFM2.5-Audio-1.5B in TTS/STT modes with LFM2-1.2B-Tool. Real-time local processing.
+</Card>
 
-  <Card title="Meeting Summarization CLI" icon="users" href="/examples/laptop-examples/meeting-summarization">
-    100% local meeting summarization tool using LFM2-2.6B-Transcript and llama.cpp. No cloud services or API keys required.
-  </Card>
+<Card title="Meeting Summarization CLI" icon="users" href="/examples/laptop-examples/meeting-summarization">
+  100% local meeting summarization tool using LFM2-2.6B-Transcript and llama.cpp. No cloud services or API keys required.
+</Card>
 
-  <Card title="Browser Control with GRPO" icon="browser" href="/examples/laptop-examples/browser-control">
-    Train language models for web automation using reinforcement learning. Demonstrates GRPO fine-tuning with BrowserGym environments.
-  </Card>
+<Card title="Browser Control with GRPO" icon="browser" href="/examples/laptop-examples/browser-control">
+  Train language models for web automation using reinforcement learning. Demonstrates GRPO fine-tuning with BrowserGym environments.
+</Card>
 
-  <Card title="Product Slogan Generator" icon="sparkles" href="/examples/android/slogan-generator">
-    Android app for single-turn generation of creative product slogans using local AI models. Built with traditional Android Views.
-  </Card>
+</CardGroup>
 
-  <Card title="Web Content Summarizer" icon="newspaper" href="/examples/android/web-content-summarizer">
-    Share web pages from any browser to this Android app for instant AI-powered summarization. Complete privacy with local processing.
-  </Card>
+## Android
 
-  <Card title="Structured Recipe Generator" icon="utensils" href="/examples/android/recipe-generator-constrained-output">
-    Generate recipes with guaranteed JSON structure using constrained generation. Demonstrates automatic model downloading with LeapSDK.
-  </Card>
+<CardGroup cols={2}>
 
-  <Card title="Vision Language Model Demo" icon="eye" href="/examples/android/vision-language-model-example">
-    Analyze images and answer visual questions on Android using Vision Language Models. Built with Jetpack Compose and Coil.
-  </Card>
+<Card title="Product Slogan Generator" icon="sparkles" href="/examples/android/slogan-generator">
+  Android app for single-turn generation of creative product slogans using local AI models. Built with traditional Android Views.
+</Card>
 
-  <Card title="AI Agents with Koog" icon="robot" href="/examples/android/leap-koog-agent">
-    Build intelligent AI agents on Android with the Koog framework. Demonstrates tool invocation, context management, and MCP integration.
-  </Card>
+<Card title="Web Content Summarizer" icon="newspaper" href="/examples/android/web-content-summarizer">
+  Share web pages from any browser to this Android app for instant AI-powered summarization. Complete privacy with local processing.
+</Card>
+
+<Card title="Structured Recipe Generator" icon="utensils" href="/examples/android/recipe-generator-constrained-output">
+  Generate recipes with guaranteed JSON structure using constrained generation. Demonstrates automatic model downloading with LeapSDK.
+</Card>
+
+<Card title="Vision Language Model Demo" icon="eye" href="/examples/android/vision-language-model-example">
+  Analyze images and answer visual questions on Android using Vision Language Models. Built with Jetpack Compose and Coil.
+</Card>
+
+<Card title="AI Agents with Koog" icon="robot" href="/examples/android/leap-koog-agent">
+  Build intelligent AI agents on Android with the Koog framework. Demonstrates tool invocation, context management, and MCP integration.
+</Card>
+
+</CardGroup>
+
+## Web
+
+<CardGroup cols={2}>
+
+<Card title="Hand & Voice Racer" icon="gamepad" href="/examples/web/hand-voice-racer">
+  A browser driving game controlled with your hands and voice. MediaPipe tracks hand gestures for steering while LFM2.5-Audio-1.5B transcribes voice commands. Fully local, no server round-trips.
+</Card>
+
+<Card title="Audio Browser Demo" icon="waveform-lines" href="/examples/web/audio-webgpu-demo">
+  Run LFM2.5-Audio-1.5B entirely in the browser with WebGPU. Supports ASR, TTS, and interleaved audio-text conversations. No data sent to external servers.
+</Card>
+
+<Card title="Real-Time Video Captioning" icon="video" href="/examples/web/vl-webgpu-demo">
+  Real-time video captioning with LFM2.5-VL-1.6B running fully client-side via WebGPU and ONNX Runtime Web. No cloud inference required.
+</Card>
+
+</CardGroup>
+
+## Model Customization
+
+<CardGroup cols={2}>
+
+<Card title="Car Maker Identification" icon="car" href="/examples/customize-models/car-maker-identification">
+  Fine-tune LFM2-VL to identify car makers from images. Learn structured generation with Outlines and parameter-efficient fine-tuning with LoRA.
+</Card>
+
 </CardGroup>
 
 ## Cannot find the example you need?
