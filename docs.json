@@ -253,7 +253,8 @@
             "icon": "globe",
             "pages": [
               "examples/web/vl-webgpu-demo",
-              "examples/web/audio-webgpu-demo"
+              "examples/web/audio-webgpu-demo",
+              "examples/web/hand-voice-racer"
             ]
           },
           {
