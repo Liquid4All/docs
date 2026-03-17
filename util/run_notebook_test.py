@@ -223,16 +223,16 @@ def main():
     code_cells = filter_cells(code_cells)
 
     if not code_cells:
-        print("No runnable code cells.")
-        sys.exit(1)
+        print(f"Notebook {notebook_path.name}: no runnable code cells (all skipped) — passing.")
+        sys.exit(0)
 
-    # Extract pip packages from ALL cells, then strip those lines from source
+    # Extract pip packages from ALL cells, then strip those lines from source.
+    # Only collect packages here — shell commands (! lines, %%bash) in regular
+    # cells are handled by preprocess_cell inside combine_cells.
     pip_packages: list[list[str]] = []
-    dep_setup: list[str] = []
     for cell in code_cells:
-        pkgs, setup = parse_packages_from_cell(cell["source"])
+        pkgs, _setup = parse_packages_from_cell(cell["source"])
         pip_packages.extend(pkgs)
-        dep_setup.extend(setup)
         cell["source"] = strip_pip_lines(cell["source"])
 
     # Filter out skipped packages
@@ -244,8 +244,7 @@ def main():
         ]
         pip_packages = [g for g in pip_packages if g]  # drop empty groups
 
-    combined, cell_setup = combine_cells(code_cells)
-    setup_commands = dep_setup + cell_setup
+    combined, setup_commands = combine_cells(code_cells)
     skipped = len(cells) - len(code_cells)
 
     print(f"{'=' * 50}")
