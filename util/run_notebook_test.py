@@ -2,8 +2,9 @@
 """
 Run code cells from a notebook on a Modal GPU as a single combined script.
 
-Cell 0 is treated as the dependency cell (pip packages).
-Remaining non-skipped cells are concatenated into one script and executed together,
+Pip install lines are extracted from ALL cells, collected as image dependencies,
+and stripped from the script so they don't run at execution time.
+Non-skipped cells are concatenated into one script and executed together,
 preserving shared state (variables, imports) across cells just like a real notebook.
 
 Usage:
@@ -18,8 +19,6 @@ import sys
 import time
 from pathlib import Path
 import json
-import sys
-from pathlib import Path
 import modal
 
 sys.path.insert(0, str(Path(__file__).resolve().parent / "tests"))
@@ -84,6 +83,29 @@ def parse_packages_from_cell(source: str) -> tuple[list[list[str]], list[str]]:
         elif line.startswith("!"):
             setup_commands.append(line[1:].strip())
     return package_groups, setup_commands
+
+
+def strip_pip_lines(source: str) -> str:
+    """Remove pip install lines (and their continuations) from cell source.
+
+    This is used after packages have been extracted so that pip installs
+    run as image-level dependencies rather than at script execution time.
+    """
+    lines = source.splitlines()
+    cleaned: list[str] = []
+    i = 0
+    while i < len(lines):
+        stripped = lines[i].strip()
+        if re.match(r"^!?\s*(?:uv\s+)?pip\s+install\s+", stripped):
+            # Skip this line and any backslash-continuation lines
+            while stripped.endswith("\\") and i + 1 < len(lines):
+                i += 1
+                stripped = lines[i].strip()
+            i += 1
+            continue
+        cleaned.append(lines[i])
+        i += 1
+    return "\n".join(cleaned)
 
 
 def filter_cells(code_cells: list[dict]) -> list[dict]:
@@ -196,13 +218,22 @@ def main():
         print("No code cells found.")
         sys.exit(1)
 
-    # Cell 0 = dependencies
-    dep_cell = cells[0]
-    pip_packages, dep_setup = parse_packages_from_cell(dep_cell["source"])
+    # Filter out skipped / modal_skip cells
+    code_cells = [c for c in cells if not c["skipped"]]
+    code_cells = filter_cells(code_cells)
 
-    if "!modal_skip_rest" in dep_cell["source"]:
-        print(f"Notebook {notebook_path.name}: dependency cell has !modal_skip_rest — skipping entirely.")
-        sys.exit(0)
+    if not code_cells:
+        print("No runnable code cells.")
+        sys.exit(1)
+
+    # Extract pip packages from ALL cells, then strip those lines from source
+    pip_packages: list[list[str]] = []
+    dep_setup: list[str] = []
+    for cell in code_cells:
+        pkgs, setup = parse_packages_from_cell(cell["source"])
+        pip_packages.extend(pkgs)
+        dep_setup.extend(setup)
+        cell["source"] = strip_pip_lines(cell["source"])
 
     # Filter out skipped packages
     if args.skip_packages:
@@ -212,17 +243,10 @@ def main():
             for group in pip_packages
         ]
         pip_packages = [g for g in pip_packages if g]  # drop empty groups
-    code_cells = [c for c in cells[1:] if not c["skipped"]]
-    code_cells = filter_cells(code_cells)
-
-    if not code_cells:
-        print("No runnable code cells after dependency cell.")
-        sys.exit(1)
 
     combined, cell_setup = combine_cells(code_cells)
     setup_commands = dep_setup + cell_setup
-    total_after_dep = len(cells) - 1
-    skipped = total_after_dep - len(code_cells)
+    skipped = len(cells) - len(code_cells)
 
     print(f"{'=' * 50}")
     print(f"Notebook: {notebook_path.name}")

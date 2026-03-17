@@ -1,0 +1,58 @@
+name: Run notebooks
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'notebooks/**'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'notebooks/**'
+  workflow_dispatch:
+
+jobs:
+  discover-notebooks:
+    runs-on: ubuntu-latest
+    outputs:
+      notebooks: ${{ steps.list.outputs.notebooks }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: List notebooks
+        id: list
+        run: |
+          notebooks=$(ls notebooks/*.ipynb | xargs -I{} basename {} | jq -R -s -c 'split("\n") | map(select(. != ""))')
+          echo "notebooks=$notebooks" >> "$GITHUB_OUTPUT"
+          echo "Found notebooks: $notebooks"
+
+  run-notebooks:
+    needs: discover-notebooks
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        notebook: ${{ fromJSON(needs.discover-notebooks.outputs.notebooks) }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+
+      - name: Install modal
+        run: uv pip install --system modal
+
+      - name: Set up Modal token
+        run: modal token set --token-id ${{ secrets.MODAL_TOKEN_ID }} --token-secret ${{ secrets.MODAL_TOKEN_SECRET }}
+
+      - name: Run notebook on Modal
+        run: python util/run_notebook_test.py --notebook "notebooks/${{ matrix.notebook }}" --skip-packages flash-attn
