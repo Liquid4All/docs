@@ -200,6 +200,10 @@ def main():
     dep_cell = cells[0]
     pip_packages, dep_setup = parse_packages_from_cell(dep_cell["source"])
 
+    if "!modal_skip_rest" in dep_cell["source"]:
+        print(f"Notebook {notebook_path.name}: dependency cell has !modal_skip_rest — skipping entirely.")
+        sys.exit(0)
+
     # Filter out skipped packages
     if args.skip_packages:
         skip_set = set(args.skip_packages)
