@@ -108,6 +108,23 @@ def strip_pip_lines(source: str) -> str:
     return "\n".join(cleaned)
 
 
+TRAINER_PATTERNS = re.compile(r"\b(?:SFTTrainer|GRPOTrainer|DPOTrainer|Trainer)\s*\(")
+
+
+def is_training_notebook(code_cells: list[dict]) -> bool:
+    """Return True if any cell instantiates a HF Trainer."""
+    return any(TRAINER_PATTERNS.search(c["source"]) for c in code_cells)
+
+# Default to lower epoch to speed up testing pipeline
+def patch_training_epochs(source: str, epochs: float = 0.01) -> str:
+    """Replace num_train_epochs=<any value> with a minimal value for smoke testing."""
+    return re.sub(
+        r"num_train_epochs\s*=\s*[0-9.]+",
+        f"num_train_epochs={epochs}",
+        source,
+    )
+
+
 def filter_cells(code_cells: list[dict]) -> list[dict]:
     """Apply !modal_skip and !modal_skip_rest directives.
 
@@ -247,8 +264,17 @@ def main():
     combined, setup_commands = combine_cells(code_cells)
     skipped = len(cells) - len(code_cells)
 
+    # Auto-detect training notebooks: upgrade GPU and patch epochs for smoke testing
+    is_training = is_training_notebook(code_cells)
+    if is_training:
+        if args.gpu == "A10G":  # only override if user didn't specify
+            args.gpu = "H100"
+        combined = patch_training_epochs(combined, epochs=0.01)
+
     print(f"{'=' * 50}")
     print(f"Notebook: {notebook_path.name}")
+    if is_training:
+        print(f"Type:     training (auto: GPU→{args.gpu}, epochs→0.01)")
     all_packages = [pkg for group in pip_packages for pkg in group]
     print(f"Packages: {all_packages or '(none)'} ({len(pip_packages)} install group(s))")
     if setup_commands:
