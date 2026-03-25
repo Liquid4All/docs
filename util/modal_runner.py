@@ -37,6 +37,15 @@ def run_code(code: str, pip_packages: list[list[str]] = [], setup_commands: list
     # Remove Modal's bundled deps from sys.path to prevent shadowing
     clean_path = [p for p in sys.path if "/__modal/deps" not in p]
 
+    # Prepend HF login if token is available
+    hf_token = os.environ.get("HF_TOKEN")
+    if hf_token:
+        code = (
+            "from huggingface_hub import login as _hf_login\n"
+            f"_hf_login(token={hf_token!r})\n"
+            "del _hf_login\n\n"
+        ) + code
+
     # Write code to a temp file and run as a subprocess so that
     # stdout/stderr are real file descriptors (required by vLLM, etc.)
     with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
