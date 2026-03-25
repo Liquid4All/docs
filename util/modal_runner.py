@@ -6,6 +6,7 @@ app = modal.App("ci-runner")
 @app.function(
     gpu="A10G",
     timeout=600,
+    secrets=[modal.Secret.from_name("huggingface")],
     image=modal.Image.debian_slim(python_version="3.12")
         .apt_install("curl", "wget", "zstd", "git")
         .pip_install("uv", "typing_extensions>=4.14.0"),
