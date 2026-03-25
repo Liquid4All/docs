@@ -5,12 +5,14 @@ on:
     branches:
       - main
     paths:
-      - 'notebooks/**'
+      - 'notebooks/*.ipynb'
+      - 'util/**/*.py'
   pull_request:
     branches:
       - main
     paths:
-      - 'notebooks/**'
+      - 'notebooks/*.ipynb'
+      - 'util/**/*.py'
   workflow_dispatch:
 
 jobs:
