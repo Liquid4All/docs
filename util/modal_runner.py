@@ -60,6 +60,7 @@ def run_code(code: str, pip_packages: list[list[str]] = [], setup_commands: list
         capture_output=True,
         text=True,
         timeout=540,
+        env=env,
     )
 
     os.unlink(script_path)
