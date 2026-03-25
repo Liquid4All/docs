@@ -9,7 +9,7 @@ app = modal.App("ci-runner")
     secrets=[modal.Secret.from_name("huggingface")],
     image=modal.Image.debian_slim(python_version="3.12")
         .apt_install("curl", "wget", "zstd", "git")
-        .pip_install("uv", "typing_extensions>=4.14.0"),
+        .pip_install("uv", "typing_extensions>=4.14.0", "huggingface_hub"),
 )
 def run_code(code: str, pip_packages: list[list[str]] = [], setup_commands: list[str] = []) -> dict:
 
