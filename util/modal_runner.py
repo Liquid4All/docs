@@ -43,8 +43,11 @@ def run_code(code: str, pip_packages: list[list[str]] = [], setup_commands: list
         code = (
             "from huggingface_hub import login as _hf_login\n"
             f"_hf_login(token={hf_token!r})\n"
+            "print('[ci-runner] HuggingFace login successful')\n"
             "del _hf_login\n\n"
         ) + code
+    else:
+        print("[ci-runner] WARNING: No HF_TOKEN found, skipping HuggingFace login")
 
     # Write code to a temp file and run as a subprocess so that
     # stdout/stderr are real file descriptors (required by vLLM, etc.)
