@@ -140,7 +140,23 @@
             "icon": "mobile",
             "pages": [
               {
-                "group": "iOS SDK",
+                "group": "LEAP SDK",
+                "icon": "microchip-ai",
+                "pages": [
+                  "deployment/on-device/leap-sdk/quick-start-guide",
+                  "deployment/on-device/leap-sdk/ai-agent-usage-guide",
+                  "deployment/on-device/leap-sdk/model-loading",
+                  "deployment/on-device/leap-sdk/conversation-generation",
+                  "deployment/on-device/leap-sdk/messages-content",
+                  "deployment/on-device/leap-sdk/advanced-features",
+                  "deployment/on-device/leap-sdk/utilities",
+                  "deployment/on-device/leap-sdk/cloud-ai-comparison",
+                  "deployment/on-device/leap-sdk/constrained-generation",
+                  "deployment/on-device/leap-sdk/function-calling"
+                ]
+              },
+              {
+                "group": "iOS SDK (Legacy)",
                 "icon": "apple",
                 "pages": [
                   "deployment/on-device/ios/ios-quick-start-guide",
@@ -156,7 +172,7 @@
                 ]
               },
               {
-                "group": "Android SDK",
+                "group": "Android SDK (Legacy)",
                 "icon": "robot",
                 "pages": [
                   "deployment/on-device/android/android-quick-start-guide",
@@ -351,15 +367,15 @@
     },
     {
       "source": "/leap/edge-sdk/overview",
-      "destination": "/deployment/on-device/ios/ios-quick-start-guide"
+      "destination": "/deployment/on-device/leap-sdk/quick-start-guide"
     },
     {
       "source": "/leap/edge-sdk/ios/:slug*",
-      "destination": "/deployment/on-device/ios/:slug*"
+      "destination": "/deployment/on-device/leap-sdk/:slug*"
     },
     {
       "source": "/leap/edge-sdk/android/:slug*",
-      "destination": "/deployment/on-device/android/:slug*"
+      "destination": "/deployment/on-device/leap-sdk/:slug*"
     },
     {
       "source": "/leap/leap-bundle/:slug*",
