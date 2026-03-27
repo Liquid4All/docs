@@ -1,0 +1,804 @@
+---
+title: "Constrained Generation"
+description: "Generate structured JSON output with compile-time validation using constrained generation"
+---
+
+LeapSDK provides powerful constrained generation capabilities that enable you to generate structured JSON output with compile-time validation. This feature ensures the AI model produces responses that conform to your predefined types, and works across both iOS and Android platforms.
+
+## Overview
+
+Constrained generation allows you to:
+
+- Define structured output formats using native types on each platform
+- Get compile-time validation of your type definitions
+- Generate JSON responses that are guaranteed to match your structures
+- Decode responses directly into type-safe objects
+
+## How It Works
+
+The constrained generation system works through a three-step process:
+
+1. **Compile-time**: The `@Generatable` annotation (Kotlin) or macro (Swift) analyzes your type and generates a JSON schema based on property types and `@Guide` descriptions
+2. **Runtime**: The generation options are configured with the generated schema to constrain the model's output
+3. **Generation**: The LLM produces valid JSON that conforms to your structure, which you can deserialize directly into your typed object
+
+<Info>
+The JSON schema generation happens at compile time, not runtime, ensuring optimal performance.
+</Info>
+
+## Setup
+
+<Tabs>
+<Tab title="Kotlin">
+
+The constrained generation annotations are included in the LeapSDK dependency. No additional setup is required beyond your existing LeapSDK integration.
+
+```kotlin
+import ai.liquid.leap.structuredoutput.Generatable
+import ai.liquid.leap.structuredoutput.Guide
+```
+
+</Tab>
+<Tab title="Swift">
+
+When adding LeapSDK via Swift Package Manager, the constrained generation macros are automatically available. No additional setup is required.
+
+```swift
+import LeapSDK
+import Foundation
+```
+
+<Info>
+Constrained generation requires Swift 5.9+ and uses Swift macros for compile-time code generation.
+</Info>
+
+</Tab>
+</Tabs>
+
+## Defining Structured Types
+
+Use the `@Generatable` and `@Guide` annotations (Kotlin) or macros (Swift) to define types for structured output.
+
+### Basic Example
+
+<Tabs>
+<Tab title="Kotlin">
+
+Only Kotlin data classes can be annotated with `@Generatable`, and all the fields of the data class should be declared in the parameter of the constructor. The `@Guide` annotation adds descriptions to individual fields to help the AI understand what each field should contain.
+
+```kotlin
+@Generatable(description = "A joke with metadata")
+data class Joke(
+    @Guide(description = "The joke text")
+    val text: String,
+
+    @Guide(description = "The category of humor (pun, dad-joke, programming, etc.)")
+    val category: String,
+
+    @Guide(description = "Humor rating from 1-10")
+    val rating: Int,
+
+    @Guide(description = "Whether the joke is suitable for children")
+    val kidFriendly: Boolean,
+)
+```
+
+</Tab>
+<Tab title="Swift">
+
+The `@Generatable` macro automatically generates conformance to the `GeneratableType` protocol, a `typeDescription` property, and a `jsonSchema()` method. The `@Guide` macro provides descriptions for individual properties that help the AI understand what each field should contain.
+
+```swift
+@Generatable("A joke with metadata")
+struct Joke: Codable {
+    @Guide("The joke text")
+    let text: String
+
+    @Guide("The category of humor (pun, dad-joke, programming, etc.)")
+    let category: String
+
+    @Guide("Humor rating from 1-10")
+    let rating: Int
+
+    @Guide("Whether the joke is suitable for children")
+    let kidFriendly: Bool
+}
+```
+
+</Tab>
+</Tabs>
+
+## Setting the Response Format
+
+<Tabs>
+<Tab title="Kotlin">
+
+Use `setResponseFormatType()` in `GenerationOptions` to set up the constraint:
+
+```kotlin
+val options = GenerationOptions.build {
+    // Set the response format to follow `Joke`
+    setResponseFormatType(Joke::class)
+    // Example of other parameters
+    minP = 0.0f
+    temperature = 0.7f
+}
+
+conversation.generateResponse("Create a programming joke in JSON format", options)
+```
+
+If you want to add the JSON Schema into the prompt to help the generation, you can get the raw JSON Schema with `JSONSchemaGenerator`:
+
+```kotlin
+val jsonSchema = JSONSchemaGenerator.getJSONSchema(Joke::class)
+conversation.generateResponse(
+    "Create a programming joke following this JSON Schema: $jsonSchema",
+    options
+)
+```
+
+If the JSON Schema cannot be created from the provided data class, a `LeapGeneratableSchematizationException` will be thrown.
+
+</Tab>
+<Tab title="Swift">
+
+Use `setResponseFormat(type:)` on `GenerationOptions` to configure the response format:
+
+```swift
+var options = GenerationOptions()
+options.temperature = 0.7
+
+do {
+    // Set the response format to your custom type
+    try options.setResponseFormat(type: Joke.self)
+} catch {
+    print("Failed to set response format: \(error)")
+}
+```
+
+</Tab>
+</Tabs>
+
+## Deserializing Output
+
+<Tabs>
+<Tab title="Kotlin">
+
+Use `GeneratableFactory.createFromJSONObject()` to deserialize the JSON string generated by the model into the generatable data class:
+
+```kotlin
+import ai.liquid.leap.structuredoutput.GeneratableFactory
+
+conversation.generateResponse(
+    "Create a programming joke.",
+    options
+).onEach {
+    if (it is MessageResponse.Complete) {
+        val message = it.fullMessage
+        val jsonContent = (message.content.first() as ChatMessageContent.Text).text
+
+        // Deserialize the content as a `Joke` object.
+        val joke: Joke = GeneratableFactory.createFromJSONObject(
+            JSONObject(jsonContent),
+        )
+
+        println("Text: ${joke.text}")
+        println("Category: ${joke.category}")
+        println("Rating: ${joke.rating}/10")
+        println("Kid-friendly: ${joke.kidFriendly}")
+    }
+}.collect()
+```
+
+If the JSON string generated by the model is not valid for creating instances of the generatable data class, a `LeapGeneratableDeserializationException` will be thrown.
+
+</Tab>
+<Tab title="Swift">
+
+Decode the JSON response using `JSONDecoder` or `GeneratableFactory.createFromJSONObject()`:
+
+```swift
+func generateStructuredJoke() async {
+    guard let conversation = conversation else { return }
+
+    var options = GenerationOptions()
+    options.temperature = 0.7
+
+    do {
+        try options.setResponseFormat(type: Joke.self)
+
+        let message = ChatMessage(
+            role: .user,
+            content: [.text("Create a programming joke in JSON format")]
+        )
+
+        for try await response in conversation.generateResponse(
+            message: message,
+            generationOptions: options
+        ) {
+            switch response {
+            case .chunk(let token):
+                print(token, terminator: "")
+            case .audioSample:
+                break
+            case .reasoningChunk:
+                break
+            case .complete(let completion):
+                let jsonFragments = completion.message.content.compactMap { part -> String? in
+                    if case .text(let value) = part { return value }
+                    return nil
+                }
+                let jsonText = jsonFragments.joined()
+                guard !jsonText.isEmpty else { continue }
+
+                if let jokeData = jsonText.data(using: .utf8) {
+                    let joke = try JSONDecoder().decode(Joke.self, from: jokeData)
+                    print("Text: \(joke.text)")
+                    print("Category: \(joke.category)")
+                    print("Rating: \(joke.rating)/10")
+                    print("Kid-friendly: \(joke.kidFriendly)")
+                }
+            }
+        }
+    } catch {
+        print("Failed: \(error)")
+    }
+}
+```
+
+<Info>
+`completion.message.content` can contain multiple fragments (text, audio, images). The JSON payload you need for decoding typically lives in the `.text` fragments. Filter and join those fragments before decoding, as shown above.
+</Info>
+
+</Tab>
+</Tabs>
+
+## Supported Data Types
+
+Not all data types are supported in constrained generation. Here is the list of supported JSON Schema types:
+
+| JSON Schema Type | Kotlin Types | Swift Types |
+|---|---|---|
+| String | `String` | `String` |
+| Integer | `Int`, `Long` | `Int` |
+| Number | `Float`, `Double` | `Double` |
+| Boolean | `Boolean` | `Bool` |
+| Enum | Enum class (plain name strings as values) | — |
+| Object | Data classes annotated with `@Generatable` | Structs with `@Generatable` macro |
+| Array | `List`, `MutableList` of supported types; arrays of integer, float, and boolean | `[T]` (Array) of supported types |
+| Optional | — | `T?` (Optional) |
+
+Only if the data types of the fields of object types and the items of array types are themselves supported can these composition types be used.
+
+## Advanced Examples
+
+### Complex Nested Structures
+
+<Tabs>
+<Tab title="Kotlin">
+
+```kotlin
+@Generatable(description = "Facts about a city")
+data class CityFact(
+    @Guide(description = "Name of the city")
+    val name: String,
+
+    @Guide(description = "State/province of the city")
+    val state: String,
+
+    @Guide(description = "Country name")
+    val country: String,
+
+    @Guide(description = "Places of interest in the city")
+    val placeOfInterests: List<String>,
+)
+
+// Usage
+val options = GenerationOptions.build {
+    setResponseFormatType(CityFact::class)
+    temperature = 0.7f
+}
+
+conversation.generateResponse("Show the city facts about Tokyo", options)
+    .onEach {
+        if (it is MessageResponse.Complete) {
+            val message = it.fullMessage
+            val jsonContent = (message.content.first() as ChatMessageContent.Text).text
+            val cityFact: CityFact = GeneratableFactory.createFromJSONObject(
+                JSONObject(jsonContent),
+            )
+        }
+    }.collect()
+```
+
+</Tab>
+<Tab title="Swift">
+
+```swift
+@Generatable("A recipe with ingredients and instructions")
+struct Recipe: Codable {
+    @Guide("Name of the dish")
+    let name: String
+
+    @Guide("List of ingredients with quantities")
+    let ingredients: [String]
+
+    @Guide("Step-by-step cooking instructions")
+    let instructions: [String]
+
+    @Guide("Cooking time in minutes")
+    let cookingTimeMinutes: Int
+
+    @Guide("Difficulty level: easy, medium, or hard")
+    let difficulty: String
+
+    @Guide("Number of servings this recipe makes")
+    let servings: Int?
+
+    @Guide("Nutritional information if available")
+    let nutrition: NutritionInfo?
+}
+
+@Generatable("Nutritional information for a recipe")
+struct NutritionInfo: Codable {
+    @Guide("Calories per serving")
+    let caloriesPerServing: Int
+
+    @Guide("Protein in grams")
+    let proteinGrams: Double
+
+    @Guide("Carbohydrates in grams")
+    let carbsGrams: Double
+}
+```
+
+</Tab>
+</Tabs>
+
+### Mathematical Problem Solving
+
+<Tabs>
+<Tab title="Kotlin">
+
+```kotlin
+@Generatable(description = "Mathematical calculation result with detailed steps")
+data class MathResult(
+    @Guide(description = "The mathematical expression that was solved")
+    val expression: String,
+
+    @Guide(description = "The final numeric result")
+    val result: Double,
+
+    @Guide(description = "Step-by-step solution process")
+    val steps: List<String>,
+
+    @Guide(description = "The mathematical operation type (addition, multiplication, etc.)")
+    val operationType: String,
+
+    @Guide(description = "Whether the solution is exact or approximate")
+    val isExact: Boolean,
+)
+
+// Usage
+val options = GenerationOptions.build {
+    setResponseFormatType(MathResult::class)
+    temperature = 0.3f  // Lower temperature for mathematical accuracy
+}
+
+conversation.generateResponse(
+    "Solve: 15 x 4 + 8 / 2. Show your work step by step.",
+    options
+)
+```
+
+</Tab>
+<Tab title="Swift">
+
+```swift
+@Generatable("Mathematical calculation result with detailed steps")
+struct MathResult: Codable {
+    @Guide("The mathematical expression that was solved")
+    let expression: String
+
+    @Guide("The final numeric result")
+    let result: Double
+
+    @Guide("Step-by-step solution process")
+    let steps: [String]
+
+    @Guide("The mathematical operation type (addition, multiplication, etc.)")
+    let operationType: String
+
+    @Guide("Whether the solution is exact or approximate")
+    let isExact: Bool
+}
+
+// Usage
+var options = GenerationOptions()
+options.temperature = 0.3  // Lower temperature for mathematical accuracy
+
+try options.setResponseFormat(type: MathResult.self)
+
+let message = ChatMessage(
+    role: .user,
+    content: [.text("Solve: 15 x 4 + 8 / 2. Show your work step by step.")]
+)
+
+// Process the response...
+```
+
+</Tab>
+</Tabs>
+
+### Data Analysis Results
+
+<Tabs>
+<Tab title="Kotlin">
+
+```kotlin
+@Generatable(description = "Statistical summary of data")
+data class StatisticalSummary(
+    @Guide(description = "Total number of data points")
+    val totalPoints: Int,
+
+    @Guide(description = "Mean value")
+    val mean: Double,
+
+    @Guide(description = "Standard deviation")
+    val standardDeviation: Double,
+
+    @Guide(description = "Minimum value observed")
+    val minimum: Double,
+
+    @Guide(description = "Maximum value observed")
+    val maximum: Double,
+)
+
+@Generatable(description = "Analysis results for a dataset")
+data class DataAnalysis(
+    @Guide(description = "Name or description of the dataset")
+    val datasetName: String,
+
+    @Guide(description = "Key insights discovered")
+    val insights: List<String>,
+
+    @Guide(description = "Statistical summary")
+    val statistics: StatisticalSummary,
+
+    @Guide(description = "Recommended next steps")
+    val recommendations: List<String>,
+)
+```
+
+</Tab>
+<Tab title="Swift">
+
+```swift
+@Generatable("Analysis results for a dataset")
+struct DataAnalysis: Codable {
+    @Guide("Name or description of the dataset")
+    let datasetName: String
+
+    @Guide("Key insights discovered")
+    let insights: [String]
+
+    @Guide("Statistical summary")
+    let statistics: StatisticalSummary
+
+    @Guide("Recommended next steps")
+    let recommendations: [String]
+}
+
+@Generatable("Statistical summary of data")
+struct StatisticalSummary: Codable {
+    @Guide("Total number of data points")
+    let totalPoints: Int
+
+    @Guide("Mean value")
+    let mean: Double
+
+    @Guide("Standard deviation")
+    let standardDeviation: Double
+
+    @Guide("Minimum value observed")
+    let minimum: Double
+
+    @Guide("Maximum value observed")
+    let maximum: Double
+}
+```
+
+</Tab>
+</Tabs>
+
+## Best Practices
+
+### 1. Use Descriptive Guide Annotations
+
+Good `@Guide` descriptions help the AI understand what each field should contain:
+
+<Tabs>
+<Tab title="Kotlin">
+
+```kotlin
+// Good - specific and descriptive
+@Guide(description = "The programming language name (e.g., Kotlin, Python, JavaScript)")
+val language: String
+
+// Less helpful - too generic
+@Guide(description = "A string")
+val language: String
+```
+
+</Tab>
+<Tab title="Swift">
+
+```swift
+// Good - specific and descriptive
+@Guide("The programming language name (e.g., Swift, Python, JavaScript)")
+let language: String
+
+// Less helpful - too generic
+@Guide("A string")
+let language: String
+```
+
+</Tab>
+</Tabs>
+
+### 2. Keep Structures Focused
+
+Smaller, well-defined types work better than large complex ones:
+
+<Tabs>
+<Tab title="Kotlin">
+
+```kotlin
+// Good - focused single responsibility
+@Generatable(description = "A user's basic profile information")
+data class UserProfile(
+    @Guide(description = "Full name") val name: String,
+    @Guide(description = "Email address") val email: String,
+    @Guide(description = "Age in years") val age: Int,
+)
+
+// Less ideal - too many responsibilities
+@Generatable(description = "Everything about a user")
+data class ComplexUser(
+    // ... 20+ properties mixing profile, preferences, history, etc.
+)
+```
+
+</Tab>
+<Tab title="Swift">
+
+```swift
+// Good - focused single responsibility
+@Generatable("A user's basic profile information")
+struct UserProfile: Codable {
+    @Guide("Full name") let name: String
+    @Guide("Email address") let email: String
+    @Guide("Age in years") let age: Int
+}
+
+// Less ideal - too many responsibilities
+@Generatable("Everything about a user")
+struct ComplexUser: Codable {
+    // ... 20+ properties mixing profile, preferences, history, etc.
+}
+```
+
+</Tab>
+</Tabs>
+
+### 3. Handle Optional Fields Appropriately
+
+Use optional types when fields might not always be present:
+
+<Tabs>
+<Tab title="Kotlin">
+
+```kotlin
+@Generatable(description = "A book review")
+data class BookReview(
+    @Guide(description = "The book title")
+    val title: String,
+
+    @Guide(description = "Review text")
+    val reviewText: String,
+
+    @Guide(description = "Rating from 1-5 stars, if provided")
+    val rating: Int?,  // Nullable - reviewer might not provide a rating
+
+    @Guide(description = "Reviewer's name, if available")
+    val reviewerName: String?,  // Nullable - might be anonymous
+)
+```
+
+</Tab>
+<Tab title="Swift">
+
+```swift
+@Generatable("A book review")
+struct BookReview: Codable {
+    @Guide("The book title")
+    let title: String
+
+    @Guide("Review text")
+    let reviewText: String
+
+    @Guide("Rating from 1-5 stars, if provided")
+    let rating: Int?  // Optional - reviewer might not provide a rating
+
+    @Guide("Reviewer's name, if available")
+    let reviewerName: String?  // Optional - might be anonymous
+}
+```
+
+</Tab>
+</Tabs>
+
+### 4. Validate Generated Output
+
+Always handle potential parsing errors gracefully:
+
+<Tabs>
+<Tab title="Kotlin">
+
+```kotlin
+try {
+    val result: Joke = GeneratableFactory.createFromJSONObject(
+        JSONObject(jsonContent),
+    )
+    processJoke(result)
+} catch (e: LeapGeneratableDeserializationException) {
+    println("Failed to deserialize structured response: ${e.message}")
+    // Fallback to treating as plain text
+    processPlainText(jsonContent)
+}
+```
+
+</Tab>
+<Tab title="Swift">
+
+```swift
+private func parseResponse<T: Codable>(_ jsonText: String, as type: T.Type) -> T? {
+    guard let data = jsonText.data(using: .utf8) else {
+        print("Failed to convert response to data")
+        return nil
+    }
+
+    do {
+        return try JSONDecoder().decode(type, from: data)
+    } catch {
+        print("Failed to decode response as \(type): \(error)")
+        return nil
+    }
+}
+```
+
+</Tab>
+</Tabs>
+
+## Error Handling
+
+<Tabs>
+<Tab title="Kotlin">
+
+### Schema Errors
+
+If the JSON Schema cannot be created from the provided data class, a `LeapGeneratableSchematizationException` will be thrown at the point where `setResponseFormatType()` is called.
+
+### Deserialization Errors
+
+If the JSON string generated by the model is not valid for creating instances of the generatable data class, a `LeapGeneratableDeserializationException` will be thrown by `GeneratableFactory.createFromJSONObject()`.
+
+```kotlin
+try {
+    val result: Joke = GeneratableFactory.createFromJSONObject(
+        JSONObject(jsonContent),
+    )
+    processJoke(result)
+} catch (e: LeapGeneratableDeserializationException) {
+    println("Deserialization failed: ${e.message}")
+    processPlainText(jsonContent)
+} catch (e: LeapGeneratableSchematizationException) {
+    println("Schema generation failed: ${e.message}")
+}
+```
+
+</Tab>
+<Tab title="Swift">
+
+### Compile-time Errors
+
+All properties in a `@Generatable` struct must have a `@Guide` annotation:
+
+```swift
+// Error: Missing @Guide annotation
+@Generatable("A person")
+struct Person: Codable {
+    let name: String  // Missing @Guide - compile error
+    @Guide("Age in years") let age: Int
+}
+
+// Fixed: All properties must have @Guide
+@Generatable("A person")
+struct Person: Codable {
+    @Guide("Full name") let name: String
+    @Guide("Age in years") let age: Int
+}
+```
+
+### Runtime Parsing Errors
+
+Handle cases where the AI generates invalid JSON:
+
+```swift
+func handleResponse(_ jsonText: String) {
+    do {
+        let data = jsonText.data(using: .utf8)!
+        let result = try JSONDecoder().decode(Joke.self, from: data)
+        processJoke(result)
+    } catch {
+        print("Failed to parse structured response: \(error)")
+        // Fallback to treating as plain text
+        processPlainText(jsonText)
+    }
+}
+```
+
+</Tab>
+</Tabs>
+
+## Troubleshooting
+
+<Tabs>
+<Tab title="Kotlin">
+
+### Generated JSON doesn't match expected format
+
+- Check your `@Guide` descriptions are clear and specific
+- Try adjusting the temperature in `GenerationOptions` (lower values like 0.3-0.5 can improve structured output)
+- Include the JSON Schema in the prompt using `JSONSchemaGenerator.getJSONSchema()` to give the model additional guidance
+- Ensure your prompt clearly requests JSON format output
+
+### `LeapGeneratableSchematizationException` thrown
+
+- Verify that only supported data types are used in your data class fields
+- Ensure the class is a `data class`, not a regular class
+- All fields must be declared in the primary constructor
+
+</Tab>
+<Tab title="Swift">
+
+### "Cannot find type 'GeneratableType' in scope"
+
+Make sure you've imported the constrained generation package:
+
+```swift
+import LeapSDK
+import LeapSDKConstrainedGeneration  // Required for macros
+```
+
+### "External macro implementation could not be found"
+
+This typically means there's an issue with the macro plugin. Try:
+
+1. Clean your build folder (Cmd+Shift+K)
+2. Restart Xcode
+3. Ensure you're using Swift 5.9 or later
+
+### Generated JSON doesn't match expected format
+
+- Check your `@Guide` descriptions are clear and specific
+- Try adjusting the temperature in `GenerationOptions` (lower values like 0.3-0.5 can improve structured output)
+- Ensure your prompt clearly requests JSON format output
+
+</Tab>
+</Tabs>
+
+<Warning>
+If you encounter persistent issues with constrained generation, try testing with a simpler
+structure first to verify the basic functionality is working.
+</Warning>

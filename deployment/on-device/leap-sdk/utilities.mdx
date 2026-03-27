@@ -1,0 +1,498 @@
+---
+title: "Utilities"
+description: "API reference for error handling, serialization, and utilities in the LEAP SDK"
+---
+
+## Error Handling
+
+<Tabs>
+
+<Tab title="Kotlin">
+
+All errors are thrown as `LeapException`, which has the following subclasses:
+
+- `LeapModelLoadingException`: Error loading the model.
+- `LeapGenerationException`: Error generating content.
+- `LeapGenerationPromptExceedContextLengthException`: The prompt text exceeds the maximum context length so no content will be generated.
+- `LeapSerializationException`: Error serializing or deserializing data.
+
+</Tab>
+
+<Tab title="Swift">
+
+Errors are surfaced as `LeapError` values. The most common cases are:
+
+- `LeapError.modelLoadingFailure`: Problems reading or validating the model bundle.
+- `LeapError.generationFailure`: Unexpected native inference errors.
+- `LeapError.promptExceedContextLengthFailure`: Prompt length exceeded the configured context size.
+- `LeapError.serializationFailure`: JSON encoding/decoding problems when working with chat history or function calls.
+
+Handle thrown errors with `do` / `catch` when using async streams, or use the `onErrorCallback` in the lower-level API.
+
+</Tab>
+
+</Tabs>
+
+## Serialization Support
+
+<Tabs>
+
+<Tab title="Kotlin">
+
+The LEAP SDK uses [kotlinx.serialization](https://github.com/Kotlin/kotlinx.serialization) for JSON serialization and deserialization. This is built into the core SDK and requires no additional dependencies.
+
+The following types are `@Serializable`:
+
+- [`ChatMessage`](./messages-content#chatmessage)
+- [`ChatMessageContent`](./messages-content#chatmessagecontent)
+- [`LeapFunctionCall`](./function-calling)
+- [`Manifest`](./model-loading#manifest)
+
+### Serializing and Deserializing Conversation History
+
+**Add kotlinx.serialization to your project:**
+
+```kotlin
+// app/build.gradle.kts
+plugins {
+    id("org.jetbrains.kotlin.plugin.serialization") version "2.3.10"
+}
+
+dependencies {
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")
+}
+```
+
+**Save conversation history:**
+
+```kotlin
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.encodeToString
+
+val json = Json { ignoreUnknownKeys = true }
+
+// Serialize to JSON string
+val jsonString = json.encodeToString(conversation.history)
+
+// Save to SharedPreferences, file, database, etc.
+sharedPreferences.edit().putString("conversation_history", jsonString).apply()
+```
+
+**Restore conversation history:**
+
+```kotlin
+import kotlinx.serialization.decodeFromString
+
+// Load from storage
+val jsonString = sharedPreferences.getString("conversation_history", null)
+
+if (jsonString != null) {
+    val history = json.decodeFromString<List<ChatMessage>>(jsonString)
+    val restoredConversation = modelRunner.createConversationFromHistory(history)
+}
+```
+
+**Serialize a single message:**
+
+```kotlin
+val message = ChatMessage(
+    role = ChatMessage.Role.USER,
+    content = listOf(ChatMessageContent.Text("Hello"))
+)
+
+val messageJson = json.encodeToString(message)
+```
+
+</Tab>
+
+<Tab title="Swift">
+
+The LEAP SDK provides two approaches for serializing conversation history: `exportToJSON()` and Swift's `Codable` protocol.
+
+### Using exportToJSON
+
+```swift
+import Foundation
+
+// Save conversation
+func saveConversation() throws {
+    let jsonArray = try conversation.exportToJSON()
+    let data = try JSONSerialization.data(withJSONObject: jsonArray)
+    try data.write(to: conversationFileURL)
+}
+
+// Restore conversation
+func restoreConversation() throws {
+    let data = try Data(contentsOf: conversationFileURL)
+    if let history = try JSONSerialization.jsonObject(with: data) as? [[String: Any]] {
+        conversation = modelRunner.createConversationFromHistory(history: history)
+    }
+}
+```
+
+### Using Codable
+
+`ChatMessage` conforms to `Codable`, so you can use `JSONEncoder` and `JSONDecoder` directly:
+
+```swift
+func saveWithCodable() throws {
+    let encoder = JSONEncoder()
+    let data = try encoder.encode(conversation.history)
+    try data.write(to: conversationFileURL)
+}
+
+func restoreWithCodable() throws {
+    let data = try Data(contentsOf: conversationFileURL)
+    let decoder = JSONDecoder()
+    let history = try decoder.decode([ChatMessage].self, from: data)
+    conversation = modelRunner.createConversationFromHistory(history: history)
+}
+```
+
+</Tab>
+
+</Tabs>
+
+## LeapModelDownloader
+
+<Tabs>
+
+<Tab title="Kotlin">
+
+<Info>
+`LeapModelDownloader` is the **recommended** option for Android applications. It provides background downloads with WorkManager, foreground service notifications, and robust handling of network interruptions.
+</Info>
+
+The LeapSDK Android Model Downloader module is a production-ready helper for downloading models from the LEAP Model Library on Android. It runs as a [foreground service](https://developer.android.com/develop/background-work/services/fgs) and displays notifications to users during downloads.
+
+### Permission Setup
+
+The model downloader requires notification permissions to display download progress. You need to:
+
+1. **Add permissions to AndroidManifest.xml**:
+```xml
+<uses-permission android:name="android.permission.INTERNET" />
+<uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+<uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+<uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+```
+
+2. **Request notification permission at runtime** (Android 13+):
+```kotlin
+// In your Activity
+private val requestPermissionLauncher = registerForActivityResult(
+    ActivityResultContracts.RequestPermission()
+) { isGranted: Boolean ->
+    if (isGranted) {
+        Log.d(TAG, "Notification permission granted")
+        // Proceed with download
+    } else {
+        Log.w(TAG, "Notification permission denied")
+        // Handle permission denial
+    }
+}
+
+// Before downloading
+if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+    if (ContextCompat.checkSelfPermission(
+            this,
+            android.Manifest.permission.POST_NOTIFICATIONS
+        ) != PackageManager.PERMISSION_GRANTED
+    ) {
+        requestPermissionLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+    }
+}
+```
+
+### Installation
+
+```kotlin
+// In build.gradle.kts
+dependencies {
+  implementation("ai.liquid.leap:leap-sdk:0.9.7")
+  implementation("ai.liquid.leap:leap-model-downloader:0.9.7")
+}
+```
+
+### Basic Usage
+
+```kotlin
+import ai.liquid.leap.model_downloader.LeapModelDownloader
+import ai.liquid.leap.model_downloader.LeapModelDownloaderNotificationConfig
+
+// Initialize (in onCreate or similar)
+val modelDownloader = LeapModelDownloader(
+    context,
+    notificationConfig = LeapModelDownloaderNotificationConfig.build {
+        notificationTitleDownloading = "Downloading AI model..."
+        notificationTitleDownloaded = "Model ready!"
+        notificationContentDownloading = "Please wait..."
+    }
+)
+
+// Download and load model
+lifecycleScope.launch {
+    try {
+        val modelRunner = modelDownloader.loadModel(
+            modelSlug = "LFM2-1.2B",
+            quantizationSlug = "Q5_K_M",
+            progress = { progressData ->
+                Log.d(TAG, "Progress: ${progressData.progress * 100}%")
+            }
+        )
+        // Model is ready to use
+    } catch (e: Exception) {
+        Log.e(TAG, "Failed to load model: ${e.message}")
+    }
+}
+```
+
+### API Reference
+
+#### LeapModelDownloader
+
+`LeapModelDownloader` is the instance to make request of downloading models and to query the status of a model download request.
+
+```kotlin
+class LeapModelDownloader(
+    private val context: Context,
+    modelFileDir: File? = null,
+    private val extraHTTPRequestHeaders: Map<String, String> = mapOf(),
+    private val notificationConfig: LeapModelDownloaderNotificationConfig = LeapModelDownloaderNotificationConfig(),
+) {
+  fun getModelFile(model: DownloadableModel): File
+  fun requestDownloadModel(model: DownloadableModel, forceDownload: Boolean = false)
+  fun requestStopDownload(model: DownloadableModel)
+  suspend fun queryStatus(model: DownloadableModel): ModelDownloadStatus
+  fun requestStopService()
+}
+```
+
+**Constructor parameters:**
+
+- `context`: The Android context to retrieve cache directory and launch services. The activity context works for this purpose.
+- `modelFileDir`: The path to store model files. If not set, a path in the app's external file dir will be used.
+- `extraHTTPRequestHeaders`: Any extra HTTP request headers to send when downloading a model.
+- `notificationConfig`: Configuration for the content of Android notifications visible to the users.
+
+**getModelFile** -- Returns a file object of the model file based on the `DownloadableModel` instance. The file may not exist.
+
+**requestDownloadModel** -- Makes a request to download the model. If the model file already exists locally, it will not be downloaded.
+
+- `model`: A [`DownloadableModel`](#downloadablemodel) instance.
+- `forceDownload`: If true, the downloader will remove the model bundle file that exists locally and re-download it.
+
+**requestStopDownload** -- Makes a request to stop downloading a model.
+
+**queryStatus** -- Queries the status of the model. Returns a [`ModelDownloadStatus`](#modeldownloadstatus) object.
+
+**requestStopService** -- Makes a request to stop the foreground service of the model downloader.
+
+#### DownloadableModel
+
+`DownloadableModel` is an interface describing a model that can be downloaded by the LeapSDK Model Downloader.
+
+```kotlin
+interface DownloadableModel {
+  val uri: Uri
+  val name: String
+  val localFilename: String
+}
+```
+
+- `uri`: The URI of the model to download.
+- `name`: A user-friendly name of the model. It will be displayed in the notification.
+- `localFilename`: The filename to store the model bundle file locally.
+
+#### LeapDownloadableModel
+
+`LeapDownloadableModel` implements [`DownloadableModel`](#downloadablemodel). It is designed to download models from the LEAP Model Library. The `resolve` method retrieves the model from the LEAP Model Library.
+
+```kotlin
+class LeapDownloadableModel {
+  companion object {
+    suspend fun resolve(modelSlug: String, quantizationSlug: String) : LeapDownloadableModel?
+  }
+}
+```
+
+The `resolve` method accepts two parameters:
+
+- `modelSlug`: The model slug that identifies the model. It is usually the lowercase string of the model name. For example, the slug of `LFM2-1.2B` is `lfm2-1.2b`.
+- `quantizationSlug`: The model quantization slug. It can be found in the "Available quantizations" section of the model card.
+
+#### ModelDownloadStatus
+
+```kotlin
+sealed interface ModelDownloadStatus {
+  data object NotOnLocal: ModelDownloadStatus
+  data class DownloadInProgress(
+    val totalSizeInBytes: Long,
+    val downloadedSizeInBytes: Long,
+  ): ModelDownloadStatus
+  data class Downloaded(
+    val totalSizeInBytes: Long,
+  ) : ModelDownloadStatus
+}
+```
+
+There are three possible value types:
+
+- `NotOnLocal`: The model file has not been downloaded or has already been deleted.
+- `DownloadInProgress`: The model file is still being downloaded. `totalSizeInBytes` is the total size of the file and `downloadedSizeInBytes` is the size of the downloaded portion. If the total size is not available, `totalSizeInBytes` will be -1.
+- `Downloaded`: The file has been downloaded. `totalSizeInBytes` is the file size.
+
+</Tab>
+
+<Tab title="Swift">
+
+<Info>
+`LeapModelDownloader` is the **recommended** option for Apple platforms. It supports background downloads and provides utilities for querying download status and managing cached models.
+</Info>
+
+### Installation
+
+Add the `LeapModelDownloader` product when adding the LEAP SDK to your project:
+
+- **Swift Package Manager**: Select both `LeapSDK` and `LeapModelDownloader` when adding `https://github.com/Liquid4All/leap-ios.git`.
+- **Manual**: Download `LeapModelDownloader.xcframework.zip` from the [GitHub releases](https://github.com/Liquid4All/leap-ios/releases), unzip, and embed in your target.
+
+### Basic Usage
+
+```swift
+import LeapModelDownloader
+
+let downloader = ModelDownloader()
+
+// Download model to cache
+let manifest = try await downloader.downloadModel(
+    "LFM2.5-1.2B-Instruct",
+    quantization: "Q4_K_M"
+) { progress, speed in
+    print("Progress: \(Int(progress * 100))%")
+}
+
+// Later, load from cache (no download needed)
+let modelRunner = try await Leap.load(
+    model: "LFM2.5-1.2B-Instruct",
+    quantization: "Q4_K_M"
+)
+```
+
+### Query Status
+
+```swift
+let status = downloader.queryStatus("LFM2.5-1.2B-Instruct", quantization: "Q4_K_M")
+
+switch status {
+case .notOnLocal:
+    print("Model not downloaded")
+case .downloadInProgress(let progress):
+    print("Downloading: \(Int(progress * 100))%")
+case .downloaded:
+    print("Model ready")
+}
+```
+
+### Remove a Downloaded Model
+
+```swift
+try downloader.removeModel("LFM2.5-1.2B-Instruct", quantization: "Q4_K_M")
+```
+
+### Get Model Size
+
+Check the model size before downloading:
+
+```swift
+let sizeInBytes = try await downloader.getModelSize(
+    modelName: "LFM2.5-1.2B-Instruct",
+    quantization: "Q4_K_M"
+)
+print("Model size: \(sizeInBytes / 1_000_000) MB")
+```
+
+### Get Available Disk Space
+
+```swift
+if let freeSpace = downloader.getAvailableDiskSpace() {
+    print("Free space: \(freeSpace / 1_000_000_000) GB")
+}
+```
+
+### Cancel an Ongoing Download
+
+```swift
+downloader.requestStopDownload(model)
+```
+
+</Tab>
+
+</Tabs>
+
+## Putting It Together
+
+<Tabs>
+
+<Tab title="Kotlin">
+
+```kotlin
+val modelRunner = modelDownloader.loadModel(
+    modelSlug = "LFM2-1.2B",
+    quantizationSlug = "Q5_K_M"
+)
+
+val conversation = modelRunner.createConversation(
+    systemPrompt = "You are a travel assistant."
+)
+
+conversation.registerFunction(weatherFunction)
+
+val options = GenerationOptions(temperature = 0.8f)
+
+val userMessage = ChatMessage(
+    role = ChatMessage.Role.USER,
+    content = listOf(ChatMessageContent.Text("Plan a 3-day trip to Kyoto with food highlights"))
+)
+
+conversation.generateResponse(
+    message = userMessage,
+    generationOptions = options
+).collect { response ->
+    process(response)
+}
+```
+
+Refer to the [Quick Start](./quick-start-guide) for end-to-end project setup, [Function Calling](./function-calling) for tool invocation, and [Constrained Generation](./advanced-features) for structured outputs.
+
+</Tab>
+
+<Tab title="Swift">
+
+```swift
+let runner = try await Leap.load(url: bundleURL)
+let conversation = runner.createConversation(systemPrompt: "You are a travel assistant.")
+
+conversation.registerFunction(weatherFunction)
+
+var options = GenerationOptions(temperature: 0.8)
+try options.setResponseFormat(type: TripRecommendation.self)
+
+let userMessage = ChatMessage(
+  role: .user,
+  content: [.text("Plan a 3-day trip to Kyoto with food highlights")]
+)
+
+for try await response in conversation.generateResponse(
+  message: userMessage,
+  generationOptions: options
+) {
+  process(response)
+}
+```
+
+Refer to the [Quick Start](./quick-start-guide) for end-to-end project setup, [Function Calling](./function-calling) for tool invocation, and [Constrained Generation](./advanced-features) for structured outputs.
+
+</Tab>
+
+</Tabs>

@@ -1,0 +1,1797 @@
+---
+title: "AI Agent Usage Guide"
+description: "Complete reference for using the LEAP SDK"
+---
+
+## Core Architecture
+
+```
+LeapModelDownloader / LeapDownloader / Leap.load()
+    ↓
+ModelRunner
+    ↓
+Conversation
+    ↓
+MessageResponse (streaming)
+```
+
+The LEAP SDK uses Kotlin Multiplatform (KMP) to share core inference logic across Android, iOS, and macOS. Platform-specific wrappers (`LeapModelDownloader` on Android, `Leap.load()` on Apple) provide native ergonomics while the shared `ModelRunner`, `Conversation`, and `MessageResponse` layer remains consistent.
+
+## Installation
+
+<Tabs>
+<Tab title="Kotlin">
+
+### Gradle Dependencies
+
+**Recommended**: Use a version catalog for dependency management.
+
+```toml
+# gradle/libs.versions.toml
+[versions]
+leapSdk = "0.10.0-SNAPSHOT"
+
+[libraries]
+leap-sdk = { module = "ai.liquid.leap:leap-sdk", version.ref = "leapSdk" }
+leap-model-downloader = { module = "ai.liquid.leap:leap-model-downloader", version.ref = "leapSdk" }
+```
+
+```kotlin
+// app/build.gradle.kts
+dependencies {
+    implementation(libs.leap.sdk)
+    implementation(libs.leap.model.downloader)  // For Android notifications & background downloads
+}
+```
+
+**Alternative**: Direct dependencies
+
+```kotlin
+// app/build.gradle.kts
+dependencies {
+    implementation("ai.liquid.leap:leap-sdk:0.10.0-SNAPSHOT")
+    implementation("ai.liquid.leap:leap-model-downloader:0.10.0-SNAPSHOT")
+}
+```
+
+### Required Permissions
+
+Add to `AndroidManifest.xml`:
+
+```xml
+<uses-permission android:name="android.permission.INTERNET"></uses-permission>
+<uses-permission android:name="android.permission.POST_NOTIFICATIONS"></uses-permission>
+<uses-permission android:name="android.permission.FOREGROUND_SERVICE"></uses-permission>
+<uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC"></uses-permission>
+```
+
+### Runtime Permissions (Android 13+)
+
+Request notification permission before downloading:
+
+```kotlin
+// In Activity
+private val permissionLauncher = registerForActivityResult(
+    ActivityResultContracts.RequestPermission()
+) { isGranted ->
+    if (isGranted) {
+        // Permission granted, proceed with download
+    } else {
+        // Permission denied, handle gracefully
+    }
+}
+
+// Before downloading
+if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+    if (ContextCompat.checkSelfPermission(this, POST_NOTIFICATIONS) != PERMISSION_GRANTED) {
+        permissionLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+    }
+}
+```
+
+</Tab>
+<Tab title="Swift">
+
+### Swift Package Manager
+
+```swift
+// In Xcode: File → Add Package Dependencies
+// Repository: https://github.com/Liquid4All/leap-sdk
+// Version: 0.10.0-SNAPSHOT
+
+dependencies: [
+    .package(url: "https://github.com/Liquid4All/leap-sdk", from: "0.10.0-SNAPSHOT")
+]
+
+targets: [
+    .target(
+        name: "YourApp",
+        dependencies: [
+            .product(name: "LeapSDK", package: "leap-sdk"),
+            .product(name: "LeapModelDownloader", package: "leap-sdk") // Optional
+        ]
+    )
+]
+```
+
+</Tab>
+</Tabs>
+
+## Loading Models
+
+### Method 1: Automatic Download (Recommended)
+
+The simplest approach -- specify model name and quantization, SDK handles everything:
+
+<Tabs>
+<Tab title="Kotlin">
+
+```kotlin
+import ai.liquid.leap.downloader.LeapModelDownloader
+import ai.liquid.leap.downloader.LeapModelDownloaderNotificationConfig
+
+class ChatViewModel(application: Application) : AndroidViewModel(application) {
+    private val downloader = LeapModelDownloader(
+        application,
+        notificationConfig = LeapModelDownloaderNotificationConfig.build {
+            notificationTitleDownloading = "Downloading AI model..."
+            notificationTitleDownloaded = "Model ready!"
+        }
+    )
+
+    private var modelRunner: ModelRunner? = null
+
+    fun loadModel() {
+        viewModelScope.launch {
+            try {
+                // Downloads if not cached, then loads
+                modelRunner = downloader.loadModel(
+                    modelSlug = "LFM2.5-1.2B-Instruct",
+                    quantizationSlug = "Q4_K_M",
+                    progress = { progressData ->
+                        // progressData.progress: Float (0.0 to 1.0)
+                        Log.d(TAG, "Progress: ${(progressData.progress * 100).toInt()}%")
+                    }
+                )
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to load model", e)
+            }
+        }
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+
+        // Unload model asynchronously to avoid ANR
+        // Do NOT use runBlocking - it blocks the main thread and can cause ANRs
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                modelRunner?.unload()
+            } catch (e: Exception) {
+                Log.e(TAG, "Error unloading model", e)
+            }
+        }
+    }
+}
+```
+
+</Tab>
+<Tab title="Swift">
+
+```swift
+import LeapSDK
+
+// Load model with automatic download and caching
+let modelRunner = try await Leap.load(
+    model: "LFM2.5-1.2B-Instruct",
+    quantization: "Q4_K_M"
+) { progress, speed in
+    // progress: Double (0.0 to 1.0)
+    // speed: Int64 (bytes per second)
+    print("Download progress: \(Int(progress * 100))% at \(speed) bytes/s")
+}
+```
+
+</Tab>
+</Tabs>
+
+Available models and quantizations: [LEAP Model Library](https://leap.liquid.ai/models)
+
+### Method 2: Download Without Loading
+
+Separate download from loading for better control:
+
+<Tabs>
+<Tab title="Kotlin">
+
+```kotlin
+import ai.liquid.leap.downloader.LeapModelDownloader
+
+class ChatViewModel(application: Application) : AndroidViewModel(application) {
+    private val downloader = LeapModelDownloader(application)
+    private var modelRunner: ModelRunner? = null
+
+    // Step 1: Download model to cache (doesn't load into memory)
+    suspend fun downloadModel() {
+        try {
+            downloader.downloadModel(
+                modelSlug = "LFM2.5-1.2B-Instruct",
+                quantizationSlug = "Q4_K_M",
+                progress = { progressData ->
+                    Log.d(TAG, "Download: ${(progressData.progress * 100).toInt()}%")
+                }
+            )
+            // Model is now cached locally
+        } catch (e: Exception) {
+            Log.e(TAG, "Download failed", e)
+        }
+    }
+
+    // Step 2: Later, load from cache (no download)
+    suspend fun loadCachedModel() {
+        try {
+            modelRunner = downloader.loadModel(
+                modelSlug = "LFM2.5-1.2B-Instruct",
+                quantizationSlug = "Q4_K_M"
+            )
+            // Loads immediately from cache, no network request
+        } catch (e: Exception) {
+            Log.e(TAG, "Load failed", e)
+        }
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                modelRunner?.unload()
+            } catch (e: Exception) {
+                Log.e(TAG, "Error unloading model", e)
+            }
+        }
+    }
+}
+```
+
+</Tab>
+<Tab title="Swift">
+
+```swift
+import LeapModelDownloader
+
+let downloader = ModelDownloader()
+
+// Download model to cache
+let manifest = try await downloader.downloadModel(
+    "LFM2.5-1.2B-Instruct",
+    quantization: "Q4_K_M"
+) { progress, speed in
+    print("Progress: \(Int(progress * 100))%")
+}
+
+// Later, load from cache (no download)
+let modelRunner = try await Leap.load(
+    model: "LFM2.5-1.2B-Instruct",
+    quantization: "Q4_K_M"
+)
+```
+
+</Tab>
+</Tabs>
+
+### Method 3: Cross-Platform LeapDownloader (Kotlin Multiplatform)
+
+For KMP projects targeting iOS, macOS, JVM, and Android:
+
+```kotlin
+import ai.liquid.leap.LeapDownloader
+import ai.liquid.leap.LeapDownloaderConfig
+
+val downloader = LeapDownloader(
+    config = LeapDownloaderConfig(saveDir = "/path/to/models")
+)
+
+// Load model (downloads if not cached)
+val modelRunner = downloader.loadModel(
+    modelSlug = "LFM2.5-1.2B-Instruct",
+    quantizationSlug = "Q4_K_M"
+)
+```
+
+<Note>
+`LeapDownloader` does not provide Android-specific features like notifications or WorkManager integration. Use `LeapModelDownloader` for better UX on Android.
+</Note>
+
+### Method 4: Custom Manifest URL (Swift only)
+
+Load from a custom manifest:
+
+```swift
+let manifestURL = URL(string: "https://your-server.com/model-manifest.json")!
+
+let modelRunner = try await Leap.load(
+    manifestURL: manifestURL,
+    downloadProgressHandler: { progress, speed in
+        print("Progress: \(Int(progress * 100))%")
+    }
+)
+```
+
+### Method 5: Local Bundle (Swift only, Legacy)
+
+Load from a local `.bundle` or `.gguf` file:
+
+```swift
+guard let bundleURL = Bundle.main.url(forResource: "model", withExtension: "bundle") else {
+    fatalError("Model bundle not found")
+}
+
+let modelRunner = try await Leap.load(
+    url: bundleURL,
+    options: LiquidInferenceEngineOptions(
+        bundlePath: bundleURL.path,
+        cpuThreads: 6,
+        contextSize: 8192,
+        nGpuLayers: 8  // Metal GPU acceleration on macOS
+    )
+)
+```
+
+## Core Classes
+
+### `ModelRunner`
+
+The loaded model instance. Create conversations from this.
+
+<Tabs>
+<Tab title="Kotlin">
+
+**Methods:**
+- `createConversation(systemPrompt: String? = null): Conversation` -- Start new chat
+- `createConversationFromHistory(history: List<ChatMessage>): Conversation` -- Restore chat
+- `suspend fun unload()` -- Free memory (MUST call in `onCleared`)
+
+```kotlin
+val conversation = modelRunner.createConversation(
+    systemPrompt = "Explain it to me like I'm 5 years old"
+)
+
+// Or restore from saved history
+val conversation = modelRunner.createConversationFromHistory(savedHistory)
+```
+
+</Tab>
+<Tab title="Swift">
+
+```swift
+protocol ModelRunner {
+    func createConversation(systemPrompt: String?) -> Conversation
+    func createConversationFromHistory(history: [ChatMessage]) -> Conversation
+}
+```
+
+**Usage:**
+
+```swift
+let conversation = modelRunner.createConversation(
+    systemPrompt: "Explain it to me like I'm 5 years old"
+)
+
+// Or restore from saved history
+let savedHistory: [ChatMessage] = loadHistoryFromDisk()
+let conversation = modelRunner.createConversationFromHistory(history: savedHistory)
+```
+
+</Tab>
+</Tabs>
+
+### `Conversation`
+
+Manages chat history and generation.
+
+<Tabs>
+<Tab title="Kotlin">
+
+**Fields:**
+- `history: List<ChatMessage>` -- Full message history (returns a copy, immutable)
+- `isGenerating: Boolean` -- Thread-safe generation status
+
+**Methods:**
+- `generateResponse(userTextMessage: String, options: GenerationOptions? = null): Flow<MessageResponse>`
+- `generateResponse(message: ChatMessage, options: GenerationOptions? = null): Flow<MessageResponse>`
+- `registerFunction(function: LeapFunction)` -- Add tool for function calling
+- `appendToHistory(message: ChatMessage)` -- Add message without generating
+
+</Tab>
+<Tab title="Swift">
+
+```swift
+class Conversation {
+    let modelRunner: ModelRunner
+    private(set) var history: [ChatMessage]
+    private(set) var isGenerating: Bool
+
+    func generateResponse(
+        message: ChatMessage,
+        generationOptions: GenerationOptions?
+    ) -> AsyncThrowingStream<MessageResponse, Error>
+
+    func generateResponse(
+        userTextMessage: String,
+        generationOptions: GenerationOptions?
+    ) -> AsyncThrowingStream<MessageResponse, Error>
+
+    func registerFunction(_ function: LeapFunction)
+    func exportToJSON() throws -> [[String: Any]]
+}
+```
+
+**Properties:**
+- `history` -- Array of `ChatMessage` objects representing the conversation
+- `isGenerating` -- Boolean indicating if generation is in progress
+
+</Tab>
+</Tabs>
+
+### `ChatMessage`
+
+Represents a single message in the conversation.
+
+<Tabs>
+<Tab title="Kotlin">
+
+```kotlin
+data class ChatMessage(
+    val role: Role,              // USER, ASSISTANT, SYSTEM, TOOL
+    val content: List<ChatMessageContent>,
+    val reasoningContent: String? = null,  // From reasoning models
+    val functionCalls: List<LeapFunctionCall>? = null
+)
+
+enum class Role { USER, ASSISTANT, SYSTEM, TOOL }
+```
+
+</Tab>
+<Tab title="Swift">
+
+```swift
+struct ChatMessage {
+    var role: ChatMessageRole  // .system, .user, .assistant, .tool
+    var content: [ChatMessageContent]
+    var reasoningContent: String?  // For reasoning models
+    var functionCalls: [LeapFunctionCall]?
+}
+
+enum ChatMessageRole: String {
+    case user = "user"
+    case system = "system"
+    case assistant = "assistant"
+    case tool = "tool"
+}
+```
+
+</Tab>
+</Tabs>
+
+### `ChatMessageContent`
+
+Content types supported in messages.
+
+<Tabs>
+<Tab title="Kotlin">
+
+```kotlin
+ChatMessageContent.Text(text: String)
+ChatMessageContent.Image(jpegByteArray: ByteArray)  // JPEG only
+ChatMessageContent.Audio(wavByteArray: ByteArray)   // WAV only
+```
+
+</Tab>
+<Tab title="Swift">
+
+```swift
+enum ChatMessageContent {
+    case text(String)
+    case image(Data)  // JPEG encoded
+    case audio(Data)  // WAV encoded (16kHz, mono, PCM)
+}
+```
+
+**Creating Audio Content:**
+
+```swift
+// From WAV file
+let wavData = try Data(contentsOf: audioFileURL)
+let audioContent = ChatMessageContent.audio(wavData)
+
+// From float samples
+let samples: [Float] = [0.1, 0.2, 0.15, ...]  // Normalized to -1.0 to 1.0
+let audioContent = ChatMessageContent.fromFloatSamples(samples, sampleRate: 16000)
+```
+
+</Tab>
+</Tabs>
+
+**Audio Requirements (both platforms):**
+- Format: WAV (RIFF) only -- no MP3/AAC/OGG
+- Sample Rate: 16 kHz (mono channel required)
+- Encoding: PCM (Float32, Int16, Int24, or Int32)
+- Channels: Mono (1 channel) -- stereo will be rejected
+
+### `MessageResponse`
+
+Streaming response types from generation.
+
+<Tabs>
+<Tab title="Kotlin">
+
+```kotlin
+MessageResponse.Chunk(text: String)                    // Text token
+MessageResponse.ReasoningChunk(reasoning: String)      // Thinking (LFM2.5-1.2B-Thinking)
+MessageResponse.FunctionCalls(functionCalls: List)     // Tool calls requested
+MessageResponse.AudioSample(samples: FloatArray, sampleRate: Int)  // Audio output (24kHz)
+MessageResponse.Complete(
+    fullMessage: ChatMessage,
+    finishReason: GenerationFinishReason,  // STOP or EXCEED_CONTEXT
+    stats: GenerationStats?                // Token counts, tokens/sec
+)
+```
+
+</Tab>
+<Tab title="Swift">
+
+```swift
+enum MessageResponse {
+    case chunk(String)  // Text chunk
+    case reasoningChunk(String)  // Reasoning text (thinking models only)
+    case audioSample(samples: [Float], sampleRate: Int)  // Audio output (24kHz typically)
+    case functionCall([LeapFunctionCall])  // Function call requests
+    case complete(MessageCompletion)  // Generation complete
+}
+```
+
+**`MessageCompletion` Fields:**
+
+```swift
+struct MessageCompletion {
+    let message: ChatMessage  // Complete assistant message
+    let finishReason: GenerationFinishReason  // .stop or .exceed_context
+    let stats: GenerationStats?  // Token counts and speed
+}
+
+struct GenerationStats {
+    var promptTokens: UInt64
+    var completionTokens: UInt64
+    var totalTokens: UInt64
+    var tokenPerSecond: Float
+}
+```
+
+</Tab>
+</Tabs>
+
+### `GenerationOptions`
+
+Control generation behavior.
+
+<Tabs>
+<Tab title="Kotlin">
+
+```kotlin
+val options = GenerationOptions(
+    temperature = 0.7f,              // Randomness (0.0 = deterministic, 1.0+ = creative)
+    topP = 0.9f,                     // Nucleus sampling
+    minP = 0.05f,                    // Minimum probability
+    repetitionPenalty = 1.1f,        // Prevent repetition
+    jsonSchemaConstraint = """{"type":"object",...}""",  // Force JSON output
+    functionCallParser = LFMFunctionCallParser(),  // Enable function calling (null to disable)
+    inlineThinkingTags = false       // Emit ReasoningChunk separately (for thinking models)
+)
+
+conversation.generateResponse(userInput, options).collect { ... }
+```
+
+</Tab>
+<Tab title="Swift">
+
+```swift
+struct GenerationOptions {
+    var temperature: Float?  // Randomness (0.0 to 2.0)
+    var topP: Float?  // Nucleus sampling
+    var minP: Float?  // Minimum probability
+    var repetitionPenalty: Float?  // Reduce repetition
+    var rngSeed: UInt64?  // Seed for deterministic output
+    var jsonSchemaConstraint: String?  // JSON schema for structured output
+    var functionCallParser: LeapFunctionCallParserProtocol?
+    var resetHistory: Bool  // Default true
+    var sequenceLength: UInt32?  // Override context length
+    var maxOutputTokens: UInt32?  // Limit output length
+    var enableThinking: Bool  // Surface <think> blocks
+    var cacheControl: CacheControl?
+}
+```
+
+**Example:**
+
+```swift
+var options = GenerationOptions(
+    temperature: 0.7,
+    maxOutputTokens: 512,
+    enableThinking: false
+)
+
+// For structured output
+try options.setResponseFormat(type: MyStruct.self)
+```
+
+</Tab>
+</Tabs>
+
+## Generation Patterns
+
+### Basic Text Generation
+
+<Tabs>
+<Tab title="Kotlin">
+
+```kotlin
+class ChatViewModel : ViewModel() {
+    private var generationJob: Job? = null
+    private val _responseText = MutableStateFlow("")
+
+    fun generate(userInput: String) {
+        generationJob?.cancel()  // Cancel previous generation
+
+        generationJob = viewModelScope.launch {
+            conversation?.generateResponse(userInput)
+                ?.onEach { response ->
+                    when (response) {
+                        is MessageResponse.Chunk -> {
+                            _responseText.value += response.text
+                        }
+                        is MessageResponse.Complete -> {
+                            Log.d(TAG, "Tokens/sec: ${response.stats?.tokenPerSecond}")
+                        }
+                        else -> {}
+                    }
+                }
+                ?.catch { e ->
+                    // Handle error
+                }
+                ?.collect()
+        }
+    }
+
+    fun stopGeneration() {
+        generationJob?.cancel()
+    }
+}
+```
+
+</Tab>
+<Tab title="Swift">
+
+```swift
+import LeapSDK
+
+@MainActor
+final class ChatViewModel: ObservableObject {
+    @Published var messages: [ChatMessage] = []
+    @Published var isGenerating = false
+    @Published var currentResponse = ""
+
+    private var modelRunner: ModelRunner?
+    private var conversation: Conversation?
+    private var generationTask: Task<Void, Never>?
+
+    func loadModel() async {
+        do {
+            modelRunner = try await Leap.load(
+                model: "LFM2.5-1.2B-Instruct",
+                quantization: "Q4_K_M"
+            ) { progress, _ in
+                print("Loading: \(Int(progress * 100))%")
+            }
+            conversation = modelRunner?.createConversation(
+                systemPrompt: "Explain it to me like I'm 5 years old"
+            )
+        } catch {
+            print("Failed to load model: \(error)")
+        }
+    }
+
+    func send(_ text: String) {
+        guard let conversation else { return }
+
+        // Cancel any ongoing generation
+        generationTask?.cancel()
+
+        let userMessage = ChatMessage(role: .user, content: [.text(text)])
+        currentResponse = ""
+        isGenerating = true
+
+        generationTask = Task {
+            do {
+                for try await response in conversation.generateResponse(
+                    message: userMessage,
+                    generationOptions: GenerationOptions(temperature: 0.7)
+                ) {
+                    await handleResponse(response)
+                }
+            } catch {
+                print("Generation error: \(error)")
+            }
+            isGenerating = false
+        }
+    }
+
+    func stopGeneration() {
+        generationTask?.cancel()
+        generationTask = nil
+        isGenerating = false
+    }
+
+    @MainActor
+    private func handleResponse(_ response: MessageResponse) {
+        switch response {
+        case .chunk(let text):
+            currentResponse += text
+
+        case .reasoningChunk(let reasoning):
+            print("Thinking: \(reasoning)")
+
+        case .audioSample(let samples, let sampleRate):
+            // Handle audio output (typically 24kHz)
+            playAudio(samples: samples, sampleRate: sampleRate)
+
+        case .functionCall(let calls):
+            // Handle function calls
+            handleFunctionCalls(calls)
+
+        case .complete(let completion):
+            if let stats = completion.stats {
+                print("Generated \(stats.completionTokens) tokens at \(stats.tokenPerSecond) tok/s")
+            }
+            // Final message is already in conversation.history
+            messages = conversation?.history ?? []
+            currentResponse = ""
+        }
+    }
+}
+```
+
+</Tab>
+</Tabs>
+
+### Multimodal Input (Vision)
+
+<Tabs>
+<Tab title="Kotlin">
+
+```kotlin
+val imageBytes = File("image.jpg").readBytes()  // JPEG only
+
+val message = ChatMessage(
+    role = ChatMessage.Role.USER,
+    content = listOf(
+        ChatMessageContent.Image(imageBytes),
+        ChatMessageContent.Text("What's in this image?")
+    )
+)
+
+conversation.generateResponse(message).collect { ... }
+```
+
+</Tab>
+<Tab title="Swift">
+
+```swift
+func sendImageMessage(image: UIImage, prompt: String) {
+    guard let jpegData = image.jpegData(compressionQuality: 0.8) else { return }
+
+    let message = ChatMessage(
+        role: .user,
+        content: [
+            .text(prompt),
+            .image(jpegData)
+        ]
+    )
+
+    Task {
+        for try await response in conversation.generateResponse(message: message) {
+            await handleResponse(response)
+        }
+    }
+}
+```
+
+</Tab>
+</Tabs>
+
+### Audio Input
+
+<Tabs>
+<Tab title="Kotlin">
+
+```kotlin
+import ai.liquid.leap.audio.FloatAudioBuffer
+
+// From raw PCM samples
+val audioBuffer = FloatAudioBuffer(sampleRate = 16000)
+audioBuffer.add(floatArrayOf(...))  // Float samples normalized -1.0 to 1.0
+val wavBytes = audioBuffer.createWavBytes()
+
+val message = ChatMessage(
+    role = ChatMessage.Role.USER,
+    content = listOf(
+        ChatMessageContent.Audio(wavBytes),
+        ChatMessageContent.Text("Transcribe this audio")
+    )
+)
+
+conversation.generateResponse(message).collect { ... }
+```
+
+</Tab>
+<Tab title="Swift">
+
+```swift
+import AVFoundation
+
+func transcribeAudio(audioFileURL: URL) async {
+    // Load WAV file (must be 16kHz, mono, PCM)
+    guard let wavData = try? Data(contentsOf: audioFileURL) else { return }
+
+    let message = ChatMessage(
+        role: .user,
+        content: [
+            .text("Transcribe this audio:"),
+            .audio(wavData)
+        ]
+    )
+
+    Task {
+        for try await response in conversation.generateResponse(message: message) {
+            await handleResponse(response)
+        }
+    }
+}
+
+// Recording audio with AVAudioRecorder
+class AudioRecorder {
+    private var audioRecorder: AVAudioRecorder?
+
+    func startRecording(to url: URL) throws {
+        let settings: [String: Any] = [
+            AVFormatIDKey: Int(kAudioFormatLinearPCM),
+            AVSampleRateKey: 16000.0,  // 16 kHz required
+            AVNumberOfChannelsKey: 1,  // Mono required
+            AVEncoderBitDepthKey: 16,  // 16-bit PCM
+            AVEncoderAudioQualityKey: AVAudioQuality.high.rawValue
+        ]
+
+        audioRecorder = try AVAudioRecorder(url: url, settings: settings)
+        audioRecorder?.record()
+    }
+
+    func stopRecording() -> URL? {
+        audioRecorder?.stop()
+        return audioRecorder?.url
+    }
+}
+```
+
+</Tab>
+</Tabs>
+
+### Audio Output (Text-to-Speech)
+
+<Tabs>
+<Tab title="Kotlin">
+
+```kotlin
+val audioSamples = mutableListOf<FloatArray>()
+
+conversation.generateResponse("Say hello").collect { response ->
+    when (response) {
+        is MessageResponse.AudioSample -> {
+            // samples: FloatArray (Float32 PCM, -1.0 to 1.0)
+            // sampleRate: Int (typically 24000 Hz)
+            audioSamples.add(response.samples)
+            playAudio(response.samples, response.sampleRate)
+        }
+    }
+}
+```
+
+</Tab>
+<Tab title="Swift">
+
+```swift
+for try await response in conversation.generateResponse(message: message) {
+    switch response {
+    case .audioSample(let samples, let sampleRate):
+        // samples: [Float] (Float32 PCM, -1.0 to 1.0)
+        // sampleRate: Int (typically 24000 Hz)
+        playAudio(samples: samples, sampleRate: sampleRate)
+    default:
+        break
+    }
+}
+```
+
+</Tab>
+</Tabs>
+
+## Function Calling
+
+Register functions for the model to invoke. See also the [Function Calling guide](./function-calling).
+
+<Tabs>
+<Tab title="Kotlin">
+
+```kotlin
+// 1. Define function
+val getWeather = LeapFunction(
+    name = "get_weather",
+    description = "Get current weather for a city",
+    parameters = """
+        {
+            "type": "object",
+            "properties": {
+                "city": {"type": "string"},
+                "units": {"type": "string", "enum": ["celsius", "fahrenheit"]}
+            },
+            "required": ["city"]
+        }
+    """
+)
+
+// 2. Register function
+conversation.registerFunction(getWeather)
+
+// 3. Handle function calls
+conversation.generateResponse("What's the weather in Tokyo?").collect { response ->
+    when (response) {
+        is MessageResponse.FunctionCalls -> {
+            response.functionCalls.forEach { call ->
+                // call.name: String
+                // call.arguments: String (JSON)
+                val result = executeTool(call.name, call.arguments)
+
+                // Add result back to conversation
+                val toolMessage = ChatMessage(
+                    role = ChatMessage.Role.TOOL,
+                    content = listOf(ChatMessageContent.Text(result))
+                )
+                conversation.appendToHistory(toolMessage)
+
+                // Generate next response
+                conversation.generateResponse("").collect { ... }
+            }
+        }
+    }
+}
+```
+
+</Tab>
+<Tab title="Swift">
+
+```swift
+// Define function
+let weatherFunction = LeapFunction(
+    name: "get_weather",
+    description: "Get the current weather for a location",
+    parameters: [
+        LeapFunctionParameter(
+            name: "location",
+            description: "City name",
+            type: .string,
+            required: true
+        ),
+        LeapFunctionParameter(
+            name: "unit",
+            description: "Temperature unit",
+            type: .string,
+            required: false,
+            enumValues: ["celsius", "fahrenheit"]
+        )
+    ]
+)
+
+// Register with conversation
+conversation.registerFunction(weatherFunction)
+
+// Handle function calls in response
+func handleResponse(_ response: MessageResponse) {
+    switch response {
+    case .functionCall(let calls):
+        for call in calls {
+            if call.name == "get_weather" {
+                let location = call.arguments["location"] as? String ?? "Unknown"
+                let result = getWeather(location: location)
+
+                // Add tool result back to conversation
+                let toolMessage = ChatMessage(
+                    role: .tool,
+                    content: [.text(result)]
+                )
+
+                // Create new conversation with updated history
+                let updatedHistory = conversation.history + [toolMessage]
+                conversation = modelRunner.createConversationFromHistory(
+                    history: updatedHistory
+                )
+            }
+        }
+    default:
+        break
+    }
+}
+```
+
+</Tab>
+</Tabs>
+
+## Structured Output (Constrained Generation)
+
+Use the `@Generatable` annotation/macro for type-safe JSON output. See also the [Constrained Generation guide](./constrained-generation).
+
+<Tabs>
+<Tab title="Kotlin">
+
+```kotlin
+@Serializable
+@Generatable("Recipe information")
+data class Recipe(
+    val name: String,
+    val ingredients: List<String>,
+    val steps: List<String>
+)
+
+val options = GenerationOptions().apply {
+    setResponseFormatType<Recipe>()  // Auto-generates JSON schema
+}
+
+conversation.generateResponse("Generate a pasta recipe", options).collect { response ->
+    if (response is MessageResponse.Complete) {
+        val recipe = LeapJson.decodeFromString<Recipe>(response.fullMessage.content[0].text)
+    }
+}
+```
+
+</Tab>
+<Tab title="Swift">
+
+```swift
+import LeapSDK
+
+@Generatable
+struct Recipe {
+    let name: String
+    let ingredients: [String]
+    let steps: [String]
+    let cookingTime: Int
+}
+
+// Configure generation
+var options = GenerationOptions()
+try options.setResponseFormat(type: Recipe.self)
+
+// Generate
+for try await response in conversation.generateResponse(
+    message: ChatMessage(role: .user, content: [.text("Give me a pasta recipe")]),
+    generationOptions: options
+) {
+    if case .complete(let completion) = response {
+        // Parse JSON response into Recipe struct
+        if case .text(let json) = completion.message.content.first {
+            let recipe = try JSONDecoder().decode(Recipe.self, from: json.data(using: .utf8)!)
+            print("Recipe: \(recipe.name)")
+        }
+    }
+}
+```
+
+</Tab>
+</Tabs>
+
+## Conversation Persistence
+
+<Tabs>
+<Tab title="Kotlin">
+
+```kotlin
+// Save conversation
+val json = LeapJson.encodeToString(conversation.history)
+
+// Restore conversation
+val history = LeapJson.decodeFromString<List<ChatMessage>>(json)
+val conversation = modelRunner.createConversationFromHistory(history)
+```
+
+</Tab>
+<Tab title="Swift">
+
+```swift
+import Foundation
+
+// Save conversation
+func saveConversation() throws {
+    let jsonArray = try conversation.exportToJSON()
+    let data = try JSONSerialization.data(withJSONObject: jsonArray)
+    try data.write(to: conversationFileURL)
+}
+
+// Restore conversation
+func restoreConversation() throws {
+    let data = try Data(contentsOf: conversationFileURL)
+    let jsonArray = try JSONSerialization.jsonObject(with: data) as! [[String: Any]]
+
+    let history = try jsonArray.map { json in
+        try ChatMessage(from: json)
+    }
+
+    conversation = modelRunner.createConversationFromHistory(history: history)
+}
+
+// Using Codable (alternative)
+func saveWithCodable() throws {
+    let encoder = JSONEncoder()
+    let data = try encoder.encode(conversation.history)
+    try data.write(to: conversationFileURL)
+}
+
+func restoreWithCodable() throws {
+    let data = try Data(contentsOf: conversationFileURL)
+    let decoder = JSONDecoder()
+    let history = try decoder.decode([ChatMessage].self, from: data)
+    conversation = modelRunner.createConversationFromHistory(history: history)
+}
+```
+
+</Tab>
+</Tabs>
+
+## Model Download Management
+
+Query download status and manage cached models.
+
+<Tabs>
+<Tab title="Kotlin">
+
+```kotlin
+import ai.liquid.leap.downloader.LeapModelDownloader
+
+val downloader = LeapModelDownloader(application)
+
+// Query status for a specific model
+viewModelScope.launch {
+    val status = downloader.queryStatus(
+        modelSlug = "LFM2.5-1.2B-Instruct",
+        quantizationSlug = "Q4_K_M"
+    )
+
+    when (status) {
+        is ModelDownloadStatus.NotOnLocal -> {
+            Log.d(TAG, "Model not downloaded")
+        }
+        is ModelDownloadStatus.DownloadInProgress -> {
+            val progressPercent = (status.progress * 100).toInt()
+            Log.d(TAG, "Downloading: $progressPercent%")
+        }
+        is ModelDownloadStatus.Downloaded -> {
+            Log.d(TAG, "Model ready to load")
+        }
+    }
+}
+
+// Get total model size before downloading
+val totalBytes = downloader.getModelSize(
+    modelSlug = "LFM2.5-1.2B-Instruct",
+    quantizationSlug = "Q4_K_M"
+)
+val totalMB = totalBytes / (1024 * 1024)
+
+// Remove a specific model from cache
+downloader.removeModel(
+    modelSlug = "LFM2.5-1.2B-Instruct",
+    quantizationSlug = "Q4_K_M"
+)
+
+// Cancel an in-progress download
+downloader.cancelDownload(
+    modelSlug = "LFM2.5-1.2B-Instruct",
+    quantizationSlug = "Q4_K_M"
+)
+```
+
+**Download Status Types:**
+
+```kotlin
+sealed interface ModelDownloadStatus {
+    object NotOnLocal : ModelDownloadStatus
+    data class DownloadInProgress(val progress: Float) : ModelDownloadStatus  // 0.0 to 1.0
+    object Downloaded : ModelDownloadStatus
+}
+```
+
+</Tab>
+<Tab title="Swift">
+
+```swift
+import LeapModelDownloader
+
+let downloader = ModelDownloader()
+
+// Check download status
+let status = downloader.queryStatus("LFM2.5-1.2B-Instruct", quantization: "Q4_K_M")
+
+switch status {
+case .notOnLocal:
+    print("Model not downloaded")
+case .downloadInProgress(let progress):
+    print("Downloading: \(Int(progress * 100))%")
+case .downloaded:
+    print("Model ready")
+}
+
+// Get model size before downloading
+let sizeInBytes = try await downloader.getModelSize(
+    modelName: "LFM2.5-1.2B-Instruct",
+    quantization: "Q4_K_M"
+)
+print("Model size: \(sizeInBytes / 1_000_000) MB")
+
+// Remove downloaded model
+try downloader.removeModel("LFM2.5-1.2B-Instruct", quantization: "Q4_K_M")
+
+// Cancel ongoing download
+downloader.requestStopDownload(model)
+```
+
+</Tab>
+</Tabs>
+
+## Complete ViewModel Example
+
+<Tabs>
+<Tab title="Kotlin">
+
+```kotlin
+import ai.liquid.leap.*
+import ai.liquid.leap.downloader.*
+import ai.liquid.leap.message.*
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.*
+
+class ChatViewModel(application: Application) : AndroidViewModel(application) {
+    private val downloader = LeapModelDownloader(
+        application,
+        notificationConfig = LeapModelDownloaderNotificationConfig.build {
+            notificationTitleDownloading = "Downloading model..."
+            notificationTitleDownloaded = "Model ready!"
+        }
+    )
+
+    private var modelRunner: ModelRunner? = null
+    private var conversation: Conversation? = null
+    private var generationJob: Job? = null
+
+    private val _messages = MutableStateFlow<List<ChatMessage>>(emptyList())
+    val messages: StateFlow<List<ChatMessage>> = _messages.asStateFlow()
+
+    private val _isLoading = MutableStateFlow(false)
+    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
+
+    private val _isGenerating = MutableStateFlow(false)
+    val isGenerating: StateFlow<Boolean> = _isGenerating.asStateFlow()
+
+    private val _currentResponse = MutableStateFlow("")
+    val currentResponse: StateFlow<String> = _currentResponse.asStateFlow()
+
+    fun loadModel() {
+        viewModelScope.launch {
+            _isLoading.value = true
+            try {
+                modelRunner = downloader.loadModel(
+                    modelSlug = "LFM2.5-1.2B-Instruct",
+                    quantizationSlug = "Q4_K_M"
+                )
+                conversation = modelRunner?.createConversation(
+                    systemPrompt = "Explain it to me like I'm 5 years old"
+                )
+            } catch (e: Exception) {
+                // Handle error
+            } finally {
+                _isLoading.value = false
+            }
+        }
+    }
+
+    fun sendMessage(text: String) {
+        generationJob?.cancel()
+        _currentResponse.value = ""
+
+        generationJob = viewModelScope.launch {
+            _isGenerating.value = true
+            try {
+                conversation?.generateResponse(text)
+                    ?.onEach { response ->
+                        when (response) {
+                            is MessageResponse.Chunk -> {
+                                _currentResponse.value += response.text
+                            }
+                            is MessageResponse.Complete -> {
+                                _messages.value = conversation?.history ?: emptyList()
+                                _currentResponse.value = ""
+                            }
+                            else -> {}
+                        }
+                    }
+                    ?.catch { e ->
+                        // Handle generation error
+                    }
+                    ?.collect()
+            } finally {
+                _isGenerating.value = false
+            }
+        }
+    }
+
+    fun stopGeneration() {
+        generationJob?.cancel()
+        _isGenerating.value = false
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        generationJob?.cancel()
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                modelRunner?.unload()
+            } catch (e: Exception) {
+                Log.e(TAG, "Error unloading model", e)
+            }
+        }
+    }
+}
+```
+
+</Tab>
+<Tab title="Swift">
+
+```swift
+import SwiftUI
+import LeapSDK
+import LeapModelDownloader
+
+@MainActor
+final class ChatViewModel: ObservableObject {
+    @Published var messages: [ChatMessage] = []
+    @Published var currentResponse = ""
+    @Published var isGenerating = false
+    @Published var isLoadingModel = false
+    @Published var downloadProgress: Double = 0.0
+    @Published var error: String?
+
+    private var modelRunner: ModelRunner?
+    private var conversation: Conversation?
+    private var generationTask: Task<Void, Never>?
+
+    func loadModel() async {
+        isLoadingModel = true
+        downloadProgress = 0.0
+        error = nil
+
+        do {
+            modelRunner = try await Leap.load(
+                model: "LFM2.5-1.2B-Instruct",
+                quantization: "Q4_K_M"
+            ) { [weak self] progress, speed in
+                Task { @MainActor in
+                    self?.downloadProgress = progress
+                }
+            }
+
+            conversation = modelRunner?.createConversation(
+                systemPrompt: "Explain it to me like I'm 5 years old"
+            )
+
+        } catch {
+            self.error = "Failed to load model: \(error.localizedDescription)"
+        }
+
+        isLoadingModel = false
+    }
+
+    func send(_ text: String) {
+        guard let conversation, !text.isEmpty else { return }
+
+        generationTask?.cancel()
+
+        let userMessage = ChatMessage(role: .user, content: [.text(text)])
+        messages.append(userMessage)
+        currentResponse = ""
+        isGenerating = true
+
+        generationTask = Task {
+            do {
+                for try await response in conversation.generateResponse(
+                    message: userMessage,
+                    generationOptions: GenerationOptions(
+                        temperature: 0.7,
+                        maxOutputTokens: 512
+                    )
+                ) {
+                    await handleResponse(response)
+                }
+            } catch is CancellationError {
+                // Generation was cancelled
+            } catch {
+                self.error = "Generation failed: \(error.localizedDescription)"
+            }
+
+            isGenerating = false
+        }
+    }
+
+    func stopGeneration() {
+        generationTask?.cancel()
+        generationTask = nil
+        isGenerating = false
+    }
+
+    @MainActor
+    private func handleResponse(_ response: MessageResponse) {
+        switch response {
+        case .chunk(let text):
+            currentResponse += text
+
+        case .reasoningChunk(let reasoning):
+            print("Thinking: \(reasoning)")
+
+        case .audioSample(let samples, let sampleRate):
+            // Handle audio playback
+            break
+
+        case .functionCall(let calls):
+            // Handle function calls
+            break
+
+        case .complete(let completion):
+            if let stats = completion.stats {
+                print("Stats: \(stats.totalTokens) tokens, \(stats.tokenPerSecond) tok/s")
+            }
+            messages = conversation?.history ?? []
+            currentResponse = ""
+        }
+    }
+
+    deinit {
+        generationTask?.cancel()
+    }
+}
+```
+
+</Tab>
+</Tabs>
+
+## Error Handling
+
+<Tabs>
+<Tab title="Kotlin">
+
+```kotlin
+sealed class LeapException : Exception()
+class LeapModelLoadingException : LeapException()
+class LeapGenerationException : LeapException()
+class LeapGenerationPromptExceedContextLengthException : LeapException()
+class LeapSerializationException : LeapException()
+
+try {
+    modelRunner = downloader.loadModel(...)
+} catch (e: LeapModelLoadingException) {
+    // Model failed to load
+} catch (e: LeapGenerationPromptExceedContextLengthException) {
+    // Prompt too long
+} catch (e: Exception) {
+    // Other errors
+}
+```
+
+</Tab>
+<Tab title="Swift">
+
+```swift
+enum LeapError: Error {
+    case modelLoadingFailure(String, Error?)
+    case generationFailure(String, Error?)
+    case serializationFailure(String, Error?)
+    case invalidInput(String)
+}
+
+// Handling errors
+do {
+    let modelRunner = try await Leap.load(model: "LFM2.5-1.2B-Instruct", quantization: "Q4_K_M")
+} catch let error as LeapError {
+    switch error {
+    case .modelLoadingFailure(let message, _):
+        print("Model loading failed: \(message)")
+    case .generationFailure(let message, _):
+        print("Generation failed: \(message)")
+    case .serializationFailure(let message, _):
+        print("Serialization failed: \(message)")
+    case .invalidInput(let message):
+        print("Invalid input: \(message)")
+    }
+} catch {
+    print("Unexpected error: \(error)")
+}
+```
+
+</Tab>
+</Tabs>
+
+## Imports Reference
+
+<Tabs>
+<Tab title="Kotlin">
+
+**Android (LeapModelDownloader):**
+
+```kotlin
+import ai.liquid.leap.Conversation
+import ai.liquid.leap.ModelRunner
+import ai.liquid.leap.downloader.LeapModelDownloader
+import ai.liquid.leap.downloader.LeapModelDownloaderNotificationConfig
+import ai.liquid.leap.message.ChatMessage
+import ai.liquid.leap.message.ChatMessageContent
+import ai.liquid.leap.message.MessageResponse
+import ai.liquid.leap.generation.GenerationOptions
+import ai.liquid.leap.LeapException
+```
+
+**Cross-Platform (LeapDownloader):**
+
+```kotlin
+import ai.liquid.leap.Conversation
+import ai.liquid.leap.ModelRunner
+import ai.liquid.leap.LeapDownloader
+import ai.liquid.leap.LeapDownloaderConfig
+import ai.liquid.leap.message.ChatMessage
+import ai.liquid.leap.message.ChatMessageContent
+import ai.liquid.leap.message.MessageResponse
+import ai.liquid.leap.generation.GenerationOptions
+```
+
+</Tab>
+<Tab title="Swift">
+
+```swift
+// Core SDK
+import LeapSDK
+
+// Optional model downloader
+import LeapModelDownloader
+
+// SwiftUI integration
+import SwiftUI
+import Combine
+
+// Audio handling
+import AVFoundation
+
+// Image processing
+import UIKit  // iOS
+import AppKit  // macOS
+```
+
+</Tab>
+</Tabs>
+
+## Model Selection Guide
+
+### Text Models
+- **LFM2.5-1.2B-Instruct**: General purpose (recommended)
+- **LFM2.5-1.2B-Thinking**: Extended reasoning (emits `ReasoningChunk`)
+- **LFM2-1.2B**: Stable version
+- **LFM2-1.2B-Tool**: Optimized for function calling
+
+### Multimodal Models
+- **LFM2.5-VL-1.6B**: Vision + text
+- **LFM2.5-Audio-1.5B**: Audio + text (TTS, ASR, voice chat)
+
+## Quantization Guide
+
+Choose the right balance of speed vs quality:
+
+| Quantization | Quality | Size | Speed | Use Case |
+|---|---|---|---|---|
+| **Q4_0** | Lowest | Smallest | Fastest | Prototyping, low-end devices |
+| **Q4_K_M** | Good | Small | Fast | **Recommended for most apps** |
+| **Q5_K_M** | Better | Medium | Medium | Quality-sensitive applications |
+| **Q6_K** | High | Large | Slower | High-quality responses needed |
+| **Q8_0** | Near-original | Larger | Slow | Maximum quality |
+| **F16** | Original | Largest | Slowest | Research, benchmarking |
+
+## Critical Best Practices
+
+### 1. Model Unloading (REQUIRED)
+
+Always release model resources when you are done. On Android, unload asynchronously to avoid ANR (Application Not Responding) errors. On iOS, nil out the references.
+
+<Tabs>
+<Tab title="Kotlin">
+
+```kotlin
+override fun onCleared() {
+    super.onCleared()
+
+    // Unload model asynchronously to avoid ANR
+    // NEVER use runBlocking - it blocks the main thread and causes ANRs
+    CoroutineScope(Dispatchers.IO).launch {
+        try {
+            modelRunner?.unload()
+        } catch (e: Exception) {
+            Log.e(TAG, "Error unloading model", e)
+        }
+    }
+}
+```
+
+</Tab>
+<Tab title="Swift">
+
+```swift
+// Explicitly unload model when done
+modelRunner = nil
+conversation = nil
+```
+
+</Tab>
+</Tabs>
+
+### 2. Generation Cancellation
+
+<Tabs>
+<Tab title="Kotlin">
+
+```kotlin
+// Generation auto-cancels when Flow collection is cancelled
+generationJob?.cancel()
+
+// Or when viewModelScope is cleared (ViewModel destroyed)
+```
+
+</Tab>
+<Tab title="Swift">
+
+```swift
+generationTask?.cancel()
+generationTask = nil
+isGenerating = false
+```
+
+</Tab>
+</Tabs>
+
+### 3. Thread Safety
+
+- All SDK operations are main-thread safe on both platforms
+- **Kotlin:** Use `viewModelScope.launch` for all suspend functions
+- **Swift:** Use `@MainActor` for UI-bound ViewModels and `Task {}` for async work
+- Callbacks run on the main thread
+
+### 4. History Management
+
+Both platforms return a copy of the history that is safe to read without synchronization:
+
+<Tabs>
+<Tab title="Kotlin">
+
+```kotlin
+// conversation.history returns a COPY
+val history = conversation.history  // Safe to read
+
+// To restore conversation
+val newConversation = modelRunner.createConversationFromHistory(savedHistory)
+```
+
+</Tab>
+<Tab title="Swift">
+
+```swift
+// conversation.history returns a copy
+let history = conversation.history  // Safe to read
+
+// To restore conversation
+let newConversation = modelRunner.createConversationFromHistory(history: savedHistory)
+```
+
+</Tab>
+</Tabs>
+
+### 5. Serialization
+
+<Tabs>
+<Tab title="Kotlin">
+
+```kotlin
+// Save conversation
+val json = LeapJson.encodeToString(conversation.history)
+
+// Restore conversation
+val history = LeapJson.decodeFromString<List<ChatMessage>>(json)
+val conversation = modelRunner.createConversationFromHistory(history)
+```
+
+</Tab>
+<Tab title="Swift">
+
+```swift
+// Save conversation
+let data = try JSONEncoder().encode(conversation.history)
+try data.write(to: fileURL)
+
+// Restore conversation
+let data = try Data(contentsOf: fileURL)
+let history = try JSONDecoder().decode([ChatMessage].self, from: data)
+let conversation = modelRunner.createConversationFromHistory(history: history)
+```
+
+</Tab>
+</Tabs>
+
+## Troubleshooting
+
+### Model Fails to Load
+- Check internet connection (first download requires network)
+- **Android:** Verify `minSdk = 31` in `build.gradle.kts`; use physical device (emulators may crash)
+- **iOS/macOS:** Test on physical device (simulator is much slower)
+- Check storage space -- models typically need 500MB to 2GB
+
+### Generation is Slow
+- Test on a physical device (simulators and emulators are much slower)
+- Use smaller quantization (`Q4_K_M` instead of `Q8_0`)
+- Reduce context size in options
+- **macOS:** Increase `nGpuLayers` for Metal GPU acceleration
+
+### Audio Not Working
+- Verify WAV format (16kHz, mono, PCM) -- no MP3/AAC/OGG
+- Check that the model supports audio (LFM2.5-Audio models)
+- Ensure mono channel -- stereo will be rejected
+- Audio output is typically 24kHz (different from 16kHz input)
+
+### Memory Issues
+- Always unload the model when done (see Critical Best Practices above)
+- Do not load multiple models simultaneously
+- Use appropriate quantization (`Q4_K_M` recommended)
+- Use smaller models on devices with limited RAM (e.g., LFM2-350M for 3GB devices, LFM2.5-1.2B for 6GB+ devices)
+
+### Generation Fails
+- Check prompt length vs context window
+- Verify the model supports the feature you are using (vision, audio, function calling)
+- Check `isGenerating` before starting a new generation
+
+## Platform Requirements
+
+| Requirement | Android | iOS | macOS |
+|---|---|---|---|
+| **Minimum OS** | API 31 (Android 12) | 14.0+ | 11.0+ |
+| **Build tools** | Gradle + AGP | Xcode 15+ / Swift 5.9+ | Xcode 15+ / Swift 5.9+ |
+| **Distribution** | Maven (Gradle) | SPM | SPM |
+| **Device RAM** | 3GB min (6GB+ recommended) | 3GB min (6GB+ recommended) | 6GB+ recommended |
+| **Storage** | 500MB - 2GB per model | 500MB - 2GB per model | 500MB - 2GB per model |
+
+## Related Guides
+
+- [Quick Start Guide](./quick-start-guide) -- Get up and running in minutes
+- [Constrained Generation](./constrained-generation) -- Structured JSON output with schemas
+- [Function Calling](./function-calling) -- Tool use and agentic workflows
+- [Conversation & Generation](./conversation-generation) -- Deep dive into conversation management
+- [Messages & Content](./messages-content) -- Multimodal message types
+- [Model Loading](./model-loading) -- Advanced loading options and configuration

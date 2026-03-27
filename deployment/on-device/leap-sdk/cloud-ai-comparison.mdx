@@ -1,0 +1,285 @@
+---
+title: "Cloud AI Comparison"
+description: "Compare the LEAP SDK with cloud-based AI APIs like OpenAI"
+sidebar_position: 5
+---
+
+If you are familiar with cloud-based AI APIs (e.g. [OpenAI API](https://openai.com/api/)), this document
+shows the similarities and differences between cloud APIs and the LEAP SDK.
+
+We will inspect this Python-based OpenAI API chat completion request and show how to achieve the same with LeapSDK.
+This example is modified from [OpenAI API documentation](https://platform.openai.com/docs/guides/streaming-responses?api-mode=chat).
+
+```python
+from openai import OpenAI
+client = OpenAI()
+
+stream = client.chat.completions.create(
+    model="gpt-4.1",
+    messages=[
+        {
+            "role": "user",
+            "content": "Say 'double bubble bath' ten times fast.",
+        },
+    ],
+    stream=True,
+)
+
+for chunk in stream:
+    if chunk.choices:
+        delta_content = chunk.choices[0].delta.get("content")
+        if delta_content:
+            print(delta_content, end="", flush=True)
+
+print("")
+print("Generation done!")
+```
+
+## Loading the Model
+
+While cloud APIs let you use models immediately after creating a client, LeapSDK requires you to explicitly load the model first — because the model runs locally. This step generally takes a few seconds depending on model size and device performance.
+
+On cloud API, you create an API client:
+
+```python
+client = OpenAI()
+```
+
+In LeapSDK, you download and load the model to create a model runner:
+
+<Tabs>
+  <Tab title="Kotlin">
+    ```kotlin
+    // Using LeapModelDownloader (Android - recommended)
+    val downloader = LeapModelDownloader(context)
+    val modelRunner = downloader.loadModel(
+        modelSlug = "LFM2.5-1.2B-Instruct",
+        quantizationSlug = "Q4_K_M"
+    )
+
+    // OR using LeapDownloader (cross-platform)
+    val downloader = LeapDownloader()
+    val modelRunner = downloader.loadModel(
+        modelSlug = "LFM2.5-1.2B-Instruct",
+        quantizationSlug = "Q4_K_M"
+    )
+    ```
+  </Tab>
+  <Tab title="Swift">
+    ```swift
+    let modelRunner = try await Leap.load(
+        model: "LFM2.5-1.2B-Instruct",
+        quantization: "Q4_K_M"
+    )
+    ```
+  </Tab>
+</Tabs>
+
+The return value is a "model runner" which plays a similar role to the client object in the cloud API — except that it carries the model weights. If the model runner is released, the app has to reload the model before requesting new generations.
+
+## Requesting Generation
+
+In the cloud API, `client.chat.completions.create` returns a stream object:
+
+```python
+stream = client.chat.completions.create(
+    model="gpt-4.1",
+    messages=[
+        {
+            "role": "user",
+            "content": "Say 'double bubble bath' ten times fast.",
+        },
+    ],
+    stream=True,
+)
+```
+
+In LeapSDK, use `generateResponse` on the conversation object to get a stream for generation. Since the model runner already contains all model information, you don't need to specify the model name again:
+
+<Tabs>
+  <Tab title="Kotlin">
+    ```kotlin
+    val conversation = modelRunner.createConversation()
+    val stream = conversation.generateResponse(
+        ChatMessage(
+            ChatMessage.Role.USER,
+            listOf(ChatMessageContent.Text("Say 'double bubble bath' ten times fast."))
+        )
+    )
+
+    // Simplified version with the same effect:
+    val stream = conversation.generateResponse("Say 'double bubble bath' ten times fast.")
+    ```
+  </Tab>
+  <Tab title="Swift">
+    ```swift
+    let conversation = modelRunner.createConversation()
+    let stream = conversation.generateResponse(
+        message: ChatMessage(
+            role: .user,
+            content: [.text("Say 'double bubble bath' ten times fast.")]
+        )
+    )
+
+    // Simplified version with the same effect:
+    let stream = conversation.generateResponse(
+        userTextMessage: "Say 'double bubble bath' ten times fast."
+    )
+    ```
+  </Tab>
+</Tabs>
+
+## Processing Generated Content
+
+In cloud API Python code, a for-loop retrieves the content:
+
+```python
+for chunk in stream:
+    if chunk.choices:
+        delta_content = chunk.choices[0].delta.get("content")
+        if delta_content:
+            print(delta_content, end="", flush=True)
+
+print("")
+print("Generation done!")
+```
+
+<Tabs>
+  <Tab title="Kotlin">
+    In LeapSDK, call `onEach` on the Kotlin Flow to process content. Call `collect()` to start generation:
+
+    ```kotlin
+    stream.onEach { chunk ->
+        when (chunk) {
+            is MessageResponse.Chunk -> {
+                print(chunk.text)
+            }
+            else -> {}
+        }
+    }.onCompletion {
+        print("")
+        print("Generation done!")
+    }.collect()
+    ```
+  </Tab>
+  <Tab title="Swift">
+    In LeapSDK, use a `for try await` loop on the AsyncThrowingStream:
+
+    ```swift
+    for try await response in stream {
+        switch response {
+        case .chunk(let text):
+            print(text, terminator: "")
+        case .reasoningChunk(let reasoning):
+            break
+        case .complete(let completion):
+            print("")
+            print("Generation done!")
+            if let stats = completion.stats {
+                print("Tokens: \(stats.totalTokens), Speed: \(stats.tokenPerSecond) tok/s")
+            }
+        default:
+            break
+        }
+    }
+    ```
+  </Tab>
+</Tabs>
+
+## Async Context
+
+Most LeapSDK APIs are asynchronous. You need an async context to execute them:
+
+<Tabs>
+  <Tab title="Kotlin">
+    LeapSDK Android APIs use [Kotlin coroutines](https://kotlinlang.org/docs/coroutines-basics.html). Use `viewModelScope` in a ViewModel:
+
+    ```kotlin
+    class ChatViewModel(application: Application) : AndroidViewModel(application) {
+        private val downloader = LeapModelDownloader(application)
+        private var modelRunner: ModelRunner? = null
+        private var conversation: Conversation? = null
+
+        fun loadModelAndGenerate() {
+            viewModelScope.launch {
+                modelRunner = downloader.loadModel(
+                    modelSlug = "LFM2.5-1.2B-Instruct",
+                    quantizationSlug = "Q4_K_M"
+                )
+
+                conversation = modelRunner?.createConversation()
+
+                conversation?.generateResponse("Say 'double bubble bath' ten times fast.")
+                    ?.onEach { chunk ->
+                        when (chunk) {
+                            is MessageResponse.Chunk -> print(chunk.text)
+                            else -> {}
+                        }
+                    }?.onCompletion {
+                        println("\nGeneration done!")
+                    }?.collect()
+            }
+        }
+
+        override fun onCleared() {
+            super.onCleared()
+            runBlocking(Dispatchers.IO) {
+                modelRunner?.unload()
+            }
+        }
+    }
+    ```
+  </Tab>
+  <Tab title="Swift">
+    LeapSDK iOS/macOS APIs use [Swift async/await](https://docs.swift.org/swift-book/documentation/the-swift-programming-language/concurrency/). Use `Task` or `async` functions within SwiftUI views:
+
+    ```swift
+    @MainActor
+    final class ChatViewModel: ObservableObject {
+        @Published var currentResponse = ""
+        private var modelRunner: ModelRunner?
+        private var conversation: Conversation?
+
+        func loadModel() async {
+            do {
+                modelRunner = try await Leap.load(
+                    model: "LFM2.5-1.2B-Instruct",
+                    quantization: "Q4_K_M"
+                )
+                conversation = modelRunner?.createConversation()
+            } catch {
+                print("Failed to load model: \(error)")
+            }
+        }
+
+        func sendMessage(_ text: String) {
+            guard let conversation else { return }
+
+            Task {
+                do {
+                    for try await response in conversation.generateResponse(
+                        message: ChatMessage(role: .user, content: [.text(text)])
+                    ) {
+                        switch response {
+                        case .chunk(let text):
+                            currentResponse += text
+                        case .complete:
+                            print("Generation done!")
+                            currentResponse = ""
+                        default:
+                            break
+                        }
+                    }
+                } catch {
+                    print("Generation error: \(error)")
+                }
+            }
+        }
+    }
+    ```
+  </Tab>
+</Tabs>
+
+## Next Steps
+
+For more information, see the [Quick Start Guide](./quick-start-guide).

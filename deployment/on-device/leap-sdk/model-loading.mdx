@@ -1,0 +1,336 @@
+---
+title: "Model Loading"
+description: "API reference for loading models in the LEAP SDK"
+---
+
+<Info>
+The LEAP SDK provides multiple model loading options:
+- **`LeapModelDownloader`** — Platform-specific downloader with background download support (Android: WorkManager + notifications; Apple: NSURLSession background downloads)
+- **`LeapDownloader`** — Cross-platform (Android, iOS, macOS, JVM), lightweight downloader for all platforms
+- **`Leap.load()`** — Swift convenience API via the compatibility layer
+</Info>
+
+## `LeapModelDownloader`
+
+The recommended option for production apps on Android and Apple platforms. It provides platform-specific features for robust background downloads.
+
+<Tabs>
+  <Tab title="Kotlin">
+    ```kotlin
+    class LeapModelDownloader(
+        private val context: Context,
+        modelFileDir: File? = null,
+        private val extraHTTPRequestHeaders: Map<String, String> = mapOf(),
+        private val notificationConfig: LeapModelDownloaderNotificationConfig = LeapModelDownloaderNotificationConfig(),
+    )
+    ```
+
+    <Info>
+    This class is part of the `ai.liquid.leap:leap-model-downloader` module. It uses Android WorkManager for background downloads and displays foreground service notifications.
+    </Info>
+
+    ### Constructor Parameters
+
+    | Field | Type | Required | Default | Description |
+    |-------|------|----------|---------|-------------|
+    | `context` | `Context` | Yes | - | Android context (Activity or Application) |
+    | `modelFileDir` | `File` | No | `null` | Directory to save models. If null, uses app's external files directory. |
+    | `extraHTTPRequestHeaders` | `Map<String, String>` | No | `mapOf()` | Additional HTTP headers for download requests |
+    | `notificationConfig` | `LeapModelDownloaderNotificationConfig` | No | `LeapModelDownloaderNotificationConfig()` | Notification configuration for the foreground service |
+
+    ### `loadModel`
+
+    Download and load a model in one operation. If the model is already cached, it loads directly without downloading.
+
+    | Name | Type | Required | Default | Description |
+    |------|------|----------|---------|-------------|
+    | `modelSlug` | `String` | Yes | - | The model name (e.g., "LFM2-1.2B"). See the [LEAP Model Library](https://leap.liquid.ai/models). |
+    | `quantizationSlug` | `String` | Yes | - | The quantization level (e.g., "Q4_K_M", "Q5_K_M"). |
+    | `modelLoadingOptions` | `ModelLoadingOptions` | No | `null` | Options for loading the model. See [`ModelLoadingOptions`](#modelloadingoptions). |
+    | `generationTimeParameters` | `GenerationTimeParameters` | No | `null` | Parameters to control generation. See [`GenerationTimeParameters`](#generationtimeparameters). |
+    | `progress` | `(ProgressData) -> Unit` | No | `{}` | Callback for download progress updates |
+
+    **Returns:** [`ModelRunner`](./conversation-generation#modelrunner) instance.
+
+    ### `downloadModel`
+
+    Download a model without loading it into memory. Useful for pre-downloading models in the background.
+
+    | Name | Type | Required | Default | Description |
+    |------|------|----------|---------|-------------|
+    | `modelSlug` | `String` | Yes | - | The model name |
+    | `quantizationSlug` | `String` | Yes | - | The quantization level |
+    | `progress` | `(ProgressData) -> Unit` | No | `{}` | Callback for download progress |
+
+    **Returns:** `Manifest` metadata about the downloaded model.
+
+    ### Example
+
+    ```kotlin
+    import ai.liquid.leap.model_downloader.LeapModelDownloader
+    import ai.liquid.leap.model_downloader.LeapModelDownloaderNotificationConfig
+
+    val modelDownloader = LeapModelDownloader(
+        context,
+        notificationConfig = LeapModelDownloaderNotificationConfig.build {
+            notificationTitleDownloading = "Downloading AI model..."
+            notificationTitleDownloaded = "Model ready!"
+        }
+    )
+
+    lifecycleScope.launch {
+        val modelRunner = modelDownloader.loadModel(
+            modelSlug = "LFM2-1.2B",
+            quantizationSlug = "Q5_K_M",
+            progress = { progressData ->
+                println("Progress: ${progressData.progress * 100}%")
+            }
+        )
+    }
+    ```
+  </Tab>
+  <Tab title="Swift">
+    On Apple platforms, `LeapModelDownloader` supports background downloads via `NSURLSessionConfiguration`.
+
+    ```swift
+    import LeapModelDownloader
+
+    let downloader = LeapModelDownloader()
+
+    // Download and get manifest
+    let manifest = try await downloader.downloadModel(
+        model: "LFM2-1.2B",
+        quantization: "Q5_K_M"
+    ) { fraction, bytesPerSecond in
+        print("Progress: \(Int(fraction * 100))%")
+    }
+
+    // Query download status
+    let status = await downloader.queryStatus(
+        model: "LFM2-1.2B",
+        quantization: "Q5_K_M"
+    )
+    switch status {
+    case .notOnLocal:
+        print("Model not downloaded")
+    case .downloadInProgress(let progress):
+        print("Downloading: \(Int(progress * 100))%")
+    case .downloaded:
+        print("Model ready")
+    }
+
+    // Remove downloaded model
+    try await downloader.removeModel(
+        model: "LFM2-1.2B",
+        quantization: "Q5_K_M"
+    )
+    ```
+  </Tab>
+</Tabs>
+
+## `Leap.load()` (Swift)
+
+`Leap` is the static entry point for loading models on Apple platforms via the Swift compatibility layer.
+
+### `Leap.load(model:quantization:options:downloadProgressHandler:)`
+
+Download a model from the LEAP Model Library and load it into memory. If already downloaded, it loads from the local cache.
+
+```swift
+public struct Leap {
+  public static func load(
+    model: String,
+    quantization: String,
+    options: LiquidInferenceEngineManifestOptions? = nil,
+    downloadProgressHandler: @escaping (_ progress: Double, _ speed: Int64) -> Void
+  ) async throws -> ModelRunner
+}
+```
+
+| Name | Type | Required | Default | Description |
+|------|------|----------|---------|-------------|
+| `model` | `String` | Yes | - | The model name. See the [LEAP Model Library](https://leap.liquid.ai/models). |
+| `quantization` | `String` | Yes | - | The quantization level. |
+| `options` | `LiquidInferenceEngineManifestOptions` | No | `nil` | Override options for loading (advanced). |
+| `downloadProgressHandler` | `(Double, Int64) -> Void` | No | `nil` | Progress callback (0–1 fraction, bytes/sec). |
+
+**Returns:** [`ModelRunner`](./conversation-generation#modelrunner) instance.
+
+<Accordion title="Legacy: Leap.load(url:options:)">
+  Load a local model file (`.bundle` or `.gguf`) directly:
+
+  ```swift
+  public struct Leap {
+    public static func load(
+      url: URL,
+      options: LiquidInferenceEngineOptions? = nil
+    ) async throws -> ModelRunner
+  }
+  ```
+
+  ```swift
+  // ExecuTorch backend via .bundle
+  let bundleURL = Bundle.main.url(forResource: "qwen3-0_6b", withExtension: "bundle")!
+  let runner = try await Leap.load(url: bundleURL)
+
+  // llama.cpp backend via .gguf
+  let ggufURL = Bundle.main.url(forResource: "qwen3-0_6b", withExtension: "gguf")!
+  let ggufRunner = try await Leap.load(url: ggufURL)
+  ```
+</Accordion>
+
+### `LiquidInferenceEngineOptions`
+
+Override runtime configuration when loading from a local file:
+
+```swift
+public struct LiquidInferenceEngineOptions {
+  public var bundlePath: String
+  public let cacheOptions: LiquidCacheOptions?
+  public let cpuThreads: UInt32?
+  public let contextSize: UInt32?
+  public let nGpuLayers: UInt32?
+  public let mmProjPath: String?
+  public let audioDecoderPath: String?
+  public let chatTemplate: String?
+  public let audioTokenizerPath: String?
+  public let extras: String?
+}
+```
+
+- `cpuThreads`: Number of CPU threads for token generation.
+- `contextSize`: Override maximum context length.
+- `nGpuLayers`: Layers to offload to GPU (macOS/Mac Catalyst with Metal).
+- `mmProjPath`: Auxiliary multimodal projection model path. Leave `nil` to auto-detect `mmproj-*.gguf`.
+- `audioDecoderPath`: Audio decoder model. Leave `nil` to auto-detect.
+
+```swift
+let options = LiquidInferenceEngineOptions(
+  bundlePath: bundleURL.path,
+  cpuThreads: 6,
+  contextSize: 8192
+)
+let runner = try await Leap.load(url: bundleURL, options: options)
+```
+
+## `LeapDownloader` (Cross-Platform)
+
+A lightweight, cross-platform model loader available in the core `leap-sdk` module. Works on all platforms (Android, iOS, macOS, JVM).
+
+```kotlin
+class LeapDownloader(config: LeapDownloaderConfig = LeapDownloaderConfig())
+```
+
+### `loadModel`
+
+Download and load a model. If already cached, loads from the local cache.
+
+| Name | Type | Required | Default | Description |
+|------|------|----------|---------|-------------|
+| `modelSlug` | `String` | Yes | - | The model name. See the [LEAP Model Library](https://leap.liquid.ai/models). |
+| `quantizationSlug` | `String` | Yes | - | The quantization level. |
+| `modelLoadingOptions` | `ModelLoadingOptions` | No | `null` | Options for loading. See [`ModelLoadingOptions`](#modelloadingoptions). |
+| `generationTimeParameters` | `GenerationTimeParameters` | No | `null` | Generation parameters. See [`GenerationTimeParameters`](#generationtimeparameters). |
+| `progress` | `(ProgressData) -> Unit` | No | `{}` | Download progress callback. |
+
+**Returns:** [`ModelRunner`](./conversation-generation#modelrunner) instance.
+
+### `downloadModel`
+
+Download a model without loading it into memory.
+
+| Name | Type | Required | Default | Description |
+|------|------|----------|---------|-------------|
+| `modelSlug` | `String` | Yes | - | The model name. |
+| `quantizationSlug` | `String` | Yes | - | The quantization level. |
+| `progress` | `(ProgressData) -> Unit` | No | `{}` | Download progress callback. |
+
+**Returns:** `Manifest` metadata about the downloaded model.
+
+## Supporting Types
+
+### `LeapDownloaderConfig`
+
+```kotlin
+data class LeapDownloaderConfig(
+    val saveDir: String = "leap_models",
+    val validateSha256: Boolean = true,
+)
+```
+
+### `GenerationTimeParameters`
+
+```kotlin
+data class GenerationTimeParameters(
+    val samplingParameters: SamplingParameters? = null,
+    val numberOfDecodingThreads: Int? = null,
+)
+```
+
+### `SamplingParameters`
+
+```kotlin
+data class SamplingParameters(
+    val temperature: Double? = null,
+    val topP: Double? = null,
+    val minP: Double? = null,
+    val repetitionPenalty: Double? = null,
+)
+```
+
+<Warning>
+LEAP models are trained to perform well with the default parameters from the model manifest. Overriding with `SamplingParameters` can degrade output quality.
+</Warning>
+
+### `ProgressData`
+
+```kotlin
+data class ProgressData(
+    val bytes: Long,
+    val total: Long,
+) {
+    val progress: Float // 0.0 to 1.0
+}
+```
+
+### `Manifest`
+
+```kotlin
+data class Manifest(
+    val schemaVersion: String,
+    val inferenceType: String,
+    val loadTimeParameters: LoadTimeParameters,
+    val generationTimeParameters: GenerationTimeParameters? = null,
+    val originalUrl: String? = null,
+    val pathOnDisk: String? = null,
+)
+```
+
+### `ModelLoadingOptions`
+
+```kotlin
+data class ModelLoadingOptions(
+    var randomSeed: Long? = null,
+    var cpuThreads: Int = 2,
+) {
+    companion object {
+        fun build(action: ModelLoadingOptions.() -> Unit): ModelLoadingOptions
+    }
+}
+```
+
+- `randomSeed`: Set the random seed to reproduce output.
+- `cpuThreads`: Number of threads for generation.
+
+<Accordion title="Legacy: LeapClient">
+  The `LeapClient` class is a legacy entry point. Use `LeapDownloader` or `LeapModelDownloader` instead.
+
+  ```kotlin
+  object LeapClient {
+    suspend fun loadModel(path: String, options: ModelLoadingOptions? = null): ModelRunner
+    suspend fun loadModelAsResult(path: String, options: ModelLoadingOptions? = null): Result<ModelRunner>
+    suspend fun loadModel(bundlePath: String, mmprojPath: String, options: ModelLoadingOptions? = null): ModelRunner
+    suspend fun loadModel(model: AudioGenerationModelDescriptor, options: ModelLoadingOptions? = null): ModelRunner
+  }
+  ```
+</Accordion>

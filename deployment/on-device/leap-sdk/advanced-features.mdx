@@ -1,0 +1,455 @@
+---
+title: "Advanced Features"
+description: "API reference for advanced generation options, constrained generation, and function calling in the LEAP SDK"
+---
+
+## `GenerationOptions`
+
+Tune generation behavior with `GenerationOptions`. Leave a field as `nil` / `null` to fall back to the defaults packaged with the model bundle.
+
+<Tabs>
+
+<Tab title="Kotlin">
+
+```kotlin
+data class GenerationOptions(
+    val temperature: Float? = null,
+    val topP: Float? = null,
+    val minP: Float? = null,
+    val repetitionPenalty: Float? = null,
+    val jsonSchemaConstraint: String? = null,
+    val functionCallParser: LeapFunctionCallParser? = LFMFunctionCallParser(),
+    val injectSchemaIntoPrompt: Boolean = true,
+    val topK: Int? = null,
+    val rngSeed: Long? = null,
+    val enableThinking: Boolean = false,
+)
+```
+
+| Field | Type | Description |
+|---|---|---|
+| `temperature` | `Float?` | Sampling temperature. |
+| `topP` | `Float?` | Nucleus sampling probability mass. |
+| `minP` | `Float?` | Minimum probability threshold. |
+| `repetitionPenalty` | `Float?` | Penalizes repeated tokens. |
+| `jsonSchemaConstraint` | `String?` | JSON schema string for [Constrained Generation](./constrained-generation). |
+| `functionCallParser` | `LeapFunctionCallParser?` | Parser for tool-call tokens. Default is `LFMFunctionCallParser`. Use `HermesFunctionCallParser` for Hermes/Qwen3 formats, or `null` for raw text. |
+| `injectSchemaIntoPrompt` | `Boolean` | Whether to inject the JSON schema into the system prompt. |
+| `topK` | `Int?` | Top-K sampling: only the K most likely tokens are considered. |
+| `rngSeed` | `Long?` | Random number generator seed for reproducible outputs. |
+| `enableThinking` | `Boolean` | Enable the model's thinking/reasoning mode. |
+
+Use `setResponseFormat` to populate `jsonSchemaConstraint` from a `@Generatable`-annotated data class:
+
+```kotlin
+val options = GenerationOptions(temperature = 0.6f, topP = 0.9f)
+    .apply { setResponseFormat(CityFact::class) }
+
+conversation.generateResponse(
+    message = user,
+    generationOptions = options,
+).collect { response ->
+    // Handle structured output
+}
+```
+
+</Tab>
+
+<Tab title="Swift">
+
+```swift
+public struct GenerationOptions {
+    public var temperature: Float?
+    public var topP: Float?
+    public var minP: Float?
+    public var repetitionPenalty: Float?
+    public var jsonSchemaConstraint: String?
+    public var functionCallParser: LeapFunctionCallParserProtocol?
+    public var topK: Int?
+    public var rngSeed: UInt64?
+    public var enableThinking: Bool
+    public var maxOutputTokens: UInt32?
+    public var sequenceLength: UInt32?
+    public var cacheControl: CacheControl?
+
+    public init(
+        temperature: Float? = nil,
+        topP: Float? = nil,
+        minP: Float? = nil,
+        repetitionPenalty: Float? = nil,
+        jsonSchemaConstraint: String? = nil,
+        functionCallParser: LeapFunctionCallParserProtocol? = LFMFunctionCallParser(),
+        topK: Int? = nil,
+        rngSeed: UInt64? = nil,
+        enableThinking: Bool = false,
+        maxOutputTokens: UInt32? = nil,
+        sequenceLength: UInt32? = nil,
+        cacheControl: CacheControl? = nil
+    )
+}
+```
+
+| Field | Type | Description |
+|---|---|---|
+| `temperature` | `Float?` | Sampling temperature. |
+| `topP` | `Float?` | Nucleus sampling probability mass. |
+| `minP` | `Float?` | Minimum probability threshold. |
+| `repetitionPenalty` | `Float?` | Penalizes repeated tokens. |
+| `jsonSchemaConstraint` | `String?` | JSON schema string for [Constrained Generation](./constrained-generation). |
+| `functionCallParser` | `LeapFunctionCallParserProtocol?` | Parser for tool-call tokens. Default is `LFMFunctionCallParser`. Use `HermesFunctionCallParser()` for Hermes/Qwen3 formats, or `nil` for raw text. |
+| `topK` | `Int?` | Top-K sampling: only the K most likely tokens are considered. |
+| `rngSeed` | `UInt64?` | Random number generator seed for reproducible outputs. |
+| `enableThinking` | `Bool` | Enable the model's thinking/reasoning mode. |
+| `maxOutputTokens` | `UInt32?` | Maximum number of tokens to generate. |
+| `sequenceLength` | `UInt32?` | Total sequence length (prompt + output). |
+| `cacheControl` | `CacheControl?` | Controls KV-cache behavior for the session. |
+
+Use `setResponseFormat(type:)` to populate `jsonSchemaConstraint` from a type annotated with the `@Generatable` macro:
+
+```swift
+extension GenerationOptions {
+    public mutating func setResponseFormat<T: GeneratableType>(type: T.Type) throws {
+        self.jsonSchemaConstraint = try JSONSchemaGenerator.getJSONSchema(for: type)
+    }
+}
+```
+
+```swift
+var options = GenerationOptions(temperature: 0.6, topP: 0.9)
+try options.setResponseFormat(type: CityFact.self)
+
+for try await response in conversation.generateResponse(
+    message: user,
+    generationOptions: options
+) {
+    // Handle structured output
+}
+```
+
+</Tab>
+
+</Tabs>
+
+## Constrained Generation Utilities
+
+For full usage details, see the [Constrained Generation](./constrained-generation) guide.
+
+### `JSONSchemaGenerator`
+
+Generates a JSON schema string from a `@Generatable`-annotated type. This schema is passed to `GenerationOptions.jsonSchemaConstraint` to activate constrained generation.
+
+<Tabs>
+
+<Tab title="Kotlin">
+
+```kotlin
+package ai.liquid.leap.structuredoutput
+
+object JSONSchemaGenerator {
+    @Throws(LeapGeneratableSchematizationException::class)
+    fun <T : Any> getJSONSchema(
+        klass: KClass<T>,
+        indentSpaces: Int? = null,
+    ): String
+}
+```
+
+- `klass` -- the Kotlin class object created from `T::class`. It must be a data class annotated with `@Generatable`.
+- `indentSpaces` -- a non-null value will format the JSON output into a pretty style with the given indent spaces.
+
+If the data class cannot be supported or any other issue blocks JSON schema generation, a `LeapGeneratableSchematizationException` is thrown.
+
+</Tab>
+
+<Tab title="Swift">
+
+```swift
+public enum JSONSchemaGenerator {
+    public static func getJSONSchema<T: GeneratableType>(for type: T.Type) throws -> String
+}
+```
+
+Pass the result directly to `GenerationOptions.jsonSchemaConstraint` or use the convenience method `setResponseFormat(type:)`.
+
+</Tab>
+
+</Tabs>
+
+### `GeneratableFactory`
+
+Deserializes a JSON object into an instance of a `@Generatable`-annotated type. Available on all platforms (commonMain).
+
+<Tabs>
+
+<Tab title="Kotlin">
+
+```kotlin
+package ai.liquid.leap.structuredoutput
+
+object GeneratableFactory {
+    @Throws(LeapGeneratableDeserializationException::class)
+    fun <T : Any> createFromJSONObject(
+        jsonObject: JSONObject,
+        klass: KClass<T>,
+    ): T
+
+    @Throws(LeapGeneratableDeserializationException::class)
+    inline fun <reified T : Any> createFromJSONObject(jsonObject: JSONObject): T {
+        return createFromJSONObject(jsonObject, T::class)
+    }
+}
+```
+
+The single-parameter version can be called when the return type can be inferred from context. It is a convenience wrapper around the full version.
+
+- `jsonObject` -- the JSON object used as the data source for creating the generatable data class instance.
+- `klass` -- the Kotlin class object created from `T::class`. It must be a data class annotated with `@Generatable`.
+
+</Tab>
+
+<Tab title="Swift">
+
+On Swift, constrained generation output is decoded using standard `Codable` conformance synthesized by the `@Generatable` macro. Use `JSONDecoder` to create instances from JSON data returned by the model.
+
+```swift
+let decoder = JSONDecoder()
+let cityFact = try decoder.decode(CityFact.self, from: jsonData)
+```
+
+</Tab>
+
+</Tabs>
+
+### Annotations
+
+<Tabs>
+
+<Tab title="Kotlin">
+
+```kotlin
+package ai.liquid.leap.structuredoutput
+
+@Target(AnnotationTarget.CLASS)
+annotation class Generatable(val description: String)
+
+@Target(AnnotationTarget.PROPERTY)
+annotation class Guide(val description: String)
+```
+
+- `@Generatable` marks a data class for use as a generation constraint.
+- `@Guide` adds a human-readable description to a field, helping the model produce accurate values.
+
+</Tab>
+
+<Tab title="Swift">
+
+```swift
+@attached(member, conformances: GeneratableType)
+public macro Generatable(description: String)
+
+@attached(peer)
+public macro Guide(description: String)
+```
+
+- `@Generatable` marks a struct for constrained generation and synthesizes `GeneratableType` conformance.
+- `@Guide` adds a description to a property to guide the model's output.
+
+</Tab>
+
+</Tabs>
+
+## Function Calling Types
+
+For full usage details, see the [Function Calling](./function-calling) guide.
+
+### `LeapFunction`
+
+Describes the signature of a function that can be called by the model.
+
+<Tabs>
+
+<Tab title="Kotlin">
+
+```kotlin
+data class LeapFunction(
+    val name: String,
+    val description: String,
+    val parameters: List<LeapFunctionParameter>,
+)
+```
+
+</Tab>
+
+<Tab title="Swift">
+
+```swift
+public struct LeapFunction {
+    public let name: String
+    public let description: String
+    public let parameters: [LeapFunctionParameter]
+}
+```
+
+</Tab>
+
+</Tabs>
+
+- `name` -- name of the function.
+- `description` -- a human- and LLM-readable description of the function.
+- `parameters` -- the list of parameters accepted by the function.
+
+### `LeapFunctionParameter`
+
+Describes the signature of a parameter in a function.
+
+<Tabs>
+
+<Tab title="Kotlin">
+
+```kotlin
+data class LeapFunctionParameter(
+    val name: String,
+    val type: LeapFunctionParameterType,
+    val description: String,
+    val optional: Boolean = false,
+)
+```
+
+</Tab>
+
+<Tab title="Swift">
+
+```swift
+public struct LeapFunctionParameter {
+    public let name: String
+    public let type: LeapFunctionParameterType
+    public let description: String
+    public let optional: Bool
+}
+```
+
+</Tab>
+
+</Tabs>
+
+- `name` -- name of the parameter.
+- `type` -- data type of the parameter.
+- `description` -- a human- and LLM-readable description of the parameter.
+- `optional` -- whether this parameter is optional.
+
+### `LeapFunctionParameterType`
+
+Represents a data type for function parameters. All types must be valid [JSON Schema](https://json-schema.org/) types.
+
+<Tabs>
+
+<Tab title="Kotlin">
+
+```kotlin
+sealed class LeapFunctionParameterType(description: kotlin.String? = null) {
+    val description: kotlin.String? = description
+
+    class String(val enumValues: List<kotlin.String>? = null, description: kotlin.String? = null)
+    class Number(val enumValues: List<kotlin.Number>? = null, description: kotlin.String? = null)
+    class Integer(val enumValues: List<Int>? = null, description: kotlin.String? = null)
+    class Boolean(description: kotlin.String? = null)
+    class Null
+    class Array(val itemType: LeapFunctionParameterType, description: kotlin.String? = null)
+    class Object(
+        val properties: Map<kotlin.String, LeapFunctionParameterType>,
+        val required: List<kotlin.String> = listOf(),
+        description: kotlin.String? = null,
+    )
+}
+```
+
+</Tab>
+
+<Tab title="Swift">
+
+```swift
+public indirect enum LeapFunctionParameterType: Codable, Equatable {
+    case string(StringType)
+    case number(NumberType)
+    case integer(IntegerType)
+    case boolean(BooleanType)
+    case array(ArrayType)
+    case object(ObjectType)
+    case null(NullType)
+}
+```
+
+</Tab>
+
+</Tabs>
+
+| Variant | Description |
+|---|---|
+| `String` | A string literal. `enumValues` restricts accepted values. |
+| `Number` | A number (integer or floating point). `enumValues` restricts accepted values. |
+| `Integer` | An integer literal. `enumValues` restricts accepted values. |
+| `Boolean` | A boolean literal. |
+| `Null` | Accepts only null. |
+| `Array` | An array. `itemType` describes the element type. |
+| `Object` | An object. `properties` maps property names to types; `required` lists mandatory properties. |
+
+### `LeapFunctionCall`
+
+Describes a function call request generated by the model.
+
+<Tabs>
+
+<Tab title="Kotlin">
+
+```kotlin
+data class LeapFunctionCall(
+    val name: String,
+    val arguments: Map<String, Any?>,
+)
+```
+
+</Tab>
+
+<Tab title="Swift">
+
+```swift
+public struct LeapFunctionCall {
+    public let name: String
+    public let arguments: [String: Any]
+}
+```
+
+</Tab>
+
+</Tabs>
+
+- `name` -- name of the function to be called.
+- `arguments` -- the arguments for the call. Values can be strings, numbers, booleans, null, lists (arrays), or maps/dictionaries (objects).
+
+### Function Call Parsers
+
+Function call parsers convert raw tool-call tokens from the model into `LeapFunctionCall` instances.
+
+<Tabs>
+
+<Tab title="Kotlin">
+
+Two built-in implementations of `LeapFunctionCallParser`:
+
+- **`LFMFunctionCallParser`** -- parses Liquid Foundation Model (LFM2) Pythonic function calls. This is the default.
+- **`HermesFunctionCallParser`** -- parses Hermes/Qwen3 function calling format.
+
+</Tab>
+
+<Tab title="Swift">
+
+Two built-in implementations of `LeapFunctionCallParserProtocol`:
+
+- **`LFMFunctionCallParser`** -- parses Liquid Foundation Model (LFM2) Pythonic function calls. This is the default.
+- **`HermesFunctionCallParser`** -- parses Hermes/Qwen3 function calling format.
+
+</Tab>
+
+</Tabs>
+
+Set the parser to `nil` / `null` in `GenerationOptions` to receive raw tool-call text instead.
