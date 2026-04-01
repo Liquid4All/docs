@@ -261,7 +261,8 @@
             "group": "Model Customization",
             "icon": "sliders",
             "pages": [
-              "examples/customize-models/car-maker-identification"
+              "examples/customize-models/car-maker-identification",
+              "examples/customize-models/home-assistant"
             ]
           }
         ]
