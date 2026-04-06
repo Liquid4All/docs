@@ -18,6 +18,7 @@ model = AutoModelForImageTextToText.from_pretrained(
     device_map="auto",
     dtype="bfloat16",
 )
+
 processor = AutoProcessor.from_pretrained(model_id)
 
 url = "https://cdn.britannica.com/61/93061-050-99147DCE/Statue-of-Liberty-Island-New-York-Bay.jpg"
