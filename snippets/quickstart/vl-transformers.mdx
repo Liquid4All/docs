@@ -3,17 +3,9 @@ export const VlTransformers = ({ modelId }) => (
 <p><strong>Install:</strong></p>
 <pre className="shiki shiki-themes github-light github-dark" style={{backgroundColor: '#fff', '--shiki-dark-bg': '#24292e', color: '#24292e', '--shiki-dark': '#e1e4e8'}} language="bash">
 <code language="bash">
-{`pip install "transformers>=5.0.0" pillow torch`.split('\n').map((line, i) => <span key={i} className="line">{line}{'\n'}</span>)}
+{`pip install "transformers>=5.2.0" pillow torch`.split('\n').map((line, i) => <span key={i} className="line">{line}{'\n'}</span>)}
 </code>
 </pre>
-<Note>
-Transformers v5 is newly released. If you encounter issues, fall back to the pinned git source:
-<pre className="shiki shiki-themes github-light github-dark" style={{backgroundColor: '#fff', '--shiki-dark-bg': '#24292e', color: '#24292e', '--shiki-dark': '#e1e4e8', marginTop: '0.5rem'}} language="bash">
-<code language="bash">
-{`pip install git+https://github.com/huggingface/transformers.git@3c2517727ce28a30f5044e01663ee204deb1cdbe pillow torch`.split('\n').map((line, i) => <span key={i} className="line">{line}{'\n'}</span>)}
-</code>
-</pre>
-</Note>
 <p><strong>Download & Run:</strong></p>
 <pre className="shiki shiki-themes github-light github-dark" style={{backgroundColor: '#fff', '--shiki-dark-bg': '#24292e', color: '#24292e', '--shiki-dark': '#e1e4e8'}} language="python">
 <code language="python">
@@ -26,9 +18,6 @@ model = AutoModelForImageTextToText.from_pretrained(
     device_map="auto",
     dtype="bfloat16",
 )
-# IMPORTANT: tie lm_head to input embeddings (transformers v5 bug)
-model.lm_head.weight = model.get_input_embeddings().weight
-
 processor = AutoProcessor.from_pretrained(model_id)
 
 url = "https://cdn.britannica.com/61/93061-050-99147DCE/Statue-of-Liberty-Island-New-York-Bay.jpg"
