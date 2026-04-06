@@ -180,30 +180,17 @@ for chunk in stream:
 
 ## Vision Models
 
-<Warning>
-vLLM support for LFM Vision Models requires a specific version that includes changes not yet merged upstream. You must install vLLM from a custom source to use vision models. See installation instructions below.
-</Warning>
-
 ### Installation for Vision Models
 
-To use LFM Vision Models with vLLM, install the precompiled wheel along with the required transformers version:
+To use LFM Vision Models with vLLM, install the required versions:
 
 ```bash
-VLLM_PRECOMPILED_WHEEL_COMMIT=72506c98349d6bcd32b4e33eec7b5513453c1502 VLLM_USE_PRECOMPILED=1 uv pip install git+https://github.com/vllm-project/vllm.git
+uv pip install vllm==0.19.0
 ```
 
 ```bash
-uv pip install "transformers>=5.0.0" pillow
+uv pip install transformers==5.5.0 pillow
 ```
-
-<Note>
-Transformers v5 is newly released. If you encounter issues, fall back to the pinned git source:
-```bash
-uv pip install git+https://github.com/huggingface/transformers.git@3c2517727ce28a30f5044e01663ee204deb1cdbe pillow
-```
-</Note>
-
-This installs vLLM with the necessary changes for LFM Vision Model support. Once these changes are merged upstream, you'll be able to use the standard vLLM installation.
 
 ### Basic Usage
 
