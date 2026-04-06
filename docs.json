@@ -61,7 +61,8 @@
             "icon": "rocket",
             "pages": [
               "lfm/getting-started/welcome",
-              "lfm/getting-started/connect-ai-tools"
+              "lfm/getting-started/connect-ai-tools",
+              "lfm/getting-started/model-license"
             ]
           },
           {
