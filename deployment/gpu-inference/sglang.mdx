@@ -14,7 +14,7 @@ SGLang requires a CUDA-compatible GPU. For CPU-only environments, consider using
 | Model Type | Status | Examples |
 | --- | --- | --- |
 | Dense text models | Supported | LFM2-350M, LFM2.5-1.2B-Instruct, LFM2-2.6B |
-| MoE text models | Supported | LFM2-8B-A1B |
+| MoE text models | Supported | LFM2-8B-A1B, LFM2-24B-A2B |
 | Vision models | Supported | LFM2-VL-450M, LFM2-VL-3B, LFM2.5-VL-1.6B |
 
 <Note>
@@ -121,7 +121,8 @@ Launch a vision-language model:
 sglang serve \
     --model-path LiquidAI/LFM2.5-VL-1.6B \
     --host 0.0.0.0 \
-    --port 30000
+    --port 30000 \
+    --tool-call-parser lfm2
 ```
 
 Query with an image:
