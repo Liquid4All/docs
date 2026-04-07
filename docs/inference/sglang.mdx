@@ -14,29 +14,21 @@ SGLang requires a CUDA-compatible GPU. For CPU-only environments, consider using
 | Model Type | Status | Examples |
 | --- | --- | --- |
 | Dense text models | Supported | LFM2-350M, LFM2.5-1.2B-Instruct, LFM2-2.6B |
-| MoE text models | Coming in 0.5.9 | LFM2-8B-A1B |
-| Vision models | Not yet supported | LFM2-VL |
+| MoE text models | Supported | LFM2-8B-A1B |
+| Vision models | Supported | LFM2-VL-450M, LFM2-VL-3B, LFM2.5-VL-1.6B |
 
 <Note>
-MoE model support has been merged into SGLang but is not yet included in a stable release — [install from main](#install-from-main-moe-support) to use MoE models now. Vision models are not yet supported in SGLang — use [Transformers](/docs/inference/transformers) for vision workloads.
+All LFM model types are supported as of SGLang v0.5.10.
 </Note>
 
 ## Installation
 
-Install SGLang following the [official installation guide](https://docs.sglang.io/get_started/install_sglang.html). The recommended method is (requires `sglang>=0.5.8`):
+Install SGLang following the [official installation guide](https://docs.sglang.io/get_started/install_sglang.html). The recommended method is (requires `sglang>=0.5.10`):
 
 ```bash
 pip install --upgrade pip
 pip install uv
-uv pip install "sglang>=0.5.8"
-```
-
-### Install from Main (MoE Support)
-
-To use MoE models (e.g., LFM2-8B-A1B) before the 0.5.9 release, install SGLang from the main branch:
-
-```bash
-uv pip install "sglang @ git+https://github.com/sgl-project/sglang.git@main#subdirectory=python"
+uv pip install "sglang>=0.5.10"
 ```
 
 ## Launching the Server
@@ -48,7 +40,7 @@ By default the model runs in bfloat16. To use float16 instead, add `--dtype floa
 <Tabs>
   <Tab title="Python">
     ```bash
-    python3 -m sglang.launch_server \
+    sglang serve \
         --model-path LiquidAI/LFM2.5-1.2B-Instruct \
         --host 0.0.0.0 \
         --port 30000 \
@@ -57,9 +49,9 @@ By default the model runs in bfloat16. To use float16 instead, add `--dtype floa
   </Tab>
 
   <Tab title="Docker">
-    Dense LFM models work with any recent SGLang Docker tag. For MoE models (e.g., LFM2-8B-A1B), use the `dev` tag as MoE support is not yet in a stable release.
+    All LFM model types (dense, MoE, vision) are supported in the `v0.5.10` tag and later.
 
-    * For CUDA 13 environments (B300/GB300), use `lmsysorg/sglang:dev-cu13`
+    * For CUDA 13 environments (B300/GB300), use `lmsysorg/sglang:v0.5.10-cu13`
     * The `HF_TOKEN` env var is optional, but can speed up downloads and reduce retry errors. We recommend a read-only Hugging Face token for reliability.
 
     ```bash
@@ -69,8 +61,8 @@ By default the model runs in bfloat16. To use float16 instead, add `--dtype floa
         -v ~/.cache/huggingface:/root/.cache/huggingface \
         --env "HF_TOKEN=<secret>" \
         --ipc=host \
-        lmsysorg/sglang:dev \
-        python3 -m sglang.launch_server \
+        lmsysorg/sglang:v0.5.10 \
+        sglang serve \
             --model-path LiquidAI/LFM2.5-1.2B-Instruct \
             --host 0.0.0.0 \
             --port 30000 \
@@ -121,6 +113,40 @@ print(response.choices[0].message)
 
 For more details on tool use with LFM models, see [Tool Use](/docs/key-concepts/tool-use).
 
+### Vision Models
+
+Launch a vision-language model:
+
+```bash
+sglang serve \
+    --model-path LiquidAI/LFM2.5-VL-1.6B \
+    --host 0.0.0.0 \
+    --port 30000
+```
+
+Query with an image:
+
+```python
+from openai import OpenAI
+
+client = OpenAI(base_url="http://localhost:30000/v1", api_key="None")
+
+response = client.chat.completions.create(
+    model="LiquidAI/LFM2.5-VL-1.6B",
+    messages=[{
+        "role": "user",
+        "content": [
+            {"type": "image_url", "image_url": {"url": "http://images.cocodataset.org/val2017/000000039769.jpg"}},
+            {"type": "text", "text": "Describe what you see in this image."},
+        ],
+    }],
+    temperature=0.0,
+    max_tokens=256,
+)
+
+print(response.choices[0].message.content)
+```
+
 <Accordion title="Curl request example">
   ```bash
   curl http://localhost:30000/v1/chat/completions \
@@ -149,7 +175,7 @@ Key flags for low latency:
 * `--chunked-prefill-size -1`: Disables chunked prefill, processing the full prompt in one pass. This lowers TTFT at the cost of slightly reduced throughput under high concurrency.
 
 ```bash
-python3 -m sglang.launch_server \
+sglang serve \
     --model-path LiquidAI/LFM2.5-1.2B-Instruct \
     --host 0.0.0.0 \
     --port 30000 \
@@ -167,8 +193,8 @@ docker run --gpus all \
     -v ~/.cache/huggingface:/root/.cache/huggingface \
     --env "HF_TOKEN=<secret>" \
     --ipc=host \
-    lmsysorg/sglang:dev-cu13 \
-    python3 -m sglang.launch_server \
+    lmsysorg/sglang:v0.5.10-cu13 \
+    sglang serve \
         --model-path LiquidAI/LFM2.5-1.2B-Instruct \
         --host 0.0.0.0 \
         --port 30000 \
