@@ -5,6 +5,7 @@ description: "1.2B parameter model (deprecated - use LFM2.5-1.2B-Instruct instea
 
 import { TextTransformers } from "/snippets/quickstart/text-transformers.mdx";
 import { TextVllm } from "/snippets/quickstart/text-vllm.mdx";
+import { TextSglang } from "/snippets/quickstart/text-sglang.mdx";
 import { TextLlamacpp } from "/snippets/quickstart/text-llamacpp.mdx";
 
 <a href="/docs/models/text-models" className="back-button">← Back to Text Models</a>
@@ -41,5 +42,8 @@ LFM2-1.2B was the original 1.2B parameter model in the LFM2 series. It has been 
   </Tab>
   <Tab title="vLLM">
     <TextVllm modelId="LiquidAI/LFM2-1.2B"></TextVllm>
+  </Tab>
+  <Tab title="SGLang">
+    <TextSglang modelId="LiquidAI/LFM2-1.2B" toolCallParser="lfm2"></TextSglang>
   </Tab>
 </Tabs>
