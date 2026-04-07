@@ -1,0 +1,42 @@
+export const TextSglang = ({ modelId, toolCallParser }) => (
+<div>
+<p><strong>Install:</strong></p>
+<pre className="shiki shiki-themes github-light github-dark" style={{backgroundColor: '#fff', '--shiki-dark-bg': '#24292e', color: '#24292e', '--shiki-dark': '#e1e4e8'}} language="bash">
+<code language="bash">
+{`uv pip install "sglang>=0.5.10"`.split('\n').map((line, i) => <span key={i} className="line">{line}{'\n'}</span>)}
+</code>
+</pre>
+<p><strong>Launch server:</strong></p>
+<pre className="shiki shiki-themes github-light github-dark" style={{backgroundColor: '#fff', '--shiki-dark-bg': '#24292e', color: '#24292e', '--shiki-dark': '#e1e4e8'}} language="bash">
+<code language="bash">
+{(toolCallParser
+  ? `sglang serve \\
+    --model-path ${modelId} \\
+    --host 0.0.0.0 \\
+    --port 30000 \\
+    --tool-call-parser ${toolCallParser}`
+  : `sglang serve \\
+    --model-path ${modelId} \\
+    --host 0.0.0.0 \\
+    --port 30000`
+).split('\n').map((line, i) => <span key={i} className="line">{line}{'\n'}</span>)}
+</code>
+</pre>
+<p><strong>Query (OpenAI-compatible):</strong></p>
+<pre className="shiki shiki-themes github-light github-dark" style={{backgroundColor: '#fff', '--shiki-dark-bg': '#24292e', color: '#24292e', '--shiki-dark': '#e1e4e8'}} language="python">
+<code language="python">
+{`from openai import OpenAI
+
+client = OpenAI(base_url="http://localhost:30000/v1", api_key="None")
+
+response = client.chat.completions.create(
+    model="${modelId}",
+    messages=[{"role": "user", "content": "What is machine learning?"}],
+    temperature=0.3,
+)
+
+print(response.choices[0].message.content)`.split('\n').map((line, i) => <span key={i} className="line">{line}{'\n'}</span>)}
+</code>
+</pre>
+</div>
+);
