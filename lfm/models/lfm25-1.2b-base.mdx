@@ -90,4 +90,36 @@ LFM2.5-1.2B-Base is the pre-trained foundation model for the LFM2.5 series. Idea
     print(output[0].outputs[0].text)
     ```
   </Tab>
+
+  <Tab title="SGLang">
+    **Install:**
+    ```bash
+    uv pip install "sglang>=0.5.10"
+    ```
+
+    **Launch server:**
+    ```bash
+    sglang serve \
+        --model-path LiquidAI/LFM2.5-1.2B-Base \
+        --host 0.0.0.0 \
+        --port 30000
+    ```
+
+    **Query (OpenAI-compatible):**
+    ```python
+    from openai import OpenAI
+
+    client = OpenAI(base_url="http://localhost:30000/v1", api_key="None")
+
+    # Base model uses raw text completion (not chat)
+    response = client.completions.create(
+        model="LiquidAI/LFM2.5-1.2B-Base",
+        prompt="The future of AI is",
+        temperature=0.8,
+        max_tokens=512,
+    )
+
+    print(response.choices[0].text)
+    ```
+  </Tab>
 </Tabs>

@@ -5,6 +5,7 @@ description: "Instruction-tuned 1.2B parameter model optimized for chat and gene
 
 import { TextTransformers } from "/snippets/quickstart/text-transformers.mdx";
 import { TextVllm } from "/snippets/quickstart/text-vllm.mdx";
+import { TextSglang } from "/snippets/quickstart/text-sglang.mdx";
 import { TextLlamacpp } from "/snippets/quickstart/text-llamacpp.mdx";
 
 <a href="/lfm/models/text-models" className="back-button">← Back to Text Models</a>
@@ -55,5 +56,8 @@ LFM2.5-1.2B-Instruct is Liquid AI's flagship instruction-tuned model, delivering
   </Tab>
   <Tab title="vLLM">
     <TextVllm modelId="LiquidAI/LFM2.5-1.2B-Instruct" samplingParams="temperature=0.1, top_k=50, repetition_penalty=1.05, "></TextVllm>
+  </Tab>
+  <Tab title="SGLang">
+    <TextSglang modelId="LiquidAI/LFM2.5-1.2B-Instruct" toolCallParser="lfm2"></TextSglang>
   </Tab>
 </Tabs>

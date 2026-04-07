@@ -5,6 +5,7 @@ description: "Highly capable 2.6B parameter model for deployment on most phones 
 
 import { TextTransformers } from "/snippets/quickstart/text-transformers.mdx";
 import { TextVllm } from "/snippets/quickstart/text-vllm.mdx";
+import { TextSglang } from "/snippets/quickstart/text-sglang.mdx";
 import { TextLlamacpp } from "/snippets/quickstart/text-llamacpp.mdx";
 
 <a href="/lfm/models/text-models" className="back-button">← Back to Text Models</a>
@@ -55,5 +56,8 @@ LFM2-2.6B is a versatile mid-sized model delivering strong performance across ch
   </Tab>
   <Tab title="vLLM">
     <TextVllm modelId="LiquidAI/LFM2-2.6B" samplingParams="temperature=0.3, min_p=0.15, repetition_penalty=1.05, "></TextVllm>
+  </Tab>
+  <Tab title="SGLang">
+    <TextSglang modelId="LiquidAI/LFM2-2.6B" toolCallParser="lfm2"></TextSglang>
   </Tab>
 </Tabs>
