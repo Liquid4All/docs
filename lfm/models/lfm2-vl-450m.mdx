@@ -5,6 +5,7 @@ description: "Compact 450M vision-language model for edge deployment and fast in
 
 import { VlTransformers } from "/snippets/quickstart/vl-transformers.mdx";
 import { VlVllm } from "/snippets/quickstart/vl-vllm.mdx";
+import { VlSglang } from "/snippets/quickstart/vl-sglang.mdx";
 import { VlLlamacpp } from "/snippets/quickstart/vl-llamacpp.mdx";
 
 <a href="/lfm/models/vision-models" className="back-button">← Back to Vision Models</a>
@@ -52,6 +53,9 @@ LFM2-VL-450M is Liquid AI's smallest vision-language model, designed for edge de
   </Tab>
   <Tab title="vLLM">
     <VlVllm modelId="LiquidAI/LFM2-VL-450M"></VlVllm>
+  </Tab>
+  <Tab title="SGLang">
+    <VlSglang modelId="LiquidAI/LFM2-VL-450M"></VlSglang>
   </Tab>
   <Tab title="llama.cpp">
     <VlLlamacpp ggufRepo="LiquidAI/LFM2-VL-450M-GGUF" samplingFlags="--temp 0.1 --min-p 0.15 --repeat-penalty 1.05"></VlLlamacpp>

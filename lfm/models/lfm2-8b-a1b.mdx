@@ -5,6 +5,7 @@ description: "8B parameter Mixture-of-Experts model with 1.5B active parameters 
 
 import { TextTransformers } from "/snippets/quickstart/text-transformers.mdx";
 import { TextVllm } from "/snippets/quickstart/text-vllm.mdx";
+import { TextSglang } from "/snippets/quickstart/text-sglang.mdx";
 import { TextLlamacpp } from "/snippets/quickstart/text-llamacpp.mdx";
 
 <a href="/lfm/models/text-models" className="back-button">← Back to Text Models</a>
@@ -55,5 +56,8 @@ LFM2-8B-A1B is Liquid AI's Mixture-of-Experts model, combining 8B total paramete
   </Tab>
   <Tab title="vLLM">
     <TextVllm modelId="LiquidAI/LFM2-8B-A1B" samplingParams="temperature=0.3, min_p=0.15, repetition_penalty=1.05, "></TextVllm>
+  </Tab>
+  <Tab title="SGLang">
+    <TextSglang modelId="LiquidAI/LFM2-8B-A1B" toolCallParser="lfm2"></TextSglang>
   </Tab>
 </Tabs>
