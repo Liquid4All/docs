@@ -24,13 +24,8 @@ We use [uv](https://docs.astral.sh/uv/#installation) to manage packages across a
 Install the required dependencies:
 
 ```bash
-uv pip install "transformers>=5.0.0" torch accelerate
+uv pip install "transformers>=5.2.0" torch accelerate
 ```
-
-> **Note:** Transformers v5 is newly released. If you encounter issues, fall back to the pinned git source:
-> ```bash
-> uv pip install git+https://github.com/huggingface/transformers.git@0c9a72e4576fe4c84077f066e585129c97bfd4e6 torch accelerate
-> ```
 
 GPU is recommended for faster inference.
 
@@ -215,9 +210,6 @@ model = AutoModelForImageTextToText.from_pretrained(
     device_map="auto",
     dtype="bfloat16"
 )
-# IMPORTANT: tie lm_head to input embeddings (transformers v5 bug)
-model.lm_head.weight = model.get_input_embeddings().weight
-
 processor = AutoProcessor.from_pretrained(model_id)
 
 # Load image and create conversation

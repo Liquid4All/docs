@@ -53,10 +53,8 @@
 
 | Dependency | Version | Reason |
 |-----------|---------|--------|
-| transformers | `>=5.0.0` | VL models require v5; standard models work with v5 too |
-| transformers (git fallback) | `3c2517727ce28a30f5044e01663ee204deb1cdbe` | For VL if v5 has issues |
-| vLLM | `==0.14` | Latest stable with LFM support |
-| vLLM (VL custom wheel) | commit `72506c98349d6bcd32b4e33eec7b5513453c1502` | VL support not yet upstream |
+| transformers | `>=5.2.0` | VL models require v5; standard models work with v5 too |
+| vLLM | `==0.19.0` | Latest stable with LFM support (text and vision) |
 | llama.cpp | Latest via `brew install` or b7075+ binaries | |
 
 ## Known Limitations

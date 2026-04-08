@@ -1,7 +1,7 @@
 {
   "$schema": "https://mintlify.com/docs.json",
   "banner": {
-    "content": "🚀 New: LFM2-24B-A2B — our largest model is now available! [Learn more →](/lfm/models/lfm2-24b-a2b)",
+    "content": "🚀 New: LFM2.5-VL-450M — our smallest vision model is now available! [Learn more →](/lfm/models/lfm25-vl-450m)",
     "dismissible": true
   },
   "theme": "mint",
@@ -61,7 +61,8 @@
             "icon": "rocket",
             "pages": [
               "lfm/getting-started/welcome",
-              "lfm/getting-started/connect-ai-tools"
+              "lfm/getting-started/connect-ai-tools",
+              "lfm/getting-started/model-license"
             ]
           },
           {
