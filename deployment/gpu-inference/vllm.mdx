@@ -17,11 +17,24 @@ vLLM offers significantly higher throughput than [Transformers](/deployment/gpu-
 
 ## Installation
 
-You need to install [`vLLM`](https://github.com/vllm-project/vllm) v0.14 or a more recent version:
+<Tabs>
+  <Tab title="pip">
+    Install [`vLLM`](https://github.com/vllm-project/vllm) v0.14 or a more recent version:
 
-```bash
-uv pip install vllm==0.14
-```
+    ```bash
+    uv pip install vllm==0.14
+    ```
+  </Tab>
+  <Tab title="Docker">
+    vLLM provides a prebuilt Docker image that serves an OpenAI-compatible API:
+
+    ```bash
+    docker pull vllm/vllm-openai:latest
+    ```
+
+    This image requires NVIDIA GPU access. See the [OpenAI-Compatible Server](#openai-compatible-server) section below for the full `docker run` command.
+  </Tab>
+</Tabs>
 
 ## Basic Usage
 
@@ -108,19 +121,42 @@ for i, output in enumerate(outputs):
 
 ## OpenAI-Compatible Server
 
-vLLM can serve models through an OpenAI-compatible API, allowing you to use existing OpenAI client libraries:
+vLLM can serve models through an OpenAI-compatible API, allowing you to use existing OpenAI client libraries.
 
-```bash
-vllm serve LiquidAI/LFM2.5-1.2B-Instruct \
-    --host 0.0.0.0 \
-    --port 8000 \
-    --dtype auto
-```
+<Tabs>
+  <Tab title="vllm serve">
+    ```bash
+    vllm serve LiquidAI/LFM2.5-1.2B-Instruct \
+        --host 0.0.0.0 \
+        --port 8000 \
+        --dtype auto
+    ```
 
-Optional parameters:
+    Optional parameters:
 
-* `--max-model-len L`: Set maximum context length
-* `--gpu-memory-utilization 0.9`: Set GPU memory usage (0.0-1.0)
+    * `--max-model-len L`: Set maximum context length
+    * `--gpu-memory-utilization 0.9`: Set GPU memory usage (0.0-1.0)
+  </Tab>
+  <Tab title="Docker">
+    ```bash
+    docker run --runtime nvidia --gpus all \
+        -v ~/.cache/huggingface:/root/.cache/huggingface \
+        --env "HF_TOKEN=$HF_TOKEN" \
+        -p 8000:8000 \
+        --ipc=host \
+        vllm/vllm-openai:latest \
+        --model LiquidAI/LFM2.5-1.2B-Instruct
+    ```
+
+    Key flags:
+    * `--runtime nvidia --gpus all`: GPU access (required)
+    * `--ipc=host`: Shared memory for tensor parallelism
+    * `-v ~/.cache/huggingface:/root/.cache/huggingface`: Cache models on host
+    * `HF_TOKEN`: Set this env var if using gated models
+
+    **Note:** The Docker image does not include optional dependencies. If you need them, build a custom image from the [vLLM Dockerfile](https://docs.vllm.ai/en/stable/deployment/docker/).
+  </Tab>
+</Tabs>
 
 ### Chat Completions
 
