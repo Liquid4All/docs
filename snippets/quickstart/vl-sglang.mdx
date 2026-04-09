@@ -12,8 +12,7 @@ export const VlSglang = ({ modelId }) => (
 {`sglang serve \\
     --model-path ${modelId} \\
     --host 0.0.0.0 \\
-    --port 30000 \\
-    --tool-call-parser lfm2`.split('\n').map((line, i) => <span key={i} className="line">{line}{'\n'}</span>)}
+    --port 30000`.split('\n').map((line, i) => <span key={i} className="line">{line}{'\n'}</span>)}
 </code>
 </pre>
 <p><strong>Query (OpenAI-compatible):</strong></p>
