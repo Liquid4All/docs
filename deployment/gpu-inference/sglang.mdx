@@ -121,8 +121,7 @@ Launch a vision-language model:
 sglang serve \
     --model-path LiquidAI/LFM2.5-VL-1.6B \
     --host 0.0.0.0 \
-    --port 30000 \
-    --tool-call-parser lfm2
+    --port 30000
 ```
 
 Query with an image:
@@ -161,6 +160,63 @@ print(response.choices[0].message.content)
     }'
   ```
 </Accordion>
+
+## Offline Inference
+
+SGLang's `Engine` class provides a simple interface for offline inference without launching a server. This is useful for scripts, notebooks, and batch processing.
+
+<Note>
+In Jupyter notebooks, you must apply `nest_asyncio` before creating the engine, because SGLang uses an async event loop internally.
+</Note>
+
+### Text Generation
+
+```python
+# Required in Jupyter notebooks:
+# import nest_asyncio
+# nest_asyncio.apply()
+
+import sglang as sgl
+
+llm = sgl.Engine(model_path="LiquidAI/LFM2-8B-A1B")
+
+tokenizer = llm.tokenizer_manager.tokenizer
+messages = [{"role": "user", "content": "What is the capital of France?"}]
+prompt = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
+
+output = llm.generate(prompt=prompt, sampling_params={"max_new_tokens": 128, "temperature": 0})
+print(output["text"])
+
+llm.shutdown()
+```
+
+### Vision Models
+
+```python
+# Required in Jupyter notebooks:
+# import nest_asyncio
+# nest_asyncio.apply()
+
+import sglang as sgl
+
+vlm = sgl.Engine(model_path="LiquidAI/LFM2.5-VL-1.6B")
+
+processor = vlm.tokenizer_manager.processor
+messages = [{"role": "user", "content": [
+    {"type": "image", "image": "placeholder"},
+    {"type": "text", "text": "Describe what you see in this image."},
+]}]
+prompt = processor.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
+
+output = vlm.generate(
+    prompt=prompt,
+    image_data="http://images.cocodataset.org/val2017/000000039769.jpg",
+    sampling_params={"max_new_tokens": 256, "temperature": 0},
+)
+print(output["text"])
+
+vlm.shutdown()
+```
 
 ## Low Latency on Blackwell (B300)
 
