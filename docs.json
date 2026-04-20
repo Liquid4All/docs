@@ -185,7 +185,13 @@
             "pages": [
               "deployment/gpu-inference/transformers",
               "deployment/gpu-inference/vllm",
-              "deployment/gpu-inference/sglang",
+              "deployment/gpu-inference/sglang"
+            ]
+          },
+          {
+            "group": "Cloud inference",
+            "icon": "cloud",
+            "pages": [
               "deployment/gpu-inference/modal",
               "deployment/gpu-inference/baseten",
               "deployment/gpu-inference/fal"
