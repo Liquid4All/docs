@@ -263,7 +263,8 @@
             "pages": [
               "examples/customize-models/car-maker-identification",
               "examples/customize-models/home-assistant",
-              "examples/customize-models/satellite-vlm"
+              "examples/customize-models/satellite-vlm",
+              "examples/customize-models/wildfire-prevention"
             ]
           }
         ]
