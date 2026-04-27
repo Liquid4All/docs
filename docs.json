@@ -296,6 +296,10 @@
       "destination": "/customization/getting-started/welcome"
     },
     {
+      "source": "/customization/tools/workbench",
+      "destination": "/customization/getting-started/welcome"
+    },
+    {
       "source": "/docs/fine-tuning/datasets",
       "destination": "/customization/finetuning-frameworks/datasets"
     },
