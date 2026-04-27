@@ -88,15 +88,18 @@
     }
 
     /* Fix GitHub icon visibility in light mode for standalone Cards (not in card-groups) */
-    /* Target all Card icons including github icons in example pages */
-    :root:not(.dark) [class*="card"] svg:not([class*="arrow"]),
-    :root:not(.dark) a[class*="block"][class*="border"] svg:not([class*="arrow"]) {
+    /* Scoped to .mdx-content so the page-footer "Suggest edits" / "Raise issue" toolbar
+       buttons don't match. Their <a> has `dark:bg-codeblock/50` (substring "block") and
+       `border-standard` (substring "border"), which would otherwise satisfy
+       a[class*="block"][class*="border"] and turn their icons into purple squares. */
+    :root:not(.dark) .mdx-content [class*="card"] svg:not([class*="arrow"]),
+    :root:not(.dark) .mdx-content a[class*="block"][class*="border"] svg:not([class*="arrow"]) {
       background-color: #864bc4 !important;
     }
 
     /* For mask-image based icons, also set the color property as fallback */
-    :root:not(.dark) [class*="card"] [style*="mask-image"],
-    :root:not(.dark) a[class*="block"][class*="border"] [style*="mask-image"] {
+    :root:not(.dark) .mdx-content [class*="card"] [style*="mask-image"],
+    :root:not(.dark) .mdx-content a[class*="block"][class*="border"] [style*="mask-image"] {
       background-color: #864bc4 !important;
       color: #864bc4 !important;
     }
