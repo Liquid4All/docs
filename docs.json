@@ -108,13 +108,6 @@
             ]
           },
           {
-            "group": "Tools",
-            "icon": "wrench",
-            "pages": [
-              "customization/tools/workbench"
-            ]
-          },
-          {
             "group": "Finetuning Frameworks",
             "icon": "sliders",
             "pages": [
@@ -300,7 +293,11 @@
     },
     {
       "source": "/docs/fine-tuning/workbench",
-      "destination": "/customization/tools/workbench"
+      "destination": "/customization/getting-started/welcome"
+    },
+    {
+      "source": "/customization/tools/workbench",
+      "destination": "/customization/getting-started/welcome"
     },
     {
       "source": "/docs/fine-tuning/datasets",
