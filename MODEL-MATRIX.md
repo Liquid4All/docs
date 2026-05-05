@@ -7,7 +7,7 @@
 
 | Category | Snippet files | Used by |
 |----------|--------------|---------|
-| Standard text | `snippets/quickstart/text-transformers.mdx`, `text-vllm.mdx`, `text-llamacpp.mdx` | LFM2.5-1.2B-Instruct, Thinking, JP; LFM2-8B-A1B, 2.6B, 2.6B-Exp, 1.2B, 700M, 350M |
+| Standard text | `snippets/quickstart/text-transformers.mdx`, `text-vllm.mdx`, `text-llamacpp.mdx` | LFM2.5-1.2B-Instruct, Thinking, JP, 350M; LFM2-8B-A1B, 2.6B, 2.6B-Exp, 1.2B, 700M, 350M |
 | Vision | `snippets/quickstart/vl-transformers.mdx`, `vl-vllm.mdx`, `vl-llamacpp.mdx` | LFM2.5-VL-1.6B; LFM2-VL-3B, VL-1.6B, VL-450M |
 | Audio | Inline (unique code) | LFM2.5-Audio-1.5B, LFM2-Audio-1.5B |
 | ColBERT | Inline (PyLate) | LFM2-ColBERT-350M |
@@ -22,6 +22,7 @@
 | 1.2B-Thinking | `LiquidAI/LFM2.5-1.2B-Thinking` | Standard | Standard | Standard | Standard | Yes | Yes | |
 | 1.2B-Base | `LiquidAI/LFM2.5-1.2B-Base` | Base (no chat) | -- | Base (no chat) | -- | -- | Yes | Raw text completion |
 | 1.2B-JP | `LiquidAI/LFM2.5-1.2B-JP` | Standard | Standard | Standard | Standard | Yes | Yes | Japanese |
+| 350M | `LiquidAI/LFM2.5-350M` | Standard | Standard | Standard | Standard | Yes | Yes | Smallest LFM2.5 |
 | **LFM2.5 Vision & Audio** |
 | VL-1.6B | `LiquidAI/LFM2.5-VL-1.6B` | VL (v5 req) | VL (--image) | VL (custom wheel) | NO (PR#14069) | Yes | Yes | |
 | Audio-1.5B | `LiquidAI/LFM2.5-Audio-1.5B` | liquid-audio | Custom binary | NO | NO | NO | Yes | |
