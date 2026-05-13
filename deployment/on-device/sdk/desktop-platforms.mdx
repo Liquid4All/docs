@@ -1,0 +1,361 @@
+---
+title: "Desktop & Native Platforms"
+description: "Run the LEAP SDK on JVM desktop, native Linux, native Windows, and macOS — same API as Android and iOS."
+---
+
+The LEAP SDK is a Kotlin Multiplatform library. The same conversation, model-loading, and generation APIs you use on Android and iOS run unchanged on JVM desktop and Kotlin/Native targets. This page covers installation and per-platform notes for everything outside the mobile guides.
+
+<Info>
+**Where to start by platform:**
+
+| Building on… | Use this guide |
+|---|---|
+| iOS or Android app | [Quick Start](/deployment/on-device/sdk/quick-start) (iOS / Android tabs) |
+| macOS (Swift app) | [Quick Start](/deployment/on-device/sdk/quick-start) (iOS / macOS tab) — same Swift API, see [macOS notes](#macos-apple-silicon) below |
+| macOS / Linux / Windows JVM (Kotlin or Java) | This page → [JVM Desktop](#jvm-desktop) |
+| Linux Kotlin/Native (server, CLI) | This page → [Linux native](#linux-native-kotlin-native) |
+| Windows Kotlin/Native | This page → [Windows native](#windows-native-mingw-x64) |
+</Info>
+
+## Platform support matrix
+
+| Platform | Architectures | Min OS | Binding | Notes |
+|---|---|---|---|---|
+| **Android** | ARM64 | API 31 (Android 12) | JNI | See [Quick Start](/deployment/on-device/sdk/quick-start). |
+| **JVM Desktop** | macOS ARM64 · Linux x86_64 · Linux aarch64 · Windows x86_64 · Windows aarch64 | JDK 11 | JNI | This page. |
+| **Linux native** | x86_64 · aarch64 | glibc 2.34+ (Ubuntu 22.04, Debian 12, RHEL 9) | C-interop (Kotlin/Native) | This page. |
+| **Windows native** | x86_64 (MinGW toolchain) | Windows 10+ | C-interop (Kotlin/Native) | This page. |
+| **iOS** | ARM64 (device + simulator) | iOS 17 | C-interop | See [Quick Start](/deployment/on-device/sdk/quick-start). |
+| **macOS** | ARM64 (Apple Silicon) | macOS 15 | C-interop (Kotlin/Native `macosArm64`) | Swift API: see [Quick Start](/deployment/on-device/sdk/quick-start). For JVM on macOS, use the **JVM Desktop** row above. The `macosArm64` Kotlin/Native klib is niche — see [macOS (Apple Silicon)](#macos-apple-silicon) below. |
+
+x86 JVM hosts (e.g. Linux/Windows x86_64 desktop JVMs) load the engine via JNI. JNI binaries ship inside the `leap-sdk` JAR — no extra setup needed.
+
+## JVM Desktop
+
+The JVM target supports Kotlin and Java projects on macOS (Apple Silicon), Linux (x86_64, aarch64), and Windows (x86_64, aarch64). The JAR bundles all platform-specific JNI binaries — at runtime the SDK extracts and loads the right one for the current OS/arch.
+
+### Installation
+
+<Tabs>
+  <Tab title="Gradle (Kotlin DSL)">
+    ```kotlin
+    plugins {
+        kotlin("jvm") version "2.3.20"
+        application
+    }
+
+    repositories {
+        mavenCentral()
+    }
+
+    dependencies {
+        implementation("ai.liquid.leap:leap-sdk:0.10.6")
+
+        // Optional: OpenAI-compatible cloud chat client
+        // implementation("ai.liquid.leap:leap-openai-client:0.10.6")
+
+        // Optional: Compose Multiplatform voice widget (also runs on JVM)
+        // implementation("ai.liquid.leap:leap-ui:0.10.6")
+    }
+
+    application {
+        mainClass.set("com.example.AppKt")
+    }
+    ```
+  </Tab>
+  <Tab title="Gradle (Groovy DSL)">
+    ```groovy
+    plugins {
+        id 'org.jetbrains.kotlin.jvm' version '2.3.20'
+        id 'application'
+    }
+
+    repositories {
+        mavenCentral()
+    }
+
+    dependencies {
+        implementation 'ai.liquid.leap:leap-sdk:0.10.6'
+    }
+
+    application {
+        mainClass = 'com.example.AppKt'
+    }
+    ```
+  </Tab>
+  <Tab title="Maven">
+    ```xml
+    <dependencies>
+      <dependency>
+        <groupId>ai.liquid.leap</groupId>
+        <artifactId>leap-sdk-jvm</artifactId>
+        <version>0.10.6</version>
+      </dependency>
+    </dependencies>
+    ```
+
+    Use the `-jvm` artifact ID when consuming KMP libraries from a pure-Maven JVM project.
+  </Tab>
+</Tabs>
+
+<Warning>
+**Do not** add `ai.liquid.leap:leap-model-downloader` from a non-Android JVM project — that module is Android-only (WorkManager + foreground service). Use `LeapDownloader` from `leap-sdk` instead (shown below).
+</Warning>
+
+### Loading a model
+
+`LeapDownloader` is the cross-platform downloader. Point it at a writable directory and call `loadModel(modelName:, quantizationType:)` for manifest-based downloads, or `loadSimpleModel(model: ModelSource(...))` for a GGUF you already have on disk.
+
+```kotlin
+import ai.liquid.leap.LeapDownloader
+import ai.liquid.leap.LeapDownloaderConfig
+import ai.liquid.leap.ModelSource
+import ai.liquid.leap.message.ChatMessage
+import ai.liquid.leap.message.MessageResponse
+import kotlinx.coroutines.runBlocking
+import java.nio.file.Paths
+
+fun main() = runBlocking {
+    // Pick a stable cache location. Linux/macOS: ~/.cache/leap. Windows: %LOCALAPPDATA%\leap.
+    val cacheDir = Paths.get(System.getProperty("user.home"), ".cache", "leap").toString()
+
+    val downloader = LeapDownloader(config = LeapDownloaderConfig(saveDir = cacheDir))
+
+    val runner = downloader.loadModel(
+        modelName = "LFM2-1.2B",
+        quantizationType = "Q5_K_M",
+        progress = { p -> println("Downloading: ${(p.progress * 100).toInt()}%") },
+    )
+
+    val conversation = runner.createConversation(
+        systemPrompt = "You are a helpful assistant."
+    )
+
+    conversation.generateResponse(
+        ChatMessage.user("What is the capital of France?")
+    ).collect { response ->
+        when (response) {
+            is MessageResponse.Chunk -> print(response.text)
+            is MessageResponse.Complete -> println("\n[${response.stats?.totalTokens} tokens]")
+            else -> {}
+        }
+    }
+
+    runner.unload()
+}
+```
+
+### Loading a sideloaded GGUF
+
+When the file already lives somewhere on disk (CI artifact, app resource folder, network share), skip the manifest lookup:
+
+```kotlin
+val runner = downloader.loadSimpleModel(
+    model = ModelSource(
+        modelPath = "/opt/models/lfm2-1_2b-q4_k_m.gguf",
+        modelName = "LFM2-1.2B-Instruct",
+        quantizationId = "Q4_K_M"
+    )
+)
+```
+
+Pass `mmprojPath = "..."` for vision models, or `audioDecoderPath = "..."` (and optionally `audioTokenizerPath = "..."`) for audio models. See [Model Loading](/deployment/on-device/sdk/model-loading) for the full `ModelSource` reference — the Kotlin API applies unchanged to JVM, Linux native, and Windows native.
+
+### Runtime expectations
+
+- **Memory.** Plan for at least `model_size_on_disk + 1 GiB` of free RAM. With `use_mmap=true` (the default since v0.10.4 — see the [changelog](/deployment/on-device/leap-sdk-changelog#mmap-default)) the OS pages weights in lazily, so resident memory grows as the model is exercised rather than at load time.
+- **Threads.** The engine defaults to a sensible CPU thread count for the host (`CpuThreadAdvisor.getRecommendedThreadCount()`). Override by passing `ModelLoadingOptions(cpuThreads = N)` through `loadModel(...)` if you need to share the box with other workloads.
+- **GPU acceleration.** Available on macOS (Metal, automatic) and on Linux JVM builds with a CUDA-capable GPU when the matching native variant is on the classpath. GPU offload is configured through the `extras` JSON payload on `ModelLoadingOptions` (advanced use only — most desktop workloads run pure-CPU).
+
+## Linux native (Kotlin/Native)
+
+For statically-targeted Linux binaries — CLIs, daemons, embedded server processes — the SDK ships `linuxX64` and `linuxArm64` Kotlin/Native targets. The engine is shipped as a separate `-natives.zip` classifier artifact rather than embedded in a JAR, because Kotlin/Native has no runtime resource-extraction equivalent to JVM's `getResourceAsStream`.
+
+### Installation (recommended: `ai.liquid.leap.nativelibs` plugin)
+
+The plugin auto-discovers your Kotlin/Native targets, registers a Copy task that drops the `.so` files next to the linked executable, and wires the linker `-L<dir>` flag automatically.
+
+```kotlin
+// settings.gradle.kts
+pluginManagement {
+    repositories {
+        mavenCentral()
+        gradlePluginPortal()
+    }
+}
+dependencyResolutionManagement {
+    repositories {
+        mavenCentral()
+    }
+}
+```
+
+```kotlin
+// build.gradle.kts
+plugins {
+    kotlin("multiplatform") version "2.3.20"
+    id("ai.liquid.leap.nativelibs") version "0.10.6"
+}
+
+dependencies {
+    implementation("ai.liquid.leap:leap-sdk:0.10.6")
+}
+
+kotlin {
+    linuxX64 { binaries.executable() }
+    // linuxArm64 { binaries.executable() }   // uncomment when targeting aarch64
+}
+```
+
+Build with the usual Kotlin/Native link tasks:
+
+```bash
+./gradlew linkReleaseExecutableLinuxX64
+```
+
+The resulting binary lives at `build/bin/linuxX64/releaseExecutable/`, alongside the `.so` files the plugin installed (`libinference_engine.so`, `libinference_engine_llamacpp_backend.so`, `libie_zip.so`, plus their transitive dependencies). Keep them co-located when you ship — the cinterop manifest bakes `-rpath=$ORIGIN` into the binary so the dynamic linker resolves siblings.
+
+<Warning>
+**Versions 0.10.0, 0.10.1, and 0.10.2 cannot link a working Kotlin/Native executable** due to three separate Maven Central / cinterop issues that have all been fixed in 0.10.5. Maven Central is immutable per GAV, so the older versions cannot be republished — pin to **0.10.5 or newer**. See [the changelog](/deployment/on-device/leap-sdk-changelog#kotlin-native-linux-windows) for the full story.
+</Warning>
+
+### Manual recipe (if you can't apply the plugin)
+
+```kotlin
+plugins {
+    kotlin("multiplatform") version "2.3.20"
+}
+
+dependencies {
+    implementation("ai.liquid.leap:leap-sdk:0.10.6")
+}
+
+val nativesDir = layout.buildDirectory.dir("bin/linuxX64/releaseExecutable")
+
+kotlin {
+    linuxX64 {
+        binaries.executable()
+        binaries.all { linkerOpts("-L${nativesDir.get().asFile.absolutePath}") }
+    }
+}
+
+val leapSdkNatives by configurations.creating
+dependencies {
+    leapSdkNatives("ai.liquid.leap:leap-sdk-linuxx64:0.10.6:natives@zip")
+}
+
+val installLeapNatives by tasks.registering(Copy::class) {
+    from(zipTree(leapSdkNatives.singleFile))
+    into(nativesDir)
+}
+
+tasks.named("linkReleaseExecutableLinuxX64") { dependsOn(installLeapNatives) }
+```
+
+### Runtime requirements
+
+- **glibc 2.34+** — Ubuntu 22.04, Debian 12, RHEL 9, or newer. The pinned glibc-2.19 sysroot Kotlin/Native links against is *only* used at link time; the engine `.so` is built against modern glibc and calls into symbols like `dlsym@GLIBC_2.34` at runtime. Older hosts fail at process start with a glibc version error.
+- **Co-located `.so` files** — the dynamic linker uses `rpath=$ORIGIN` from the binary, plus `DT_RUNPATH=$ORIGIN:$ORIGIN/../lib` from the engine `.so` itself. The Copy task installs every dependent library (umbrella libs, `libllama`, `libmtmd`, `libggml*`, per-CPU-microarch GGML variants, SONAME aliases). Don't cherry-pick from the natives ZIP — ship the whole set.
+
+The Maven coordinates for the `-natives.zip` artifacts:
+
+- `ai.liquid.leap:leap-sdk-linuxx64:0.10.6:natives@zip`
+- `ai.liquid.leap:leap-sdk-linuxarm64:0.10.6:natives@zip`
+
+## Windows native (MinGW x64)
+
+The same Kotlin/Native flow works for Windows x86_64 via the MinGW-w64 toolchain.
+
+```kotlin
+plugins {
+    kotlin("multiplatform") version "2.3.20"
+    id("ai.liquid.leap.nativelibs") version "0.10.6"
+}
+
+dependencies {
+    implementation("ai.liquid.leap:leap-sdk:0.10.6")
+}
+
+kotlin {
+    mingwX64 { binaries.executable() }
+}
+```
+
+Build with:
+
+```bash
+./gradlew linkReleaseExecutableMingwX64
+```
+
+The plugin installs `inference_engine.dll`, `libinference_engine_llamacpp_backend.dll`, `ie_zip.dll`, and their transitive DLLs into the link output directory. Windows' standard DLL search order finds DLLs co-located with the `.exe` before checking `PATH`, so no `rpath` plumbing is needed — just ship the executable and its sibling DLLs together.
+
+The Maven coordinates for the `-natives.zip` artifact:
+
+- `ai.liquid.leap:leap-sdk-mingwx64:0.10.6:natives@zip`
+
+<Info>
+**Building from macOS or Linux for Windows?** Kotlin/Native does not support cross-compiling to MinGW from a non-Windows host as of 2.3.20 — the build must run on Windows (native or in CI). GitHub Actions `windows-latest` works without extra setup.
+</Info>
+
+## macOS (Apple Silicon)
+
+macOS is supported from **two** angles depending on the language you're writing in:
+
+### From Swift (AppKit / SwiftUI)
+
+Identical Swift API to iOS — same `ModelDownloader`, `Conversation`, `ChatMessage`, `MessageResponse`. Follow the [Quick Start](/deployment/on-device/sdk/quick-start) (iOS / macOS tab) and substitute these platform-specific bits:
+
+| iOS | macOS |
+|---|---|
+| `UIViewControllerRepresentable` | `NSViewControllerRepresentable` |
+| `VoiceAssistantViewController` (UIKit) | `VoiceAssistantNSViewController` (AppKit) |
+| `UIHostingController` | `NSHostingController` |
+| `import UIKit` | `import AppKit` |
+| Deployment target: iOS 17 | Deployment target: macOS 15 |
+
+```swift
+.binaryTarget(
+  name: "LeapSDK",
+  url: "https://github.com/Liquid4All/leap-sdk/releases/download/v0.10.6/LeapSDK.xcframework.zip",
+  checksum: "ae9ecddbe5dc226ddd4ec8fe42178b721faeab71a20b3f14efceaae5a2495b7e"
+)
+```
+
+The XCFramework slice for macOS ARM64 is in the same zip as the iOS slices. Mac Catalyst (`x86_64-apple-ios13.0-macabi`, `arm64-apple-ios13.0-macabi`) is also included.
+
+### From Kotlin (JVM, Compose for Desktop)
+
+If you're targeting macOS as a JVM host — for example with Compose Multiplatform Desktop, IntelliJ-style tooling, or a Kotlin CLI — use the [JVM Desktop instructions](#jvm-desktop) above. The `leap-sdk` JAR ships a macOS ARM64 JNI binary.
+
+```kotlin
+dependencies {
+    implementation("ai.liquid.leap:leap-sdk:0.10.6")
+    implementation("ai.liquid.leap:leap-ui:0.10.6") // Compose voice widget runs on JVM too
+}
+```
+
+The voice widget renders via Compose for Desktop on JVM macOS; the same `VoiceAssistantStore` API you use on iOS/Android works unchanged.
+
+<Info>
+**`macosArm64` Kotlin/Native target.** The SDK also ships a `macosArm64` Kotlin/Native klib for shared-code KMP projects that want to compile native macOS binaries directly (no JVM, no Swift). Most macOS consumers should prefer either Swift (via SPM) or JVM — the Kotlin/Native macOS path exists primarily so KMP `commonMain` code is portable to macOS, not as a recommended end-user entry point.
+</Info>
+
+## Picking the right target
+
+Quick decision matrix when more than one target could plausibly fit:
+
+| You want to ship a… | Use |
+|---|---|
+| macOS app for end users (App Store, signed `.app`) | **Swift / SPM** ([Quick Start](/deployment/on-device/sdk/quick-start)) |
+| Cross-platform desktop GUI with shared UI code | **JVM + Compose for Desktop** (this page) |
+| Single statically-built Linux binary | **Kotlin/Native `linuxX64`** (this page) |
+| Server-side Kotlin/Java service | **JVM** (this page) |
+| Headless CLI on Windows | **Kotlin/Native `mingwX64`** (this page) — or JVM if you don't mind shipping a JDK |
+| Mixed-platform KMP library that wraps LEAP | All of the above — `commonMain` exposes the same API on every target |
+
+## Next steps
+
+- [Model Loading reference](/deployment/on-device/sdk/model-loading) — the Kotlin API applies identically on JVM, Linux native, and Windows native.
+- [Conversation & Generation](/deployment/on-device/sdk/conversation-generation) — same Kotlin API.
+- [Function Calling](/deployment/on-device/sdk/function-calling), [Constrained Generation](/deployment/on-device/sdk/constrained-generation), [OpenAI-compatible client](/deployment/on-device/sdk/openai-client) — all cross-platform.
+- [SDK Changelog](/deployment/on-device/leap-sdk-changelog) — including the [Kotlin/Native Linux + Windows](/deployment/on-device/leap-sdk-changelog#kotlin-native-linux-windows) story.

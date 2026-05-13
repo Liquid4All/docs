@@ -66,18 +66,18 @@ Before running this example, ensure you have the following:
   - **Minimum SDK**: API 24 (Android 7.0)
   - **Target SDK**: API 34 or higher
   - **Kotlin**: 1.9.0 or higher
-  - **LeapSDK**: 0.9.4 or higher
+  - **LeapSDK**: 0.10.0 or higher
   - **Internet connectivity**: Required for first-time model download
 </Accordion>
 
 <Accordion title="Model Setup - Automatic Download">
-  This example uses **LeapSDK 0.9.4+** with automatic model downloading capabilities.
+  This example uses **LeapSDK 0.10.0+** with automatic model downloading capabilities.
 
   **Automatic Model Management**
 
-  The app uses `LeapDownloader` to automatically download and cache the **LFM2-700M** model on first run:
+  The app uses `LeapModelDownloader` to download and cache **LFM2-1.2B** on first run:
 
-  - On first launch, the model downloads automatically from Leap Model Library
+  - On first launch, the model downloads automatically from the [LEAP Model Library](https://leap.liquid.ai/models)
   - Models are cached locally for subsequent app launches
   - No manual ADB push or file transfer required
   - Internet connectivity is required only for the initial download
@@ -91,13 +91,11 @@ Before running this example, ensure you have the following:
 
   **Manual Deployment (Alternative)**
 
-  If you prefer manual deployment or need offline-first installation, you can still use ADB:
+  If you prefer manual deployment or need offline-first installation, push a GGUF file via ADB and load it with `loadSimpleModel(model: ModelSource(...))`:
 
   ```bash
-  # Push the model bundle to device storage
-  adb push LFM2-700M.bundle /data/local/tmp/liquid/
-
-  # Update app code to load from this path instead of using LeapDownloader
+  # Push the GGUF file to device storage
+  adb push lfm2-1.2b-q5_k_m.gguf /data/local/tmp/liquid/
   ```
 </Accordion>
 
@@ -106,8 +104,9 @@ Before running this example, ensure you have the following:
 
   ```kotlin
   dependencies {
-      // LeapSDK for constrained generation (0.9.4+)
-      implementation("ai.liquid.leap:leap-sdk:0.9.7")
+      // LeapSDK + the Android downloader module
+      implementation("ai.liquid.leap:leap-sdk:0.10.6")
+      implementation("ai.liquid.leap:leap-model-downloader:0.10.6")
 
       // Kotlin serialization for type-safe parsing
       implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")
@@ -126,10 +125,11 @@ Before running this example, ensure you have the following:
 
   ```kotlin
   plugins {
-      id("org.jetbrains.kotlin.plugin.serialization") version "1.9.0"
+      id("org.jetbrains.kotlin.plugin.serialization") version "2.3.20"
   }
   ```
 </Accordion>
+
 
 ## How to run it
 
@@ -148,7 +148,7 @@ Follow these steps to generate structured recipes:
 
 3. **Gradle sync**
    - Wait for Gradle to sync all dependencies
-   - Ensure LeapSDK 0.9.7 is downloaded
+   - Ensure LeapSDK 0.10.6 is downloaded
 
 4. **Run the app**
    - Connect your Android device or start an emulator
@@ -157,7 +157,7 @@ Follow these steps to generate structured recipes:
    - Select your target device
 
 5. **First launch - model download**
-   - On first run, the app will automatically download the LFM2-700M model
+   - On first run, the app will automatically download the LFM2-1.2B model
    - This may take 2-5 minutes depending on your connection
    - A loading indicator will show download progress
    - The model is cached for future use
@@ -202,75 +202,79 @@ data class Ingredient(
 )
 ```
 
-### Configure Constrained Generation
+### Declare the Recipe Schema with `@Generatable`
 
-Set up the LeapSDK to enforce the schema:
+Annotate the data class with `@Generatable`. LeapSDK derives the JSON schema from the Kotlin types and enforces it during generation — no hand-written schema string required.
 
 ```kotlin
-class MainActivityViewModel : ViewModel() {
-    private lateinit var model: LeapModel
+import ai.liquid.leap.Generatable
+import ai.liquid.leap.Guide
+import kotlinx.serialization.Serializable
+
+@Generatable
+@Serializable
+@Guide("A complete recipe with metadata, ingredients, and instructions.")
+data class Recipe(
+    val name: String,
+    val description: String,
+    val servings: Int,
+    val prepTime: String,
+    val cookTime: String,
+    @Guide("One of: easy, medium, hard.")
+    val difficulty: String,
+    val ingredients: List<Ingredient>,
+    val instructions: List<String>,
+    val tags: List<String>,
+)
+
+@Generatable
+@Serializable
+data class Ingredient(
+    val item: String,
+    val amount: String,
+    val unit: String,
+)
+```
+
+### Load the Model and Wire Constrained Generation
+
+```kotlin
+import ai.liquid.leap.GenerationOptions
+import ai.liquid.leap.ModelRunner
+import ai.liquid.leap.message.ChatMessage
+import ai.liquid.leap.message.MessageResponse
+import ai.liquid.leap.model_downloader.LeapModelDownloader
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.launch
+import kotlinx.serialization.json.Json
+
+class MainActivityViewModel(application: Application) : AndroidViewModel(application) {
+    private val downloader = LeapModelDownloader(application)
+    private var runner: ModelRunner? = null
+
+    private val _downloadProgress = MutableStateFlow(0f)
+    val downloadProgress: StateFlow<Float> = _downloadProgress.asStateFlow()
+
+    private val _recipeState = MutableStateFlow<RecipeState>(RecipeState.Idle)
+    val recipeState: StateFlow<RecipeState> = _recipeState.asStateFlow()
 
     fun initializeModel() {
         viewModelScope.launch {
-            // Download and load the model automatically (LeapSDK 0.9.4+)
-            model = LeapDownloader.downloadAndLoadModel(
-                modelName = "lfm2-700m",
-                onProgress = { progress ->
-                    // Update UI with download progress
-                    _downloadProgress.value = progress
-                }
-            )
-
-            // Alternative: Load from local bundle if already cached
-            // model = LeapSDK.loadModelFromBundle(
-            //     path = "/data/local/tmp/liquid/lfm2-700m.bundle"
-            // )
-
-            configureConstraints()
-        }
-    }
-
-    private fun configureConstraints() {
-        // Define the JSON schema for recipes
-        val recipeSchema = """
-        {
-          "type": "object",
-          "properties": {
-            "name": {"type": "string"},
-            "description": {"type": "string"},
-            "servings": {"type": "integer"},
-            "prepTime": {"type": "string"},
-            "cookTime": {"type": "string"},
-            "difficulty": {"type": "string", "enum": ["easy", "medium", "hard"]},
-            "ingredients": {
-              "type": "array",
-              "items": {
-                "type": "object",
-                "properties": {
-                  "item": {"type": "string"},
-                  "amount": {"type": "string"},
-                  "unit": {"type": "string"}
+            runner = downloader.loadModel(
+                modelName = "LFM2-1.2B",
+                quantizationType = "Q5_K_M",
+                progress = { pd ->
+                    _downloadProgress.value =
+                        if (pd.total > 0) pd.bytes.toFloat() / pd.total else 0f
                 },
-                "required": ["item", "amount", "unit"]
-              }
-            },
-            "instructions": {
-              "type": "array",
-              "items": {"type": "string"}
-            },
-            "tags": {
-              "type": "array",
-              "items": {"type": "string"}
-            }
-          },
-          "required": ["name", "description", "servings", "ingredients", "instructions"]
-        }
-        """.trimIndent()
-
-            // Configure constrained generation
-            model.setConstraint(
-                type = ConstraintType.JSON_SCHEMA,
-                schema = recipeSchema
             )
         }
     }
@@ -279,11 +283,14 @@ class MainActivityViewModel : ViewModel() {
 
 ### Generate Structured Recipes
 
-Create a function to generate recipes with guaranteed structure:
+`GenerationOptions.build { setResponseFormatType(Recipe::class) }` tells the engine to constrain the stream to the schema derived from `@Generatable`. The streamed `Chunk` values arrive as JSON; concatenate them and decode at the end with `kotlinx-serialization`.
 
 ```kotlin
 fun generateRecipe(userInput: String) {
+    val runner = runner ?: return
     viewModelScope.launch {
+        _recipeState.value = RecipeState.Loading
+
         val prompt = """
             Generate a detailed recipe for: $userInput
 
@@ -292,19 +299,24 @@ fun generateRecipe(userInput: String) {
             step-by-step instructions, and relevant tags.
         """.trimIndent()
 
+        val conversation = runner.createConversation()
+        val options = GenerationOptions.build {
+            temperature = 0.3f
+            minP = 0.15f
+            repetitionPenalty = 1.05f
+            setResponseFormatType(Recipe::class)
+        }
+
         try {
-            // Generate with schema constraints
-            val jsonOutput = model.generate(
-                prompt = prompt,
-                maxTokens = 1000
-            )
+            val buffer = StringBuilder()
+            conversation.generateResponse(ChatMessage.user(prompt), options)
+                .onEach { resp ->
+                    if (resp is MessageResponse.Chunk) buffer.append(resp.text)
+                }
+                .collect()
 
-            // Parse the guaranteed-valid JSON
-            val recipe = Json.decodeFromString<Recipe>(jsonOutput)
-
-            // Use the structured data
+            val recipe = Json.decodeFromString<Recipe>(buffer.toString())
             _recipeState.value = RecipeState.Success(recipe)
-
         } catch (e: Exception) {
             _recipeState.value = RecipeState.Error(e.message ?: "Failed to generate recipe")
         }
@@ -312,57 +324,21 @@ fun generateRecipe(userInput: String) {
 }
 ```
 
-### Alternative: Using @Generatable Annotation
-
-LeapSDK 0.9.4+ provides the `@Generatable` annotation for simplified structured output:
-
-```kotlin
-@Generatable
-data class Recipe(
-    val name: String,
-    val description: String,
-    val servings: Int,
-    val prepTime: String,
-    val cookTime: String,
-    val difficulty: String,
-    val ingredients: List<Ingredient>,
-    val instructions: List<String>,
-    val tags: List<String>
-)
-
-// Generate directly with type inference
-fun generateRecipeSimplified(userInput: String) {
-    viewModelScope.launch {
-        val recipe = model.generate<Recipe>(
-            prompt = "Generate a recipe for: $userInput"
-        )
-        // Recipe is automatically parsed and type-safe
-        _recipeState.value = RecipeState.Success(recipe)
-    }
-}
-```
-
-The `@Generatable` annotation automatically creates the JSON schema from your Kotlin data class, eliminating manual schema definition.
-
 ### Resource Cleanup
 
 **Important:** Always clean up model resources properly in your ViewModel:
 
 ```kotlin
-class MainActivityViewModel : ViewModel() {
-    private lateinit var model: LeapModel
-
-    override fun onCleared() {
-        super.onCleared()
-
-        // Unload model asynchronously to avoid ANR
-        // Do NOT use runBlocking here - it blocks the main thread
-        CoroutineScope(Dispatchers.IO).launch {
-            try {
-                model.unload()
-            } catch (e: Exception) {
-                Log.e("RecipeViewModel", "Error unloading model", e)
-            }
+override fun onCleared() {
+    super.onCleared()
+    val runner = runner ?: return
+    // Unload the model asynchronously to avoid ANRs.
+    // Do NOT use runBlocking here — it blocks the main thread.
+    CoroutineScope(Dispatchers.IO).launch {
+        try {
+            runner.unload()
+        } catch (e: Exception) {
+            Log.e("RecipeViewModel", "Error unloading model", e)
         }
     }
 }

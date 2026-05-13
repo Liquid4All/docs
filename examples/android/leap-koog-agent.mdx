@@ -80,10 +80,8 @@ Before running this example, ensure you have the following:
   - Sufficient storage for model bundles
 </Accordion>
 
-<Accordion title="Model Bundle Deployment">
-  LeapKoogAgent requires the **LFM2-1.2B-Tool** model bundle optimized for tool use.
-
-  **Deploy via ADB:**
+<Accordion title="Model Deployment">
+  LeapKoogAgent uses an **LFM2-1.2B** GGUF checkpoint suited for tool use. You can either let `LeapModelDownloader.loadModel(...)` pull it from the [LEAP Model Library](https://leap.liquid.ai/models) on first launch, or push it manually via ADB:
 
   ```bash
   # Ensure device is connected
@@ -92,14 +90,14 @@ Before running this example, ensure you have the following:
   # Create directory
   adb shell mkdir -p /tmp/models
 
-  # Push the model bundle
-  adb push lfm2-1.2b-tool.bundle /tmp/models/
+  # Push the GGUF model file
+  adb push lfm2-1.2b-q5_k_m.gguf /tmp/models/
 
   # Verify deployment
   adb shell ls -lh /tmp/models/
   ```
 
-  **Note:** The path `/tmp/models` is used in this example. If you deploy to a different location, update the model path in your app code accordingly.
+  **Note:** The path `/tmp/models` is used in this example. If you deploy to a different location, update the `modelPath` in your app code accordingly. The example snippets below use `loadSimpleModel(model: ModelSource(...))` to load the sideloaded file; switch to `loadModel(modelName:, quantizationType:)` if you'd rather have the SDK download the model automatically.
 </Accordion>
 
 <Accordion title="Dependencies Setup">
@@ -107,12 +105,12 @@ Before running this example, ensure you have the following:
 
   ```kotlin
   dependencies {
-      // LeapSDK for on-device AI (0.9.7+)
-      implementation("ai.liquid.leap:leap-sdk:0.9.7")
+      // LeapSDK for on-device AI (0.10.0+)
+      implementation("ai.liquid.leap:leap-sdk:0.10.6")
+      implementation("ai.liquid.leap:leap-model-downloader:0.10.6")
 
       // Koog framework for AI agents
-      implementation("ai.anthropic:koog-core:0.1.0")
-      implementation("ai.anthropic:koog-mcp:0.1.0")
+      implementation("ai.koog:koog-agents:0.5.0")
 
       // JSON processing
       implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")
@@ -173,23 +171,33 @@ Follow these steps to build and run AI agents on Android:
 
 ### Koog Agent Initialization
 
-Set up a Koog agent with LeapSDK backend:
+Load the LEAP model first, then bridge it to a Koog agent. The Koog APIs below are illustrative — see the linked GitHub example for the canonical adapter wiring, since `ai.koog:koog-agents` evolves independently from LeapSDK.
 
 ```kotlin
-class AgentViewModel : ViewModel() {
+import ai.liquid.leap.ModelRunner
+import ai.liquid.leap.manifest.ModelSource
+import ai.liquid.leap.model_downloader.LeapModelDownloader
+
+class AgentViewModel(application: Application) : AndroidViewModel(application) {
+    private val downloader = LeapModelDownloader(application)
+    private lateinit var runner: ModelRunner
     private lateinit var agent: KoogAgent
-    private lateinit var leapModel: LeapModel
 
     fun initializeAgent() {
         viewModelScope.launch(Dispatchers.Default) {
-            // Load LeapSDK model
-            leapModel = LeapSDK.loadModelFromBundle(
-                path = "/tmp/models/lfm2-1.2b-tool.bundle"
+            // Sideloaded GGUF that was pushed via ADB (see Model Setup).
+            runner = downloader.loadSimpleModel(
+                model = ModelSource(
+                    modelPath = "/tmp/models/lfm2-1.2b-tool.gguf",
+                    modelName = "LFM2-1.2B",
+                    quantizationId = "Q5_K_M",
+                ),
             )
 
-            // Create Koog agent with Leap backend
+            // Bridge the runner to Koog. The adapter type below is example
+            // pseudocode — the canonical wiring lives in the linked GitHub repo.
             agent = KoogAgent.Builder()
-                .withModel(LeapModelAdapter(leapModel))
+                .withModel(LeapModelAdapter(runner))
                 .withTools(getAvailableTools())
                 .withSystemPrompt("""
                     You are a helpful AI assistant running on an Android device.
@@ -397,9 +405,9 @@ if (savedContext != null) {
 **Important:** Always clean up agent resources properly to prevent memory leaks and ANRs:
 
 ```kotlin
-class AgentViewModel : ViewModel() {
+class AgentViewModel(application: Application) : AndroidViewModel(application) {
     private lateinit var agent: KoogAgent
-    private lateinit var leapModel: LeapModel
+    private lateinit var runner: ModelRunner
 
     override fun onCleared() {
         super.onCleared()
@@ -411,11 +419,11 @@ class AgentViewModel : ViewModel() {
             Log.e("AgentViewModel", "Error shutting down agent", e)
         }
 
-        // Unload model asynchronously to avoid ANR
-        // Do NOT use runBlocking here - it blocks the main thread
+        // Unload the model asynchronously to avoid ANRs.
+        // Do NOT use runBlocking here — it blocks the main thread.
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                leapModel.unload()
+                runner.unload()
             } catch (e: Exception) {
                 Log.e("AgentViewModel", "Error unloading model", e)
             }

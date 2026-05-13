@@ -1,0 +1,404 @@
+---
+title: "OpenAI-Compatible Client"
+description: "Lightweight client for OpenAI-compatible chat completions APIs — ideal for hybrid on-device + cloud routing."
+---
+
+`LeapOpenAIClient` / `leap-openai-client` (introduced in v0.10.0) is a small, dependency-light client for any OpenAI-compatible chat-completions endpoint — OpenAI itself, OpenRouter, vLLM, llama-server, or your own proxy. It ships in the same SDK release as `LeapSDK`, so you can route requests between an on-device LFM and a cloud model from a single app.
+
+## When to use it
+
+- **Hybrid on-device + cloud routing.** Run small / fast models on-device with `LeapSDK`, fall back to a larger cloud model for hard prompts.
+- **Standardised cloud API.** Talk to any OpenAI-compatible backend without pulling in a heavier OpenAI SDK.
+- **Streaming first.** SSE streaming is the only mode — non-streaming requests aren't exposed (`stream = true` is the default).
+
+## Add the dependency
+
+<Tabs>
+  <Tab title="iOS / macOS (SPM)">
+    Add the `LeapOpenAIClient` product to your target. See the [Quick Start](./quick-start#2-install-the-sdk) for the full SPM setup.
+
+    ```swift
+    dependencies: [
+        .package(url: "https://github.com/Liquid4All/leap-sdk.git", from: "0.10.6")
+    ]
+
+    targets: [
+        .target(
+            name: "YourApp",
+            dependencies: [
+                .product(name: "LeapOpenAIClient", package: "leap-sdk"),
+            ]
+        )
+    ]
+    ```
+
+    In Swift sources, `import LeapOpenAIClient`. The Darwin (URLSession) Ktor engine is bundled — no extra HTTP setup needed.
+  </Tab>
+  <Tab title="Android (Gradle)">
+    ```kotlin
+    dependencies {
+      implementation("ai.liquid.leap:leap-sdk:0.10.6")
+      implementation("ai.liquid.leap:leap-openai-client:0.10.6")
+    }
+    ```
+
+    Bundles an OkHttp-engine Ktor client. No extra HTTP setup needed.
+  </Tab>
+  <Tab title="JVM / native (Gradle)">
+    ```kotlin
+    dependencies {
+        implementation("ai.liquid.leap:leap-sdk:0.10.6")
+        implementation("ai.liquid.leap:leap-openai-client:0.10.6")
+    }
+    ```
+
+    Bundles the CIO Ktor engine on JVM, and platform-appropriate engines on Linux native / Windows native. Maven users: use `leap-openai-client-jvm` for the JVM artifact.
+  </Tab>
+</Tabs>
+
+## Basic usage
+
+<Tabs>
+  <Tab title="Swift (iOS / macOS)">
+    ```swift
+    import LeapOpenAIClient
+
+    let client = OpenAiClient(
+        config: OpenAiClientConfig(
+            apiKey: "sk-…",
+            baseUrl: "https://api.openai.com/v1"
+        )
+    )
+
+    let request = ChatCompletionRequest(
+        model: "gpt-4o-mini",
+        messages: [
+            ChatMessage.System(content: "You are a helpful assistant."),
+            ChatMessage.User(content: "What is the capital of Japan?")
+        ],
+        temperature: 0.7
+    )
+
+    for try await event in client.streamChatCompletion(request: request) {
+        switch onEnum(of: event) {
+        case .delta(let d):
+            print(d.content, terminator: "")
+        case .done(let d):
+            if let usage = d.usage {
+                print("\nTokens: \(usage.totalTokens)")
+            }
+        case .error(let e):
+            print("\nError: \(e.message)")
+        }
+    }
+
+    client.close()  // closes the underlying URLSession-backed HttpClient
+    ```
+  </Tab>
+  <Tab title="Kotlin (all platforms)">
+    ```kotlin
+    import ai.liquid.leap.openai.ChatCompletionEvent
+    import ai.liquid.leap.openai.ChatCompletionRequest
+    import ai.liquid.leap.openai.ChatMessage
+    import ai.liquid.leap.openai.OpenAiClient
+    import ai.liquid.leap.openai.OpenAiClientConfig
+
+    val client = OpenAiClient(
+        config = OpenAiClientConfig(
+            apiKey = "sk-…",
+            baseUrl = "https://api.openai.com/v1",
+        )
+    )
+
+    val request = ChatCompletionRequest(
+        model = "gpt-4o-mini",
+        messages = listOf(
+            ChatMessage.System("You are a helpful assistant."),
+            ChatMessage.User("What is the capital of Japan?"),
+        ),
+        temperature = 0.7,
+    )
+
+    client.streamChatCompletion(request).collect { event ->
+        when (event) {
+            is ChatCompletionEvent.Delta -> print(event.content)
+            is ChatCompletionEvent.Done  -> event.usage?.let { println("\nTokens: ${it.totalTokens}") }
+            is ChatCompletionEvent.Error -> println("\nError: ${event.message}")
+        }
+    }
+
+    client.close()
+    ```
+  </Tab>
+</Tabs>
+
+## Configuration
+
+`OpenAiClientConfig` is a Kotlin data class bridged identically on every platform.
+
+```kotlin
+data class OpenAiClientConfig(
+    val apiKey: String,
+    val baseUrl: String = "https://api.openai.com/v1",
+    val chatCompletionsPath: String = "/chat/completions",
+    val extraHeaders: Map<String, String> = emptyMap(),
+)
+```
+
+| Field | Default | Notes |
+|---|---|---|
+| `apiKey` | — (required) | Sent as `Authorization: Bearer <apiKey>`. |
+| `baseUrl` | `https://api.openai.com/v1` | Override for OpenRouter, a self-hosted backend, etc. |
+| `chatCompletionsPath` | `/chat/completions` | Appended to `baseUrl`. |
+| `extraHeaders` | `{}` | Merged into every request — e.g. OpenRouter's `HTTP-Referer`. |
+
+### OpenRouter
+
+<Tabs>
+  <Tab title="Swift (iOS / macOS)">
+    ```swift
+    let client = OpenAiClient(
+        config: OpenAiClientConfig(
+            apiKey: "sk-or-…",
+            baseUrl: "https://openrouter.ai/api/v1",
+            extraHeaders: [
+                "HTTP-Referer": "https://yourapp.example.com",
+                "X-Title": "Your App"
+            ]
+        )
+    )
+    ```
+  </Tab>
+  <Tab title="Kotlin (all platforms)">
+    ```kotlin
+    val client = OpenAiClient(
+        OpenAiClientConfig(
+            apiKey = "sk-or-…",
+            baseUrl = "https://openrouter.ai/api/v1",
+            extraHeaders = mapOf(
+                "HTTP-Referer" to "https://yourapp.example.com",
+                "X-Title" to "Your App",
+            ),
+        )
+    )
+    ```
+  </Tab>
+</Tabs>
+
+### Self-hosted vLLM / llama-server
+
+<Tabs>
+  <Tab title="Swift (iOS / macOS)">
+    ```swift
+    let client = OpenAiClient(
+        config: OpenAiClientConfig(
+            apiKey: "anything",  // Required by config but typically unused
+            baseUrl: "http://10.0.0.42:8000/v1"
+        )
+    )
+    ```
+  </Tab>
+  <Tab title="Kotlin (all platforms)">
+    ```kotlin
+    val client = OpenAiClient(
+        OpenAiClientConfig(
+            apiKey = "anything",
+            baseUrl = "http://10.0.0.42:8000/v1",
+        )
+    )
+    ```
+  </Tab>
+</Tabs>
+
+## Request shape
+
+`ChatCompletionRequest` covers standard OpenAI fields plus a few OpenRouter-specific extensions. OpenRouter-only fields are silently ignored by stock OpenAI-compatible APIs.
+
+```kotlin
+data class ChatCompletionRequest(
+    val model: String,
+    val messages: List<ChatMessage>,
+    val temperature: Double? = null,
+    val topP: Double? = null,
+    val maxCompletionTokens: Int? = null,   // Preferred for newer OpenAI versions
+    val maxTokens: Int? = null,             // Legacy alias — some custom backends still require it
+    val frequencyPenalty: Double? = null,
+    val presencePenalty: Double? = null,
+    val stop: List<String>? = null,
+    val stream: Boolean = true,
+    // OpenRouter extensions:
+    val topK: Int? = null,
+    val repetitionPenalty: Double? = null,
+    val minP: Double? = null,
+    val topA: Double? = null,
+    val transforms: List<String>? = null,
+    val models: List<String>? = null,
+    val route: String? = null,
+    val provider: ProviderPreferences? = null,
+)
+```
+
+`ChatMessage` (the OpenAI-client one, distinct from `LeapSDK.ChatMessage`) is a sealed type with three cases — `System`, `User`, `Assistant`.
+
+## Response shape
+
+`streamChatCompletion(request)` returns an `AsyncSequence<ChatCompletionEvent>` (Swift) / `Flow<ChatCompletionEvent>` (Kotlin):
+
+| Variant | Meaning |
+|---|---|
+| `Delta(content: String)` | Text chunk from the model. May be empty for role-only deltas. |
+| `Done(usage: Usage?)` | Stream finished. `usage` is non-`null` when the API includes token counts. |
+| `Error(message: String)` | HTTP error or stream parsing failure. |
+
+```kotlin
+data class Usage(val promptTokens: Int, val completionTokens: Int, val totalTokens: Int)
+```
+
+## Hybrid routing example
+
+Route simple prompts to a small on-device LFM; escalate harder prompts to a cloud model.
+
+<Tabs>
+  <Tab title="Swift (iOS / macOS)">
+    ```swift
+    import LeapModelDownloader
+    import LeapOpenAIClient
+
+    @MainActor
+    final class HybridChatViewModel: ObservableObject {
+        private let onDevice: Conversation
+        private let cloud: OpenAiClient
+
+        init(onDevice: Conversation, cloud: OpenAiClient) {
+            self.onDevice = onDevice
+            self.cloud = cloud
+        }
+
+        func send(_ text: String, useCloud: Bool) async throws {
+            if useCloud {
+                let request = ChatCompletionRequest(
+                    model: "gpt-4o-mini",
+                    messages: [ChatMessage.User(content: text)]
+                )
+                for try await event in cloud.streamChatCompletion(request: request) {
+                    if case let .delta(d) = onEnum(of: event) { appendChunk(d.content) }
+                }
+            } else {
+                let userMessage = LeapModelDownloader.ChatMessage(role: .user, content: [.text(text)])
+                for try await response in onDevice.generateResponse(message: userMessage) {
+                    if case let .chunk(c) = onEnum(of: response) { appendChunk(c.text) }
+                }
+            }
+        }
+
+        private func appendChunk(_ text: String) { /* … */ }
+
+        deinit { cloud.close() }
+    }
+    ```
+  </Tab>
+  <Tab title="Kotlin (Android)">
+    ```kotlin
+    import ai.liquid.leap.Conversation
+    import ai.liquid.leap.MessageResponse
+    import ai.liquid.leap.openai.ChatCompletionEvent
+    import ai.liquid.leap.openai.ChatCompletionRequest
+    import ai.liquid.leap.openai.ChatMessage as CloudChatMessage
+    import ai.liquid.leap.openai.OpenAiClient
+    import ai.liquid.leap.message.ChatMessage
+    import ai.liquid.leap.message.ChatMessageContent
+    import androidx.lifecycle.ViewModel
+    import androidx.lifecycle.viewModelScope
+    import kotlinx.coroutines.launch
+
+    class HybridChatViewModel(
+        private val onDevice: Conversation,
+        private val cloud: OpenAiClient,
+    ) : ViewModel() {
+
+        fun send(text: String, useCloud: Boolean) = viewModelScope.launch {
+            if (useCloud) {
+                val request = ChatCompletionRequest(
+                    model = "gpt-4o-mini",
+                    messages = listOf(CloudChatMessage.User(text)),
+                )
+                cloud.streamChatCompletion(request).collect { event ->
+                    if (event is ChatCompletionEvent.Delta) appendChunk(event.content)
+                }
+            } else {
+                val message = ChatMessage(
+                    role = ChatMessage.Role.USER,
+                    content = listOf(ChatMessageContent.Text(text)),
+                )
+                onDevice.generateResponse(message).collect { resp ->
+                    if (resp is MessageResponse.Chunk) appendChunk(resp.text)
+                }
+            }
+        }
+
+        private fun appendChunk(text: String) { /* … */ }
+
+        override fun onCleared() {
+            super.onCleared()
+            cloud.close()
+        }
+    }
+    ```
+  </Tab>
+  <Tab title="Kotlin (JVM / native)">
+    ```kotlin
+    suspend fun hybridSend(
+        onDevice: Conversation,
+        cloud: OpenAiClient,
+        text: String,
+        useCloud: Boolean,
+    ) {
+        if (useCloud) {
+            val request = ChatCompletionRequest(
+                model = "gpt-4o-mini",
+                messages = listOf(CloudChatMessage.User(text)),
+            )
+            cloud.streamChatCompletion(request).collect { event ->
+                if (event is ChatCompletionEvent.Delta) print(event.content)
+            }
+        } else {
+            onDevice.generateResponse(text).collect { resp ->
+                if (resp is MessageResponse.Chunk) print(resp.text)
+            }
+        }
+    }
+    ```
+  </Tab>
+</Tabs>
+
+See [Cloud AI Comparison](./cloud-ai-comparison) for a side-by-side feature breakdown.
+
+## Lifecycle
+
+The platform `OpenAiClient(config:)` factory creates an `HttpClient` internally and ties it to the returned client — call `close()` when you're done.
+
+<Tabs>
+  <Tab title="Swift (iOS / macOS)">
+    ```swift
+    deinit { client.close() }
+    ```
+
+    The lower-level constructor that accepts an externally-managed `HttpClient` is part of the Kotlin/Ktor surface and isn't a useful entry point from Swift — the Ktor engine machinery isn't bridged into the public Swift API. Use `OpenAiClient(config:)` and let the SDK own the session. If multiple consumers share a client, share the `OpenAiClient` instance and `close()` once at teardown.
+  </Tab>
+  <Tab title="Kotlin (all platforms)">
+    ```kotlin
+    override fun onCleared() {
+        super.onCleared()
+        client.close()
+    }
+    ```
+
+    If you need to share an `HttpClient` across multiple clients (e.g., you already manage one for other Ktor-based code), use the lower-level constructor that takes a pre-built `HttpClient` — you then own its lifetime and shouldn't call `close()` on the OpenAiClient:
+
+    ```kotlin
+    val shared = HttpClient(OkHttp)  // your own instance
+    val client = OpenAiClient(config = config, httpClient = shared)
+    // Don't call client.close() — you own `shared` and decide when it dies
+    ```
+  </Tab>
+</Tabs>

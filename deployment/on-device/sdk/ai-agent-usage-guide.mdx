@@ -1,0 +1,456 @@
+---
+title: "AI Agent Usage Guide"
+description: "End-to-end recipes for building AI agents with the LEAP SDK — same patterns across iOS, macOS, Android, JVM, and native."
+---
+
+This guide walks through the patterns for building a real AI agent — multi-turn conversation, function calling with tool dispatch, multimodal inputs, and a complete view-model wiring. The cross-platform pages cover individual APIs in depth — start here for the full picture, then drill into the dedicated references when you need details.
+
+## Architecture
+
+```
+Downloader (LeapModelDownloader on Android · ModelDownloader on iOS / macOS · LeapDownloader on JVM/native)
+    ↓
+ModelRunner
+    ↓
+Conversation
+    ↓
+MessageResponse (streaming: Chunk · ReasoningChunk · FunctionCalls · AudioSample · Complete)
+```
+
+The `ModelRunner` owns native memory; the `Conversation` holds chat history; the `MessageResponse` stream delivers incremental output. Same shape on every platform.
+
+| Concern | Where it lives |
+|---|---|
+| Install & set up the dependency | [Quick Start](./quick-start) |
+| Load the model | [Model Loading](./model-loading) |
+| Drive the streaming loop | [Conversation & Generation](./conversation-generation) |
+| Define and dispatch tools | [Function Calling](./function-calling) |
+| Force structured JSON output | [Constrained Generation](./constrained-generation) |
+| Voice UX | [Voice Assistant Widget](./voice-assistant) |
+| Hybrid on-device + cloud | [OpenAI-Compatible Client](./openai-client) |
+| Desktop & native targets | [Desktop & Native Platforms](./desktop-platforms) |
+
+## The generation loop
+
+Every agent has the same shape: send a `ChatMessage`, iterate the response stream, dispatch each variant. Use the language's exhaustive switch — `onEnum(of:)` (Swift) or `is` checks against the sealed interface (Kotlin) — so the compiler errors if a new `MessageResponse` case is added.
+
+<Tabs>
+  <Tab title="Swift (iOS / macOS)">
+    ```swift
+    @MainActor
+    private func handle(_ response: MessageResponse) {
+        switch onEnum(of: response) {
+        case .chunk(let chunk):
+            currentText += chunk.text
+        case .reasoningChunk(let reasoning):
+            log("Reasoning:", reasoning.reasoning)
+        case .functionCalls(let payload):
+            for call in payload.functionCalls {
+                Task { await dispatch(call) }
+            }
+        case .audioSample(let audio):
+            audioPlayer.enqueue(audio.samples, sampleRate: Int(audio.sampleRate))
+        case .complete(let completion):
+            currentText = ""
+            if let stats = completion.stats {
+                log("Done: \(stats.totalTokens) tokens at \(stats.tokenPerSecond) tok/s")
+            }
+        }
+    }
+    ```
+  </Tab>
+  <Tab title="Kotlin (all platforms)">
+    ```kotlin
+    suspend fun handle(response: MessageResponse) {
+        when (response) {
+            is MessageResponse.Chunk -> _text.value += response.text
+            is MessageResponse.ReasoningChunk -> Log.d(TAG, "Reasoning: ${response.reasoning}")
+            is MessageResponse.FunctionCalls -> {
+                response.functionCalls.forEach { call -> dispatch(call) }
+            }
+            is MessageResponse.AudioSample -> audioPlayer.enqueue(response.samples, response.sampleRate)
+            is MessageResponse.Complete -> {
+                _text.value = ""
+                Log.d(TAG, "Done: ${response.stats?.totalTokens} tokens at ${response.stats?.tokenPerSecond} tok/s")
+            }
+        }
+    }
+    ```
+  </Tab>
+</Tabs>
+
+## Multi-turn with tool calls
+
+The defining feature of an agent: the model emits `FunctionCalls`, you execute the tool, append the result as a `tool`-role message, and continue. The same pattern works on every platform.
+
+<Tabs>
+  <Tab title="Swift (iOS / macOS)">
+    ```swift
+    func agentLoop(initialQuestion: String) async throws {
+        var workingConv = conversation!
+        var pending = ChatMessage(role: .user, content: [.text(initialQuestion)])
+
+        while true {
+            var toolCalls: [LeapFunctionCall] = []
+            for try await response in workingConv.generateResponse(message: pending) {
+                switch onEnum(of: response) {
+                case .chunk(let c):
+                    appendUI(c.text)
+                case .functionCalls(let payload):
+                    toolCalls.append(contentsOf: payload.functionCalls)
+                case .complete:
+                    break
+                default:
+                    break
+                }
+            }
+
+            if toolCalls.isEmpty { break }   // Agent is done
+
+            // Execute tools, append results, loop
+            let toolMessages = await toolCalls.asyncMap { call in
+                let result = await runtimeDispatch(call)
+                return ChatMessage(role: .tool, content: [.text(result)])
+            }
+            let updatedHistory = workingConv.history + toolMessages
+            workingConv = workingConv.modelRunner.createConversationFromHistory(history: updatedHistory)
+            pending = ChatMessage(role: .user, content: [.text("")])  // empty turn — let the model continue
+        }
+    }
+    ```
+  </Tab>
+  <Tab title="Kotlin (all platforms)">
+    ```kotlin
+    suspend fun agentLoop(initialQuestion: String) {
+        var workingConv: Conversation = conversation!!
+        var pending: ChatMessage = ChatMessage(
+            role = ChatMessage.Role.USER,
+            content = listOf(ChatMessageContent.Text(initialQuestion))
+        )
+
+        while (true) {
+            val toolCalls = mutableListOf<LeapFunctionCall>()
+            workingConv.generateResponse(pending).collect { response ->
+                when (response) {
+                    is MessageResponse.Chunk -> appendUI(response.text)
+                    is MessageResponse.FunctionCalls -> toolCalls.addAll(response.functionCalls)
+                    else -> {}
+                }
+            }
+
+            if (toolCalls.isEmpty()) break
+
+            val toolMessages = toolCalls.map { call ->
+                val result = runtimeDispatch(call)
+                ChatMessage(
+                    role = ChatMessage.Role.TOOL,
+                    content = listOf(ChatMessageContent.Text(result))
+                )
+            }
+            val updatedHistory = workingConv.history + toolMessages
+            workingConv = modelRunner.createConversationFromHistory(updatedHistory)
+            pending = ChatMessage(role = ChatMessage.Role.USER, content = listOf(ChatMessageContent.Text("")))
+        }
+    }
+    ```
+  </Tab>
+</Tabs>
+
+Define `runtimeDispatch(_:)` as your tool-call → result router: validate arguments, call the underlying implementation, JSON-encode the result. Register the corresponding `LeapFunction` definitions on the conversation before you start the loop — see [Function Calling](./function-calling).
+
+## Multimodal inputs
+
+<Info>
+**Multimodality is model-specific.** Most multimodal models ship as text + one other modality (vision OR audio), not both. Send `.image(...)` parts only to a vision-capable model and `.audio(...)` parts only to an audio-capable model. Verify on the model's [Hugging Face card](https://huggingface.co/LiquidAI) before wiring up the input.
+</Info>
+
+<Tabs>
+  <Tab title="Swift (iOS / macOS)">
+    ```swift
+    // Vision-capable model
+    let imageMessage = ChatMessage(
+      role: .user,
+      content: [.text("Describe what you see."), .image(jpegData)]
+    )
+
+    // Audio-capable model — WAV blob
+    let audioMessage = ChatMessage(
+      role: .user,
+      content: [.text("Transcribe."), .audio(wavData)]
+    )
+
+    // Audio-capable model — raw float32 PCM samples (no WAV re-encode)
+    let pcmMessage = ChatMessage(
+      role: .user,
+      content: [.text("How's my pronunciation?"),
+                ChatMessageContent.fromFloatSamples(samples, sampleRate: 16000)]
+    )
+    ```
+  </Tab>
+  <Tab title="Kotlin (all platforms)">
+    ```kotlin
+    // Vision-capable model
+    val imageMessage = ChatMessage(
+        role = ChatMessage.Role.USER,
+        content = listOf(
+            ChatMessageContent.Text("Describe what you see."),
+            ChatMessageContent.Image(jpegBytes)
+        )
+    )
+
+    // Audio-capable model — WAV blob
+    val audioMessage = ChatMessage(
+        role = ChatMessage.Role.USER,
+        content = listOf(
+            ChatMessageContent.Text("Transcribe."),
+            ChatMessageContent.Audio(wavBytes)
+        )
+    )
+
+    // Audio-capable model — raw float32 PCM (no WAV re-encode)
+    val pcmMessage = ChatMessage(
+        role = ChatMessage.Role.USER,
+        content = listOf(
+            ChatMessageContent.Text("How's my pronunciation?"),
+            ChatMessageContent.AudioPcmF32(samples, sampleRate = 16000)
+        )
+    )
+    ```
+  </Tab>
+</Tabs>
+
+See [Messages & Content](./messages-content) for audio format requirements (WAV, mono, 16 kHz recommended) and helpers for recording from the microphone.
+
+## Complete view-model example
+
+A `ChatViewModel` that loads the model, registers a tool, drives generation, and exposes streaming text to the UI.
+
+<Tabs>
+  <Tab title="Swift (iOS / macOS)">
+    ```swift
+    import LeapModelDownloader
+    import Combine
+
+    @MainActor
+    final class ChatViewModel: ObservableObject {
+        @Published var responseText = ""
+        @Published var isLoading = false
+        @Published var isGenerating = false
+        @Published var errorMessage: String?
+
+        private let downloader: ModelDownloader = {
+            let caches = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first!.path
+            let modelsDir = (caches as NSString).appendingPathComponent("leap_models")
+            return ModelDownloader(config: LeapDownloaderConfig(saveDir: modelsDir))
+        }()
+        private var modelRunner: ModelRunner?
+        private var conversation: Conversation?
+        private var generationTask: Task<Void, Never>?
+
+        func loadModel() async {
+            isLoading = true
+            defer { isLoading = false }
+            do {
+                let runner = try await downloader.loadModel(
+                    modelName: "LFM2.5-1.2B-Instruct",
+                    quantizationType: "Q4_K_M"
+                )
+                modelRunner = runner
+                conversation = runner.createConversation(systemPrompt: "You are a helpful assistant.")
+                conversation?.registerFunction(weatherFunction)
+            } catch {
+                errorMessage = "Failed to load model: \(error.localizedDescription)"
+            }
+        }
+
+        func send(_ text: String) {
+            guard let conversation else { return }
+            generationTask?.cancel()
+            isGenerating = true
+            responseText = ""
+
+            generationTask = Task { [weak self] in
+                defer { Task { @MainActor in self?.isGenerating = false } }
+                do {
+                    let userMessage = ChatMessage(role: .user, content: [.text(text)])
+                    for try await response in conversation.generateResponse(
+                        message: userMessage,
+                        generationOptions: GenerationOptions(temperature: 0.3, minP: 0.15, repetitionPenalty: 1.05)
+                    ) {
+                        await MainActor.run { self?.handle(response) }
+                    }
+                } catch {
+                    await MainActor.run { self?.errorMessage = "Generation failed: \(error.localizedDescription)" }
+                }
+            }
+        }
+
+        func stopGeneration() {
+            generationTask?.cancel()
+        }
+
+        @MainActor
+        private func handle(_ response: MessageResponse) {
+            switch onEnum(of: response) {
+            case .chunk(let c): responseText += c.text
+            case .reasoningChunk(let r): print("[thinking] \(r.reasoning)")
+            case .functionCalls(let f):
+                for call in f.functionCalls { Task { await dispatch(call) } }
+            case .audioSample(let a):
+                audioRenderer.enqueue(a.samples, sampleRate: Int(a.sampleRate))
+            case .complete(let c):
+                if let stats = c.stats {
+                    print("\nFinished — \(stats.totalTokens) tokens at \(stats.tokenPerSecond) tok/s")
+                }
+            }
+        }
+    }
+    ```
+  </Tab>
+  <Tab title="Kotlin (Android)">
+    ```kotlin
+    import android.app.Application
+    import androidx.lifecycle.AndroidViewModel
+    import androidx.lifecycle.viewModelScope
+    import ai.liquid.leap.Conversation
+    import ai.liquid.leap.GenerationOptions
+    import ai.liquid.leap.MessageResponse
+    import ai.liquid.leap.ModelRunner
+    import ai.liquid.leap.message.ChatMessage
+    import ai.liquid.leap.message.ChatMessageContent
+    import ai.liquid.leap.model_downloader.LeapModelDownloader
+    import kotlinx.coroutines.*
+    import kotlinx.coroutines.flow.*
+
+    class ChatViewModel(application: Application) : AndroidViewModel(application) {
+        private val downloader = LeapModelDownloader(application)
+        private var modelRunner: ModelRunner? = null
+        private var conversation: Conversation? = null
+        private var generationJob: Job? = null
+
+        private val _responseText = MutableStateFlow("")
+        val responseText: StateFlow<String> = _responseText.asStateFlow()
+
+        private val _isLoading = MutableStateFlow(false)
+        val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
+
+        private val _isGenerating = MutableStateFlow(false)
+        val isGenerating: StateFlow<Boolean> = _isGenerating.asStateFlow()
+
+        private val _errorMessage = MutableStateFlow<String?>(null)
+        val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
+
+        fun loadModel() {
+            viewModelScope.launch {
+                _isLoading.value = true
+                try {
+                    val runner = downloader.loadModel(
+                        modelName = "LFM2.5-1.2B-Instruct",
+                        quantizationType = "Q4_K_M",
+                    )
+                    modelRunner = runner
+                    conversation = runner.createConversation("You are a helpful assistant.").also {
+                        it.registerFunction(weatherFunction)
+                    }
+                } catch (e: Exception) {
+                    _errorMessage.value = "Failed to load model: ${e.message}"
+                } finally {
+                    _isLoading.value = false
+                }
+            }
+        }
+
+        fun send(text: String) {
+            generationJob?.cancel()
+            _responseText.value = ""
+            generationJob = viewModelScope.launch {
+                _isGenerating.value = true
+                val userMessage = ChatMessage(
+                    role = ChatMessage.Role.USER,
+                    content = listOf(ChatMessageContent.Text(text))
+                )
+                conversation?.generateResponse(
+                    userMessage,
+                    GenerationOptions.build {
+                        temperature = 0.3f
+                        minP = 0.15f
+                        repetitionPenalty = 1.05f
+                    },
+                )
+                    ?.onEach { handle(it) }
+                    ?.catch { e -> _errorMessage.value = "Generation failed: ${e.message}" }
+                    ?.onCompletion { _isGenerating.value = false }
+                    ?.collect()
+            }
+        }
+
+        fun stopGeneration() { generationJob?.cancel() }
+
+        private suspend fun handle(response: MessageResponse) {
+            when (response) {
+                is MessageResponse.Chunk -> _responseText.value += response.text
+                is MessageResponse.ReasoningChunk -> Log.d(TAG, "Reasoning: ${response.reasoning}")
+                is MessageResponse.FunctionCalls -> response.functionCalls.forEach { dispatch(it) }
+                is MessageResponse.AudioSample -> audioRenderer.enqueue(response.samples, response.sampleRate)
+                is MessageResponse.Complete -> Log.d(TAG, "Done: ${response.stats?.totalTokens} tokens")
+            }
+        }
+
+        override fun onCleared() {
+            super.onCleared()
+            generationJob?.cancel()
+            runBlocking(Dispatchers.IO) { modelRunner?.unload() }
+        }
+
+        companion object { private const val TAG = "ChatViewModel" }
+    }
+    ```
+  </Tab>
+</Tabs>
+
+## Pitfalls and best practices
+
+- **Always handle every `MessageResponse` case.** Even if you only care about `.chunk` and `.complete`, give `.functionCalls`, `.audioSample`, and `.reasoningChunk` explicit (empty) branches — otherwise an exhaustive switch will fail to compile when a new variant is added.
+- **Cancel before re-issuing.** Don't start a second `generateResponse(...)` while one is in flight. Either cancel the previous `Task` / `Job`, or check `conversation.isGenerating` first.
+- **Don't `runBlocking` in production paths.** It's fine in `onCleared()` for guaranteed cleanup (because `viewModelScope` is already cancelled at that point). Anywhere else, it freezes the calling thread.
+- **Use `cacheDir` (Android) / `cachesDirectory` (iOS) for KV-cache reuse paths.** They're regenerable — letting the OS reclaim them on storage pressure is the right semantics. See [Model Loading → KV cache reuse](./model-loading#kv-cache-reuse).
+- **Validate tool-call arguments before dispatching.** The `arguments: Map<String, Any?>` (Kotlin) / `[String: Any?]` (Swift) shape is unsafe by design — defensively coerce types and apply business-level invariants.
+- **Match the model's recommended sampling parameters.** The LEAP bundle manifest (`sampling_parameters` under `generation_time_parameters` in each `<Quant>.json` on [LiquidAI/LeapBundles](https://huggingface.co/LiquidAI/LeapBundles)) carries defaults tuned per checkpoint for the llama.cpp engine the SDK runs. Overriding `temperature` and friends often hurts quality more than it helps — start from the manifest values rather than the HF model card defaults (the two can differ).
+
+## Platform-specific concerns
+
+<Tabs>
+  <Tab title="iOS / macOS">
+    - iOS deployment target: **17.0+** · macOS: **15.0+**
+    - Xcode 16.0+, Swift 6.0
+    - Run model loads inside a `Task` from a `@MainActor` view model. `ModelDownloader` background downloads (via `URLSessionConfiguration.background(withIdentifier:)`) survive app suspension; see [Model Loading](./model-loading#constructing-the-downloader).
+    - The voice widget exists on UIKit and AppKit — see [Voice Assistant Widget](./voice-assistant).
+  </Tab>
+  <Tab title="Android">
+    - **Min SDK 31** (Android 12).
+    - Use a real device for testing — the emulator may crash loading model bundles.
+    - `LeapModelDownloader` (the Android one) requires `POST_NOTIFICATIONS` at runtime on Android 13+ and a few manifest entries — see [Quick Start → Install the SDK](./quick-start#2-install-the-sdk).
+    - Background downloads use WorkManager + a foreground service; the SDK ships notification configuration via `LeapModelDownloaderNotificationConfig`.
+    - For most cases, hold the runner in a `ViewModel` with `viewModelScope`. Unload via `runBlocking(Dispatchers.IO) { runner.unload() }` in `onCleared()`.
+  </Tab>
+  <Tab title="JVM / Linux native / Windows native">
+    - JVM: JDK 11+. No `Context` parameter, no foreground service, no notifications — `LeapDownloader` is a simple async fetcher with a configurable `saveDir`.
+    - Linux native runtime: glibc **2.34+** (Ubuntu 22.04, Debian 12, RHEL 9 or newer). Older hosts fail at process start.
+    - Windows native: Windows 10+. DLLs co-locate next to the `.exe` (Windows' standard search order finds them).
+    - **Pin to 0.10.5+** for Kotlin/Native — earlier 0.10.x releases have unresolved cinterop / linker issues that prevent producing a working executable. See [Desktop & Native Platforms](./desktop-platforms).
+  </Tab>
+</Tabs>
+
+## Troubleshooting
+
+| Symptom | Likely cause / fix |
+|---|---|
+| `LeapModelLoadingException` / `LeapError.modelLoadingFailure` | Missing companion file for multimodal model (mmproj / audio decoder). Verify the manifest or pass explicit paths via `loadSimpleModel(ModelSource(...))`. |
+| Model loads but generates gibberish | Wrong sampling parameters or wrong function-call parser for the model family. Check the model card; default to `LFMFunctionCallParser` for LFM models, `HermesFunctionCallParser` for Qwen3/Hermes. |
+| "ZIP archive corrupted" on download | Network hiccup mid-download. `LeapDownloader` / `LeapModelDownloader` validates SHA-256, so a partial file fails the check. Remove the cache directory and retry. |
+| Generation hangs after `cancel()` | Cancellation is cooperative — the engine checks between tokens. There's at most one extra token of slack. If it's longer, you may be missing a `Job` cancel or the stream is being awaited on a thread other than the one you're cancelling from. |
+| Voice widget records silence | Missing microphone permission, or `AVAudioSession`/Android audio config not set to `playAndRecord` / mono / 16 kHz. See [Voice Assistant Widget](./voice-assistant). |
+| K/N executable fails at start with `dlsym@GLIBC_2.34` | Runtime host's glibc is older than 2.34. Upgrade to Ubuntu 22.04+, Debian 12+, RHEL 9+, or build for an older runtime target. |
+| Compile error "@Guide annotation missing" (Swift) | All properties on a `@Generatable` `struct` need a `@Guide`. Annotate every stored property. |
+
+For deeper failure-mode coverage, see [Utilities → Errors](./utilities#errors).

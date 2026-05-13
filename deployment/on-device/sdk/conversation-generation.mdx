@@ -1,0 +1,380 @@
+---
+title: "Conversation & Generation"
+description: "Reference for ModelRunner, Conversation, MessageResponse, and GenerationOptions — same API on every platform."
+---
+
+<Info>
+All functions documented on this page are safe to call from the main/UI thread; callbacks run on the main thread unless explicitly noted. The API surface is identical across iOS, macOS, Android, JVM, and Kotlin/Native — only the language and a handful of platform conventions differ.
+</Info>
+
+## `ModelRunner`
+
+A `ModelRunner` represents a loaded model instance. Obtain one via:
+
+- **Android (recommended):** `LeapModelDownloader.loadModel(...)` / `loadSimpleModel(...)` — one-shot load that transparently routes through the optional [Leap Model Service](./model-loading#leap-model-service-android) when installed, and adds WorkManager-backed background download staging on top.
+- **iOS / macOS (recommended):** `ModelDownloader.loadModel(...)` / `loadSimpleModel(...)` — one-shot load that routes file transfers through `URLSession`. Pass `sessionConfiguration: .background(withIdentifier:)` for downloads that survive app suspension. (Class ships in the `LeapModelDownloader` SPM library product.)
+- **All platforms (iOS, Android, JVM, Linux native, Windows native, macOS Kotlin):** `LeapDownloader.loadModel(...)` / `loadSimpleModel(...)` — the cross-platform manifest loader, with no platform-native background integration. Used directly on JVM/native and as the underlying loader inside both the iOS `ModelDownloader` and Android `LeapModelDownloader`.
+
+Hold a strong reference for as long as you need to perform generations, then call `unload()` to release native resources. See [Model Loading](./model-loading) for full reference.
+
+<Tabs>
+  <Tab title="Swift (iOS / macOS)">
+    ```swift
+    public protocol ModelRunner {
+      func createConversation(systemPrompt: String?) -> Conversation
+      func createConversationFromHistory(history: [ChatMessage]) -> Conversation
+      func unload() async
+      func getPromptTokensSize(messages: [ChatMessage], addBosToken: Bool) async -> Int
+      var modelId: String { get }
+    }
+    ```
+  </Tab>
+  <Tab title="Kotlin (all platforms)">
+    ```kotlin
+    interface ModelRunner {
+      val modelId: String
+      fun createConversation(systemPrompt: String? = null): Conversation
+      fun createConversationFromHistory(history: List<ChatMessage>): Conversation
+      suspend fun unload()
+      suspend fun getPromptTokensSize(messages: List<ChatMessage>, addBosToken: Boolean = true): Int
+    }
+    ```
+  </Tab>
+</Tabs>
+
+`getPromptTokensSize(messages:, addBosToken:)` returns the prompt token count for a hypothetical generation against `messages` — useful for context-budget checks before a request lands.
+
+### Lifecycle
+
+- Use `createConversation(systemPrompt:)` for a fresh chat, or `createConversationFromHistory(history:)` to resume from persisted state.
+- Call `unload()` when you're done. On iOS this is `async`; on Kotlin it's a `suspend` function — both release native memory.
+- If the model runner is unloaded, any conversation it created becomes read-only.
+
+<Info>
+**Android lifecycle:** If you need a model runner to survive activity destruction, wrap it in an [Android Service](https://developer.android.com/develop/background-work/services). For most apps a `ViewModel` is sufficient — `viewModelScope` keeps the model alive across configuration changes and the cleanup pattern below unloads it on destruction.
+</Info>
+
+## `Conversation`
+
+`Conversation` tracks chat state and exposes the streaming generation API. Instances are always created through a `ModelRunner` — don't construct one directly.
+
+<Tabs>
+  <Tab title="Swift (iOS / macOS)">
+    ```swift
+    public class Conversation {
+      public let modelRunner: ModelRunner
+      public private(set) var history: [ChatMessage]
+      public private(set) var functions: [LeapFunction]
+      public private(set) var isGenerating: Bool
+
+      public func registerFunction(_ function: LeapFunction)
+      public func registerFunctions(_ functions: [LeapFunction])
+      public func appendToHistory(_ message: ChatMessage)
+      public func removeLastMessage()
+      public func exportToJSON() throws -> [[String: Any]]
+
+      public func generateResponse(
+        userTextMessage: String,
+        generationOptions: GenerationOptions? = nil
+      ) -> AsyncThrowingStream<MessageResponse, Error>
+
+      public func generateResponse(
+        message: ChatMessage,
+        generationOptions: GenerationOptions? = nil
+      ) -> AsyncThrowingStream<MessageResponse, Error>
+    }
+    ```
+  </Tab>
+  <Tab title="Kotlin (all platforms)">
+    ```kotlin
+    interface Conversation {
+      val modelRunner: ModelRunner
+      val history: List<ChatMessage>
+      val functions: List<LeapFunction>
+      val isGenerating: Boolean
+
+      fun appendToHistory(message: ChatMessage)
+      fun removeLastMessage()
+
+      fun registerFunction(function: LeapFunction)
+      fun registerFunctions(functions: List<LeapFunction>)
+
+      fun generateResponse(
+          userTextMessage: String,
+          generationOptions: GenerationOptions? = null
+      ): Flow<MessageResponse>
+
+      fun generateResponse(
+          message: ChatMessage,
+          generationOptions: GenerationOptions? = null
+      ): Flow<MessageResponse>
+
+      fun exportToJSONArray(): JSONArray
+    }
+    ```
+  </Tab>
+</Tabs>
+
+- **`appendToHistory(message)`** — record a message without triggering generation. Useful for replaying persisted state, or for inserting tool-result messages (`role: .tool`) after handling a function call.
+- **`removeLastMessage()`** — pop the trailing message. No-op on an empty history. Useful when a generation was cancelled and you want to drop the dangling user turn.
+- **`registerFunctions(functions)`** — bulk-register tool definitions; equivalent to looping over `registerFunction(_:)`.
+
+### Properties
+
+- **`history`** — a snapshot copy of the chat messages. Mutations don't affect generation. Once the stream emits `Complete`, `history` includes the final assistant reply.
+- **`isGenerating`** — `true` while a generation is in flight. Starting a second generation while one is running is blocked.
+- **`functions`** (Swift only field, registered via `registerFunction` on both platforms) — tool definitions the model may invoke.
+
+### Streaming generation
+
+The async stream is the recommended way to drive generation — both platforms emit the same `MessageResponse` cases in the same order. Cancel the consuming task / coroutine to stop generation cleanly.
+
+<Tabs>
+  <Tab title="Swift (iOS / macOS)">
+    ```swift
+    let user = ChatMessage(role: .user, content: [.text("Hello! What can you do?")])
+
+    Task {
+      do {
+        for try await response in conversation.generateResponse(
+          message: user,
+          generationOptions: GenerationOptions(temperature: 0.3, minP: 0.15, repetitionPenalty: 1.05)
+        ) {
+          switch onEnum(of: response) {
+          case .chunk(let c):
+            print(c.text, terminator: "")
+          case .reasoningChunk(let r):
+            print("Reasoning:", r.reasoning)
+          case .functionCalls(let payload):
+            handleFunctionCalls(payload.functionCalls)
+          case .audioSample(let audio):
+            audioRenderer.enqueue(audio.samples, sampleRate: Int(audio.sampleRate))
+          case .complete(let completion):
+            let text = completion.fullMessage.content.compactMap { part -> String? in
+              if case let .text(t) = onEnum(of: part) { return t.text }
+              return nil
+            }.joined()
+            print("\nComplete:", text)
+            if let stats = completion.stats {
+              print("Prompt tokens: \(stats.promptTokens), completion: \(stats.completionTokens)")
+            }
+          }
+        }
+      } catch {
+        print("Generation failed: \(error)")
+      }
+    }
+    ```
+
+    `onEnum(of:)` (introduced in v0.10.0) gives exhaustive switching on Kotlin-bridged sealed types — the compiler errors if a new `MessageResponse` case is added.
+  </Tab>
+  <Tab title="Kotlin (all platforms)">
+    ```kotlin
+    class ChatViewModel(application: Application) : AndroidViewModel(application) {
+        private var conversation: Conversation? = null
+        private var modelRunner: ModelRunner? = null
+        private var generationJob: Job? = null
+
+        private val _generatedText = MutableStateFlow("")
+        val generatedText: StateFlow<String> = _generatedText.asStateFlow()
+
+        fun generateResponse(userInput: String) {
+            generationJob = viewModelScope.launch {
+                _generatedText.value = ""
+                conversation?.generateResponse(userInput)
+                    ?.onEach { response ->
+                        when (response) {
+                            is MessageResponse.Chunk -> _generatedText.value += response.text
+                            is MessageResponse.ReasoningChunk -> Log.d(TAG, "Reasoning: ${response.reasoning}")
+                            is MessageResponse.FunctionCalls -> handleFunctionCalls(response.functionCalls)
+                            is MessageResponse.AudioSample -> audioRenderer.enqueue(response.samples, response.sampleRate)
+                            is MessageResponse.Complete -> Log.d(TAG, "Done. Stats: ${response.stats}")
+                        }
+                    }
+                    ?.catch { e -> Log.e(TAG, "Generation failed", e) }
+                    ?.collect()
+            }
+        }
+
+        fun stopGeneration() { generationJob?.cancel(); generationJob = null }
+
+        override fun onCleared() {
+            super.onCleared()
+            generationJob?.cancel()
+            runBlocking(Dispatchers.IO) { modelRunner?.unload() }
+        }
+    }
+    ```
+
+    Errors propagate as `LeapGenerationException` through the flow — handle with `.catch { ... }`.
+  </Tab>
+</Tabs>
+
+<Info>
+**Cancellation.** Cancelling the Swift `Task` or the Kotlin coroutine `Job` stops generation and frees native resources. On both platforms cancellation is cooperative — the engine checks between tokens, so there's at most one extra token of slack after `cancel()`.
+</Info>
+
+### Export chat history
+
+Both platforms expose a serializer compatible with OpenAI's chat-completions message format. Useful for persistence, analytics, or replaying conversations through a cloud fallback.
+
+<Tabs>
+  <Tab title="Swift (iOS / macOS)">
+    ```swift
+    let payload: [[String: Any]] = try conversation.exportToJSON()
+    ```
+  </Tab>
+  <Tab title="Kotlin (all platforms)">
+    ```kotlin
+    val payload: JSONArray = conversation.exportToJSONArray()
+    ```
+  </Tab>
+</Tabs>
+
+## `MessageResponse`
+
+A sealed type with one case per kind of incremental output the engine emits.
+
+<Tabs>
+  <Tab title="Swift (iOS / macOS)">
+    ```swift
+    public enum MessageResponse {
+      case chunk(Chunk)                        // Chunk.text — partial assistant text
+      case reasoningChunk(ReasoningChunk)      // ReasoningChunk.reasoning — thinking tokens
+      case functionCalls(FunctionCalls)        // FunctionCalls.functionCalls — [LeapFunctionCall]
+      case audioSample(AudioSample)            // AudioSample.samples, .sampleRate — PCM frames
+      case complete(Complete)                  // Complete.fullMessage, .finishReason, .stats
+    }
+    ```
+
+    Each case wraps a small struct so SKIE can bridge Kotlin sealed classes losslessly. Use `onEnum(of:)` for exhaustive switching.
+  </Tab>
+  <Tab title="Kotlin (all platforms)">
+    ```kotlin
+    sealed interface MessageResponse {
+      class Chunk(val text: String) : MessageResponse
+      class ReasoningChunk(val reasoning: String) : MessageResponse
+      class FunctionCalls(val functionCalls: List<LeapFunctionCall>) : MessageResponse
+      class AudioSample(val samples: FloatArray, val sampleRate: Int) : MessageResponse
+      class Complete(
+        val fullMessage: ChatMessage,
+        val finishReason: GenerationFinishReason,
+        val stats: GenerationStats?,
+      ) : MessageResponse
+    }
+    ```
+  </Tab>
+</Tabs>
+
+- **`Chunk`** — partial assistant text. Append to your UI buffer.
+- **`ReasoningChunk`** — thinking-style tokens emitted by reasoning models (wrapped between `<think>` / `</think>` upstream). Only fires when `GenerationOptions.enableThinking = true` *and* the model supports it.
+- **`FunctionCalls`** — one or more tool invocations the model wants you to execute. See [Function Calling](./function-calling).
+- **`AudioSample`** — float32 mono PCM frames from audio-capable checkpoints. The sample rate is constant for a generation; route the frames to a renderer.
+- **`Complete`** — final marker. `fullMessage` is the assembled assistant `ChatMessage` (also present in `conversation.history`). `stats` holds token counts and `tokenPerSecond` (may be `null` on some backends).
+
+### `GenerationFinishReason`
+
+`Complete.finishReason` is one of:
+
+| Value | Meaning |
+|---|---|
+| `STOP` | The model emitted its EOS token — clean completion. |
+| `EXCEED_CONTEXT` | The model hit the context-window limit before stopping. The reply may be truncated mid-sentence. |
+| `INTERRUPTED` | Generation was cancelled by the caller (collector cancelled the flow / task). |
+| `CONSTRAINT` | A constrained-generation constraint (e.g. JSON schema) forced an early stop. |
+| `ERROR` | An internal error occurred. The partial `fullMessage` is *not* appended to `history` — your error handler should run instead. |
+
+## `GenerationOptions`
+
+Tune sampling, structured output, tool-call parsing, and reasoning behavior per request. Leave any field as `null` to fall back to the model bundle's defaults.
+
+<Tabs>
+  <Tab title="Swift (iOS / macOS)">
+    ```swift
+    public struct GenerationOptions {
+      public var temperature: Float?
+      public var topP: Float?
+      public var minP: Float?
+      public var topK: Int32?
+      public var repetitionPenalty: Float?
+      public var rngSeed: Int64?
+      public var maxTokens: Int32?
+      public var jsonSchemaConstraint: String?
+      public var injectSchemaIntoPrompt: Bool        // default true
+      public var functionCallParser: LeapFunctionCallParserProtocol?
+      public var inlineThinkingTags: Bool            // default false
+      public var enableThinking: Bool                // default false
+      public var extras: String?
+
+      public init(/* all fields as optional kwargs */)
+      public mutating func setResponseFormat<T: GeneratableType>(type: T.Type) throws
+    }
+    ```
+
+    ```swift
+    var options = GenerationOptions(temperature: 0.3, minP: 0.15, repetitionPenalty: 1.05, maxTokens: 512)
+    try options.setResponseFormat(type: CityFact.self)
+    ```
+
+    Builder style is available too — chain `.with(temperature:)`, `.with(topP:)`, `.with(maxTokens:)`, etc.
+  </Tab>
+  <Tab title="Kotlin (all platforms)">
+    ```kotlin
+    data class GenerationOptions(
+        var temperature: Float? = null,
+        var topP: Float? = null,
+        var minP: Float? = null,
+        var repetitionPenalty: Float? = null,
+        var topK: Int? = null,
+        var rngSeed: Long? = null,
+        var jsonSchemaConstraint: String? = null,
+        var functionCallParser: LeapFunctionCallParser? = LFMFunctionCallParser(),
+        var injectSchemaIntoPrompt: Boolean = true,
+        var maxTokens: Int? = null,
+        var inlineThinkingTags: Boolean = false,
+        var enableThinking: Boolean = false,
+        var extras: String? = null,
+    ) {
+      inline fun <reified T : Any> setResponseFormatType()
+      fun setResponseFormatType(kClass: KClass<*>)
+
+      companion object {
+        fun build(buildAction: GenerationOptions.() -> Unit): GenerationOptions
+      }
+    }
+    ```
+
+    ```kotlin
+    val options = GenerationOptions.build {
+        temperature = 0.3f
+        minP = 0.15f
+        repetitionPenalty = 1.05f
+        maxTokens = 512
+        setResponseFormatType(CityFact::class)
+    }
+    ```
+  </Tab>
+</Tabs>
+
+- **Sampling fields** (`temperature`, `topP`, `minP`, `topK`, `repetitionPenalty`) — standard sampling knobs. Use the values from the LEAP bundle manifest (`sampling_parameters` under `generation_time_parameters` in each model's `<Quant>.json` on [LiquidAI/LeapBundles](https://huggingface.co/LiquidAI/LeapBundles)); they're tuned per checkpoint by the training team and differ from the HF model card defaults (the manifest values are the llama.cpp-engine path the SDK runs). Arbitrary "0.7" defaults from generic AI tutorials usually underperform.
+- **`rngSeed`** — set for deterministic / reproducible output (testing, debugging). Default is non-deterministic.
+- **`maxTokens`** — cap the response length. The model stops after this many completion tokens (prompt tokens don't count). Defaults to "until EOS or context limit." Useful for cost control with constrained output.
+- **`jsonSchemaConstraint`** — JSON Schema string for constrained generation. Use the higher-level `setResponseFormat(type:)` / `setResponseFormatType(...)` helpers with `@Generatable` types. See [Constrained Generation](./constrained-generation).
+- **`injectSchemaIntoPrompt`** — when `true` (default), the schema is appended to the system message for semantic guidance *in addition* to the structural constraint at decode time. Set `false` to skip the prompt injection (matches `llama-server` grammar mode) — saves prompt tokens for large schemas.
+- **`functionCallParser`** — picks the tokenizer expected by the model. `LFMFunctionCallParser` (default) for Liquid Foundation Models; `HermesFunctionCallParser()` for Hermes/Qwen3 formats; `null` to receive raw tool-call text in `Chunk`s.
+- **`enableThinking`** — turn on reasoning mode for models that support it (e.g. LFM2.5-Thinking). Reasoning tokens arrive as `ReasoningChunk`s.
+- **`inlineThinkingTags`** — when `true`, thinking tokens are emitted as ordinary `Chunk`s with the literal `<think>...</think>` tags intact (instead of `ReasoningChunk`). `ChatMessage.reasoningContent` is still populated on the final message.
+- **`extras`** — backend-specific JSON payload (internal use).
+
+## `GenerationStats`
+
+```text
+promptTokens         Long    Prompt tokens computed (excludes tokens restored from KV cache).
+completionTokens     Long    Tokens emitted during generation.
+totalTokens          Long    promptTokens + completionTokens (excludes cached tokens).
+tokenPerSecond       Float   Generation throughput (may be approximate on some backends).
+cachedPromptTokens   Long    Prompt tokens restored from KV cache — not recomputed. 0 when the
+                             cache is disabled or missed.
+```
+
+`cachedPromptTokens` is useful for observing KV-cache effectiveness — a high ratio of cached tokens to total prompt tokens means the prefix matched and you skipped the prefill compute for those tokens.

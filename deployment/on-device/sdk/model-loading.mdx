@@ -1,0 +1,782 @@
+---
+title: "Model Loading"
+description: "Reference for ModelDownloader, LeapDownloader, loadModel, loadSimpleModel, and KV cache reuse."
+---
+
+The LEAP SDK ships two downloader classes built on the same pipeline. They differ by what platform integration they add:
+
+| Platform | Class | What it does |
+|---|---|---|
+| **Android** | `LeapModelDownloader` | One-shot `loadModel(...)` that routes through the optional [Leap Model Service](#leap-model-service-android) when installed, plus WorkManager-backed background download staging (`requestDownloadModel` / `observeDownloadProgress`) and foreground-service notifications. |
+| **iOS / macOS (Swift)** | `ModelDownloader` | One-shot `loadModel(...)` and `loadSimpleModel(...)` that route every file transfer through `URLSession`. Pass `sessionConfiguration: .background(withIdentifier:)` for downloads that survive app suspension. Also exposes the underlying `downloadModel` / `requestDownloadModel` / `queryStatus` lifecycle for prefetch flows. The class ships in the `LeapModelDownloader` SPM library product. |
+| **All platforms (iOS, Android, JVM, Linux native, Windows native, macOS Kotlin)** | `LeapDownloader` | The cross-platform manifest loader. One-shot `loadModel(...)` and `loadSimpleModel(...)`. No platform-native background integration — the iOS `ModelDownloader` and Android `LeapModelDownloader` classes wrap one of these internally. |
+
+Both classes return the same `ModelRunner` and share an on-disk model cache when constructed with the same `LeapDownloaderConfig.saveDir`. The platform downloader wraps a `LeapDownloader` internally — once a download has landed, calling `LeapDownloader.loadModel(...)` against the shared cache picks up the files without re-downloading.
+
+<Info>
+**Parameter naming.** Every loader uses the same parameter labels across Swift and Kotlin:
+
+- **`loadModel(...)` / `downloadModel(...)` / `requestDownloadModel(...)` / `queryStatus(...)` / `removeModel(...)`** all use `modelName:` / `quantizationType:` on the Swift `ModelDownloader` (iOS, macOS), the Kotlin `LeapModelDownloader` (Android), and the cross-platform `LeapDownloader`.
+- **`ModelSource` (sideloaded)** uses `quantizationId` — the field is part of the source descriptor, not a loader parameter.
+</Info>
+
+<Info>
+**Swift class vs. SPM product name (v0.10.6+).** In Swift code the class is `ModelDownloader`; the SPM library product / framework module / `import` statement is `LeapModelDownloader`. In 0.10.5 both shared one name, which made the class effectively uninstantiable from Swift due to type-vs-module shadowing. The Kotlin class — and therefore Android consumers — still see `LeapModelDownloader`.
+</Info>
+
+## Constructing the downloader
+
+<Tabs>
+  <Tab title="Swift (iOS / macOS)">
+    ```swift
+    public class ModelDownloader {
+      // Full designated init (defaults supplied by the Swift convenience inits below)
+      public init(config: LeapDownloaderConfig, sessionConfiguration: URLSessionConfiguration?)
+
+      // Swift convenience inits (v0.10.6+)
+      public convenience init()                                                       // foreground, default config
+      public convenience init(config: LeapDownloaderConfig)                           // foreground, custom config
+      public convenience init(sessionConfiguration: URLSessionConfiguration?)         // background, default config
+    }
+    ```
+
+    The parameterless `ModelDownloader()` and single-arg forms are Swift convenience inits added in v0.10.6 — Kotlin/Native's ObjC export strips default-argument metadata, so without them Swift callers were forced to pass every parameter of the underlying seven-field `LeapDownloaderConfig` and a `sessionConfiguration` explicitly.
+
+    Pass `nil` (default) for `sessionConfiguration:` to get foreground downloads. For background downloads that continue when the app is suspended or killed, pass `URLSessionConfiguration.background(withIdentifier:)`:
+
+    ```swift
+    let backgroundConfig = URLSessionConfiguration.background(
+        withIdentifier: "com.myapp.leap.downloads"
+    )
+    let downloader = ModelDownloader(sessionConfiguration: backgroundConfig)
+    ```
+
+    Forward `application(_:handleEventsForBackgroundURLSession:completionHandler:)` to `downloader.handleBackgroundEvents(completionHandler:)` so the OS can wake your app when downloads finish.
+
+    <Accordion title="Cross-platform LeapDownloader (no background download support)">
+      `LeapDownloader` is available on iOS too — same `loadModel` / `loadSimpleModel` API as Kotlin, but no `URLSession` background integration. Use it when you don't need background downloads:
+
+      ```swift
+      let downloader = LeapDownloader(
+        config: LeapDownloaderConfig(saveDir: modelsDir, validateSha256: true)
+      )
+      ```
+    </Accordion>
+  </Tab>
+  <Tab title="Kotlin (Android)">
+    ```kotlin
+    class LeapModelDownloader(
+        private val context: Context,
+        modelFileDir: File? = null,
+        private val extraHTTPRequestHeaders: Map<String, String> = mapOf(),
+        private val notificationConfig: LeapModelDownloaderNotificationConfig = LeapModelDownloaderNotificationConfig(),
+    )
+    ```
+
+    | Field | Description |
+    |---|---|
+    | `context` | Activity or Application context. |
+    | `modelFileDir` | Override the model cache directory. Defaults to app's external files directory. |
+    | `extraHTTPRequestHeaders` | Extra headers to attach to download requests. |
+    | `notificationConfig` | Foreground service notification title/content/icon strings. |
+  </Tab>
+  <Tab title="Kotlin (JVM / native)">
+    ```kotlin
+    class LeapDownloader(config: LeapDownloaderConfig = LeapDownloaderConfig())
+
+    data class LeapDownloaderConfig(
+        val saveDir: String = "leap_models",
+        val validateSha256: Boolean = true,
+    )
+    ```
+
+    Pass any writable absolute path for `saveDir`. On Linux/macOS something like `~/.cache/leap`; on Windows `%LOCALAPPDATA%\leap`. The downloader has no `Context`, no foreground service, and no notifications — it just downloads.
+  </Tab>
+</Tabs>
+
+## Manifest-based loading
+
+Resolves the GGUF manifest for the given model + quantization slug, downloads anything that isn't already cached, then loads a `ModelRunner`. Cached on subsequent calls.
+
+<Tabs>
+  <Tab title="Swift (iOS / macOS)">
+    Use `ModelDownloader.loadModel(...)` — the transfer runs through `URLSession` (so it inherits background-session support when configured) and the loader picks up the on-disk files without re-downloading.
+
+    ```swift
+    extension ModelDownloader {
+      public func loadModel(
+        modelName: String,
+        quantizationType: String,
+        options: LiquidInferenceEngineManifestOptions? = nil,
+        generationTimeParameters: GenerationTimeParameters? = nil,
+        forceDownload: Bool = false,
+        downloadProgress: ((_ fraction: Double, _ bytesPerSecond: Int64) -> Void)? = nil
+      ) async throws -> ModelRunner
+    }
+    ```
+
+    ```swift
+    let downloader = ModelDownloader(
+      config: LeapDownloaderConfig(saveDir: modelsDir, validateSha256: true)
+    )
+
+    let runner = try await downloader.loadModel(
+      modelName: "LFM2.5-1.2B-Instruct",
+      quantizationType: "Q4_K_M"
+    ) { fraction, _ in
+      print("Loading \(Int(fraction * 100))%")
+    }
+    ```
+
+    - **`forceDownload`** — refresh the on-disk copy. The manifest is resolved first; only on a successful resolve are the local resources removed and re-downloaded, so a registry hiccup leaves the previously-working cached copy intact.
+    - **`downloadProgress`** — fraction (0…1) and bytes/sec for the transfer. The loader's own corruption-retry fallback (a silent re-download when the engine rejects the on-disk files) does not surface to this callback.
+    - **Background transfers** — construct with `ModelDownloader(sessionConfiguration: .background(withIdentifier:))` so transfers continue when the app is suspended. See [Constructing the downloader](#constructing-the-downloader).
+
+    A `loadModel(manifestUrl:, ...)` overload exists with the same shape if you're loading from a manifest URL directly.
+
+    <Accordion title="Cross-platform LeapDownloader.loadModel">
+      `LeapDownloader.loadModel(...)` is the cross-platform manifest loader. On iOS it works the same way `ModelDownloader.loadModel(...)` does, minus the `URLSession`-backed background-transfer support. Use it when you're building cross-platform Swift/Kotlin code or don't need background downloads. Note that `LeapDownloader` is reachable through `import LeapModelDownloader` — there's no need for a separate `import LeapSDK` (and the [dual-import build-time guard](./quick-start#2-install-the-sdk) will flag it if you add one).
+
+      ```swift
+      let downloader = LeapDownloader(
+        config: LeapDownloaderConfig(saveDir: modelsDir, validateSha256: true)
+      )
+
+      let runner = try await downloader.loadModel(
+        modelName: "LFM2.5-1.2B-Instruct",
+        quantizationType: "Q4_K_M"
+      )
+      ```
+    </Accordion>
+
+    <Accordion title="Legacy: Leap.load(model:quantization:options:)">
+      The 0.9.x-style `Leap.load(...)` compatibility surface still works and wraps `LeapDownloader.loadModel` internally:
+
+      ```swift
+      let runner = try await Leap.load(
+        model: "LFM2.5-1.2B-Instruct",
+        quantization: "Q4_K_M",
+        options: LiquidInferenceEngineManifestOptions(contextSize: 4096)
+      ) { fraction, bytesPerSecond in
+        print("Loading \(Int(fraction * 100))% at \(bytesPerSecond) B/s")
+      }
+      ```
+
+      New code should prefer `ModelDownloader.loadModel(...)` for app integrations, or `LeapDownloader.loadModel(...)` for cross-platform code.
+    </Accordion>
+  </Tab>
+  <Tab title="Kotlin (Android)">
+    ```kotlin
+    suspend fun loadModel(
+        modelName: String,
+        quantizationType: String,
+        options: ModelLoadingOptions? = null,
+        forceDownload: Boolean = false,
+        forceLocal: Boolean = false,
+        progress: ((ProgressData) -> Unit)? = null,
+    ): ModelRunner
+    ```
+
+    ```kotlin
+    val downloader = LeapModelDownloader(
+        context,
+        notificationConfig = LeapModelDownloaderNotificationConfig.build {
+            notificationTitleDownloading = "Downloading AI model..."
+            notificationTitleDownloaded = "Model ready!"
+        }
+    )
+
+    val runner = downloader.loadModel(
+        modelName = "LFM2-1.2B",
+        quantizationType = "Q5_K_M",
+        progress = { p -> println("Progress: ${(p.progress * 100).toInt()}%") }
+    )
+    ```
+
+    - **`forceDownload`** — re-fetch even when cached. Use after a corrupted download or when the manifest has changed upstream.
+    - **`forceLocal`** — skip the Leap Model Service and load in-process. Useful for testing the local path when the service is installed.
+    - **`progress`** — pass a callback to load eagerly inside `loadModel(...)` and observe progress; pass `null` (the default) to defer loading until the first session is created.
+    - **Background staging** — use `requestDownloadModel(modelName, quantizationType, forceDownload)` + `observeDownloadProgress(modelName, quantizationType): Flow<ProgressData>` for WorkManager-backed transfers. See [Utilities](./utilities).
+  </Tab>
+  <Tab title="Kotlin (JVM / native)">
+    ```kotlin
+    suspend fun loadModel(
+        modelName: String,
+        quantizationType: String,
+        options: ModelLoadingOptions? = null,
+        generationTimeParameters: GenerationTimeParameters? = null,
+        forceDownload: Boolean = false,
+        progress: ((ProgressData) -> Unit)? = null,
+    ): ModelRunner
+    ```
+
+    ```kotlin
+    val downloader = LeapDownloader(LeapDownloaderConfig(saveDir = cacheDir))
+
+    val runner = downloader.loadModel(
+        modelName = "LFM2-1.2B",
+        quantizationType = "Q5_K_M",
+        progress = { p -> println("Progress: ${(p.progress * 100).toInt()}%") }
+    )
+    ```
+  </Tab>
+</Tabs>
+
+Find available model and quantization slugs in the [LEAP Model Library](https://leap.liquid.ai/models).
+
+## Sideloaded files
+
+Use this path when you ship the model as an app asset, `adb push` it for development, download it via your own pipeline, or stage a multimodal model with its companion files in a known directory — anything that doesn't go through the LEAP manifest registry.
+
+<Tabs>
+  <Tab title="Swift (iOS / macOS)">
+    ```swift
+    public struct ModelSource {
+      public let modelPath: String
+      public let mmprojPath: String?
+      public let audioDecoderPath: String?
+      public let audioTokenizerPath: String?
+      public let modelName: String
+      public let quantizationId: String
+    }
+
+    extension ModelDownloader {
+      public func loadSimpleModel(
+        model: ModelSource,
+        options: LiquidInferenceEngineManifestOptions? = nil,
+        generationTimeParameters: GenerationTimeParameters? = nil,
+        downloadProgress: ((_ fraction: Double, _ bytesPerSecond: Int64) -> Void)? = nil
+      ) async throws -> ModelRunner
+    }
+    ```
+
+    Each `ModelSource` path accepts an absolute filesystem path, a `file://` URL, or an `http(s)://` URL (fetched and cached on first use through `URLSession`, so HTTPS sources inherit the same background-session support as `downloadModel`).
+
+    ```swift
+    // App-bundled GGUF
+    guard let ggufURL = Bundle.main.url(
+      forResource: "lfm2-1_2b-q4_k_m", withExtension: "gguf"
+    ) else { fatalError("missing model") }
+
+    let runner = try await downloader.loadSimpleModel(
+      model: ModelSource(
+        modelPath: ggufURL.path,
+        modelName: "LFM2-1.2B-Instruct",
+        quantizationId: "Q4_K_M"
+      )
+    )
+
+    // Vision model with companion mmproj
+    let visionRunner = try await downloader.loadSimpleModel(
+      model: ModelSource(
+        modelPath: visionURL.path,
+        mmprojPath: mmprojURL.path,
+        modelName: "LFM2.5-VL-1.6B",
+        quantizationId: "Q4_K_M"
+      )
+    )
+
+    // Audio model with decoder + tokenizer
+    let audioRunner = try await downloader.loadSimpleModel(
+      model: ModelSource(
+        modelPath: audioURL.path,
+        audioDecoderPath: decoderURL.path,
+        audioTokenizerPath: tokenizerURL.path,
+        modelName: "LFM2.5-Audio-1.5B",
+        quantizationId: "Q4_0"
+      )
+    )
+    ```
+
+    <Accordion title="Legacy: Leap.load(url:options:)">
+      The 0.9.x-style URL-based loader still works:
+
+      ```swift
+      let runner = try await Leap.load(url: ggufURL)
+
+      let options = LiquidInferenceEngineOptions(
+        bundlePath: ggufURL.path,
+        mmProjPath: mmprojURL.path
+      )
+      let runner = try await Leap.load(url: ggufURL, options: options, autoDetectCompanionFiles: false)
+      ```
+
+      Auto-detection picks up sibling `mmproj-*.gguf` (vision) and audio decoder files (`.gguf`/`.bin` whose name contains "audio" and "decoder"). New code should prefer `loadSimpleModel(model: ModelSource(...))` for race-free, explicit wiring.
+    </Accordion>
+  </Tab>
+  <Tab title="Kotlin (all platforms)">
+    Kotlin platforms use `downloader.loadSimpleModel(model: ModelSource(...))`. Each path accepts an absolute filesystem path, a `file://` URL (both `file:///` and `file://localhost/` forms work), or an `http(s)://` URL (fetched and cached on first use).
+
+    ```kotlin
+    data class ModelSource(
+        val modelPath: String,
+        val mmprojPath: String? = null,
+        val audioDecoderPath: String? = null,
+        val audioTokenizerPath: String? = null,
+        val modelName: String,
+        val quantizationId: String,
+    )
+
+    suspend fun loadSimpleModel(
+        model: ModelSource,
+        options: ModelLoadingOptions? = null,
+        generationTimeParameters: GenerationTimeParameters? = null,
+        progress: ((ProgressData) -> Unit)? = null,
+    ): ModelRunner
+    ```
+
+    ```kotlin
+    // Plain sideloaded GGUF
+    val runner = downloader.loadSimpleModel(
+        model = ModelSource(
+            modelPath = "/data/local/tmp/leap/lfm2-1.2b-q5_k_m.gguf",
+            modelName = "LFM2-1.2B",
+            quantizationId = "Q5_K_M",
+        )
+    )
+
+    // Vision model
+    val visionRunner = downloader.loadSimpleModel(
+        model = ModelSource(
+            modelPath = "file:///data/local/tmp/leap/lfm2-vl.gguf",
+            mmprojPath = "file:///data/local/tmp/leap/lfm2-vl-mmproj.gguf",
+            modelName = "LFM2-VL-450M",
+            quantizationId = "Q4_K_M",
+        )
+    )
+
+    // Audio model
+    val audioRunner = downloader.loadSimpleModel(
+        model = ModelSource(
+            modelPath = "/opt/models/audio.gguf",
+            audioDecoderPath = "/opt/models/decoder.gguf",
+            audioTokenizerPath = "/opt/models/tokenizer.gguf",
+            modelName = "LFM2.5-Audio-1.5B",
+            quantizationId = "Q4_0",
+        )
+    )
+    ```
+
+    `modelName` + `quantizationId` are used as the on-disk cache key, not for manifest lookup — pick anything stable. Note the field is `quantizationId` here, while `LeapDownloader.loadModel(...)` uses `quantizationType` for the same value.
+  </Tab>
+</Tabs>
+
+## Fetch without loading
+
+Useful for onboarding flows that prefetch over Wi-Fi or staging models you'll load later. A subsequent `loadModel(...)` call with the same identifiers picks up the cached files without re-downloading.
+
+<Tabs>
+  <Tab title="Swift (iOS / macOS)">
+    ```swift
+    extension ModelDownloader {
+      public func downloadModel(
+        modelName: String,
+        quantizationType: String,
+        downloadProgress: ((_ fraction: Double, _ bytesPerSecond: Int64) -> Void)? = nil
+      ) async throws -> DownloadedModelManifest
+
+      // Fire-and-forget — uses sessionConfiguration if provided.
+      // forceDownload: false short-circuits when a cached manifest already exists
+      // (matches Android idempotent-call semantics).
+      public func requestDownloadModel(
+        modelName: String,
+        quantizationType: String,
+        forceDownload: Bool = false
+      )
+      public func requestStopDownload(modelName: String, quantizationType: String)
+      public func queryStatus(modelName: String, quantizationType: String) async -> ModelDownloadStatus
+      public func removeModel(modelName: String, quantizationType: String) async
+
+      // Manifest-URL flavours — same shape, keyed by NSURL.
+      public func downloadModelFromManifest(
+        manifestUrl: NSURL,
+        downloadProgress: ((_ fraction: Double, _ bytesPerSecond: Int64) -> Void)? = nil
+      ) async throws -> DownloadedModelManifest
+      public func requestDownloadModel(manifestUrl: NSURL, forceDownload: Bool = false)
+      public func queryStatus(manifestUrl: NSURL) async -> ModelDownloadStatus
+      public func removeModel(manifestUrl: NSURL) async
+
+      // Resource lookup (added in v0.10.6 — same surface as LeapDownloader).
+      public func getModelResourceFolder(modelName: String, quantizationType: String) -> String
+      public func getCachedManifest(modelName: String, quantizationType: String) async -> Manifest?
+      public func getCachedFilePath(
+        modelUrl: String,
+        modelName: String,
+        quantizationType: String
+      ) -> String?
+    }
+
+    public struct DownloadedModelManifest {
+      public let manifest: ModelManifest
+      public let localModelPath: String
+      public let localMultimodalProjectorPath: String?
+      public let localAudioDecoderPath: String?
+      public let localAudioTokenizerPath: String?
+      public let chatTemplate: String?
+    }
+    ```
+  </Tab>
+  <Tab title="Kotlin (Android)">
+    ```kotlin
+    suspend fun downloadModel(
+        modelName: String,
+        quantizationType: String,
+        progress: ((ProgressData) -> Unit)? = null,
+    ): Manifest
+
+    // Background variant (WorkManager): fire-and-forget, returns immediately
+    suspend fun requestDownloadModel(modelName: String, quantizationType: String, forceDownload: Boolean = false)
+    suspend fun requestStopDownload(modelName: String, quantizationType: String)
+    suspend fun queryStatus(modelName: String, quantizationType: String): ModelDownloadStatus
+    fun observeDownloadProgress(modelName: String, quantizationType: String): Flow<ProgressData>
+    fun getModelResourceFolder(modelName: String, quantizationType: String): File
+    suspend fun requestStopService()
+    ```
+
+    The background variant runs on WorkManager and survives app restarts. See [Utilities → Android background staging](./utilities) for the full status-polling lifecycle.
+  </Tab>
+  <Tab title="Kotlin (JVM / native)">
+    ```kotlin
+    suspend fun downloadModel(
+        modelName: String,
+        quantizationType: String,
+        progress: ((ProgressData) -> Unit)? = null,
+    ): Manifest
+    ```
+
+    The cross-platform `LeapDownloader` is foreground-only — there's no WorkManager-style background staging surface on non-Android targets. Wrap calls in your own coroutine scope if you need lifecycle-aware behavior.
+  </Tab>
+</Tabs>
+
+## Runtime options
+
+### `LiquidInferenceEngineOptions` / `ModelLoadingOptions`
+
+Per-load runtime overrides. Default values come from the model bundle's manifest.
+
+<Tabs>
+  <Tab title="Swift (iOS / macOS)">
+    ```swift
+    public struct LiquidInferenceEngineOptions {
+      public var bundlePath: String
+      public let cacheOptions: LiquidCacheOptions?
+      public let cpuThreads: UInt32?
+      public let contextSize: UInt32?
+      public let nGpuLayers: UInt32?
+      public let mmProjPath: String?
+      public let audioDecoderPath: String?
+      public let audioTokenizerPath: String?
+      public let audioDecoderUseGpu: Bool       // default false
+      public let chatTemplate: String?
+      public let extras: String?
+    }
+
+    // Manifest-based variant — accepts cacheOptions + contextSize without bundlePath
+    public struct LiquidInferenceEngineManifestOptions {
+      public let cacheOptions: LiquidCacheOptions?
+      public let contextSize: UInt32?
+      // …same companion-file and tuning fields…
+    }
+    ```
+
+    Pass `LiquidInferenceEngineManifestOptions` to `ModelDownloader.loadModel(modelName:, quantizationType:, options:, ...)` for manifest-based loads, and `LiquidInferenceEngineOptions` to `Leap.load(url:, options:)` for sideloaded GGUFs:
+
+    ```swift
+    let manifestOpts = LiquidInferenceEngineManifestOptions(
+      contextSize: 8192,
+      cpuThreads: 6
+    )
+    let runner = try await downloader.loadModel(
+      modelName: "LFM2.5-1.2B-Instruct",
+      quantizationType: "Q4_K_M",
+      options: manifestOpts
+    )
+
+    // Sideloaded variant (URL-based)
+    let options = LiquidInferenceEngineOptions(
+      bundlePath: ggufURL.path,
+      cpuThreads: 6,
+      contextSize: 8192
+    )
+    let runner = try await Leap.load(url: ggufURL, options: options)
+    ```
+
+    **Builder style.** Chain `.with(...)` on `GenerationOptions`, `LiquidInferenceEngineOptions`, or `LiquidInferenceEngineManifestOptions`:
+
+    ```swift
+    let opts = LiquidInferenceEngineOptions(bundlePath: ggufURL.path)
+        .with(cpuThreads: 6)
+        .with(contextSize: 8192)
+        .with(useMmap: false)
+        .with(cacheOptions: .enabled(path: cacheDir.path))
+    ```
+  </Tab>
+  <Tab title="Kotlin (all platforms)">
+    ```kotlin
+    data class ModelLoadingOptions(
+        var randomSeed: Long? = null,
+        var cpuThreads: Int = CpuThreadAdvisor.getRecommendedThreadCount(),
+        var chatTemplate: String? = null,
+        var cacheOptions: EngineOptions.CacheOptions? = null,
+        var contextSize: Int? = 8192,
+        var useMmap: Boolean? = null,
+        var extras: String? = null,
+    ) {
+        companion object {
+            fun build(action: ModelLoadingOptions.() -> Unit): ModelLoadingOptions
+            fun cacheOptions(path: String, maxEntriesDisk: Int = 40): EngineOptions.CacheOptions
+        }
+    }
+    ```
+
+    ```kotlin
+    val runner = downloader.loadSimpleModel(
+        model = ModelSource(
+            modelPath = path,
+            modelName = "LFM2-1.2B",
+            quantizationId = "Q5_K_M",
+        ),
+        options = ModelLoadingOptions.build {
+            cpuThreads = 6
+            contextSize = 4096
+        }
+    )
+    ```
+
+    KV cache reuse is wired through `cacheOptions: EngineOptions.CacheOptions?` (see [KV cache reuse](#kv-cache-reuse) below) — use the `ModelLoadingOptions.cacheOptions(path = ...)` factory to construct a bounded-LRU `CacheOptions` with `enabled = true` and the historical 40-entry disk budget. Companion files (`mmproj`, audio decoder, audio tokenizer) are part of the `ModelSource` passed to `loadSimpleModel`, not `ModelLoadingOptions`.
+
+    <Info>
+    **Breaking change in v0.10.5.** The previous `var cacheDir: String? = null` field was replaced with `var cacheOptions: EngineOptions.CacheOptions? = null`. The old `cacheOptions(path:)` factory returned a `ModelLoadingOptions` with `cacheDir` set; it now returns a `CacheOptions` value you assign to the new field. See the [Changelog](/deployment/on-device/leap-sdk-changelog#v0-10-5) for migration notes.
+    </Info>
+  </Tab>
+</Tabs>
+
+Fields:
+
+- **`cpuThreads`** — CPU thread count for token generation. Kotlin defaults to `CpuThreadAdvisor.getRecommendedThreadCount()`; Swift defaults to engine pick when `nil`.
+- **`contextSize`** — override the maximum context length. Kotlin defaults to **8192**; Swift defaults to model's recommendation when `nil`.
+- **`useMmap`** — tristate `Boolean?`. `null` (default) defers to the engine default of `true`. Set to `false` to force full-read loading on filesystems where `mmap` misbehaves (some Android scoped-storage paths, certain network mounts). Added in v0.10.5.
+- **`nGpuLayers`** (Swift) — number of transformer blocks to offload to GPU (macOS Metal). `-1` offloads everything.
+- **`audioDecoderUseGpu`** (Swift) — opt the audio decoder onto the Metal backend.
+- **`randomSeed`** (Kotlin) — reproducible sampling seed.
+- **`cacheOptions`** — KV cache reuse (see next section). On Kotlin this is an `EngineOptions.CacheOptions` value with explicit `enabled` master switch (replaces the v0.10.4 `cacheDir: String?`).
+- **`mmProjPath` / `audioDecoderPath` / `audioTokenizerPath`** (Swift) — companion file overrides. Leave `nil` to auto-detect siblings of the GGUF file. On Kotlin these are passed via `ModelSource`.
+- **`chatTemplate`** — advanced override for backend chat templating.
+- **`extras`** — backend-specific configuration payload (JSON string).
+
+<Info>
+**Companion files.** GGUF checkpoints look for sibling vision (`mmproj`) and audio (decoder / tokenizer) files unless you override the paths. Co-locate them next to the model file or pass explicit paths via `ModelSource` for vision and audio features.
+</Info>
+
+### `GenerationTimeParameters` & `SamplingParameters` (Kotlin)
+
+Optional per-load overrides for the manifest's recommended generation defaults.
+
+```kotlin
+data class GenerationTimeParameters(
+    val samplingParameters: SamplingParameters? = null,
+    val numberOfDecodingThreads: Int? = null,
+)
+
+data class SamplingParameters(
+    val temperature: Double? = null,
+    val topP: Double? = null,
+    val minP: Double? = null,
+    val repetitionPenalty: Double? = null,
+)
+```
+
+<Warning>
+LEAP models are trained against the sampling parameters in the model manifest. Overriding them with `SamplingParameters` can significantly degrade output quality — proceed with caution.
+</Warning>
+
+## KV cache reuse
+
+`EngineOptions.CacheOptions` (Kotlin) / `LiquidCacheOptions` (Swift) tells the engine to persist KV-cache data between generations so requests sharing a prompt prefix can skip the prefill work for the shared tokens. Added in v0.10.4; Swift convenience surface in v0.10.4.3; per-tier bounded-LRU caps stabilized in v0.10.5.
+
+<Warning>
+**Disabled by default.** Cache options are `null`/`nil` until you explicitly pass them. Apps that don't opt in see no prefix reuse and no on-disk cache directory — runner load behaves exactly as it did pre-v0.10.4. On Kotlin, `enabled = true` is the sole opt-in gate: a positive `maxEntries` alone is *not* sufficient.
+</Warning>
+
+### How it works
+
+Transformer inference has two phases:
+
+- **Prefill** — the model runs the full prompt through every layer and stores the attention keys and values (the "KV cache") for each prompt token. `O(prompt_length)`. Dominates time-to-first-token (TTFT) for prompts longer than a few hundred tokens on-device.
+- **Decode** — each new output token only attends back to the cached K/V vectors. `O(1)` per token in prompt length.
+
+When the cache is enabled, the SDK keeps those K/V vectors around on disk after generation finishes. The next call checks whether the new prompt shares a prefix with any cached entry; matching tokens are loaded from disk instead of recomputed. Per-token decode speed is unchanged — the win is entirely in prefill avoidance.
+
+The cache is a **bounded LRU**: the SDK enforces a size budget and evicts least-recently-used entries automatically. Don't clean up the directory yourself; deleting it manually is a hard reset.
+
+### When it helps
+
+| Use case | What's reused |
+|---|---|
+| **Multi-turn chat with a long system prompt** | System prompt + earlier turns |
+| **RAG (retrieval-augmented generation)** | The retrieved document context preceding the user question |
+| **Few-shot prompting** | The fixed example set preceding each new query |
+| **Agent loops** | Tool definitions, role instructions, task scaffold |
+| **Voice assistant continuations** | Everything before the latest user turn |
+| **Streaming UI with quick edits** | The unchanged prefix when a user edits the tail of a prompt |
+
+It does **not** help when every prompt is fresh and unique, or when the variable content sits at the start of the prompt rather than the end.
+
+### Configuration
+
+<Tabs>
+  <Tab title="Swift (iOS / macOS)">
+    ```swift
+    let cacheDir = FileManager.default
+      .urls(for: .cachesDirectory, in: .userDomainMask)[0]
+      .appendingPathComponent("leap-kv-cache")
+    try? FileManager.default.createDirectory(at: cacheDir, withIntermediateDirectories: true)
+
+    let options = LiquidInferenceEngineManifestOptions(
+      cacheOptions: .enabled(path: cacheDir.path),
+      contextSize: 4096
+    )
+
+    let runner = try await downloader.loadModel(
+      modelName: "LFM2.5-1.2B-Instruct",
+      quantizationType: "Q4_K_M",
+      options: options
+    )
+    ```
+
+    `LiquidInferenceEngineManifestOptions` (manifest loads) and `LiquidInferenceEngineOptions` (sideloaded loads) both expose `with(cacheOptions:)` builders for chaining onto an existing options value.
+
+    Use the app's `cachesDirectory` (not `documentDirectory`) so iOS may reclaim space under storage pressure.
+  </Tab>
+  <Tab title="Kotlin (Android)">
+    ```kotlin
+    val cacheDir = context.cacheDir.resolve("leap-kv-cache").apply { mkdirs() }
+
+    val runner = downloader.loadModel(
+        modelName = "LFM2-1.2B",
+        quantizationType = "Q5_K_M",
+        options = ModelLoadingOptions().apply {
+            cacheOptions = ModelLoadingOptions.cacheOptions(path = cacheDir.absolutePath)
+        },
+    )
+    ```
+
+    Use `context.cacheDir` (the app-private cache directory) — Android may reclaim it under storage pressure, which is the right semantics for a regenerable cache. Use `context.filesDir` if you want to control eviction yourself.
+  </Tab>
+  <Tab title="Kotlin (JVM / native)">
+    ```kotlin
+    val cacheDir = "/var/cache/leap-kv"  // any writable absolute path
+
+    val runner = downloader.loadModel(
+        modelName = "LFM2-1.2B",
+        quantizationType = "Q5_K_M",
+        options = ModelLoadingOptions().apply {
+            cacheOptions = ModelLoadingOptions.cacheOptions(path = cacheDir)
+        },
+    )
+    ```
+
+    Same shape works for `loadSimpleModel` — pass the same `options` parameter alongside the `ModelSource`.
+  </Tab>
+</Tabs>
+
+### Bounded-LRU caps
+
+The `CacheOptions` value exposed in v0.10.5 has six fields plus a `diskDisabled` flag for memory-only mode:
+
+```kotlin
+class CacheOptions(
+    path: String,
+    maxEntries: Int = 0,                  // legacy disk-cap alias; read only after enabled = true
+    enabled: Boolean = false,             // sole opt-in gate
+    maxEntriesDisk: Int = 0,              // 0 → engine default (4096) when enabled
+    maxEntriesMemory: Int = 256,
+    maxBytesMemory: Long = 512L * 1024 * 1024,
+    diskDisabled: Boolean = false,        // true → memory-only mode (skip the disk tier entirely)
+)
+```
+
+Disk-cap precedence when `enabled = true`: `maxEntriesDisk` if `> 0`, else `maxEntries` (legacy alias), else the engine default of **4096**. Memory-tier defaults (256 entries / 512 MiB) apply unless you override them. The `ModelLoadingOptions.cacheOptions(path = ...)` factory preserves the historical 40-entry disk budget for callers migrating from `cacheDir`.
+
+### Notes and caveats
+
+- **Per-model.** A cache directory is tied to the model bundle that wrote it. Don't share one directory across different model checkpoints.
+- **Prefix-keyed.** Reuse is based on the leading tokens of the prompt. Changing the system prompt, sampling parameters that alter prompt formatting, or tool definitions invalidates the cache for that branch.
+- **Cross-launch.** Cached entries survive process restarts. Delete the directory to reset.
+- **First call.** The first request for a given prefix sees no speedup — it's the call that writes the entry. Subsequent calls hit the cache.
+- **Memory-only mode.** Pass `EngineOptions.CacheOptions(path = ..., enabled = true, diskDisabled = true)` to skip the disk tier entirely — useful for benchmarking or callers that don't need cross-restart persistence.
+- **wasmJs caveat.** The WASM bridge currently drops the entire `cache_options` block; a one-shot warning is logged when `enabled = true` is set on wasmJs. Native (Apple, Linux, MinGW), JVM, and Android propagate all fields end-to-end.
+- **Swift backwards compat.** Prior to v0.10.4.3 the `cacheOptions` parameter was only reachable through the verbose Obj-C designated init with `KotlinUInt(unsignedInt:)` wrapping. New code should use `.enabled(path:)` and the `with(...)` builders.
+
+See the [SDK changelog — KV cache reuse](/deployment/on-device/leap-sdk-changelog#kv-cache-reuse-across-generations) for the cross-platform overview.
+
+## Leap Model Service (Android)
+
+`leap-model-service` is an optional, separately-installable Android service that hosts loaded LEAP models in its own process and lets multiple client apps share them. Added in v0.10.5.
+
+When the service is installed on a device, `LeapModelDownloader.loadModel(...)` from any client app routes through it transparently — the model is downloaded once, loaded once, and re-used across apps. When the service is not installed, `LeapModelDownloader.loadModel(...)` falls back to in-process loading. **Client apps need zero code changes.**
+
+```kotlin
+val downloader = LeapModelDownloader(context)
+
+// Routes through the Leap Model Service if installed; otherwise loads in-process.
+val runner = downloader.loadModel(
+    modelName = "LFM2-1.2B",
+    quantizationType = "Q5_K_M",
+)
+
+// Bypass the service even when installed — useful for testing the local path.
+val localRunner = downloader.loadModel(
+    modelName = "LFM2-1.2B",
+    quantizationType = "Q5_K_M",
+    forceLocal = true,
+)
+```
+
+### What you get
+
+- **Cross-app model sharing.** Multiple apps that load the same model + quantization share one in-memory copy.
+- **Persistent foreground notification** with live state ("Loading model…", "Generating… N active", "Ready — N models loaded").
+- **Per-UID session quotas** (max 3 sessions per client app, enforced by the service).
+- **Disk-backed KV cache reuse across cold starts** — the service maintains its own KV cache directory, so prefill warmup persists across process restarts and across client apps.
+- **Service-side progress** — when routing through the service, `LeapModelDownloader.loadModel(...)`'s `progress` callback fires for service-side downloads too. Passing `null` (the default) preserves the original deferred-load behavior (the model loads on first session creation rather than eagerly inside `loadModel`).
+- **AIDL-routed function calling** — `Conversation.registerFunction(...)` and `registerFunctions(...)` are forwarded to the service and applied on the shared session.
+
+### When to install the service
+
+The service is distributed as a separate APK and is appropriate for:
+
+- **Multi-app deployments** where two or more LEAP-using apps run on the same device.
+- **System-image integrations** where the device manufacturer or MDM pre-installs the service.
+- **Long-running background inference** where the foreground-service notification is desirable.
+
+Single-app deployments don't need it — `LeapModelDownloader` already does the right thing in-process.
+
+### Permissions
+
+The service requires the `POST_NOTIFICATIONS` runtime permission (Android 13+) to display its foreground notification. If the permission is missing, `LeapServiceClient.connect()` logs a warning and falls back to in-process loading. Direct the user to grant the permission via `LeapServiceClient.isServiceNotificationPermissionGranted()` + `getOpenServiceAppIntent()` — auto-launching another app from a library call would be too intrusive.
+
+### Notes
+
+- The service ignores caller-supplied `cacheDir` paths (it maintains its own KV cache directory) — pass `cacheOptions` on `ModelLoadingOptions` to control the in-memory + disk caps, not the path.
+- First-load wins: when multiple apps request the same model simultaneously, the first call's `ModelLoadingOptions` are applied; subsequent callers receive the shared runner regardless of their options. Read the effective config back via `LeapServiceClient.getLoadedModelConfig`.
+- Models stay loaded until the service is shut down or restarted. `evictUnusedModel` is a no-op by design — eviction would race with in-flight generations.
+
+## `ProgressData` / `Manifest`
+
+```kotlin
+data class ProgressData(val bytes: Long, val total: Long) {
+    val progress: Float  // 0.0 to 1.0
+}
+
+data class Manifest(
+    val schemaVersion: String,
+    val inferenceType: String,
+    val loadTimeParameters: LoadTimeParameters,
+    val generationTimeParameters: GenerationTimeParameters? = null,
+    val originalUrl: String? = null,
+    val pathOnDisk: String? = null,
+)
+```
+
+You rarely need to instantiate `Manifest` yourself — `downloadModel` and `loadModel` populate and return it for you.

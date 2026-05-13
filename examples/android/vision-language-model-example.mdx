@@ -73,38 +73,17 @@ Before running this example, ensure you have the following:
 
   **Step 1: Obtain the model bundle**
 
-  Download the LFM2-VL-1.6B bundle from the Leap Model Library.
+  The example uses **LFM2.5-VL-1.6B** from the [LEAP Model Library](https://leap.liquid.ai/models). The code below loads it via `LeapModelDownloader.loadModel(...)`, which fetches the GGUF + matching `mmproj` companion file from the registry on first launch and caches them on device. No manual ADB step is needed.
 
-  **Step 2: Deploy to device via ADB**
-
-  Use the Android Debug Bridge (ADB) to transfer the model to your device:
+  **Manual deployment (alternative).** If you'd rather sideload the files, push the GGUF and its `mmproj` companion via ADB and use `loadSimpleModel(model: ModelSource(...))` instead of `loadModel(...)`:
 
   ```bash
-  # Ensure your device is connected and ADB is available
-  adb devices
-
-  # Create the directory on device
   adb shell mkdir -p /data/local/tmp/liquid/
-
-  # Push the VLM bundle to the device
-  adb push LFM2-VL-1_6B.bundle /data/local/tmp/liquid/
-
-  # Verify the file was transferred successfully
-  adb shell ls -lh /data/local/tmp/liquid/
+  adb push lfm2.5-vl-1.6b-q4_k_m.gguf /data/local/tmp/liquid/
+  adb push lfm2.5-vl-1.6b-mmproj.gguf /data/local/tmp/liquid/
   ```
 
-  **Note:** The VLM bundle is larger than text-only models (typically 1-3GB). Ensure you have sufficient storage on your device and a stable connection during transfer.
-
-  **Alternative deployment location:**
-
-  If `/data/local/tmp/` is not accessible, use device storage:
-
-  ```bash
-  # Push to internal storage
-  adb push LFM2-VL-1_6B.bundle /sdcard/Download/liquid/
-
-  # Update the model path in your app code accordingly
-  ```
+  Then pass both paths to `ModelSource(modelPath = ..., mmprojPath = ..., modelName = "LFM2.5-VL-1.6B", quantizationId = "Q4_K_M")` — see [Model Loading → Sideloaded files](/deployment/on-device/sdk/model-loading#sideloaded-files).
 </Accordion>
 
 <Accordion title="Dependencies Setup">
@@ -112,8 +91,9 @@ Before running this example, ensure you have the following:
 
   ```kotlin
   dependencies {
-      // LeapSDK for VLM processing (0.9.7+)
-      implementation("ai.liquid.leap:leap-sdk:0.9.7")
+      // LeapSDK for VLM processing (0.10.0+)
+      implementation("ai.liquid.leap:leap-sdk:0.10.6")
+      implementation("ai.liquid.leap:leap-model-downloader:0.10.6")
 
       // Coil for image loading
       implementation("io.coil-kt:coil-compose:2.5.0")
@@ -152,9 +132,9 @@ Follow these steps to start analyzing images with VLMs:
    cd LeapSDK-Examples/Android/VLMExample
    ```
 
-2. **Deploy the VLM model bundle**
-   - Follow the ADB commands in the setup section above
-   - Ensure the bundle is accessible at `/data/local/tmp/liquid/LFM2-VL-1_6B.bundle`
+2. **Pick a deployment strategy**
+   - Default: let `LeapModelDownloader.loadModel(...)` fetch LFM2.5-VL-1.6B from the LEAP Model Library on first launch
+   - Optional manual push: see the **Model Bundle Setup** accordion above for the ADB sideload path
 
 3. **Open in Android Studio**
    - Launch Android Studio
@@ -212,52 +192,86 @@ fun VLMScreen(viewModel: VLMViewModel) {
 Loading and using the vision language model:
 
 ```kotlin
-class VLMViewModel : ViewModel() {
-    private lateinit var vlmModel: LeapVLModel
+import ai.liquid.leap.GenerationOptions
+import ai.liquid.leap.ModelRunner
+import ai.liquid.leap.message.ChatMessage
+import ai.liquid.leap.message.ChatMessageContent
+import ai.liquid.leap.message.MessageResponse
+import ai.liquid.leap.model_downloader.LeapModelDownloader
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.launch
+import java.io.ByteArrayOutputStream
+
+class VLMViewModel(application: Application) : AndroidViewModel(application) {
+    private val downloader = LeapModelDownloader(application)
+    private var runner: ModelRunner? = null
 
     fun initializeModel() {
         viewModelScope.launch(Dispatchers.Default) {
-            vlmModel = LeapSDK.loadVLModel(
-                bundlePath = "/data/local/tmp/liquid/LFM2-VL-1_6B.bundle"
+            runner = downloader.loadModel(
+                modelName = "LFM2.5-VL-1.6B",
+                quantizationType = "Q4_K_M",
             )
             _modelState.value = ModelState.Ready
         }
     }
 
     fun processImage(imageUri: Uri) {
+        val runner = runner ?: return
         viewModelScope.launch(Dispatchers.Default) {
-            // Load image from URI
             val bitmap = loadBitmapFromUri(imageUri)
+            val pngBytes = ByteArrayOutputStream().use { out ->
+                bitmap.compress(Bitmap.CompressFormat.PNG, 100, out)
+                out.toByteArray()
+            }
 
-            // Generate description
-            val prompt = "Describe this image in detail."
-            val description = vlmModel.generateFromImage(
-                image = bitmap,
-                prompt = prompt,
-                maxTokens = 200
+            val conversation = runner.createConversation()
+            val message = ChatMessage(
+                role = ChatMessage.Role.USER,
+                content = listOf(
+                    ChatMessageContent.Image(pngBytes),
+                    ChatMessageContent.Text("Describe this image in detail."),
+                ),
             )
+
+            val description = StringBuilder()
+            conversation.generateResponse(
+                message,
+                GenerationOptions.build {
+                    temperature = 0.1f
+                    minP = 0.15f
+                    repetitionPenalty = 1.05f
+                },
+            ).onEach { resp ->
+                if (resp is MessageResponse.Chunk) description.append(resp.text)
+            }.collect()
 
             _imageAnalysis.value = ImageAnalysis(
                 imageUri = imageUri,
-                description = description
+                description = description.toString(),
             )
         }
     }
 
     private fun loadBitmapFromUri(uri: Uri): Bitmap {
-        return context.contentResolver.openInputStream(uri)?.use { inputStream ->
-            BitmapFactory.decodeStream(inputStream)
+        return getApplication<Application>().contentResolver.openInputStream(uri)?.use { input ->
+            BitmapFactory.decodeStream(input)
         } ?: throw IllegalArgumentException("Unable to load image")
     }
 
     override fun onCleared() {
         super.onCleared()
-
-        // Unload VLM model asynchronously to avoid ANR
-        // Do NOT use runBlocking here - it blocks the main thread
+        val runner = runner ?: return
+        // Unload the model asynchronously to avoid ANRs.
+        // Do NOT use runBlocking here — it blocks the main thread.
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                vlmModel.unload()
+                runner.unload()
             } catch (e: Exception) {
                 Log.e("VLMViewModel", "Error unloading model", e)
             }

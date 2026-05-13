@@ -1,0 +1,261 @@
+---
+title: "Changelog"
+description: "Release notes for the LEAP SDK, including the 0.9.x → 0.10.x Kotlin Multiplatform transition."
+---
+
+Latest release: **v0.10.6** ([GitHub](https://github.com/Liquid4All/leap-sdk/releases/tag/v0.10.6)).
+
+This page covers user-visible changes in the LEAP SDK across releases. For per-build commit detail, see the release notes on [`Liquid4All/leap-sdk`](https://github.com/Liquid4All/leap-sdk/releases).
+
+## 0.9.x → 0.10.x: Kotlin Multiplatform unification
+
+Starting with v0.10.0, the LEAP SDK ships from a single Kotlin Multiplatform codebase. The two previously separate distributions (the Android-only `ai.liquid.leap:*` Maven artifacts and the iOS-only `Liquid4All/leap-ios` Swift package) were collapsed into one source tree that publishes to:
+
+- **Swift Package Manager** — [`Liquid4All/leap-sdk`](https://github.com/Liquid4All/leap-sdk) (new repo, for iOS / macOS consumers).
+- **Maven Central** — `ai.liquid.leap:*` (Android, JVM, and Kotlin/Native targets).
+
+The standalone `Liquid4All/leap-ios` repository is no longer the iOS source-of-truth. Existing 0.9.x Swift call sites (`Leap.load(...)`, `Conversation.generateResponse(...)`, etc.) keep compiling thanks to a Swift compatibility layer, but new code should adopt the unified APIs documented in the [Quick Start](/deployment/on-device/sdk/quick-start).
+
+### Five SPM products / four Maven artifacts
+
+The unified KMP package vends a richer surface than the 0.9.x distributions:
+
+| SPM product | Maven artifact | Purpose |
+|---|---|---|
+| `LeapSDK` | `ai.liquid.leap:leap-sdk` | Core inference + conversation API |
+| `LeapModelDownloader` | `ai.liquid.leap:leap-model-downloader` | Hosted / manifest-based model fetch |
+| `LeapOpenAIClient` | `ai.liquid.leap:leap-openai-client` | OpenAI-compatible cloud chat client (new in 0.10.0) |
+| `LeapUI` | `ai.liquid.leap:leap-ui` | Voice assistant widget — Compose Multiplatform (new in 0.10.0) |
+| `LeapSDKMacros` | _(Swift only)_ | `@Generatable` / `@Guide` constrained-generation macros |
+
+### Breaking changes for iOS consumers
+
+<Warning>
+v0.10.0 raises the minimum iOS deployment target from 15.0 to **17.0** and macOS from 12.0 to **15.0**. Apps targeting older OSes need to pin to `0.9.x` or bump their deployment target before upgrading.
+</Warning>
+
+- **SPM URL change.** Point your Swift Package Manager dependency at `https://github.com/Liquid4All/leap-sdk.git` (not the deprecated `leap-ios` repo).
+- **CocoaPods removed.** The SDK ships exclusively through SPM in v0.10.0 onward.
+- **Toolchain bump.** Xcode 16 and Swift 6.0 are required.
+- **`ModelDownloader` → `LeapModelDownloader`.** The downloader class was renamed; update call sites accordingly. See [Model Loading](/deployment/on-device/sdk/model-loading) for the 0.10.x constructor signature.
+
+## Major additions since 0.9.x
+
+The features below were introduced in the 0.10.x line.
+
+### OpenAI-compatible cloud client
+
+`LeapOpenAIClient` / `leap-openai-client` is a small, dependency-light client for any OpenAI-compatible chat completions endpoint — OpenAI itself, OpenRouter, vLLM, llama-server, or your own proxy. It ships in the same package so you can route requests between an on-device LFM and a cloud model from a single app.
+
+See [OpenAI-Compatible Client](/deployment/on-device/sdk/openai-client).
+
+### Voice assistant widget
+
+`LeapUI` / `leap-ui` is a Compose Multiplatform module that ships a drop-in voice assistant widget — an animated orb, mic button, and status label — backed by a state machine that handles recording, generation, and audio playback. Stable on iOS, macOS, Android, and JVM; Wasm/Web is present in the source tree as preview.
+
+See [Voice Assistant Widget](/deployment/on-device/sdk/voice-assistant).
+
+### Sideloading models from explicit paths
+
+`LeapDownloader.loadSimpleModel` and `LeapModelDownloader.loadSimpleModel` load a model from explicit resource paths or URLs without going through the LEAP Model Library manifest. Useful for ADB-pushed bundles, app-bundled models, or any setup where you've already placed the model files on disk.
+
+See [Model Loading — Sideloaded files](/deployment/on-device/sdk/model-loading#loadsimplemodel-sideloaded-files).
+
+### iOS background downloads
+
+The iOS / macOS Swift `ModelDownloader(sessionConfiguration:)` initializer accepts an optional `URLSessionConfiguration?` so downloads can continue when the app is suspended or killed. See [Model Loading → Constructing the downloader](/deployment/on-device/sdk/model-loading#constructing-the-downloader).
+
+### `autoDetectCompanionFiles`
+
+`Leap.load(url:options:)` on iOS gained an `autoDetectCompanionFiles: Bool = true` parameter that picks up companion files sitting next to the model file (e.g. multimodal projection weights).
+
+### Swift ergonomics
+
+- **Compatibility layer** keeps 0.9.x call sites (`Leap.load(...)`, `Conversation.generateResponse(...)`) compiling on top of the unified KMP surface.
+- **`onEnum(of:)`** — SKIE-bridged sealed-class switching for Kotlin enums and sealed hierarchies (e.g. `MessageResponse`).
+- **`ChatMessageContent` static factories** — `.text(...)`, `.image(...)`, `.audio(...)` helpers instead of constructor calls.
+- **Builder-style options** — `LiquidInferenceEngineOptions.with(cacheOptions:)`, etc.
+
+### Memory-mapped model loading by default
+
+Starting in **v0.10.4** and on by default through the current release, the inference engine loads model weights via `mmap` (`use_mmap=true`). It's the default behavior for every loaded model. On mobile this is the most user-visible runtime change in the 0.10.x line. A public opt-out arrived in **v0.10.5** as `ModelLoadingOptions.useMmap: Boolean?` (Kotlin) / `LiquidInferenceEngineOptions(useMmap:)` (Swift) — leave it `null`/`nil` to keep the default, or set `false` for filesystems where `mmap` misbehaves (some Android scoped-storage paths, certain network mounts).
+
+**What changed.** Previously the engine `read(2)`-ed the entire model file into a heap-allocated buffer before running prefill. Now it memory-maps the file: the kernel maps the on-disk weights into the process's virtual address space and loads pages lazily as they're accessed.
+
+**Performance implications on mobile:**
+
+- **Lower private RSS.** mmap'd weights are file-backed pages, not "anonymous private" RSS. iOS's jetsam and Android's low-memory killer both score apps primarily by anonymous RSS, so a 1.2B-Q4 model that previously counted as ~700 MB of dirty heap now shows as backing pages the OS may evict for free. Foreground apps are significantly less likely to be terminated under memory pressure.
+- **Faster cold load.** The constructor returns as soon as the file is mapped — typically tens of milliseconds — instead of waiting for the entire model to be read into RAM. The first inference pays the page-in cost incrementally as the engine touches weights.
+- **Faster warm reloads.** After the first load, the kernel's page cache holds the model's hot pages. Re-creating a runner on the same model (e.g. after a background termination and relaunch within the same boot) is near-instant — pages stream from the page cache, not disk.
+- **Multi-model sharing.** Two processes (or two runners in one process) loading the same model file share physical pages via the page cache, with no extra RAM cost.
+- **Graceful memory pressure.** When the OS needs RAM for the foreground UI or another app, it can drop read-only model pages without writing them anywhere (they're backed by the file). The next access re-pages them in. With anonymous heap buffers, the kernel had to choose between swapping (slow) or killing the app (worse).
+
+**Trade-offs:**
+
+- **First-token latency on cold pages.** The first generation against a freshly-mapped model triggers page faults as the engine walks the weights. This adds disk-I/O latency to TTFT on the first call after process start. The KV cache reuse documented [above](#kv-cache-reuse-across-generations) compounds well here: cached prefixes skip both prefill compute *and* the page-fault cost for weights touched during prefill.
+- **Storage type matters.** On devices with slow eMMC / external SD storage, lazy page-in can be noticeably slower than the old eager-read flow that loaded the whole file once. Internal flash on every shipped iOS device and any modern Android device is fast enough that this isn't visible in practice.
+- **Opt-out available since v0.10.5.** Pass `useMmap = false` on `ModelLoadingOptions` (Kotlin) or `LiquidInferenceEngineOptions(useMmap: false)` (Swift) to force the legacy full-read loader. Use only when `mmap` misbehaves on the target filesystem; the default of `null`/`nil` keeps the engine default.
+
+This change shipped via the inference-engine vendor pin bumped in v0.10.4 (`v26.02.1-79-ge5f65988dc`). The default has stayed on through every subsequent pin cascade.
+
+### KV cache reuse across generations
+
+`CacheOptions` (new in v0.10.4, ergonomic Swift surface in v0.10.4.3) lets the engine persist KV-cache data between `generateResponse` calls so requests that share a prompt prefix skip the prefill work for the shared tokens.
+
+<Warning>
+**Disabled by default.** `cacheOptions` is `nil` (Swift) / `null` (Kotlin) until you explicitly pass `LiquidCacheOptions.enabled(path:)` / `ModelLoadingOptions.cacheOptions(path:)`. Apps that don't opt in see no prefix reuse and no on-disk cache directory created — same behavior as 0.9.x and pre-0.10.4 builds.
+</Warning>
+
+**Why it matters.** Transformer inference has two phases: **prefill** (compute keys and values for every prompt token) and **decode** (generate one new token at a time, reusing those K/V vectors). On mobile, prefill dominates time-to-first-token for any prompt longer than a few hundred tokens. With `CacheOptions` enabled, a previously seen prefix is read from disk instead of recomputed — TTFT can drop from seconds to under a hundred milliseconds on cache hits. Per-token decode cost is unchanged.
+
+**When it speeds things up.** Anywhere the same tokens appear at the start of many requests:
+
+- **Multi-turn chat with a long system prompt.** Every turn reuses the system prompt and earlier turns.
+- **RAG / retrieval-augmented generation.** Many queries share the retrieved-document preamble.
+- **Few-shot prompting.** A fixed set of examples precedes every request.
+- **Agent loops.** Tool definitions, role instructions, and task scaffold are stable across iterations.
+- **Voice assistant continuations.** Conversation history grows; everything before the latest user turn is cacheable.
+
+The cache is a bounded LRU — the engine caps cache size and evicts the least-recently-used entries automatically; you do not need to manage the directory yourself. See [Model Loading → KV cache reuse](/deployment/on-device/sdk/model-loading#kv-cache-reuse) for the per-platform configuration.
+
+Minimal config:
+
+```swift
+// iOS / macOS (v0.10.4.3+)
+let cacheDir = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0]
+    .appendingPathComponent("leap-kv-cache")
+
+let options = LiquidInferenceEngineManifestOptions(
+    cacheOptions: .enabled(path: cacheDir.path),
+    contextSize: 4096
+)
+let runner = try await Leap.load(url: bundleURL, options: options)
+```
+
+```kotlin
+// Android / JVM / KMP (v0.10.5+)
+val cacheDir = context.cacheDir.resolve("leap-kv-cache").apply { mkdirs() }
+
+val runner = downloader.loadModel(
+    modelName = "LFM2-1.2B",
+    quantizationType = "Q5_K_M",
+    options = ModelLoadingOptions().apply {
+        cacheOptions = ModelLoadingOptions.cacheOptions(path = cacheDir.absolutePath)
+    },
+)
+```
+
+## Per-release notes
+
+### v0.10.6 — 2026-05-12
+
+iOS `ModelDownloader` (the Swift class formerly known as `LeapModelDownloader` — see the rename note below) reaches parity with the cross-platform `LeapDownloader`. Callers no longer need to pair the two classes to download and load a model on Apple platforms — every entry point routes file transfer through `URLSession` and then hands off to the loader.
+
+**New iOS API on `ModelDownloader`:**
+
+- **`loadModel(modelName:, quantizationType:, options:, generationTimeParameters:, forceDownload:, downloadProgress:)`** — downloads (when needed) and loads in one call. The transfer registers in `queryStatus`, is cancellable via `requestStopDownload`, and continues across backgrounding when constructed with `sessionConfiguration: .backgroundSessionConfiguration(withIdentifier:)`.
+- **`loadModel(manifestUrl:, options:, generationTimeParameters:, forceDownload:, downloadProgress:)`** — same flow keyed by a manifest URL.
+- **`loadSimpleModel(model: ModelSource, options:, generationTimeParameters:, downloadProgress:)`** — sideload from explicit paths or URLs; HTTPS sources stream through `URLSession`, local paths pass straight through.
+- **`forceDownload: Bool = false`** on all three load methods. Resolves the manifest first, then deletes the local cache, then re-downloads — a registry failure on resolve leaves the previously-working cached copy intact.
+- **Resource-lookup helpers** that previously lived only on the cross-platform `LeapDownloader`: `getModelResourceFolder(...)`, `getCachedManifest(...)`, `getCachedFilePath(...)`, `resolve(...)`, `deleteModelFile(...)`.
+- **`requestDownloadModel(manifestUrl:, forceDownload:)`** overload for symmetry with `removeModel(manifestUrl:)` / `queryStatus(manifestUrl:)`.
+
+**Breaking changes (Swift):**
+
+- **Class renamed: `LeapModelDownloader` → `ModelDownloader`** on iOS / macOS. The Kotlin class still lives in `ai.liquid.leap.downloader.LeapModelDownloader` and Android consumers are unaffected; a `@ObjCName(swiftName = "ModelDownloader")` annotation gives the Swift export an unambiguous name distinct from the framework module's own `LeapModelDownloader` name. Update Swift call sites:
+  ```diff
+  - let downloader = LeapModelDownloader()  // was uninstantiable from Swift in 0.10.5 due to the class-vs-module name collision
+  + let downloader = ModelDownloader()
+  ```
+- **Parameter labels renamed across the iOS `ModelDownloader` surface** — `model:` / `quantization:` → `modelName:` / `quantizationType:` on every method that already existed: `downloadModel(...)`, `requestDownloadModel(...)`, `requestStopDownload(...)`, `queryStatus(...)`, `removeModel(...)`, `getModelSize(...)`. Every loader now uses the same labels across Swift and Kotlin — `ModelDownloader` (iOS, macOS), `LeapModelDownloader` (Android), and `LeapDownloader` (cross-platform) all share `modelName:` / `quantizationType:`.
+- **`LeapModelDownloader` SPM library product is now single-target.** It no longer bundles the `LeapSDK` target. Apps depending on this product must drop any direct `LeapSDK` SPM dependency from the same target — `import LeapModelDownloader` re-exports every LeapSDK Kotlin type (`Conversation`, `ModelRunner`, `ChatMessage`, `Leap`, the convenience extensions, …). Keeping both library products on the same target double-bundles the inference engine dylibs and triggers a build-time `#error` from the LMD umbrella header (see "dual-import guard" below); the `LeapUI` library product still bundles `LeapSDK` because LeapUI does not re-emit those types in its ObjC binding.
+- **`LeapModelDownloader.xcframework` is now a dynamic framework.** It was a static archive in 0.10.5. SPM applies Embed & Sign automatically; manual integrators must add the framework with "Embed & Sign" instead of "Do Not Embed". The shipped XCFramework now also bundles the inference engine dylibs (`libinference_engine.dylib`, `libinference_engine_llamacpp_backend.dylib`, `libie_zip.dylib`) under `Frameworks/` with an `@loader_path/Frameworks` LC_RPATH — consumers using LMD on its own no longer need `LeapSDK.framework/Frameworks` on their search path.
+- **Dual-import build-time guard.** LMD's umbrella header carries a `__has_include(<LeapSDK/LeapSDK.h>) && !defined(LEAP_DUAL_IMPORT_ALLOW)` check that fires `#error` at the consumer's preprocessing time when both `LeapSDK` and `LeapModelDownloader` frameworks are reachable in the same target. To opt out for legitimate combinations (e.g. transitive linkage via `LeapUI`), add `LEAP_DUAL_IMPORT_ALLOW=1` to `OTHER_CFLAGS`.
+
+**New Swift conveniences:**
+
+- **`ModelDownloader()`**, **`ModelDownloader(sessionConfiguration:)`**, **`ModelDownloader(config:)`** — Kotlin/Native ObjC export strips default-argument metadata, so 0.10.5 forced Swift callers to pass every parameter (and `LeapDownloaderConfig` has seven). These new SKIE-bundled convenience inits restore the parameterless / single-arg forms.
+- **`LeapDownloaderConfig()`** parameterless convenience init mirroring the Kotlin defaults (`saveDir = "leap_models"`, `validateSha256 = true`, etc.). Same rationale — `LeapDownloaderConfig` is a Kotlin `data class` with seven defaulted fields that the ObjC export couldn't carry through.
+
+**Behavior changes:**
+
+- **`requestDownloadModel(forceDownload: false)`** now short-circuits when a cached manifest already exists *and* every resource referenced by that manifest is present on disk — matches both the Android downloader's idempotent-call semantics and what `queryStatus(...)` already reports. Earlier 0.10.5 builds would short-circuit on the manifest alone, leaving the caller stuck if any resource file had been removed. Pass `forceDownload: true` to re-download on top of a cache.
+- **Cached-file lookup** uses Ktor URL parsing instead of substring slicing, so URLs with fragments or query strings now produce the same filename the loader expects (`getCachedFilePath` was previously brittle for those shapes).
+
+**Fixes:**
+
+- **`getAvailableDiskSpace()`** previously returned `null` on every Apple platform because the internal `NSFileManager.attributesOfFileSystem(forPath:)[.systemFreeSize]` extraction cast through `as? Long` (Kotlin) which never matches the bridged `NSNumber`. Now goes through `NSNumber.longLongValue` and reports the real free-space figure.
+
+**Other changes:**
+
+- Options on the new load methods take `LiquidInferenceEngineManifestOptions?` (the Swift-friendly type already used by `Leap.load`), with `toModelLoadingOptions()` / `toGenerationTimeParameters()` conversion at the boundary — no separate KMP options class needed from Swift.
+- Internal: the iOS class uses `kotlin.experimental.ExperimentalObjCName` (stable in our Kotlin 2.3.20 baseline but still formally experimental).
+- No public-API changes for Android or non-Apple Kotlin/Native targets.
+
+### v0.10.5 — 2026-05-11
+
+Headline additions: Android Leap Model Service for cross-app model sharing, the `useMmap` knob on `ModelLoadingOptions`, and a parameter-name cleanup on `LeapDownloader.loadModel` so it matches `LeapModelDownloader.loadModel`.
+
+**Breaking changes (Kotlin):**
+
+- **`ModelLoadingOptions.cacheDir: String?` → `cacheOptions: EngineOptions.CacheOptions?`** — KV cache configuration moves to a bounded-LRU `CacheOptions` value with explicit `enabled` master switch, per-tier caps (`maxEntriesDisk`, `maxEntriesMemory`, `maxBytesMemory`), and optional `diskDisabled = true` for memory-only mode. Migrate via the `ModelLoadingOptions.cacheOptions(path = ...)` factory (preserves the historical 40-entry disk budget and sets `enabled = true`). Constructing a raw `CacheOptions` requires `enabled = true` to enable the cache — a positive `maxEntries` alone is no longer sufficient.
+- **`LeapDownloader.loadModel(modelName, quantizationSlug, modelLoadingOptions, …)` → `loadModel(modelName, quantizationType, options, …)`** — parameter renames bring `LeapDownloader` in line with `LeapModelDownloader`. The same rename applies to `loadSimpleModel(model, modelLoadingOptions, …)` → `loadSimpleModel(model, options, …)` and `loadModelFromManifestUrl(…)`. Swift sites that called `downloader.loadModel(modelName:, quantizationSlug:, modelLoadingOptions:)` need to swap to `quantizationType:` / `options:` after upgrading.
+- **`progress` is now nullable** (`progress: ((ProgressData) -> Unit)? = null`) — pass `null` to opt out (was an empty-lambda default).
+
+**New features:**
+
+- **`ModelLoadingOptions.useMmap: Boolean? = null`** — exposes the engine's `use_mmap` toggle to Kotlin/Swift callers. `null` (default) defers to the engine default of `true`. Set `false` only on filesystems where `mmap` misbehaves (some Android scoped-storage paths, certain network mounts). On Swift, `LiquidInferenceEngineOptions` gained a matching `.with(useMmap:)` builder. Previously mmap could not be disabled from the SDK.
+- **Leap Model Service (Android)** — `leap-model-service` is a new optional Android service that hosts loaded models in its own process and lets multiple client apps share them. Apps using `LeapModelDownloader.loadModel(...)` route through the service transparently when it's installed on the device; otherwise they fall back to in-process loading. Per-UID session quotas, persistent foreground notification, disk-backed KV cache reuse across cold starts, and AIDL-routed `registerFunction(s)`. Pass `forceLocal = true` on `LeapModelDownloader.loadModel(...)` to bypass the service for testing. See [Model Loading](/deployment/on-device/sdk/model-loading) for the routing model.
+- **Service-side load progress** — when routing through the model service, `LeapModelDownloader.loadModel`'s `progress` callback now fires for service-side downloads too (was previously local-path-only).
+
+**Fixes / refresh:**
+
+- Apple `LeapModelDownloader` internal slot names switched from `quantizationSlug` → `quantizationType` for consistency. Public Swift label names (`model:` / `quantization:`) are unchanged.
+- Vendor `liquid.h` header refresh for Linux/MinGW K/N targets.
+
+### v0.10.4.5 — 2026-05-08
+
+Engine ABI fix release. SPM consumers should bump to this version.
+
+- Engine pin advanced to `v26.02.1-146-g777faf0dbb` — fixes a K/N + Linux `free(): invalid pointer` SIGABRT in `liquid_string_destroy` (the FFI helper was freeing the wrong pointer slot).
+- Linux runtime smoke test now asserts the engine reports failure on a missing model path, guarding against silent-success regressions.
+- `NativeLibLoader` cleanup: stdout warnings moved to `System.err`; loader stays kotlin-stdlib-only.
+
+### v0.10.4.4 — 2026-05-07
+
+K/N link-time `--allow-shlib-undefined` fix for Linux consumers. No API changes.
+
+### v0.10.4.3 — 2026-05-07
+
+iOS/macOS Swift convenience surface for `cacheOptions`:
+
+- `LiquidInferenceEngineManifestOptions(cacheOptions: ..., contextSize: 4096)` now accepts native Swift types (previously the convenience init dropped `cacheOptions` and forced consumers to the verbose Obj-C designated init).
+- New `with(cacheOptions:)` builders on `LiquidInferenceEngineOptions` and `LiquidInferenceEngineManifestOptions`.
+- New `LiquidCacheOptions.enabled(path:)` static factory — Swift analog of `ModelLoadingOptions.cacheOptions(path:)`.
+
+(v0.10.4.2 was staged to Sonatype but never released; superseded by 0.10.4.3.)
+
+### v0.10.4.1 — 2026-05-07
+
+Vendor pin refresh — bumps the inference engine to `v26.02.1-142-gb4aa080538`. Adds Strategy B chain-prefix replay for cold/warm bit-determinism and generalizes the Android backend native loader to Linux and Windows desktop. No public API changes.
+
+### v0.10.4 — 2026-05-06
+
+- **Bounded-LRU `CacheOptions` API** across JVM, Android, Kotlin/Native, Apple, and wasmJs.
+- **`use_mmap=true` is now the engine default** (via vendored IE pin `v26.02.1-79+`). Model weights are memory-mapped instead of `read(2)`-ed into a heap buffer. See [Memory-mapped model loading by default](#memory-mapped-model-loading-by-default) above for the mobile performance impact.
+- K/N Linux link fix (`--allow-shlib-undefined` for `libinference_engine.so` against modern glibc).
+- Dynamic vendor pipeline + `DT_NEEDED`-based shipped-libs verify; `inference_engine` RUNPATH=`$ORIGIN` cascade for Linux/Windows shared vendor libs.
+- `NativeLibLoader` cross-platform load fixes (resource extraction + Windows pre-load topo-retry).
+- Three release-gate smokes (Linux K/N, Apple SwiftPM consumer, Windows JVM) wired into CI.
+
+### v0.10.1 — 2026-04-29
+
+Additive fix release for Linux/MinGW Kotlin/Native consumers. Apple/SPM consumers see no API or behavior changes vs v0.10.0.
+
+- `leap-sdk` Linux/MinGW K/N artifacts on Maven Central now publish a `-natives.zip` classifier containing the runtime `.so`/`.dll` libraries.
+- New `ai.liquid.leap.nativelibs` Gradle plugin auto-wires the natives ZIP into consumer K/N executables.
+- `leap-openai-client` now publishes Linux/MinGW K/N klibs.
+
+### v0.10.0 — 2026-04-28
+
+Initial Kotlin Multiplatform unification release. See [the 0.9.x → 0.10.x section above](#0-9-x-0-10-x-kotlin-multiplatform-unification) for the full migration story.

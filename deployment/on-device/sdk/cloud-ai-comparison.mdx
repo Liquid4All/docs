@@ -1,0 +1,257 @@
+---
+title: "Cloud AI Comparison"
+description: "Mapping LEAP SDK concepts to cloud chat-completion APIs like OpenAI."
+---
+
+If you've used a cloud chat-completion API (OpenAI, Anthropic, etc.), most of LEAP's shape will be familiar — async streaming, role-tagged messages, JSON-serializable history. The biggest difference: you load the model explicitly, locally, before generation, instead of pointing a client at a remote endpoint.
+
+This page maps the OpenAI Python client's flow onto the LEAP SDK across Swift, Kotlin (Android), and Kotlin (JVM / native). For OpenAI compatibility on the client side, also see [OpenAI-Compatible Client](./openai-client).
+
+## Reference: an OpenAI streaming call
+
+```python
+from openai import OpenAI
+client = OpenAI()
+
+stream = client.chat.completions.create(
+    model="gpt-4.1",
+    messages=[{"role": "user", "content": "Say 'double bubble bath' ten times fast."}],
+    stream=True,
+)
+
+for chunk in stream:
+    if chunk.choices:
+        delta = chunk.choices[0].delta.get("content")
+        if delta:
+            print(delta, end="", flush=True)
+print("\nGeneration done!")
+```
+
+## 1. Load the model (vs. construct a client)
+
+Cloud APIs create a thin client that points at a remote endpoint. LEAP downloads the model the first time and loads it into a `ModelRunner` — typically a few seconds depending on model size and device.
+
+<Tabs>
+  <Tab title="OpenAI (Python)">
+    ```python
+    client = OpenAI()
+    ```
+  </Tab>
+  <Tab title="Swift (iOS / macOS)">
+    ```swift
+    import LeapModelDownloader
+
+    let caches = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first!.path
+    let modelsDir = (caches as NSString).appendingPathComponent("leap_models")
+    let downloader = ModelDownloader(config: LeapDownloaderConfig(saveDir: modelsDir))
+
+    let runner = try await downloader.loadModel(
+        modelName: "LFM2.5-1.2B-Instruct",
+        quantizationType: "Q4_K_M"
+    )
+    ```
+  </Tab>
+  <Tab title="Kotlin (Android)">
+    ```kotlin
+    val downloader = LeapModelDownloader(context)
+    val runner = downloader.loadModel(
+        modelName = "LFM2.5-1.2B-Instruct",
+        quantizationType = "Q4_K_M",
+    )
+    ```
+  </Tab>
+  <Tab title="Kotlin (JVM / native)">
+    ```kotlin
+    val downloader = LeapDownloader(LeapDownloaderConfig(saveDir = cacheDir))
+    val runner = downloader.loadModel(
+        modelName = "LFM2.5-1.2B-Instruct",
+        quantizationType = "Q4_K_M",
+    )
+    ```
+  </Tab>
+</Tabs>
+
+The returned `ModelRunner` plays the same role as the cloud API's client object — except it carries the model weights. Release it and you'll have to load again before generating.
+
+## 2. Request generation
+
+The cloud API takes a `messages` array and returns a stream. LEAP attaches messages to a `Conversation` (so history is tracked automatically) and returns an async stream from `generateResponse(...)`.
+
+<Tabs>
+  <Tab title="OpenAI (Python)">
+    ```python
+    stream = client.chat.completions.create(
+        model="gpt-4.1",
+        messages=[{"role": "user", "content": "..."}],
+        stream=True,
+    )
+    ```
+  </Tab>
+  <Tab title="Swift (iOS / macOS)">
+    ```swift
+    let conversation = runner.createConversation()
+    let stream = conversation.generateResponse(userTextMessage: "Say 'double bubble bath' ten times fast.")
+    ```
+  </Tab>
+  <Tab title="Kotlin (all platforms)">
+    ```kotlin
+    val conversation = runner.createConversation()
+    val flow = conversation.generateResponse("Say 'double bubble bath' ten times fast.")
+    ```
+  </Tab>
+</Tabs>
+
+You don't pass the model name on each call — the `Conversation` is already bound to the runner that loaded it.
+
+## 3. Consume the stream
+
+Cloud APIs deliver deltas; you concatenate them. LEAP delivers `MessageResponse` values; each variant maps to a UI update, audio frame, tool call, or completion marker.
+
+<Tabs>
+  <Tab title="OpenAI (Python)">
+    ```python
+    for chunk in stream:
+        if chunk.choices:
+            delta = chunk.choices[0].delta.get("content")
+            if delta:
+                print(delta, end="", flush=True)
+    ```
+  </Tab>
+  <Tab title="Swift (iOS / macOS)">
+    ```swift
+    for try await response in stream {
+        switch onEnum(of: response) {
+        case .chunk(let chunk):
+            print(chunk.text, terminator: "")
+        case .complete(let completion):
+            print("\nDone! Tokens: \(completion.stats?.totalTokens ?? 0)")
+        case .reasoningChunk, .audioSample, .functionCalls:
+            break
+        }
+    }
+    ```
+  </Tab>
+  <Tab title="Kotlin (all platforms)">
+    ```kotlin
+    flow.onEach { response ->
+        when (response) {
+            is MessageResponse.Chunk -> print(response.text)
+            is MessageResponse.Complete -> println("\nDone! Tokens: ${response.stats?.totalTokens}")
+            else -> {}
+        }
+    }.collect()
+    ```
+  </Tab>
+</Tabs>
+
+## 4. Async context
+
+Both LEAP and the OpenAI Python streaming client run inside an async context. The SDK's call shape mirrors the language's idiomatic concurrency primitives.
+
+<Tabs>
+  <Tab title="Swift (iOS / macOS)">
+    Wrap calls in a `Task`. SwiftUI's `.task` modifier on a view is the most common entry. `@MainActor` view models keep model state on the main thread; the `for try await` loop suspends the task until the next chunk arrives.
+
+    ```swift
+    @MainActor
+    final class ChatViewModel: ObservableObject {
+        @Published var currentResponse = ""
+        private var runner: ModelRunner?
+        private var conversation: Conversation?
+        private let downloader: ModelDownloader = {
+            let caches = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first!.path
+            let modelsDir = (caches as NSString).appendingPathComponent("leap_models")
+            return ModelDownloader(config: LeapDownloaderConfig(saveDir: modelsDir))
+        }()
+
+        func loadModel() async {
+            runner = try? await downloader.loadModel(
+                modelName: "LFM2.5-1.2B-Instruct",
+                quantizationType: "Q4_K_M"
+            )
+            conversation = runner?.createConversation()
+        }
+
+        func sendMessage(_ text: String) {
+            guard let conversation else { return }
+            Task {
+                let message = ChatMessage(role: .user, content: [.text(text)])
+                for try await response in conversation.generateResponse(message: message) {
+                    if case .chunk(let c) = onEnum(of: response) {
+                        currentResponse += c.text
+                    }
+                }
+            }
+        }
+    }
+    ```
+  </Tab>
+  <Tab title="Kotlin (Android)">
+    Use `viewModelScope` (or `lifecycleScope` for activity-bound work). The flow is collected on the coroutine; cancellation is cooperative.
+
+    ```kotlin
+    class ChatViewModel(application: Application) : AndroidViewModel(application) {
+        private val downloader = LeapModelDownloader(application)
+        private var runner: ModelRunner? = null
+        private var conversation: Conversation? = null
+        private val _text = MutableStateFlow("")
+        val text: StateFlow<String> = _text.asStateFlow()
+
+        fun loadModel() = viewModelScope.launch {
+            runner = downloader.loadModel(
+                modelName = "LFM2.5-1.2B-Instruct",
+                quantizationType = "Q4_K_M"
+            )
+            conversation = runner?.createConversation()
+        }
+
+        fun send(text: String) = viewModelScope.launch {
+            conversation?.generateResponse(text)?.onEach { resp ->
+                if (resp is MessageResponse.Chunk) _text.value += resp.text
+            }?.collect()
+        }
+    }
+    ```
+  </Tab>
+  <Tab title="Kotlin (JVM / native)">
+    Use any coroutine scope — `runBlocking` for CLIs, a custom `CoroutineScope` for server-side code, or `MainScope()` for Compose for Desktop.
+
+    ```kotlin
+    fun main() = runBlocking {
+        val downloader = LeapDownloader(LeapDownloaderConfig(saveDir = cacheDir))
+        val runner = downloader.loadModel(
+            modelName = "LFM2.5-1.2B-Instruct",
+            quantizationType = "Q4_K_M"
+        )
+        val conversation = runner.createConversation()
+
+        conversation.generateResponse("Hello").collect { resp ->
+            if (resp is MessageResponse.Chunk) print(resp.text)
+        }
+    }
+    ```
+  </Tab>
+</Tabs>
+
+## What's the same
+
+| Concept | OpenAI | LEAP |
+|---|---|---|
+| Role-tagged messages | `{"role": "user", "content": "..."}` | `ChatMessage(role: .user, content: [.text("...")])` |
+| Streaming responses | `stream=True` iterator | `AsyncThrowingStream` (Swift) / `Flow` (Kotlin) |
+| Function calling | Tool definitions + `tool_calls` field | `registerFunction(LeapFunction)` + `MessageResponse.functionCalls` |
+| Structured output | `response_format = json_schema` | `GenerationOptions.setResponseFormat(type:)` |
+| Token usage stats | `usage` object on completion | `Complete.stats` (`promptTokens`, `completionTokens`, `tokenPerSecond`) |
+
+## What's different
+
+- **No remote endpoint.** You ship the model with the app (or download it the first time it runs). Latency is bounded by device CPU/GPU, not network round-trips.
+- **Explicit lifecycle.** Hold a `ModelRunner` reference; `unload()` when done. Cloud clients never load anything explicitly.
+- **Multimodal inputs go in `content` array, same as OpenAI.** Image and audio parts use the same OpenAI `image_url` / `input_audio` wire format.
+- **Companion files for multimodal models.** Vision and audio-capable models need an `mmproj` (vision) and/or audio decoder/tokenizer co-located on disk. Manifest-based loading handles this automatically; `loadSimpleModel` accepts explicit `mmprojPath` / `audioDecoderPath` / `audioTokenizerPath`.
+
+## Next steps
+
+- [Quick Start](./quick-start) — full setup for your platform.
+- [OpenAI-Compatible Client](./openai-client) — the `LeapOpenAIClient` lets you point an OpenAI-style client at any OpenAI-compatible endpoint.
+- [Conversation & Generation](./conversation-generation) — full streaming API reference.

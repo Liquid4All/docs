@@ -1,0 +1,591 @@
+---
+title: "Quick Start"
+description: "Install the LEAP SDK on iOS, macOS, Android, JVM, Linux, or Windows — same API everywhere."
+---
+
+Latest version: `v0.10.6`
+
+The LEAP SDK is a Kotlin Multiplatform library: the same `ModelRunner` / `Conversation` / `MessageResponse` API runs on every supported target. The code differs only in **language** (Swift vs. Kotlin) and **packaging** (SPM, Gradle, or Kotlin/Native plugin) — the call shapes are identical.
+
+<Info>
+**Migrating from 0.9.x?** v0.10.0 unifies the SDK into a single Kotlin Multiplatform distribution published from [`Liquid4All/leap-sdk`](https://github.com/Liquid4All/leap-sdk). The standalone `Liquid4All/leap-ios` repo is no longer the source-of-truth. See the [SDK changelog](/deployment/on-device/leap-sdk-changelog#0-9-x-0-10-x-kotlin-multiplatform-unification) for the transition story and drop-in replacements for legacy `Leap.load(...)` / `LiquidEngine(...)` call sites.
+</Info>
+
+## 1. Prerequisites
+
+<Tabs>
+  <Tab title="iOS / macOS">
+    - Xcode 16.0+ with Swift 6.0.
+    - iOS **17.0+** or macOS **15.0+** (Mac Catalyst 17.0+ also supported).
+    - A physical iPhone or iPad with at least 3 GB RAM for best performance. The simulator works for development but runs models much slower.
+
+    <Warning>
+    v0.10.0 raises the minimum iOS deployment target from 15.0 to **17.0** and macOS from 12.0 to **15.0**. Apps targeting older OSes need to pin to `0.9.x` or bump their deployment target before upgrading.
+    </Warning>
+  </Tab>
+  <Tab title="Android">
+    - Kotlin Android Plugin **2.3.0+** and Android Gradle Plugin **8.13.0+**:
+      ```kotlin
+      plugins {
+          id("com.android.application") version "8.13.2" apply false
+          id("com.android.library") version "8.13.2" apply false
+          id("org.jetbrains.kotlin.android") version "2.3.20" apply false
+      }
+      ```
+    - A working Android device that supports `arm64-v8a` with [developer mode enabled](https://developer.android.com/studio/debug/dev-options) and 3 GB+ of RAM.
+    - **Min SDK 31** (Android 12):
+      ```kotlin
+      android { defaultConfig { minSdk = 31; targetSdk = 36 } }
+      ```
+
+    <Warning>
+    The SDK may crash on loading model bundles in emulators. Always test on a physical device.
+    </Warning>
+  </Tab>
+  <Tab title="JVM Desktop">
+    - **JDK 11+** (Hotspot or any standard JVM).
+    - Kotlin 2.3.0+ if you're writing Kotlin (Java consumers work too).
+    - Supported hosts: macOS ARM64, Linux x86_64, Linux aarch64, Windows x86_64, Windows aarch64.
+
+    The `leap-sdk` JAR bundles the JNI binaries for every supported OS/arch — no extra setup needed.
+  </Tab>
+  <Tab title="Linux / Windows native">
+    - Kotlin **2.3.20+** and Gradle 8.x for the Kotlin/Native build.
+    - **Linux runtime:** glibc **2.34+** (Ubuntu 22.04, Debian 12, RHEL 9, or newer).
+    - **Windows runtime:** Windows 10+.
+
+    <Warning>
+    **Versions 0.10.0, 0.10.1, and 0.10.2 cannot link a working Kotlin/Native executable** due to Maven Central / cinterop issues. Pin to **0.10.5+** — Maven Central is immutable per GAV, so the older versions cannot be republished. See the [changelog](/deployment/on-device/leap-sdk-changelog#kotlin-native-linux-windows) for the full story.
+    </Warning>
+  </Tab>
+</Tabs>
+
+## 2. Install the SDK
+
+<Tabs>
+  <Tab title="iOS / macOS (SPM)">
+    The Leap SDK ships exclusively through Swift Package Manager in v0.10.0. CocoaPods support has been removed.
+
+    1. In Xcode choose **File → Add Package Dependencies**.
+    2. Enter `https://github.com/Liquid4All/leap-sdk.git`.
+    3. Select the `0.10.6` release (or newer).
+    4. Add the products you need to your app target.
+
+    The package vends five products. Most apps only need one or two:
+
+    | Product | What it provides | Re-exports |
+    |---|---|---|
+    | `LeapSDK` | Core inference + conversation API. Use this when you only need foreground manifest loads via `LeapDownloader.loadModel(...)`. | — |
+    | `LeapModelDownloader` | The Swift `ModelDownloader` class with `URLSession`-backed `loadModel(...)` / `downloadModel(...)` and background-session support. Re-exports every `LeapSDK` Kotlin type, so a single `import LeapModelDownloader` reaches `Conversation`, `ModelRunner`, `ChatMessage`, `Leap`, the convenience extensions, and so on. | every `LeapSDK` type |
+    | `LeapOpenAIClient` | OpenAI-compatible cloud chat client | — |
+    | `LeapUI` | Voice assistant widget (SwiftUI/AppKit/Compose) | `LeapSDK` |
+    | `LeapSDKMacros` | `@Generatable` / `@Guide` macros | swift-syntax |
+
+    **Pick exactly one of `LeapSDK` or `LeapModelDownloader` per target.** `LeapModelDownloader` is the recommended choice — its `ModelDownloader.loadModel(...)` covers everything `LeapDownloader.loadModel(...)` does and adds background-friendly transfers, and `LeapSDK`'s types are re-exported through the same `import LeapModelDownloader` statement. Drop the `LeapSDK` dependency from any target that already pulls in `LeapModelDownloader`. Add `LeapSDKMacros` if you use `@Generatable` constrained generation. `LeapOpenAIClient` and `LeapUI` are independent opt-ins.
+
+    <Warning>
+    **Dual-import build-time guard (v0.10.6+).** `LeapModelDownloader`'s umbrella header carries a `__has_include(<LeapSDK/LeapSDK.h>) && !defined(LEAP_DUAL_IMPORT_ALLOW)` check that fires `#error` at preprocessing time if both `LeapSDK` and `LeapModelDownloader` are linked into the same target. The K/N export creates a distinct Swift type per Kotlin protocol per framework, so `LeapSDK.Conversation` and `LeapModelDownloader.Conversation` are different types and every protocol reference triggers "ambiguous for type lookup."
+
+    **Opt out** only for the legitimate `LeapUI` + `LeapModelDownloader` combination (`LeapUI` transitively bundles `LeapSDK` and there's no source-level workaround): add `LEAP_DUAL_IMPORT_ALLOW=1` to `OTHER_CFLAGS` for the affected target, and qualify any ambiguous Swift type with the source module — e.g. `LeapModelDownloader.Conversation` — or stick to a single `import` per file.
+    </Warning>
+
+    <Info>
+    **Framework type (v0.10.6+).** `LeapModelDownloader.xcframework` is now a dynamic framework (was static in 0.10.5) and bundles the three inference engine dylibs under `Frameworks/`. SPM applies **Embed & Sign** automatically; manual Xcode integrators must select "Embed & Sign" on the framework instead of "Do Not Embed".
+    </Info>
+
+    <Accordion title="Pin to explicit binary XCFrameworks">
+      For explicit pinning, declare each framework as a `.binaryTarget` in your `Package.swift`. The XCFramework assets live on the `Liquid4All/leap-sdk` v0.10.6 release page — copy the SHA-256 values from there.
+
+      <Warning>
+      The constrained-generation macros (`@Generatable`, `@Guide`) are Swift macros, not XCFrameworks — they ship as the `LeapSDKMacros` source target inside the SPM package and **cannot be installed as a `.binaryTarget`**. If you need them, use the standard SPM package URL above (or add the `LeapSDKMacros` source target separately on top of your binary targets).
+      </Warning>
+
+      ```swift
+      .binaryTarget(
+        name: "LeapSDK",
+        url: "https://github.com/Liquid4All/leap-sdk/releases/download/v0.10.6/LeapSDK.xcframework.zip",
+        checksum: "236fb6c897d25fc5804be64edc16a9ee73c26678d02e58dab4a1b77ab2e4898f"
+      ),
+      .binaryTarget(
+        name: "LeapModelDownloader",
+        url: "https://github.com/Liquid4All/leap-sdk/releases/download/v0.10.6/LeapModelDownloader.xcframework.zip",
+        checksum: "a2a57f9c932ef7005d42b33b69d7a67f0ffb65fb79dffa954be99a0225932a61"
+      ),
+      .binaryTarget(
+        name: "LeapOpenAIClient",
+        url: "https://github.com/Liquid4All/leap-sdk/releases/download/v0.10.6/LeapOpenAIClient.xcframework.zip",
+        checksum: "b661059af8bfb086931099f8fac9f54e957272d5d6bbc9dd36e3e154fddf8222"
+      ),
+      .binaryTarget(
+        name: "LeapUi",
+        url: "https://github.com/Liquid4All/leap-sdk/releases/download/v0.10.6/LeapUi.xcframework.zip",
+        checksum: "694f4b8a8d1a8cd9086ce718a9fc15f4e74c442541b983816fd0eef8cecc7875"
+      ),
+      ```
+
+      Note that the binary target name is `LeapUi` (lowercase `i`) — `import LeapUi` in Swift sources matches the binary-target module name, even though the SPM library product is `LeapUI`.
+    </Accordion>
+  </Tab>
+  <Tab title="Android (Gradle)">
+    Add the dependencies to `app/build.gradle.kts`:
+
+    ```kotlin
+    dependencies {
+      implementation("ai.liquid.leap:leap-sdk:0.10.6")
+      implementation("ai.liquid.leap:leap-model-downloader:0.10.6") // Android background downloads
+
+      // Optional: OpenAI-compatible cloud chat client
+      // implementation("ai.liquid.leap:leap-openai-client:0.10.6")
+
+      // Optional: Voice assistant widget (Compose Multiplatform)
+      // implementation("ai.liquid.leap:leap-ui:0.10.6")
+    }
+    ```
+
+    <Accordion title="Version catalog (recommended for multi-module projects)">
+      In `gradle/libs.versions.toml`:
+
+      ```toml
+      [versions]
+      leapSdk = "0.10.6"
+
+      [libraries]
+      leap-sdk = { module = "ai.liquid.leap:leap-sdk", version.ref = "leapSdk" }
+      leap-model-downloader = { module = "ai.liquid.leap:leap-model-downloader", version.ref = "leapSdk" }
+      leap-openai-client = { module = "ai.liquid.leap:leap-openai-client", version.ref = "leapSdk" }
+      leap-ui = { module = "ai.liquid.leap:leap-ui", version.ref = "leapSdk" }
+      ```
+
+      Then in `app/build.gradle.kts`:
+
+      ```kotlin
+      dependencies {
+        implementation(libs.leap.sdk)
+        implementation(libs.leap.model.downloader)
+      }
+      ```
+    </Accordion>
+
+    Also declare these permissions in `AndroidManifest.xml` — `LeapModelDownloader` runs as a foreground service for reliable downloads:
+
+    ```xml
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+    ```
+
+    <Info>
+    `POST_NOTIFICATIONS` requires a runtime permission request on Android 13 (API 33)+ — see the code example below.
+    </Info>
+  </Tab>
+  <Tab title="JVM Desktop">
+    ```kotlin
+    plugins {
+        kotlin("jvm") version "2.3.20"
+        application
+    }
+
+    repositories {
+        mavenCentral()
+    }
+
+    dependencies {
+        implementation("ai.liquid.leap:leap-sdk:0.10.6")
+
+        // Optional:
+        // implementation("ai.liquid.leap:leap-openai-client:0.10.6")
+        // implementation("ai.liquid.leap:leap-ui:0.10.6") // Compose for Desktop voice widget
+    }
+    ```
+
+    <Warning>
+    **Do not** add `ai.liquid.leap:leap-model-downloader` from a non-Android JVM project — that module is Android-only (WorkManager + foreground service). Use `LeapDownloader` from the core `leap-sdk` instead.
+    </Warning>
+
+    Maven projects: use the `leap-sdk-jvm` artifact ID (KMP libraries require the `-jvm` suffix when consumed from pure Maven).
+  </Tab>
+  <Tab title="Linux / Windows native">
+    Apply the `ai.liquid.leap.nativelibs` plugin — it installs the engine `.so`/`.dll` files next to your linked executable and wires the linker `-L<dir>` flag automatically.
+
+    ```kotlin
+    // settings.gradle.kts
+    pluginManagement {
+        repositories { mavenCentral(); gradlePluginPortal() }
+    }
+    dependencyResolutionManagement {
+        repositories { mavenCentral() }
+    }
+    ```
+
+    ```kotlin
+    // build.gradle.kts
+    plugins {
+        kotlin("multiplatform") version "2.3.20"
+        id("ai.liquid.leap.nativelibs") version "0.10.6"
+    }
+
+    dependencies {
+        implementation("ai.liquid.leap:leap-sdk:0.10.6")
+    }
+
+    kotlin {
+        linuxX64 { binaries.executable() }
+        // linuxArm64 { binaries.executable() }
+        // mingwX64  { binaries.executable() }
+    }
+    ```
+
+    See [Desktop & Native Platforms](/deployment/on-device/sdk/desktop-platforms) for the manual recipe, runtime requirements, and the natives ZIP coordinates.
+  </Tab>
+</Tabs>
+
+## 3. Load a model
+
+The recommended path is **manifest-based** loading. On every platform, the platform downloader's `loadModel(...)` downloads (if needed) and loads in one call — `LeapModelDownloader.loadModel(...)` on iOS / macOS / Android, `LeapDownloader.loadModel(...)` on JVM and Linux / Windows Kotlin/Native. All paths fetch from the [LEAP Model Library](https://leap.liquid.ai/models) on first use and load from cache thereafter.
+
+<Tabs>
+  <Tab title="Swift (iOS / macOS)">
+    ```swift
+    import LeapModelDownloader
+    import Combine
+
+    @MainActor
+    final class ChatViewModel: ObservableObject {
+        @Published var isLoading = false
+        @Published var conversation: Conversation?
+
+        private let modelsDir: String = {
+            let caches = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first!.path
+            return (caches as NSString).appendingPathComponent("leap_models")
+        }()
+        private lazy var downloader = ModelDownloader(
+            config: LeapDownloaderConfig(saveDir: modelsDir)
+            // For background transfers, pass:
+            // sessionConfiguration: .background(withIdentifier: "com.myapp.leap.downloads")
+        )
+
+        private var modelRunner: ModelRunner?
+        private var generationTask: Task<Void, Never>?
+
+        func loadModel() async {
+            isLoading = true
+            defer { isLoading = false }
+            do {
+                let runner = try await downloader.loadModel(
+                    modelName: "LFM2-1.2B",
+                    quantizationType: "Q5_K_M"
+                ) { fraction, _ in
+                    // fraction: Double (0...1) · bytesPerSecond: Int64
+                }
+                conversation = runner.createConversation(
+                    systemPrompt: "You are a helpful travel assistant."
+                )
+                self.modelRunner = runner
+            } catch {
+                print("Failed to load model: \(error)")
+            }
+        }
+    }
+    ```
+
+    `ModelDownloader.loadModel(...)` runs the file transfer through `URLSession` (so it inherits background-session support when you pass a `sessionConfiguration`) and then loads the on-disk files in place — no need to pair the downloader with a separate loader. If you only need foreground transfers and cross-platform Swift/Kotlin code, `LeapDownloader.loadModel(modelName:, quantizationType:)` has the same shape minus the `URLSession` integration; it ships in the same `LeapModelDownloader` SPM product, so no extra `import` is needed. See [Model Loading](/deployment/on-device/sdk/model-loading).
+  </Tab>
+  <Tab title="Kotlin (Android)">
+    ```kotlin
+    import android.app.Application
+    import androidx.lifecycle.AndroidViewModel
+    import androidx.lifecycle.viewModelScope
+    import ai.liquid.leap.Conversation
+    import ai.liquid.leap.ModelRunner
+    import ai.liquid.leap.model_downloader.LeapModelDownloader
+    import ai.liquid.leap.model_downloader.LeapModelDownloaderNotificationConfig
+    import kotlinx.coroutines.Dispatchers
+    import kotlinx.coroutines.flow.MutableStateFlow
+    import kotlinx.coroutines.flow.StateFlow
+    import kotlinx.coroutines.flow.asStateFlow
+    import kotlinx.coroutines.launch
+    import kotlinx.coroutines.runBlocking
+
+    class ChatViewModel(application: Application) : AndroidViewModel(application) {
+        private val modelDownloader = LeapModelDownloader(
+            application,
+            notificationConfig = LeapModelDownloaderNotificationConfig.build {
+                notificationTitleDownloading = "Downloading AI model..."
+                notificationTitleDownloaded = "Model ready!"
+                notificationContentDownloading = "Please wait while the model downloads"
+            }
+        )
+
+        private var modelRunner: ModelRunner? = null
+        private var conversation: Conversation? = null
+
+        private val _isLoading = MutableStateFlow(false)
+        val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
+
+        private val _downloadProgress = MutableStateFlow(0f)
+        val downloadProgress: StateFlow<Float> = _downloadProgress.asStateFlow()
+
+        fun loadModel() {
+            viewModelScope.launch {
+                _isLoading.value = true
+                try {
+                    modelRunner = modelDownloader.loadModel(
+                        modelName = "LFM2-1.2B",
+                        quantizationType = "Q5_K_M",
+                        progress = { _downloadProgress.value = it.progress }
+                    )
+                    conversation = modelRunner?.createConversation()
+                } finally {
+                    _isLoading.value = false
+                }
+            }
+        }
+
+        override fun onCleared() {
+            super.onCleared()
+            runBlocking(Dispatchers.IO) { modelRunner?.unload() }
+        }
+    }
+    ```
+  </Tab>
+  <Tab title="Kotlin (JVM / native)">
+    ```kotlin
+    import ai.liquid.leap.LeapDownloader
+    import ai.liquid.leap.LeapDownloaderConfig
+    import ai.liquid.leap.message.ChatMessage
+    import ai.liquid.leap.message.MessageResponse
+    import kotlinx.coroutines.runBlocking
+    import java.nio.file.Paths
+
+    fun main() = runBlocking {
+        // Linux/macOS: ~/.cache/leap   ·   Windows: %LOCALAPPDATA%\leap
+        val cacheDir = Paths.get(System.getProperty("user.home"), ".cache", "leap").toString()
+
+        val downloader = LeapDownloader(config = LeapDownloaderConfig(saveDir = cacheDir))
+
+        val runner = downloader.loadModel(
+            modelName = "LFM2-1.2B",
+            quantizationType = "Q5_K_M",
+            progress = { p -> println("Downloading: ${(p.progress * 100).toInt()}%") },
+        )
+
+        val conversation = runner.createConversation(systemPrompt = "You are a helpful assistant.")
+
+        conversation.generateResponse(ChatMessage.user("Hello!")).collect { resp ->
+            when (resp) {
+                is MessageResponse.Chunk -> print(resp.text)
+                is MessageResponse.Complete -> println("\n[done]")
+                else -> {}
+            }
+        }
+
+        runner.unload()
+    }
+    ```
+
+    `LeapDownloader` is the cross-platform downloader — same shape on JVM, Linux native, Windows native, and macOS Kotlin/Native. There is no Android `Context` to pass; provide a writable cache directory via `LeapDownloaderConfig(saveDir = ...)`.
+  </Tab>
+</Tabs>
+
+### Loading a sideloaded GGUF
+
+When you already have a model file on disk — shipped as an app asset, `adb push`-ed for development, or downloaded by your own pipeline — use `loadSimpleModel(model: ModelSource(...))` to skip the LEAP Model Library lookup entirely.
+
+<Tabs>
+  <Tab title="Swift (iOS / macOS)">
+    ```swift
+    let runner = try await downloader.loadSimpleModel(
+      model: ModelSource(
+        modelPath: bundledURL.path,
+        modelName: "LFM2-1.2B-Instruct",
+        quantizationId: "Q4_K_M"
+      )
+    )
+    ```
+
+    For a vision-capable model, pass `mmprojPath`. For an audio-capable model, pass `audioDecoderPath` (and optionally `audioTokenizerPath`).
+  </Tab>
+  <Tab title="Kotlin (all platforms)">
+    ```kotlin
+    val runner = downloader.loadSimpleModel(
+        model = ModelSource(
+            modelPath = "/path/to/lfm2-1_2b-q4_k_m.gguf",
+            modelName = "LFM2-1.2B-Instruct",
+            quantizationId = "Q4_K_M"
+        )
+    )
+    ```
+
+    Pass `mmprojPath` for vision, `audioDecoderPath` (+ optional `audioTokenizerPath`) for audio. See [Model Loading](/deployment/on-device/sdk/model-loading) for the full `ModelSource` reference. Note: `ModelSource` uses `quantizationId` (the loader parameters use `quantizationType`).
+  </Tab>
+</Tabs>
+
+## 4. Stream a response
+
+Both platforms expose the same streaming shape: an async sequence of `MessageResponse` values, each handled with an exhaustive switch.
+
+<Tabs>
+  <Tab title="Swift (iOS / macOS)">
+    ```swift
+    func send(_ text: String) {
+        guard let conversation else { return }
+        generationTask?.cancel()
+        let userMessage = ChatMessage(role: .user, content: [.text(text)])
+        generationTask = Task { [weak self] in
+            do {
+                for try await response in conversation.generateResponse(
+                    message: userMessage,
+                    generationOptions: GenerationOptions(temperature: 0.3, minP: 0.15, repetitionPenalty: 1.05)
+                ) {
+                    self?.handle(response)
+                }
+            } catch {
+                print("Generation failed: \(error)")
+            }
+        }
+    }
+
+    @MainActor
+    private func handle(_ response: MessageResponse) {
+        // `onEnum(of:)` (v0.10.0+) gives exhaustive switching without a `default`.
+        switch onEnum(of: response) {
+        case .chunk(let chunk):
+            print(chunk.text, terminator: "")
+        case .reasoningChunk(let reasoning):
+            print("Reasoning:", reasoning.reasoning)
+        case .audioSample(let audio):
+            audioRenderer.enqueue(audio.samples, sampleRate: Int(audio.sampleRate))
+        case .functionCalls(let payload):
+            handleFunctionCalls(payload.functionCalls)
+        case .complete(let completion):
+            if let stats = completion.stats {
+                print("Finished with \(stats.totalTokens) tokens")
+            }
+            let text = completion.fullMessage.content.compactMap { part -> String? in
+                if case let .text(t) = onEnum(of: part) { return t.text }
+                return nil
+            }.joined()
+            print("Final:", text)
+        }
+    }
+    ```
+  </Tab>
+  <Tab title="Kotlin (all platforms)">
+    ```kotlin
+    fun generateResponse(userMessage: String) {
+        viewModelScope.launch {
+            conversation?.generateResponse(userMessage)
+                ?.onEach { response ->
+                    when (response) {
+                        is MessageResponse.Chunk -> _responseText.value += response.text
+                        is MessageResponse.ReasoningChunk -> Log.d(TAG, "Reasoning: ${response.text}")
+                        is MessageResponse.FunctionCalls -> handleFunctionCalls(response.functionCalls)
+                        is MessageResponse.AudioSample -> audioRenderer.enqueue(response.samples, response.sampleRate)
+                        is MessageResponse.Complete -> Log.d(TAG, "Done. Stats: ${response.stats}")
+                    }
+                }
+                ?.onCompletion { _isGenerating.value = false }
+                ?.catch { e -> _errorMessage.value = "Generation failed: ${e.message}" }
+                ?.collect()
+        }
+    }
+    ```
+  </Tab>
+</Tabs>
+
+Cancel the in-flight task (Swift) or coroutine job (Kotlin) to interrupt generation early.
+
+## 5. Send images and audio (optional)
+
+If the loaded model is multimodal (and its companion files were detected), you can attach a non-text part — an image, a WAV blob, or raw PCM samples — alongside the text in a `ChatMessage`.
+
+<Info>
+**Multimodality is model-specific.** Most multimodal models we ship are text + one other modality: text + vision (the VLM family) or text + audio (the audio family) — not both in the same checkpoint. Send `.image(...)` parts only to a vision-capable model, and `.audio(...)` / `.fromFloatSamples(...)` parts only to an audio-capable model. Mixing modalities a model wasn't trained on will either fail to load the companion file or produce nonsense. Check the model's [Hugging Face card](https://huggingface.co/LiquidAI) before wiring up a non-text input path.
+</Info>
+
+<Tabs>
+  <Tab title="Swift (iOS / macOS)">
+    ```swift
+    // Text + image (vision-capable model)
+    let imageMessage = ChatMessage(
+      role: .user,
+      content: [.text("Describe what you see."), .image(jpegData)]
+    )
+
+    // Text + WAV audio (audio-capable model)
+    let wavMessage = ChatMessage(
+      role: .user,
+      content: [.text("Transcribe and summarize this clip."), .audio(wavData)]
+    )
+
+    // Text + raw PCM samples (audio-capable model)
+    let pcmMessage = ChatMessage(
+      role: .user,
+      content: [
+        .text("Give feedback on my pronunciation."),
+        ChatMessageContent.fromFloatSamples(samples, sampleRate: 16000)
+      ]
+    )
+    ```
+  </Tab>
+  <Tab title="Kotlin (all platforms)">
+    ```kotlin
+    // Text + image (vision-capable model)
+    val imageMessage = ChatMessage.user(
+        content = listOf(
+            ChatMessageContent.Text("Describe what you see."),
+            ChatMessageContent.Image(jpegBytes)
+        )
+    )
+
+    // Text + WAV audio (audio-capable model)
+    val wavMessage = ChatMessage.user(
+        content = listOf(
+            ChatMessageContent.Text("Transcribe and summarize this clip."),
+            ChatMessageContent.Audio(wavBytes)
+        )
+    )
+
+    // Text + raw PCM samples (audio-capable model)
+    val pcmMessage = ChatMessage.user(
+        content = listOf(
+            ChatMessageContent.Text("Give feedback on my pronunciation."),
+            ChatMessageContent.AudioPcmF32(samples, sampleRate = 16000)
+        )
+    )
+    ```
+  </Tab>
+</Tabs>
+
+## 6. Next steps
+
+<CardGroup cols={2}>
+
+<Card title="Model Loading" icon="download" href="/deployment/on-device/sdk/model-loading">
+  Full `LeapModelDownloader` / `LeapDownloader` reference, `loadSimpleModel`, KV cache reuse, and runtime options.
+</Card>
+
+<Card title="Conversation & Generation" icon="comments" href="/deployment/on-device/sdk/conversation-generation">
+  `Conversation`, `ModelRunner`, `MessageResponse`, and `GenerationOptions`.
+</Card>
+
+<Card title="Function Calling" icon="wrench" href="/deployment/on-device/sdk/function-calling">
+  Tool use with Hermes and Pythonic parsers.
+</Card>
+
+<Card title="Constrained Generation" icon="brackets-curly" href="/deployment/on-device/sdk/constrained-generation">
+  Structured JSON output via `@Generatable` macros.
+</Card>
+
+<Card title="Voice Assistant Widget" icon="microphone" href="/deployment/on-device/sdk/voice-assistant">
+  Drop-in Compose voice orb for iOS, macOS, Android, and JVM Desktop.
+</Card>
+
+<Card title="Desktop & Native Platforms" icon="laptop" href="/deployment/on-device/sdk/desktop-platforms">
+  JVM Desktop, Linux native (Kotlin/Native), Windows MinGW, and macOS deep-dive.
+</Card>
+
+</CardGroup>
+
+See [LeapSDK-Examples](https://github.com/Liquid4All/LeapSDK-Examples) for complete sample apps.
