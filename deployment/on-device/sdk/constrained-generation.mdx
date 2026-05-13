@@ -1,0 +1,302 @@
+---
+title: "Constrained Generation"
+description: "Generate structured JSON output with compile-time validation — same approach on every platform."
+---
+
+Constrained generation forces the model to emit JSON matching a schema. Use the language's native facility — Swift macros (`@Generatable` / `@Guide`) or Kotlin annotations (`@Generatable` / `@Guide`) — to define the structure, then set it on `GenerationOptions`. The schema is computed at compile time (Swift) or via reflection at load time (Kotlin), and the model's output decodes directly into your type.
+
+## Define the structured type
+
+<Tabs>
+  <Tab title="Swift (iOS / macOS)">
+    The `@Generatable` macro analyzes your `struct` at compile time and synthesizes the `jsonSchema()` method. All stored properties must carry a `@Guide` description.
+
+    ```swift
+    import LeapModelDownloader
+
+    @Generatable("A joke with metadata")
+    struct Joke: Codable {
+        @Guide("The joke text")
+        let text: String
+
+        @Guide("The category of humor (pun, dad-joke, programming, etc.)")
+        let category: String
+
+        @Guide("Humor rating from 1-10")
+        let rating: Int
+
+        @Guide("Whether the joke is suitable for children")
+        let kidFriendly: Bool
+    }
+    ```
+
+    <Info>
+    Requires Swift 5.9+ (Swift macros). The `@Generatable` / `@Guide` macros ship in the `LeapSDKMacros` SPM product — add it to your target alongside `LeapModelDownloader` (or `LeapSDK`) if you use constrained generation.
+    </Info>
+  </Tab>
+  <Tab title="Kotlin (all platforms)">
+    `@Generatable` and `@Guide` are runtime annotations on Kotlin `data class` declarations. All properties must be declared in the primary constructor.
+
+    ```kotlin
+    package ai.liquid.leap.structuredoutput
+
+    annotation class Generatable(val description: String)
+    annotation class Guide(val description: String)
+    ```
+
+    ```kotlin
+    @Generatable(description = "Facts about a city")
+    data class CityFact(
+        @Guide(description = "Name of the city")
+        val name: String,
+
+        @Guide(description = "State/province of the city")
+        val state: String,
+
+        @Guide(description = "Country name")
+        val country: String,
+
+        @Guide(description = "Places of interest in the city")
+        val placeOfInterests: List<String>,
+    )
+    ```
+  </Tab>
+</Tabs>
+
+## Apply the schema in `GenerationOptions`
+
+<Tabs>
+  <Tab title="Swift (iOS / macOS)">
+    ```swift
+    var options = GenerationOptions(temperature: 0.3, minP: 0.15, repetitionPenalty: 1.05)
+    try options.setResponseFormat(type: Joke.self)
+
+    let message = ChatMessage(role: .user, content: [.text("Tell me a programming joke")])
+
+    for try await response in conversation.generateResponse(
+        message: message,
+        generationOptions: options
+    ) {
+        if case .complete(let completion) = onEnum(of: response) {
+            let jsonText = completion.fullMessage.content.compactMap { part -> String? in
+                if case let .text(t) = onEnum(of: part) { return t.text }
+                return nil
+            }.joined()
+            guard let data = jsonText.data(using: .utf8) else { continue }
+            let joke = try JSONDecoder().decode(Joke.self, from: data)
+            print(joke)
+        }
+    }
+    ```
+  </Tab>
+  <Tab title="Kotlin (all platforms)">
+    ```kotlin
+    val options = GenerationOptions.build {
+        setResponseFormatType(CityFact::class)
+        temperature = 0.3f
+        minP = 0.15f
+        repetitionPenalty = 1.05f
+    }
+
+    conversation.generateResponse("Show the city facts about Tokyo", options)
+        .onEach { response ->
+            if (response is MessageResponse.Complete) {
+                val jsonContent = (response.fullMessage.content.first() as ChatMessageContent.Text).text
+                val cityFact: CityFact = GeneratableFactory.createFromJSONObject(JSONObject(jsonContent))
+                println(cityFact)
+            }
+        }
+        .collect()
+    ```
+
+    If the model's JSON doesn't deserialize cleanly into the data class, `GeneratableFactory.createFromJSONObject` throws `LeapGeneratableDeserializationException`.
+  </Tab>
+</Tabs>
+
+### Embedding the schema in the prompt
+
+Some models do better when the JSON Schema is also included in the prompt text. Both platforms expose a helper.
+
+<Tabs>
+  <Tab title="Swift (iOS / macOS)">
+    ```swift
+    let schemaString = try JSONSchemaGenerator.getJSONSchema(for: Joke.self)
+    let message = ChatMessage(
+        role: .user,
+        content: [.text("Tell me a programming joke following this JSON Schema: \(schemaString)")]
+    )
+    ```
+  </Tab>
+  <Tab title="Kotlin (all platforms)">
+    ```kotlin
+    val jsonSchema = JSONSchemaGenerator.getJSONSchema(CityFact::class)
+    conversation.generateResponse(
+        "Show the city facts about Tokyo following this JSON Schema: $jsonSchema",
+        options
+    )
+    ```
+  </Tab>
+</Tabs>
+
+## Supported types
+
+Composition types are supported as long as the leaf types are supported.
+
+| Schema type | Swift | Kotlin |
+|---|---|---|
+| String | `String` | `String` |
+| Integer | `Int`, `Int32`, `Int64` | `Int`, `Long` |
+| Number | `Double`, `Float` | `Float`, `Double` |
+| Boolean | `Bool` | `Boolean` |
+| Enum | `String` with constrained `enumValues` | Kotlin `enum class` (plain name used as value) |
+| Object | nested `@Generatable` `struct` | nested `@Generatable` `data class` |
+| Array | `[T]` of any supported type | `List<T>` / `MutableList<T>` of supported type |
+| Optional | `Optional<T>` (`T?`) | nullable `T?` |
+
+## Complex nested structures
+
+<Tabs>
+  <Tab title="Swift (iOS / macOS)">
+    ```swift
+    @Generatable("A recipe with ingredients and instructions")
+    struct Recipe: Codable {
+        @Guide("Name of the dish")
+        let name: String
+
+        @Guide("List of ingredients with quantities")
+        let ingredients: [String]
+
+        @Guide("Step-by-step cooking instructions")
+        let instructions: [String]
+
+        @Guide("Cooking time in minutes")
+        let cookingTimeMinutes: Int
+
+        @Guide("Number of servings this recipe makes")
+        let servings: Int?
+
+        @Guide("Nutritional information if available")
+        let nutrition: NutritionInfo?
+    }
+
+    @Generatable("Nutritional information for a recipe")
+    struct NutritionInfo: Codable {
+        @Guide("Calories per serving")
+        let caloriesPerServing: Int
+
+        @Guide("Protein in grams")
+        let proteinGrams: Double
+
+        @Guide("Carbohydrates in grams")
+        let carbsGrams: Double
+    }
+    ```
+  </Tab>
+  <Tab title="Kotlin (all platforms)">
+    ```kotlin
+    @Generatable("A recipe with ingredients and instructions")
+    data class Recipe(
+        @Guide("Name of the dish")
+        val name: String,
+
+        @Guide("List of ingredients with quantities")
+        val ingredients: List<String>,
+
+        @Guide("Step-by-step cooking instructions")
+        val instructions: List<String>,
+
+        @Guide("Cooking time in minutes")
+        val cookingTimeMinutes: Int,
+
+        @Guide("Number of servings this recipe makes")
+        val servings: Int? = null,
+
+        @Guide("Nutritional information if available")
+        val nutrition: NutritionInfo? = null,
+    )
+
+    @Generatable("Nutritional information for a recipe")
+    data class NutritionInfo(
+        @Guide("Calories per serving")
+        val caloriesPerServing: Int,
+
+        @Guide("Protein in grams")
+        val proteinGrams: Double,
+
+        @Guide("Carbohydrates in grams")
+        val carbsGrams: Double,
+    )
+    ```
+  </Tab>
+</Tabs>
+
+## Best practices
+
+### Write descriptive `@Guide` annotations
+
+The model uses them as natural-language hints about what each field should contain. Specific descriptions outperform generic ones.
+
+```text
+✓ @Guide("The programming language name (e.g., Swift, Python, JavaScript)")
+✗ @Guide("A string")
+```
+
+### Keep structures focused
+
+Smaller, single-responsibility types produce better output than sprawling structures with twenty fields. If a type starts mixing concerns (profile + preferences + history), split it.
+
+### Lower temperature for structured output
+
+Temperature `0.3–0.5` typically improves adherence to the schema. The default `0.7` is biased toward conversational variation that doesn't help when you need parseable JSON.
+
+### Validate the decoded output
+
+Even with constrained generation, you should handle parse failures gracefully. The model's output is constrained against the schema but not against business invariants.
+
+<Tabs>
+  <Tab title="Swift (iOS / macOS)">
+    ```swift
+    private func parse<T: Codable>(_ jsonText: String, as type: T.Type) -> T? {
+        guard let data = jsonText.data(using: .utf8) else { return nil }
+        do {
+            return try JSONDecoder().decode(type, from: data)
+        } catch {
+            print("Failed to decode response as \(type): \(error)")
+            return nil
+        }
+    }
+    ```
+  </Tab>
+  <Tab title="Kotlin (all platforms)">
+    ```kotlin
+    fun <T : Any> parse(jsonText: String, kClass: KClass<T>): T? = try {
+        GeneratableFactory.createFromJSONObject(JSONObject(jsonText)) as T
+    } catch (e: LeapGeneratableDeserializationException) {
+        Log.e(TAG, "Failed to decode response as ${kClass.simpleName}", e)
+        null
+    }
+    ```
+  </Tab>
+</Tabs>
+
+## How it works
+
+1. **Compile/load time** — `@Generatable` produces a JSON Schema for your type. (Swift: compile-time macro; Kotlin: reflective build at load time.)
+2. **Configuration** — `GenerationOptions.setResponseFormat(type:)` / `setResponseFormatType(...)` installs the schema as `jsonSchemaConstraint` on the generation options.
+3. **Generation** — the SDK constrains decoding so only tokens that produce schema-valid JSON are emitted. The model's output is guaranteed to parse.
+
+## Error handling
+
+| Error | When it happens |
+|---|---|
+| `LeapGeneratableSchematizationException` (Kotlin) | The data class can't be translated to JSON Schema (unsupported field type, missing primary-constructor declaration). |
+| `LeapGeneratableDeserializationException` (Kotlin) | The generated JSON can't be deserialized into the target data class. |
+| Swift `DecodingError` | `JSONDecoder` rejects the generated payload — usually because the model output contains stray prose alongside the JSON; filter `Complete.fullMessage.content` for the `.text` fragments first. |
+
+## Troubleshooting
+
+**"External macro implementation could not be found" (Swift)** — clean the build folder, restart Xcode, verify Swift 5.9+.
+
+**Generated JSON includes prose alongside the JSON object** — common with low-quality prompts. Add "Reply with only the JSON object" to the user message, lower temperature, and filter `.text` content fragments before decoding.
+
+**Model produces empty or trivial JSON** — verify each `@Guide` description gives the model a concrete sense of what to fill in. Generic descriptions ("a string") leave the model guessing.

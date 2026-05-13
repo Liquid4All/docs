@@ -1,0 +1,339 @@
+---
+title: "Messages & Content"
+description: "ChatMessage, ChatMessageContent, audio format requirements — same shape on every platform."
+---
+
+`ChatMessage` and `ChatMessageContent` mirror the OpenAI chat-completions message schema. The same fields exist on iOS / macOS (`struct ChatMessage`, `enum ChatMessageContent`) and the Kotlin platforms (`data class ChatMessage`, `sealed interface ChatMessageContent`).
+
+## `ChatMessage`
+
+<Tabs>
+  <Tab title="Swift (iOS / macOS)">
+    ```swift
+    public struct ChatMessage {
+      public var role: ChatMessageRole
+      public var content: [ChatMessageContent]
+      public var reasoningContent: String?
+      public var functionCalls: [LeapFunctionCall]?
+
+      public init(
+        role: ChatMessageRole,
+        content: [ChatMessageContent],
+        reasoningContent: String? = nil,
+        functionCalls: [LeapFunctionCall]? = nil
+      )
+
+      public init(from json: [String: Any]) throws
+    }
+
+    public enum ChatMessageRole: String {
+      case user, system, assistant, tool
+    }
+    ```
+  </Tab>
+  <Tab title="Kotlin (all platforms)">
+    ```kotlin
+    data class ChatMessage(
+        val role: Role,
+        val content: List<ChatMessageContent>,
+        val reasoningContent: String? = null,
+        val functionCalls: List<LeapFunctionCall>? = null,
+    ) {
+        enum class Role(val type: String) {
+            SYSTEM("system"),
+            USER("user"),
+            ASSISTANT("assistant"),
+            TOOL("tool"),
+        }
+
+        fun toJSONObject(): JSONObject
+
+        companion object {
+            fun fromJSONObject(obj: JSONObject): ChatMessage
+        }
+    }
+    ```
+  </Tab>
+</Tabs>
+
+### Fields
+
+- **`role`** — the speaker (`user`, `system`, `assistant`, or `tool`). Use `tool` when appending function-call results back into the history.
+- **`content`** — ordered fragments. Supported part types: `Text`, `Image` (JPEG bytes), `Audio` (WAV bytes), and on Kotlin `AudioPcmF32` for raw float samples.
+- **`reasoningContent`** — text emitted by reasoning models inside `<think>` / `</think>` tags. `null` for non-reasoning responses.
+- **`functionCalls`** — calls returned by `MessageResponse.functionCalls` on the previous turn, included when appending tool-call results to history.
+
+### Serialization
+
+Both platforms expose round-trip JSON helpers compatible with OpenAI's `ChatCompletionRequestMessage`.
+
+<Tabs>
+  <Tab title="Swift (iOS / macOS)">
+    `ChatMessage(from: [String: Any])` constructs a message from an OpenAI-style payload. Throws `LeapSerializationError` on unrecognized shapes.
+  </Tab>
+  <Tab title="Kotlin (all platforms)">
+    `ChatMessage.toJSONObject()` / `ChatMessage.fromJSONObject(obj)`. Throws `LeapSerializationException` on unrecognized shapes. See [Utilities → Serialization Support](./utilities#serialization-support).
+  </Tab>
+</Tabs>
+
+## `ChatMessageContent`
+
+<Tabs>
+  <Tab title="Swift (iOS / macOS)">
+    ```swift
+    public enum ChatMessageContent {
+      case text(String)
+      case image(Data)   // JPEG bytes
+      case audio(Data)   // WAV bytes
+
+      public init(from json: [String: Any]) throws
+    }
+    ```
+
+    Helper initializers simplify interop with platform-native buffers:
+
+    - `ChatMessageContent.fromUIImage(image, compressionQuality:)` — UIKit
+    - `ChatMessageContent.fromNSImage(image, compressionQuality:)` — AppKit
+    - `ChatMessageContent.fromWAVData(data)` — pass-through validator
+    - `ChatMessageContent.fromFloatSamples(samples, sampleRate:, channelCount:)` — wrap raw float32 PCM into a WAV blob
+
+    On the wire, image parts are encoded as OpenAI-style `image_url` payloads and audio parts as `input_audio` arrays with Base64 data.
+  </Tab>
+  <Tab title="Kotlin (all platforms)">
+    ```kotlin
+    sealed interface ChatMessageContent {
+        fun clone(): ChatMessageContent
+        fun toJSONObject(): JSONObject
+
+        data class Text(val text: String) : ChatMessageContent
+        data class Image(val jpegByteArray: ByteArray) : ChatMessageContent
+        data class Audio(val wavByteArray: ByteArray) : ChatMessageContent
+        data class AudioPcmF32(val samples: FloatArray, val sampleRate: Int) : ChatMessageContent
+    }
+
+    fun ChatMessageContent.fromJSONObject(obj: JSONObject): ChatMessageContent
+    ```
+
+    Android-specific helper: `ChatMessageContent.Image.fromBitmap(bitmap, compressionQuality = 85)` re-encodes an Android `Bitmap` to JPEG.
+  </Tab>
+</Tabs>
+
+- **`Text`** — plain text fragment.
+- **`Image`** — JPEG-encoded image bytes. Only vision-capable models can interpret image parts.
+- **`Audio`** — WAV-encoded audio bytes (see [audio format requirements](#audio-format-requirements) below).
+- **`AudioPcmF32`** (Kotlin) / `fromFloatSamples(...)` (Swift) — raw float32 mono PCM in memory. Avoids re-encoding when you already have samples.
+
+## Audio format requirements
+
+The LEAP inference engine expects WAV-encoded audio with these specifications:
+
+| Property | Required value | Notes |
+|---|---|---|
+| **Container** | WAV (RIFF) | Only WAV is supported |
+| **Sample rate** | 16000 Hz recommended | Other rates auto-resampled to 16 kHz |
+| **Encoding** | PCM | Float32, Int16, Int24, or Int32 |
+| **Channels** | Mono (1) | Stereo is **rejected** |
+| **Byte order** | Little-endian | Standard WAV |
+
+**Supported PCM encodings**
+
+- **Float32** — 32-bit floating point, normalized to [-1.0, 1.0]
+- **Int16** — 16-bit signed integer (recommended)
+- **Int24** — 24-bit signed integer
+- **Int32** — 32-bit signed integer
+
+<Warning>
+The engine **only accepts WAV**. M4A, MP3, AAC, OGG, and other compressed formats are rejected. Convert to WAV before sending.
+</Warning>
+
+<Warning>
+**Mono required.** Stereo or multi-channel WAVs are rejected with an error. Downmix to mono first.
+</Warning>
+
+<Info>
+**Automatic resampling.** The engine resamples to 16 kHz when needed, but providing 16 kHz audio directly avoids the resampling overhead. For best quality, record at 16 kHz mono.
+</Info>
+
+## Creating audio content
+
+### From a WAV file
+
+<Tabs>
+  <Tab title="Swift (iOS / macOS)">
+    ```swift
+    let wavURL = Bundle.main.url(forResource: "audio", withExtension: "wav")!
+    let wavData = try Data(contentsOf: wavURL)
+
+    let message = ChatMessage(
+        role: .user,
+        content: [
+            .text("What is being said in this audio?"),
+            .audio(wavData)
+        ]
+    )
+    ```
+  </Tab>
+  <Tab title="Kotlin (all platforms)">
+    ```kotlin
+    val wavBytes = File("/path/to/audio.wav").readBytes()
+    val audio = ChatMessageContent.Audio(wavBytes)
+
+    val message = ChatMessage(
+        role = ChatMessage.Role.USER,
+        content = listOf(
+            ChatMessageContent.Text("What is being said in this audio?"),
+            audio
+        )
+    )
+    ```
+  </Tab>
+</Tabs>
+
+### From raw PCM samples
+
+<Tabs>
+  <Tab title="Swift (iOS / macOS)">
+    ```swift
+    // Float samples normalized to [-1.0, 1.0]
+    let samples: [Float] = [0.1, 0.2, 0.15, -0.3 /* ... */]
+
+    let audioContent = ChatMessageContent.fromFloatSamples(
+        samples,
+        sampleRate: 16000,
+        channelCount: 1
+    )
+
+    let message = ChatMessage(
+        role: .user,
+        content: [.text("Transcribe this audio"), audioContent]
+    )
+    ```
+  </Tab>
+  <Tab title="Kotlin (all platforms)">
+    ```kotlin
+    import ai.liquid.leap.audio.FloatAudioBuffer
+
+    val audioBuffer = FloatAudioBuffer(sampleRate = 16000)
+    audioBuffer.add(floatArrayOf(0.1f, 0.2f, 0.15f /* ... */))
+    audioBuffer.add(floatArrayOf(0.3f, 0.25f /* ... */))
+
+    val wavBytes = audioBuffer.createWavBytes()
+    val audio = ChatMessageContent.Audio(wavBytes)
+    ```
+
+    Or skip the WAV encoding entirely with `ChatMessageContent.AudioPcmF32(samples, sampleRate)` — the engine handles the framing internally and you save the WAV header overhead.
+  </Tab>
+</Tabs>
+
+### Recording from the microphone
+
+<Tabs>
+  <Tab title="Swift (iOS / macOS)">
+    Configure `AVAudioRecorder` with WAV-compatible settings:
+
+    ```swift
+    import AVFoundation
+
+    let audioURL = FileManager.default.temporaryDirectory
+        .appendingPathComponent("recording.wav")
+
+    let settings: [String: Any] = [
+        AVFormatIDKey: kAudioFormatLinearPCM,
+        AVSampleRateKey: 16000.0,        // 16 kHz
+        AVNumberOfChannelsKey: 1,        // Mono
+        AVLinearPCMBitDepthKey: 16,      // 16-bit
+        AVLinearPCMIsFloatKey: false,
+        AVLinearPCMIsBigEndianKey: false
+    ]
+
+    let recorder = try AVAudioRecorder(url: audioURL, settings: settings)
+    recorder.record()
+    // ...
+    recorder.stop()
+
+    let wavData = try Data(contentsOf: audioURL)
+    let audioContent: ChatMessageContent = .audio(wavData)
+    ```
+  </Tab>
+  <Tab title="Kotlin (Android)">
+    Use `android.media.AudioRecord` or a library like `WaveRecorder`:
+
+    ```kotlin
+    import com.github.squti.androidwaverecorder.WaveRecorder
+
+    val recorder = WaveRecorder(outputFilePath)
+    recorder.configureWaveSettings {
+        sampleRate = 16000
+        channels = android.media.AudioFormat.CHANNEL_IN_MONO
+        audioEncoding = android.media.AudioFormat.ENCODING_PCM_16BIT
+    }
+    recorder.startRecording()
+    // ...
+    recorder.stopRecording()
+
+    val wavBytes = File(outputFilePath).readBytes()
+    val audioContent = ChatMessageContent.Audio(wavBytes)
+    ```
+  </Tab>
+  <Tab title="Kotlin (JVM)">
+    Use `javax.sound.sampled.TargetDataLine`:
+
+    ```kotlin
+    import javax.sound.sampled.AudioFormat
+    import javax.sound.sampled.AudioSystem
+    import javax.sound.sampled.TargetDataLine
+
+    val format = AudioFormat(16000f, 16, 1, true, false)
+    val line = AudioSystem.getTargetDataLine(format)
+    line.open(format)
+    line.start()
+    // ... read into a byte buffer, wrap in WAV header ...
+    line.stop(); line.close()
+
+    val audioContent = ChatMessageContent.Audio(wavBytes)
+    ```
+
+    For simpler cases, JVM apps that already have a `FloatAudioBuffer`-equivalent in their codebase can use `ChatMessageContent.AudioPcmF32(samples, sampleRate)` directly.
+  </Tab>
+</Tabs>
+
+### Audio duration
+
+- **Minimum** — at least 1 second of audio for reliable speech recognition.
+- **Maximum** — bounded by the model's context window (typically several minutes).
+- **Silence** — trim excessive silence from the start and end for better results.
+
+## Audio output from models
+
+Audio-capable models like `LFM2.5-Audio-1.5B` emit float32 PCM frames via `MessageResponse.AudioSample`. Output sample rate is typically **24 kHz** (vs. 16 kHz for input).
+
+<Tabs>
+  <Tab title="Swift (iOS / macOS)">
+    ```swift
+    for try await response in conversation.generateResponse(message: userMessage) {
+        if case .audioSample(let audio) = onEnum(of: response) {
+            // audio.samples: [Float] in [-1.0, 1.0]
+            // audio.sampleRate: Int (typically 24000 for audio-gen models)
+            audioPlayer.enqueue(samples: audio.samples, sampleRate: Int(audio.sampleRate))
+        }
+    }
+    ```
+  </Tab>
+  <Tab title="Kotlin (all platforms)">
+    ```kotlin
+    conversation.generateResponse(userMessage)
+        .onEach { response ->
+            if (response is MessageResponse.AudioSample) {
+                // response.samples: FloatArray in [-1.0, 1.0]
+                // response.sampleRate: Int (typically 24000)
+                audioBuffer.add(response.samples)
+            }
+        }
+        .collect()
+    ```
+  </Tab>
+</Tabs>
+
+<Info>
+Audio **input** should be 16 kHz; audio **output** from generation models is typically **24 kHz**. Configure your playback pipeline accordingly.
+</Info>

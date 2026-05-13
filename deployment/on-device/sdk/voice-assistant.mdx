@@ -1,0 +1,478 @@
+---
+title: "Voice Assistant Widget"
+description: "Drop-in Compose Multiplatform voice UI — runs on iOS, macOS, Android, and JVM Desktop."
+---
+
+The `leap-ui` module (introduced in v0.10.0) ships a ready-to-use voice assistant widget — an animated orb, mic button, and status label — backed by a state machine that handles recording, generation, and audio playback. Wire it to a model and it handles the rest.
+
+`leap-ui` is a Compose Multiplatform module, so the same widget runs on:
+
+- **iOS** — bridged to UIKit via `VoiceAssistantViewController` and exposed to SwiftUI through `UIViewControllerRepresentable`.
+- **macOS** — bridged to AppKit via `VoiceAssistantNSViewController`. SwiftUI hosts via `NSViewControllerRepresentable` + `NSHostingController`.
+- **Android** — direct Compose for Android.
+- **JVM Desktop** — Compose for Desktop. Same Maven artifact; you provide audio I/O implementations (the demo apps in `leap-ui-demo/` ship patterns you can adapt).
+- **Web (Wasm, experimental)** — present in the source tree (`leap-ui-demo/web`) but not yet covered by the v0.10.6 stable release notes — treat as preview.
+
+## Add the dependency
+
+<Tabs>
+  <Tab title="iOS / macOS (SPM)">
+    Add the `LeapUI` product to your target alongside `LeapModelDownloader` (the SPM product whose Swift `ModelDownloader` class is what the snippets below use to load the audio model). See the [Quick Start](./quick-start#2-install-the-sdk) for the full SPM setup.
+
+    ```swift
+    dependencies: [
+        .package(url: "https://github.com/Liquid4All/leap-sdk.git", from: "0.10.6")
+    ]
+
+    targets: [
+        .target(
+            name: "YourApp",
+            dependencies: [
+                .product(name: "LeapModelDownloader", package: "leap-sdk"),
+                .product(name: "LeapUI",              package: "leap-sdk"),
+            ]
+        )
+    ]
+    ```
+
+    In Swift sources, `import LeapUi` (lowercase `i` — that's the binary-target module name).
+
+    <Warning>
+    **Dual-import opt-out required for this combination.** `LeapUI` transitively bundles `LeapSDK`, and `LeapModelDownloader` re-exports the same Kotlin types under its own framework module, so the [dual-import build-time guard](./quick-start#2-install-the-sdk) fires `#error` at preprocessing time unless you opt out. Add `LEAP_DUAL_IMPORT_ALLOW=1` to `OTHER_CFLAGS` for the affected target, and qualify ambiguous Swift type references with the source module (`LeapSDK.Conversation` vs. `LeapModelDownloader.Conversation`) or stick to a single `import` per file.
+
+    If you'd rather avoid the opt-out, swap `LeapModelDownloader` for `LeapSDK` in the target dependencies and rewrite the snippets below to use `LeapDownloader(config:).loadModel(modelName:, quantizationType:)` — the cross-platform loader has the same shape minus the `URLSession` background-session integration.
+    </Warning>
+  </Tab>
+  <Tab title="Android / JVM (Gradle)">
+    ```kotlin
+    dependencies {
+        implementation("ai.liquid.leap:leap-sdk:0.10.6")
+        implementation("ai.liquid.leap:leap-ui:0.10.6")
+    }
+    ```
+
+    `leap-ui` brings in Compose runtime, foundation, and material3 transitively. If your project doesn't already use Compose, add the standard Compose dependencies too.
+  </Tab>
+</Tabs>
+
+## Architecture
+
+```
+VoiceAssistantWidget (Compose UI)
+        ↓ intents
+VoiceAssistantStore  (state machine: IDLE → LISTENING → RESPONDING → IDLE)
+        ↓ uses
+VoiceAudioRecorder + VoiceAudioPlayer + VoiceConversation
+```
+
+- **`VoiceAssistantStore`** owns the session lifecycle. Instantiate once when the screen appears; `close()` it when it goes away.
+- **`VoiceConversation`** is a thin interface you implement to bridge the store to your model. Wrap the SDK's `Conversation.generateResponse` and forward `AudioSample` chunks to `onAudioChunk`.
+- **Audio I/O** uses `VoiceAudioRecorder` / `VoiceAudioPlayer` interfaces. iOS / macOS ship `AppleAudioRecorder` and `AppleAudioPlayer` defaults; Android / JVM reference implementations live in `leap-ui-demo/`.
+
+## Wire the model
+
+The `VoiceConversation` adapter looks similar on every platform — both implementations stream audio samples back through `onAudioChunk`.
+
+<Tabs>
+  <Tab title="Swift (iOS / macOS)">
+    The factory `VoiceAssistantStore.makeForApple()` hides Kotlin coroutine plumbing from Swift callers. It creates the store with a `MainScope()`, the default Apple audio recorder and player, and an EMA-smoothed amplitude.
+
+    ```swift
+    import LeapModelDownloader
+    import LeapUi
+
+    @MainActor
+    final class VoiceAssistantViewModel: ObservableObject {
+        let store: VoiceAssistantStore
+        private let downloader: ModelDownloader = {
+            let caches = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first!.path
+            let modelsDir = (caches as NSString).appendingPathComponent("leap_models")
+            return ModelDownloader(config: LeapDownloaderConfig(saveDir: modelsDir))
+        }()
+
+        init() {
+            // Defaults: AppleAudioRecorder, AppleAudioPlayer, MainScope, interruptToSpeak = true
+            store = VoiceAssistantStore.makeForApple()
+        }
+
+        deinit { store.close() }
+
+        func loadModel() async {
+            do {
+                let runner = try await downloader.loadModel(
+                    modelName: "LFM2.5-Audio-1.5B",
+                    quantizationType: "Q4_0",
+                    downloadProgress: { fraction, _ in
+                        Task { @MainActor in
+                            self.store.setModelProgress(
+                                fraction: fraction,
+                                message: "Downloading (\(Int(fraction * 100))%)"
+                            )
+                        }
+                    }
+                )
+                let conversation = runner.createConversation(
+                    systemPrompt: "Respond with interleaved text and audio."
+                )
+                store.setConversation(conv: AppleVoiceConversation(conversation: conversation))
+            } catch {
+                store.setModelError(message: "✗ \(error.localizedDescription)")
+            }
+        }
+    }
+    ```
+
+    Override defaults via the same `makeForApple` factory parameters:
+
+    ```swift
+    let store = VoiceAssistantStore.makeForApple(
+        recorder: myCustomRecorder,
+        player: myCustomPlayer,
+        smoothingAlpha: 0.3,
+        playbackTimeoutMs: 10_000,
+        interruptToSpeak: false  // Press during a response only cancels; doesn't re-record immediately
+    )
+    ```
+  </Tab>
+  <Tab title="Kotlin (Android)">
+    ```kotlin
+    import ai.liquid.leap.model_downloader.LeapModelDownloader
+    import ai.liquid.leap.ui.VoiceAssistantIntent
+    import ai.liquid.leap.ui.VoiceAssistantStore
+    import ai.liquid.leap.ui.VoiceAssistantStoreState
+    import android.app.Application
+    import androidx.lifecycle.AndroidViewModel
+    import androidx.lifecycle.viewModelScope
+    import kotlinx.coroutines.flow.StateFlow
+    import kotlinx.coroutines.launch
+
+    class VoiceAssistantViewModel(application: Application) : AndroidViewModel(application) {
+        private val recorder = AndroidAudioRecorder()    // see "Audio I/O implementations" below
+        private val player = AndroidAudioPlayer()
+
+        val store = VoiceAssistantStore(recorder = recorder, player = player, scope = viewModelScope)
+        val state: StateFlow<VoiceAssistantStoreState> = store.state
+
+        private val downloader = LeapModelDownloader(application)
+
+        init { viewModelScope.launch { loadModel() } }
+
+        fun processIntent(intent: VoiceAssistantIntent) = store.processIntent(intent)
+
+        private suspend fun loadModel() = runCatching {
+            store.setModelProgress(0f, "Resolving manifest…")
+            val runner = downloader.loadModel(
+                modelName = "LFM2.5-Audio-1.5B",
+                quantizationType = "Q4_0",
+                progress = { pd ->
+                    val pct = if (pd.total > 0) " (${(pd.bytes * 100 / pd.total).toInt()}%)" else ""
+                    store.setModelProgress(
+                        fraction = if (pd.total > 0) pd.bytes.toFloat() / pd.total else 0f,
+                        message = "Downloading$pct",
+                    )
+                },
+            )
+            store.setConversation(
+                LeapVoiceConversation(
+                    conv = runner.createConversation(systemPrompt = "Respond with interleaved text and audio.")
+                )
+            )
+        }.onFailure { e -> store.setModelError("✗ ${e.message}") }
+
+        override fun onCleared() {
+            super.onCleared()
+            store.close()
+        }
+    }
+    ```
+  </Tab>
+</Tabs>
+
+## Host the widget
+
+<Tabs>
+  <Tab title="Swift (iOS)">
+    ```swift
+    import LeapUi
+    import SwiftUI
+
+    struct VoiceAssistantScreen: View {
+        @StateObject private var viewModel = VoiceAssistantViewModel()
+
+        var body: some View {
+            VoiceWidgetRepresentable(store: viewModel.store)
+                .background(Color.black)
+                .ignoresSafeArea()
+                .task { await viewModel.loadModel() }
+        }
+    }
+
+    private struct VoiceWidgetRepresentable: UIViewControllerRepresentable {
+        let store: VoiceAssistantStore
+
+        func makeUIViewController(context: Context) -> UIViewController {
+            VoiceAssistantViewControllerKt.VoiceAssistantViewController(
+                state: store.widgetStateHolder,
+                onIntent: { intent in store.processIntent(intent: intent) },
+                labels: VoiceWidgetLabels(
+                    idle: "Tap and hold to speak",
+                    listening: "Listening",
+                    responding: "Generating",
+                    micStartDescription: "Start recording",
+                    micStopDescription: "Stop recording",
+                    micCancelDescription: "Cancel recording"
+                ),
+                colors: VoiceWidgetColors.companion.Default,
+                showPoweredBy: true
+            )
+        }
+
+        func updateUIViewController(_ uiViewController: UIViewController, context: Context) {}
+    }
+    ```
+  </Tab>
+  <Tab title="Swift (macOS)">
+    Swap `UIViewControllerRepresentable` → `NSViewControllerRepresentable`, `UIViewController` → `NSViewController`, and `VoiceAssistantViewController` → `VoiceAssistantNSViewController`. Everything else (the view model, store, conversation) is unchanged.
+
+    ```swift
+    import LeapUi
+    import SwiftUI
+
+    private struct VoiceWidgetRepresentable: NSViewControllerRepresentable {
+        let store: VoiceAssistantStore
+
+        func makeNSViewController(context: Context) -> NSViewController {
+            VoiceAssistantNSViewControllerKt.VoiceAssistantNSViewController(
+                state: store.widgetStateHolder,
+                onIntent: { intent in store.processIntent(intent: intent) },
+                labels: VoiceWidgetLabels(/* same labels */),
+                colors: VoiceWidgetColors.companion.Default,
+                showPoweredBy: true
+            )
+        }
+
+        func updateNSViewController(_ nsViewController: NSViewController, context: Context) {}
+    }
+    ```
+  </Tab>
+  <Tab title="Kotlin (Android / Compose Desktop)">
+    ```kotlin
+    import ai.liquid.leap.ui.VoiceAssistantWidget
+    import androidx.activity.ComponentActivity
+    import androidx.activity.compose.setContent
+    import androidx.compose.foundation.background
+    import androidx.compose.foundation.layout.fillMaxSize
+    import androidx.compose.material3.MaterialTheme
+    import androidx.compose.material3.darkColorScheme
+    import androidx.compose.runtime.collectAsState
+    import androidx.compose.runtime.getValue
+    import androidx.compose.ui.Modifier
+    import androidx.compose.ui.graphics.Color
+    import androidx.lifecycle.viewmodel.compose.viewModel
+
+    class MainActivity : ComponentActivity() {
+        override fun onCreate(savedInstanceState: Bundle?) {
+            super.onCreate(savedInstanceState)
+            setContent {
+                MaterialTheme(colorScheme = darkColorScheme(background = Color.Black)) {
+                    val vm = viewModel<VoiceAssistantViewModel>()
+                    val state by vm.state.collectAsState()
+
+                    VoiceAssistantWidget(
+                        state = state.widgetState,
+                        onIntent = vm::processIntent,
+                        modifier = Modifier.fillMaxSize().background(Color.Black),
+                    )
+                }
+            }
+        }
+    }
+    ```
+
+    Compose for Desktop on JVM uses the same `VoiceAssistantWidget` composable inside a `Window { ... }` block.
+  </Tab>
+</Tabs>
+
+## Implement `VoiceConversation`
+
+The store calls into a `VoiceConversation` you provide. A minimal adapter that wraps a normal `Conversation`:
+
+<Tabs>
+  <Tab title="Swift (iOS / macOS)">
+    ```swift
+    import LeapModelDownloader
+    import LeapUi
+
+    final class AppleVoiceConversation: VoiceConversation {
+        private let conversation: Conversation
+
+        init(conversation: Conversation) {
+            self.conversation = conversation
+        }
+
+        func generateResponse(
+            audioSamples: [Float],
+            sampleRate: Int32,
+            onAudioChunk: @escaping (_ samples: [Float], _ sampleRate: Int32) -> Void
+        ) async throws -> GenerationStats? {
+            let userMessage = ChatMessage(
+                role: .user,
+                content: [ChatMessageContent.fromFloatSamples(audioSamples, sampleRate: Int(sampleRate))]
+            )
+
+            var stats: GenerationStats?
+            for try await response in conversation.generateResponse(message: userMessage) {
+                switch onEnum(of: response) {
+                case .audioSample(let chunk):
+                    onAudioChunk(chunk.samples, Int32(chunk.sampleRate))
+                case .complete(let c):
+                    stats = c.stats
+                case .chunk, .reasoningChunk, .functionCalls:
+                    break
+                }
+            }
+            return stats
+        }
+
+        func reset() -> VoiceConversation {
+            AppleVoiceConversation(conversation: conversation.modelRunner.createConversation())
+        }
+    }
+    ```
+  </Tab>
+  <Tab title="Kotlin (all platforms)">
+    ```kotlin
+    import ai.liquid.leap.Conversation
+    import ai.liquid.leap.MessageResponse
+    import ai.liquid.leap.message.ChatMessage
+    import ai.liquid.leap.message.ChatMessageContent
+    import ai.liquid.leap.message.GenerationStats
+    import ai.liquid.leap.message.encodePcm16Wav
+    import ai.liquid.leap.ui.VoiceConversation
+
+    class LeapVoiceConversation(private val conv: Conversation) : VoiceConversation {
+
+        override suspend fun generateResponse(
+            audioSamples: FloatArray,
+            sampleRate: Int,
+            onAudioChunk: (samples: FloatArray, sampleRate: Int) -> Unit,
+        ): GenerationStats? {
+            val wavBytes = encodePcm16Wav(audioSamples, sampleRate)
+            val userMessage = ChatMessage(
+                role = ChatMessage.Role.USER,
+                content = listOf(ChatMessageContent.Audio(wavBytes)),
+            )
+
+            var stats: GenerationStats? = null
+            conv.generateResponse(userMessage).collect { response ->
+                when (response) {
+                    is MessageResponse.AudioSample -> onAudioChunk(response.samples, response.sampleRate)
+                    is MessageResponse.Complete -> stats = response.stats
+                    else -> Unit
+                }
+            }
+            return stats
+        }
+
+        override fun reset(): VoiceConversation =
+            LeapVoiceConversation(conv.modelRunner.createConversation())
+    }
+    ```
+  </Tab>
+</Tabs>
+
+## Audio I/O implementations
+
+The `VoiceAudioRecorder` and `VoiceAudioPlayer` contracts are short. Substitute your own implementations when the defaults don't fit.
+
+```kotlin
+interface VoiceAudioRecorder {
+    val amplitude: Float          // 0..1 RMS, drives orb animation
+    val nativeSampleRate: Int     // Available after start()
+    fun start(): Boolean
+    suspend fun stop(): FloatArray
+    suspend fun cancel()
+}
+
+interface VoiceAudioPlayer {
+    val amplitude: Float
+    fun enqueue(samples: FloatArray, sampleRate: Int)
+    suspend fun waitForPlayback()
+    fun stop()
+}
+```
+
+<Tabs>
+  <Tab title="iOS / macOS">
+    `AppleAudioRecorder` and `AppleAudioPlayer` are the shipped defaults — `makeForApple()` wires them up automatically. Implement the protocols directly if you need to integrate with custom AVAudioEngine pipelines.
+
+    iOS apps must configure `AVAudioSession` for record + playback before the model starts streaming audio:
+
+    ```swift
+    import AVFoundation
+
+    let session = AVAudioSession.sharedInstance()
+    try session.setCategory(.playAndRecord, mode: .default, options: [.defaultToSpeaker])
+    try session.setActive(true)
+    session.requestRecordPermission { _ in }
+    ```
+
+    Add `NSMicrophoneUsageDescription` to your `Info.plist`.
+  </Tab>
+  <Tab title="Android">
+    `AndroidAudioRecorder` and `AndroidAudioPlayer` aren't part of `leap-ui` — they're reference implementations shipped with the demo app at `leap-ui-demo/android/src/main/kotlin/ai/liquid/leap/uidemo/AudioPipeline.kt`. Copy the file into your project, or implement the contracts against your own audio stack.
+
+    Required permissions:
+
+    ```xml
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.INTERNET" />
+    ```
+
+    Request `RECORD_AUDIO` at runtime via the standard `ActivityResultContracts.RequestPermission()` pattern (see [Quick Start](./quick-start)).
+  </Tab>
+  <Tab title="JVM Desktop">
+    No bundled implementations — use `javax.sound.sampled.TargetDataLine` for capture and `SourceDataLine` for playback, wrapped to match the `VoiceAudioRecorder` / `VoiceAudioPlayer` contracts. The demo at `leap-ui-demo/jvm` (if present in your release) ships a working reference.
+  </Tab>
+</Tabs>
+
+## `interruptToSpeak`
+
+`VoiceAssistantStore` (v0.10.0+) exposes an `interruptToSpeak: Boolean = true` parameter controlling what happens when the user presses the orb during a response:
+
+- **`true` (default)** — cancels the in-flight generation **and** immediately starts a new recording.
+- **`false`** — only cancels. The user must press again to start a new recording.
+
+<Tabs>
+  <Tab title="Swift (iOS / macOS)">
+    ```swift
+    let store = VoiceAssistantStore.makeForApple(interruptToSpeak: false)
+    ```
+  </Tab>
+  <Tab title="Kotlin (all platforms)">
+    ```kotlin
+    val store = VoiceAssistantStore(
+        recorder = recorder,
+        player = player,
+        scope = viewModelScope,
+        interruptToSpeak = false,
+    )
+    ```
+  </Tab>
+</Tabs>
+
+## What's in the module
+
+| Symbol | Purpose |
+|---|---|
+| `VoiceAssistantStore` | State machine + orchestrator. Apple platforms: `makeForApple()`. |
+| `VoiceAssistantStateHolder` | Compose-friendly state container, exposed to Swift. |
+| `VoiceAssistantWidget` (Compose) | The widget itself. Drop into any Compose tree (Android, JVM, iOS via host controller, macOS via host controller). |
+| `VoiceAssistantViewController` (UIKit) / `VoiceAssistantNSViewController` (AppKit) | Pre-built hosts for Apple. |
+| `AppleAudioRecorder` / `AppleAudioPlayer` | Default audio I/O on iOS / macOS. |
+| `VoiceConversation` | Adapter interface you implement to bridge the store to a `Conversation`. |
+| `VoiceWidgetLabels`, `VoiceWidgetColors` | Theming (use `.companion.Default` to access the canonical palette). |
+
+## Compatible models
+
+Voice mode requires a model that emits audio output. The shipped demo uses `LFM2.5-Audio-1.5B` at `Q4_0` quantization, with a system prompt of *"Respond with interleaved text and audio."* See the [LEAP Model Library](https://leap.liquid.ai/models) for other audio-capable models.

@@ -1,0 +1,244 @@
+---
+title: "Utilities"
+description: "Error handling, serialization, Android-specific downloader internals, and a putting-it-together example."
+---
+
+This page covers error types, serialization helpers, and a few platform-specific entry points that don't fit in the main reference pages.
+
+## Errors
+
+<Tabs>
+  <Tab title="Swift (iOS / macOS)">
+    Errors surface as `LeapError` values. The most common cases:
+
+    - **`LeapError.modelLoadingFailure`** — problems reading or validating the model bundle.
+    - **`LeapError.generationFailure`** — unexpected native inference errors.
+    - **`LeapError.promptExceedContextLengthFailure`** — prompt length exceeded the configured context size.
+    - **`LeapError.serializationFailure`** — JSON encoding/decoding problems on chat history or function calls.
+
+    Handle thrown errors with `do` / `catch` on async streams, or use `onErrorCallback` on the lower-level callback APIs.
+  </Tab>
+  <Tab title="Kotlin (all platforms)">
+    All errors are subclasses of `LeapException`:
+
+    - **`LeapModelLoadingException`** — error loading the model.
+    - **`LeapGenerationException`** — error during generation.
+    - **`LeapGenerationPromptExceedContextLengthException`** — the prompt text exceeds the maximum context length, so no content is generated.
+    - **`LeapSerializationException`** — error serializing or deserializing data.
+    - **`LeapGeneratableSchematizationException`** — couldn't translate a `@Generatable` data class into JSON Schema.
+    - **`LeapGeneratableDeserializationException`** — couldn't deserialize the model's JSON output into the target data class.
+
+    Capture errors from `Flow<MessageResponse>` with `.catch { e -> ... }`.
+  </Tab>
+</Tabs>
+
+## Serialization
+
+`ChatMessage`, `ChatMessageContent`, `LeapFunctionCall`, and `Manifest` are serializable on every platform and round-trip cleanly into JSON compatible with OpenAI's chat-completions schema.
+
+<Tabs>
+  <Tab title="Swift (iOS / macOS)">
+    Use the JSON initializers directly on `ChatMessage` and `ChatMessageContent`:
+
+    ```swift
+    // Serialize the conversation history
+    let payload: [[String: Any]] = try conversation.exportToJSON()
+    let data = try JSONSerialization.data(withJSONObject: payload, options: [])
+
+    // Round-trip a single message
+    let json: [String: Any] = ["role": "user", "content": "Hello"]
+    let message = try ChatMessage(from: json)
+    ```
+
+    Persist `data` to disk, UserDefaults, or your sync backend. On restore, decode it back to `[[String: Any]]`, map each entry through `ChatMessage(from:)`, and rebuild via `modelRunner.createConversationFromHistory(history:)`.
+  </Tab>
+  <Tab title="Kotlin (all platforms)">
+    The SDK uses [kotlinx.serialization](https://github.com/Kotlin/kotlinx.serialization) — `@Serializable` is already declared on the relevant types in the core SDK.
+
+    Add kotlinx-serialization to your project:
+
+    ```kotlin
+    plugins {
+        id("org.jetbrains.kotlin.plugin.serialization") version "2.3.20"
+    }
+
+    dependencies {
+        implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")
+    }
+    ```
+
+    Serialize and restore the history:
+
+    ```kotlin
+    import kotlinx.serialization.json.Json
+    import kotlinx.serialization.encodeToString
+    import kotlinx.serialization.decodeFromString
+
+    val json = Json { ignoreUnknownKeys = true }
+
+    // Save
+    val jsonString = json.encodeToString(conversation.history)
+
+    // Restore
+    val history: List<ChatMessage> = json.decodeFromString(jsonString)
+    val restored = modelRunner.createConversationFromHistory(history)
+    ```
+
+    The same approach works for a single message:
+
+    ```kotlin
+    val message = ChatMessage(
+        role = ChatMessage.Role.USER,
+        content = listOf(ChatMessageContent.Text("Hello"))
+    )
+    val messageJson = json.encodeToString(message)
+    ```
+  </Tab>
+</Tabs>
+
+## Android `LeapModelDownloader` internals
+
+<Info>
+This section is **Android-only**. iOS / macOS callers use the Swift `ModelDownloader` (shipped in the `LeapModelDownloader` SPM product), which routes transfers through `URLSession` — see [Model Loading → Constructing the downloader](./model-loading#constructing-the-downloader) for background-session configuration. The cross-platform `LeapDownloader` (used directly on JVM, Linux native, Windows native) is a plain async fetcher with no platform background-service hooks.
+</Info>
+
+Beyond the high-level `loadModel` / `loadSimpleModel` / `downloadModel` methods covered in [Model Loading](./model-loading), the Android `LeapModelDownloader` exposes a few lower-level methods for background staging, status polling, and service control.
+
+### Permission setup
+
+The downloader runs as a [foreground service](https://developer.android.com/develop/background-work/services/fgs) and displays notifications. Declare these in your `AndroidManifest.xml`:
+
+```xml
+<uses-permission android:name="android.permission.INTERNET" />
+<uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+<uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+<uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+```
+
+On Android 13+ (API 33) request `POST_NOTIFICATIONS` at runtime:
+
+```kotlin
+private val requestPermissionLauncher = registerForActivityResult(
+    ActivityResultContracts.RequestPermission()
+) { isGranted ->
+    if (isGranted) Log.d(TAG, "Notification permission granted")
+    else Log.w(TAG, "Notification permission denied — downloads will still run, no UI")
+}
+
+if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+    if (ContextCompat.checkSelfPermission(
+            this, android.Manifest.permission.POST_NOTIFICATIONS
+        ) != PackageManager.PERMISSION_GRANTED
+    ) {
+        requestPermissionLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+    }
+}
+```
+
+### Status polling API
+
+```kotlin
+class LeapModelDownloader(
+    private val context: Context,
+    modelFileDir: File? = null,
+    private val extraHTTPRequestHeaders: Map<String, String> = mapOf(),
+    private val notificationConfig: LeapModelDownloaderNotificationConfig = LeapModelDownloaderNotificationConfig(),
+) {
+    fun requestDownloadModel(modelName: String, quantizationType: String, forceDownload: Boolean = false)
+    fun requestStopDownload(modelName: String, quantizationType: String)
+    suspend fun queryStatus(modelName: String, quantizationType: String): ModelDownloadStatus
+    fun observeDownloadProgress(modelName: String, quantizationType: String): Flow<ProgressData>
+    fun getModelResourceFolder(modelName: String, quantizationType: String): File
+    fun requestStopService()
+}
+
+sealed interface ModelDownloadStatus {
+    data object NotOnLocal : ModelDownloadStatus
+    data class DownloadInProgress(
+        val totalSizeInBytes: Long,
+        val downloadedSizeInBytes: Long,
+    ) : ModelDownloadStatus
+    data class Downloaded(val totalSizeInBytes: Long) : ModelDownloadStatus
+}
+```
+
+- **`requestDownloadModel`** — fire-and-forget download via WorkManager. Returns immediately; the download survives app restarts.
+- **`requestStopDownload`** — cancel an in-flight background download.
+- **`queryStatus`** — one-shot status check.
+- **`observeDownloadProgress`** — `Flow<ProgressData>` for UI updates during a background download.
+- **`getModelResourceFolder`** — the directory the SDK will use for this model+quantization on disk.
+- **`requestStopService`** — gracefully stop the foreground service (it auto-stops when no work is queued, but you can force it).
+
+### Removing a downloaded model
+
+Use the cross-platform `LeapDownloader.deleteModelResources(...)` to clean up disk:
+
+```kotlin
+LeapDownloader.deleteModelResources(
+    modelName = "LFM2-1.2B",
+    quantizationType = "Q5_K_M",
+    baseDir = baseDir, // same dir LeapModelDownloader / LeapDownloader was configured with
+)
+```
+
+## Putting it together
+
+A minimal end-to-end snippet exercising load → conversation → tool registration → constrained generation → streaming.
+
+<Tabs>
+  <Tab title="Swift (iOS / macOS)">
+    ```swift
+    let caches = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first!.path
+    let modelsDir = (caches as NSString).appendingPathComponent("leap_models")
+    let downloader = ModelDownloader(config: LeapDownloaderConfig(saveDir: modelsDir))
+
+    let runner = try await downloader.loadModel(
+      modelName: "LFM2.5-1.2B-Instruct",
+      quantizationType: "Q4_K_M"
+    )
+    let conversation = runner.createConversation(systemPrompt: "You are a travel assistant.")
+
+    conversation.registerFunction(weatherFunction)
+
+    var options = GenerationOptions(temperature: 0.3, minP: 0.15, repetitionPenalty: 1.05)
+    try options.setResponseFormat(type: TripRecommendation.self)
+
+    let userMessage = ChatMessage(
+      role: .user,
+      content: [.text("Plan a 3-day trip to Kyoto with food highlights")]
+    )
+
+    for try await response in conversation.generateResponse(
+      message: userMessage,
+      generationOptions: options
+    ) {
+      process(response)
+    }
+    ```
+  </Tab>
+  <Tab title="Kotlin (all platforms)">
+    ```kotlin
+    val downloader = LeapDownloader(LeapDownloaderConfig(saveDir = cacheDir))
+    val runner = downloader.loadModel(
+        modelName = "LFM2.5-1.2B-Instruct",
+        quantizationType = "Q4_K_M"
+    )
+    val conversation = runner.createConversation(systemPrompt = "You are a travel assistant.")
+
+    conversation.registerFunction(weatherFunction)
+
+    val options = GenerationOptions.build {
+        temperature = 0.3f
+        minP = 0.15f
+        repetitionPenalty = 1.05f
+        setResponseFormatType(TripRecommendation::class)
+    }
+
+    val userMessage = ChatMessage.user("Plan a 3-day trip to Kyoto with food highlights")
+
+    conversation.generateResponse(userMessage, options).onEach(::process).collect()
+    ```
+  </Tab>
+</Tabs>
+
+See also: [Quick Start](./quick-start), [Function Calling](./function-calling), [Constrained Generation](./constrained-generation).

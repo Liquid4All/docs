@@ -1,0 +1,238 @@
+---
+title: "Advanced Features"
+description: "GenerationOptions, JSONSchemaGenerator, function-calling type references — same surface everywhere."
+---
+
+This page consolidates the lower-level reference symbols used by [Constrained Generation](./constrained-generation) and [Function Calling](./function-calling). Most apps don't touch these directly — the high-level pages cover the usual flows. Reach here when you need to inspect schemas, build options programmatically, or wire a custom parser.
+
+## `GenerationOptions`
+
+Per-request controls. Leave any field as `null` / `nil` to fall back to the manifest defaults.
+
+<Tabs>
+  <Tab title="Swift (iOS / macOS)">
+    ```swift
+    public struct GenerationOptions {
+      public var temperature: Float?
+      public var topP: Float?
+      public var minP: Float?
+      public var repetitionPenalty: Float?
+      public var jsonSchemaConstraint: String?
+      public var functionCallParser: LeapFunctionCallParserProtocol?
+
+      public init(
+        temperature: Float? = nil,
+        topP: Float? = nil,
+        minP: Float? = nil,
+        repetitionPenalty: Float? = nil,
+        jsonSchemaConstraint: String? = nil,
+        functionCallParser: LeapFunctionCallParserProtocol? = LFMFunctionCallParser()
+      )
+
+      public mutating func setResponseFormat<T: GeneratableType>(type: T.Type) throws
+    }
+    ```
+
+    Builder-style chaining (v0.10.0+):
+
+    ```swift
+    let opts = GenerationOptions()
+        .with(temperature: 0.3)
+        .with(minP: 0.15)
+        .with(repetitionPenalty: 1.05)
+        .with(jsonSchema: schemaString)
+    ```
+  </Tab>
+  <Tab title="Kotlin (all platforms)">
+    ```kotlin
+    data class GenerationOptions(
+        var temperature: Float? = null,
+        var topP: Float? = null,
+        var minP: Float? = null,
+        var repetitionPenalty: Float? = null,
+        var jsonSchemaConstraint: String? = null,
+        var functionCallParser: LeapFunctionCallParser? = LFMFunctionCallParser(),
+    ) {
+        fun setResponseFormatType(kClass: KClass<*>)
+
+        companion object {
+            fun build(buildAction: GenerationOptions.() -> Unit): GenerationOptions
+        }
+    }
+    ```
+  </Tab>
+</Tabs>
+
+- **Sampling fields** — use the model card's recommended values; arbitrary defaults from generic tutorials usually underperform.
+- **`jsonSchemaConstraint`** — JSON Schema string for constrained generation. Use the `setResponseFormat(type:)` / `setResponseFormatType(...)` helpers instead of writing the schema by hand.
+- **`functionCallParser`** — `LFMFunctionCallParser` (default), `HermesFunctionCallParser()`, or `null`/`nil` to disable parsing and surface raw tool-call text in `Chunk`s.
+
+## Constrained generation utilities
+
+<Tabs>
+  <Tab title="Swift (iOS / macOS)">
+    ```swift
+    // Compile-time schema synthesis lives in the @Generatable macro.
+    // For ad-hoc inspection:
+    let schemaString = try JSONSchemaGenerator.getJSONSchema(for: CityFact.self)
+    ```
+
+    `JSONSchemaGenerator.getJSONSchema(for:)` returns the same JSON Schema string the macro emits at compile time. Useful when embedding the schema in the prompt itself, or when you want to debug the schema the model is being constrained against.
+
+    See [Constrained Generation](./constrained-generation) for the full `@Generatable` / `@Guide` macro reference.
+  </Tab>
+  <Tab title="Kotlin (all platforms)">
+    ### `JSONSchemaGenerator`
+
+    ```kotlin
+    package ai.liquid.leap.structuredoutput
+
+    object JSONSchemaGenerator {
+      @Throws(LeapGeneratableSchematizationException::class)
+      fun <T : Any> getJSONSchema(klass: KClass<T>, indentSpaces: Int? = null): String
+    }
+    ```
+
+    - `klass` — must be a data class annotated with `@Generatable`.
+    - `indentSpaces` — non-null formats the output with the given indent (pretty-print).
+
+    Throws `LeapGeneratableSchematizationException` if the class can't be translated.
+
+    ### `GeneratableFactory`
+
+    ```kotlin
+    object GeneratableFactory {
+      @Throws(LeapGeneratableDeserializationException::class)
+      fun <T : Any> createFromJSONObject(jsonObject: JSONObject, klass: KClass<T>): T
+
+      @Throws(LeapGeneratableDeserializationException::class)
+      inline fun <reified T : Any> createFromJSONObject(jsonObject: JSONObject): T
+    }
+    ```
+
+    The reified-`T` overload is a convenience when the target type can be inferred from context.
+
+    ### Annotations
+
+    ```kotlin
+    package ai.liquid.leap.structuredoutput
+
+    @Target(AnnotationTarget.CLASS)
+    annotation class Generatable(val description: String)
+
+    @Target(AnnotationTarget.PROPERTY)
+    annotation class Guide(val description: String)
+    ```
+  </Tab>
+</Tabs>
+
+## Function-calling type reference
+
+The full surface is documented in [Function Calling](./function-calling); the type signatures here are the at-a-glance reference.
+
+<Tabs>
+  <Tab title="Swift (iOS / macOS)">
+    ```swift
+    public struct LeapFunction {
+      public let name: String
+      public let description: String
+      public let parameters: [LeapFunctionParameter]
+    }
+
+    public struct LeapFunctionParameter {
+      public let name: String
+      public let type: LeapFunctionParameterType
+      public let description: String
+      public let optional: Bool
+    }
+
+    public indirect enum LeapFunctionParameterType: Codable, Equatable {
+      case string(StringType)
+      case number(NumberType)
+      case integer(IntegerType)
+      case boolean(BooleanType)
+      case array(ArrayType)
+      case object(ObjectType)
+      case null(NullType)
+    }
+
+    public struct LeapFunctionCall {
+      public let name: String
+      public let arguments: [String: Any?]
+    }
+    ```
+
+    Type wrappers (`StringType`, `NumberType`, etc.) carry per-type metadata like `enumValues` for restricting valid inputs and `description` for prompt-time hints (used when the type is nested inside an array or object).
+  </Tab>
+  <Tab title="Kotlin (all platforms)">
+    ```kotlin
+    data class LeapFunction(
+        val name: String,
+        val description: String,
+        val parameters: List<LeapFunctionParameter>,
+    )
+
+    data class LeapFunctionParameter(
+        val name: String,
+        val type: LeapFunctionParameterType,
+        val description: String,
+        val optional: Boolean = false,
+    )
+
+    sealed class LeapFunctionParameterType(description: String? = null) {
+      val description: String? = description
+
+      class String(val enumValues: List<kotlin.String>? = null, description: kotlin.String? = null) : LeapFunctionParameterType(description)
+      class Number(val enumValues: List<kotlin.Number>? = null, description: kotlin.String? = null) : LeapFunctionParameterType(description)
+      class Integer(val enumValues: List<Int>? = null, description: kotlin.String? = null) : LeapFunctionParameterType(description)
+      class Boolean(description: kotlin.String? = null) : LeapFunctionParameterType(description)
+      class Null : LeapFunctionParameterType()
+      class Array(val itemType: LeapFunctionParameterType, description: kotlin.String? = null) : LeapFunctionParameterType(description)
+      class Object(
+        val properties: Map<kotlin.String, LeapFunctionParameterType>,
+        val required: List<kotlin.String> = listOf(),
+        description: kotlin.String? = null,
+      ) : LeapFunctionParameterType(description)
+    }
+
+    data class LeapFunctionCall(
+        val name: String,
+        val arguments: Map<String, Any?>,
+    )
+    ```
+  </Tab>
+</Tabs>
+
+### Parsers
+
+Two parser implementations ship with the SDK on every platform:
+
+- **`LFMFunctionCallParser`** — default. Handles Liquid Foundation Model (LFM2) Pythonic-style control tokens (`<|tool_call_start|>` / `<|tool_call_end|>`).
+- **`HermesFunctionCallParser`** — Qwen3 and other models using the [Hermes function-calling format](https://github.com/NousResearch/Hermes-Function-Calling).
+
+Implement `LeapFunctionCallParserProtocol` (Swift) / `LeapFunctionCallParser` (Kotlin) to add support for a new format.
+
+## Backend-specific extras
+
+Some runtime utilities are exposed on the concrete `LiquidInferenceEngineRunner` rather than the cross-platform `ModelRunner` protocol/interface. The most common is **prompt token budgeting** — useful when you need to estimate context usage before sending a long request.
+
+<Tabs>
+  <Tab title="Swift (iOS / macOS)">
+    ```swift
+    if let engine = runner as? LiquidInferenceEngineRunner {
+        let count = engine.getPromptTokensSize(messages: history, addBosToken: true)
+        print("Prompt would consume \(count) tokens")
+    }
+    ```
+  </Tab>
+  <Tab title="Kotlin (all platforms)">
+    ```kotlin
+    (runner as? LiquidInferenceEngineRunner)?.let { engine ->
+        val count = engine.getPromptTokensSize(messages = history, addBosToken = true)
+        println("Prompt would consume $count tokens")
+    }
+    ```
+  </Tab>
+</Tabs>
+
+These methods are backend-specific and may be elevated to the `ModelRunner` interface in a future release — defensively check the cast.

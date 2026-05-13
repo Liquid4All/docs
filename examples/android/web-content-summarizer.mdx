@@ -60,8 +60,8 @@ Before running this example, ensure you have the following:
 
   ```kotlin
   dependencies {
-      // LeapSDK for AI processing (0.9.7+)
-      implementation("ai.liquid.leap:leap-sdk:0.9.7")
+      // LeapSDK for AI processing (0.10.0+)
+      implementation("ai.liquid.leap:leap-sdk:0.10.6")
 
       // Networking for web scraping
       implementation("com.squareup.okhttp3:okhttp:4.12.0")
@@ -208,9 +208,18 @@ suspend fun extractWebContent(url: String): String = withContext(Dispatchers.IO)
 Once content is extracted, LeapSDK generates a concise summary:
 
 ```kotlin
-suspend fun summarizeContent(content: String): String = withContext(Dispatchers.Default) {
-    val model = LeapSDK.loadModel("lfm2-700m")
+import ai.liquid.leap.GenerationOptions
+import ai.liquid.leap.ModelRunner
+import ai.liquid.leap.message.ChatMessage
+import ai.liquid.leap.message.MessageResponse
+import ai.liquid.leap.model_downloader.LeapModelDownloader
+import kotlinx.coroutines.flow.onEach
 
+// Cache the runner on a ViewModel or singleton so the model loads once.
+suspend fun summarizeContent(
+    runner: ModelRunner,
+    content: String,
+): String {
     val prompt = """
         Summarize the following article in 3-5 concise sentences.
         Focus on the main points and key takeaways.
@@ -221,8 +230,28 @@ suspend fun summarizeContent(content: String): String = withContext(Dispatchers.
         Summary:
     """.trimIndent()
 
-    model.generate(prompt, maxTokens = 200)
+    val conversation = runner.createConversation()
+    val options = GenerationOptions.build {
+        temperature = 0.3f
+        minP = 0.15f
+        repetitionPenalty = 1.05f
+    }
+
+    val out = StringBuilder()
+    conversation.generateResponse(ChatMessage.user(prompt), options)
+        .onEach { resp ->
+            if (resp is MessageResponse.Chunk) out.append(resp.text)
+        }
+        .collect()
+    return out.toString().trim()
 }
+
+// One-time setup on app start or in your ViewModel's init {}:
+//   val downloader = LeapModelDownloader(applicationContext)
+//   val runner = downloader.loadModel(
+//       modelName = "LFM2-1.2B",
+//       quantizationType = "Q5_K_M",
+//   )
 ```
 
 ### Complete Flow

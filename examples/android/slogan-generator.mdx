@@ -47,7 +47,7 @@ Before running this example, ensure you have the following:
 
   ```kotlin
   dependencies {
-      implementation("ai.liquid.leap:leap-sdk:0.9.7")
+      implementation("ai.liquid.leap:leap-sdk:0.10.6")
 
       // Android UI components
       implementation("androidx.appcompat:appcompat:1.6.1")
@@ -143,17 +143,33 @@ Unlike examples that use Jetpack Compose, SloganApp demonstrates integration wit
 
 **Activity Implementation:**
 ```kotlin
+import ai.liquid.leap.GenerationOptions
+import ai.liquid.leap.ModelRunner
+import ai.liquid.leap.message.ChatMessage
+import ai.liquid.leap.message.MessageResponse
+import ai.liquid.leap.model_downloader.LeapModelDownloader
+import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.launch
+
 class MainActivity : AppCompatActivity() {
-    private lateinit var leapModel: LeapModel
+    private val mainScope = MainScope()
+    private val downloader by lazy { LeapModelDownloader(applicationContext) }
+    private var runner: ModelRunner? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        // Initialize LeapSDK
-        leapModel = LeapSDK.loadModel("lfm2-700m")
+        mainScope.launch {
+            runner = downloader.loadModel(
+                modelName = "LFM2-1.2B",
+                quantizationType = "Q5_K_M",
+            )
+            generateButton.isEnabled = true
+        }
 
-        // Set up UI listeners
         generateButton.setOnClickListener {
             val product = productInput.text.toString()
             generateSlogan(product)
@@ -161,14 +177,28 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun generateSlogan(product: String) {
+        val runner = runner ?: return
         val prompt = """
             Create a compelling, memorable slogan for: $product
             Make it concise, catchy, and professional.
         """.trimIndent()
 
-        // Single-turn generation
-        val slogan = leapModel.generate(prompt)
-        sloganOutput.text = slogan
+        sloganOutput.text = ""
+        mainScope.launch {
+            val conversation = runner.createConversation()
+            val options = GenerationOptions.build {
+                temperature = 0.3f
+                minP = 0.15f
+                repetitionPenalty = 1.05f
+            }
+            conversation.generateResponse(ChatMessage.user(prompt), options)
+                .onEach { resp ->
+                    if (resp is MessageResponse.Chunk) {
+                        sloganOutput.append(resp.text)
+                    }
+                }
+                .collect()
+        }
     }
 }
 ```
@@ -176,22 +206,22 @@ class MainActivity : AppCompatActivity() {
 ### Single-turn Generation Pattern
 
 This example demonstrates **single-turn generation**, where:
-- Each request is independent (no conversation history)
-- The model generates a complete response in one go
-- No need to manage conversation state or context
+- Each request is independent (no conversation history) — a fresh `Conversation` is created per request
+- The streamed `MessageResponse.Chunk` values are appended to the UI as they arrive
+- No need to manage conversation state or context across requests
 - Ideal for focused tasks like slogan generation, summarization, or classification
 
 This pattern is simpler than multi-turn conversations and perfect for specific use cases where context isn't needed.
 
 ### Model Selection
 
-The app uses **LFM2-700M**, a lightweight model that balances:
+The app uses **LFM2-1.2B** (Q5_K_M), a lightweight model that balances:
 - **Speed** - Fast generation for responsive UI
 - **Quality** - Creative and coherent slogans
-- **Size** - Smaller footprint suitable for mobile devices
-- **Efficiency** - Lower memory and battery consumption
+- **Size** - ~700 MB on disk; comfortably fits in mobile RAM
+- **Efficiency** - Lower memory and battery consumption than larger checkpoints
 
-For more creative outputs, you could swap to larger models like LFM2-1.2B by simply changing the model identifier.
+For higher-quality outputs, swap the `modelName` / `quantizationType` arguments to a larger checkpoint from the [LEAP Model Library](https://leap.liquid.ai/models).
 
 ## Results
 

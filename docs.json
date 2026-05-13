@@ -134,35 +134,23 @@
             "icon": "mobile",
             "pages": [
               {
-                "group": "iOS SDK",
-                "icon": "apple",
+                "group": "Leap SDK",
+                "icon": "rocket",
                 "pages": [
-                  "deployment/on-device/ios/ios-quick-start-guide",
-                  "deployment/on-device/ios/ai-agent-usage-guide",
-                  "deployment/on-device/ios/model-loading",
-                  "deployment/on-device/ios/conversation-generation",
-                  "deployment/on-device/ios/messages-content",
-                  "deployment/on-device/ios/advanced-features",
-                  "deployment/on-device/ios/utilities",
-                  "deployment/on-device/ios/cloud-ai-comparison",
-                  "deployment/on-device/ios/constrained-generation",
-                  "deployment/on-device/ios/function-calling"
-                ]
-              },
-              {
-                "group": "Android SDK",
-                "icon": "robot",
-                "pages": [
-                  "deployment/on-device/android/android-quick-start-guide",
-                  "deployment/on-device/android/ai-agent-usage-guide",
-                  "deployment/on-device/android/model-loading",
-                  "deployment/on-device/android/conversation-generation",
-                  "deployment/on-device/android/messages-content",
-                  "deployment/on-device/android/advanced-features",
-                  "deployment/on-device/android/utilities",
-                  "deployment/on-device/android/cloud-ai-comparison",
-                  "deployment/on-device/android/constrained-generation",
-                  "deployment/on-device/android/function-calling"
+                  "deployment/on-device/sdk/quick-start",
+                  "deployment/on-device/sdk/ai-agent-usage-guide",
+                  "deployment/on-device/sdk/model-loading",
+                  "deployment/on-device/sdk/conversation-generation",
+                  "deployment/on-device/sdk/messages-content",
+                  "deployment/on-device/sdk/function-calling",
+                  "deployment/on-device/sdk/constrained-generation",
+                  "deployment/on-device/sdk/advanced-features",
+                  "deployment/on-device/sdk/utilities",
+                  "deployment/on-device/sdk/voice-assistant",
+                  "deployment/on-device/sdk/openai-client",
+                  "deployment/on-device/sdk/cloud-ai-comparison",
+                  "deployment/on-device/sdk/desktop-platforms",
+                  "deployment/on-device/leap-sdk-changelog"
                 ]
               },
               "deployment/on-device/llama-cpp",
@@ -358,15 +346,119 @@
     },
     {
       "source": "/leap/edge-sdk/overview",
-      "destination": "/deployment/on-device/ios/ios-quick-start-guide"
+      "destination": "/deployment/on-device/sdk/quick-start"
     },
     {
       "source": "/leap/edge-sdk/ios/:slug*",
-      "destination": "/deployment/on-device/ios/:slug*"
+      "destination": "/deployment/on-device/sdk/:slug*"
     },
     {
       "source": "/leap/edge-sdk/android/:slug*",
-      "destination": "/deployment/on-device/android/:slug*"
+      "destination": "/deployment/on-device/sdk/:slug*"
+    },
+    {
+      "source": "/deployment/on-device/ios/ios-quick-start-guide",
+      "destination": "/deployment/on-device/sdk/quick-start"
+    },
+    {
+      "source": "/deployment/on-device/android/android-quick-start-guide",
+      "destination": "/deployment/on-device/sdk/quick-start"
+    },
+    {
+      "source": "/deployment/on-device/ios/ai-agent-usage-guide",
+      "destination": "/deployment/on-device/sdk/ai-agent-usage-guide"
+    },
+    {
+      "source": "/deployment/on-device/android/ai-agent-usage-guide",
+      "destination": "/deployment/on-device/sdk/ai-agent-usage-guide"
+    },
+    {
+      "source": "/deployment/on-device/ios/model-loading",
+      "destination": "/deployment/on-device/sdk/model-loading"
+    },
+    {
+      "source": "/deployment/on-device/android/model-loading",
+      "destination": "/deployment/on-device/sdk/model-loading"
+    },
+    {
+      "source": "/deployment/on-device/ios/conversation-generation",
+      "destination": "/deployment/on-device/sdk/conversation-generation"
+    },
+    {
+      "source": "/deployment/on-device/android/conversation-generation",
+      "destination": "/deployment/on-device/sdk/conversation-generation"
+    },
+    {
+      "source": "/deployment/on-device/ios/messages-content",
+      "destination": "/deployment/on-device/sdk/messages-content"
+    },
+    {
+      "source": "/deployment/on-device/android/messages-content",
+      "destination": "/deployment/on-device/sdk/messages-content"
+    },
+    {
+      "source": "/deployment/on-device/ios/function-calling",
+      "destination": "/deployment/on-device/sdk/function-calling"
+    },
+    {
+      "source": "/deployment/on-device/android/function-calling",
+      "destination": "/deployment/on-device/sdk/function-calling"
+    },
+    {
+      "source": "/deployment/on-device/ios/constrained-generation",
+      "destination": "/deployment/on-device/sdk/constrained-generation"
+    },
+    {
+      "source": "/deployment/on-device/android/constrained-generation",
+      "destination": "/deployment/on-device/sdk/constrained-generation"
+    },
+    {
+      "source": "/deployment/on-device/ios/advanced-features",
+      "destination": "/deployment/on-device/sdk/advanced-features"
+    },
+    {
+      "source": "/deployment/on-device/android/advanced-features",
+      "destination": "/deployment/on-device/sdk/advanced-features"
+    },
+    {
+      "source": "/deployment/on-device/ios/utilities",
+      "destination": "/deployment/on-device/sdk/utilities"
+    },
+    {
+      "source": "/deployment/on-device/android/utilities",
+      "destination": "/deployment/on-device/sdk/utilities"
+    },
+    {
+      "source": "/deployment/on-device/ios/voice-assistant",
+      "destination": "/deployment/on-device/sdk/voice-assistant"
+    },
+    {
+      "source": "/deployment/on-device/android/voice-assistant",
+      "destination": "/deployment/on-device/sdk/voice-assistant"
+    },
+    {
+      "source": "/deployment/on-device/ios/openai-client",
+      "destination": "/deployment/on-device/sdk/openai-client"
+    },
+    {
+      "source": "/deployment/on-device/android/openai-client",
+      "destination": "/deployment/on-device/sdk/openai-client"
+    },
+    {
+      "source": "/deployment/on-device/ios/cloud-ai-comparison",
+      "destination": "/deployment/on-device/sdk/cloud-ai-comparison"
+    },
+    {
+      "source": "/deployment/on-device/android/cloud-ai-comparison",
+      "destination": "/deployment/on-device/sdk/cloud-ai-comparison"
+    },
+    {
+      "source": "/deployment/on-device/ios/:slug*",
+      "destination": "/deployment/on-device/sdk/:slug*"
+    },
+    {
+      "source": "/deployment/on-device/android/:slug*",
+      "destination": "/deployment/on-device/sdk/:slug*"
     },
     {
       "source": "/leap/leap-bundle/:slug*",
