@@ -165,3 +165,6 @@ env
 env/*
 
 __pycache__/
+
+devlog/
+worktrees/
