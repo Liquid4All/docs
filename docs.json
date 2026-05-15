@@ -57,102 +57,38 @@
         "tab": "LFM",
         "groups": [
           {
-            "group": "Getting Started",
-            "icon": "rocket",
-            "pages": [
-              "lfm/getting-started/welcome",
-              "lfm/getting-started/connect-ai-tools",
-              "lfm/getting-started/model-license"
-            ]
-          },
-          {
             "group": "Models",
             "icon": "brain",
             "pages": [
-              "lfm/models/complete-library",
-              "lfm/models/text-models",
-              "lfm/models/vision-models",
-              "lfm/models/audio-models",
-              "lfm/models/liquid-nanos"
-            ]
-          },
-          {
-            "group": "Key Concepts",
-            "icon": "lightbulb",
-            "pages": [
+              {
+                "group": "Liquid Foundation Models",
+                "root": "lfm/models/complete-library",
+                "expanded": false,
+                "pages": [
+                  "lfm/models/text-models",
+                  "lfm/models/vision-models",
+                  "lfm/models/audio-models",
+                  "lfm/models/liquid-nanos"
+                ]
+              },
               "lfm/key-concepts/chat-template",
               "lfm/key-concepts/text-generation-and-prompting",
               "lfm/key-concepts/tool-use"
             ]
           },
           {
-            "group": "Help",
-            "icon": "book",
-            "pages": [
-              "lfm/help/faqs",
-              "lfm/help/troubleshooting",
-              "lfm/help/contributing"
-            ]
-          }
-        ]
-      },
-      {
-        "tab": "Customization",
-        "groups": [
-          {
-            "group": "Getting Started",
-            "icon": "rocket",
-            "pages": [
-              "customization/getting-started/welcome",
-              "customization/getting-started/connect-ai-tools"
-            ]
-          },
-          {
-            "group": "Finetuning Frameworks",
+            "group": "Fine-tuning",
             "icon": "sliders",
             "pages": [
-              "customization/finetuning-frameworks/datasets",
-              "customization/finetuning-frameworks/trl",
-              "customization/finetuning-frameworks/unsloth"
-            ]
-          }
-        ]
-      },
-      {
-        "tab": "Deployment",
-        "groups": [
-          {
-            "group": "Getting Started",
-            "icon": "rocket",
-            "pages": [
-              "deployment/getting-started/welcome",
-              "deployment/getting-started/connect-ai-tools"
+              "lfm/fine-tuning/datasets",
+              "lfm/fine-tuning/trl",
+              "lfm/fine-tuning/unsloth"
             ]
           },
           {
-            "group": "On-Device",
+            "group": "Edge Inference",
             "icon": "mobile",
             "pages": [
-              {
-                "group": "Leap SDK",
-                "icon": "rocket",
-                "pages": [
-                  "deployment/on-device/sdk/quick-start",
-                  "deployment/on-device/sdk/ai-agent-usage-guide",
-                  "deployment/on-device/sdk/model-loading",
-                  "deployment/on-device/sdk/conversation-generation",
-                  "deployment/on-device/sdk/messages-content",
-                  "deployment/on-device/sdk/function-calling",
-                  "deployment/on-device/sdk/constrained-generation",
-                  "deployment/on-device/sdk/advanced-features",
-                  "deployment/on-device/sdk/utilities",
-                  "deployment/on-device/sdk/voice-assistant",
-                  "deployment/on-device/sdk/openai-client",
-                  "deployment/on-device/sdk/cloud-ai-comparison",
-                  "deployment/on-device/sdk/desktop-platforms",
-                  "deployment/on-device/leap-sdk-changelog"
-                ]
-              },
               "deployment/on-device/llama-cpp",
               "deployment/on-device/lm-studio",
               "deployment/on-device/mlx",
@@ -170,7 +106,7 @@
             ]
           },
           {
-            "group": "Cloud inference",
+            "group": "Cloud Inference",
             "icon": "cloud",
             "pages": [
               "deployment/gpu-inference/modal",
@@ -179,24 +115,54 @@
             ]
           },
           {
-            "group": "Tools",
-            "icon": "toolbox",
+            "group": "Help",
+            "icon": "book",
             "pages": [
-              {
-                "group": "Model Bundling Services",
-                "icon": "box",
-                "pages": [
-                  "deployment/tools/model-bundling/quick-start",
-                  "deployment/tools/model-bundling/authentication",
-                  "deployment/tools/model-bundling/configuration",
-                  "deployment/tools/model-bundling/bundle-creation",
-                  "deployment/tools/model-bundling/bundle-management",
-                  "deployment/tools/model-bundling/download",
-                  "deployment/tools/model-bundling/reference",
-                  "deployment/tools/model-bundling/data-privacy",
-                  "deployment/tools/model-bundling/changelog"
-                ]
-              }
+              "lfm/help/faqs",
+              "lfm/help/troubleshooting",
+              "lfm/help/contributing",
+              "lfm/help/connect-ai-tools",
+              "lfm/help/model-license"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Leap SDK",
+        "groups": [
+          {
+            "group": "Leap SDK",
+            "icon": "rocket",
+            "pages": [
+              "deployment/on-device/sdk/quick-start",
+              "deployment/on-device/sdk/ai-agent-usage-guide",
+              "deployment/on-device/sdk/model-loading",
+              "deployment/on-device/sdk/conversation-generation",
+              "deployment/on-device/sdk/messages-content",
+              "deployment/on-device/sdk/function-calling",
+              "deployment/on-device/sdk/constrained-generation",
+              "deployment/on-device/sdk/advanced-features",
+              "deployment/on-device/sdk/utilities",
+              "deployment/on-device/sdk/voice-assistant",
+              "deployment/on-device/sdk/openai-client",
+              "deployment/on-device/sdk/cloud-ai-comparison",
+              "deployment/on-device/sdk/desktop-platforms",
+              "deployment/on-device/leap-sdk-changelog"
+            ]
+          },
+          {
+            "group": "Model Bundling Services",
+            "icon": "box",
+            "pages": [
+              "deployment/tools/model-bundling/quick-start",
+              "deployment/tools/model-bundling/authentication",
+              "deployment/tools/model-bundling/configuration",
+              "deployment/tools/model-bundling/bundle-creation",
+              "deployment/tools/model-bundling/bundle-management",
+              "deployment/tools/model-bundling/download",
+              "deployment/tools/model-bundling/reference",
+              "deployment/tools/model-bundling/data-privacy",
+              "deployment/tools/model-bundling/changelog"
             ]
           }
         ]
@@ -266,7 +232,15 @@
     },
     {
       "source": "/docs/getting-started/connect-ai-tools",
-      "destination": "/lfm/getting-started/connect-ai-tools"
+      "destination": "/lfm/help/connect-ai-tools"
+    },
+    {
+      "source": "/lfm/getting-started/connect-ai-tools",
+      "destination": "/lfm/help/connect-ai-tools"
+    },
+    {
+      "source": "/lfm/getting-started/model-license",
+      "destination": "/lfm/help/model-license"
     },
     {
       "source": "/docs/models/:slug*",
@@ -282,23 +256,55 @@
     },
     {
       "source": "/docs/fine-tuning/workbench",
-      "destination": "/customization/getting-started/welcome"
+      "destination": "/lfm/fine-tuning/trl"
     },
     {
       "source": "/customization/tools/workbench",
-      "destination": "/customization/getting-started/welcome"
+      "destination": "/lfm/fine-tuning/trl"
+    },
+    {
+      "source": "/customization/getting-started/welcome",
+      "destination": "/lfm/fine-tuning/trl"
+    },
+    {
+      "source": "/customization/getting-started/connect-ai-tools",
+      "destination": "/lfm/help/connect-ai-tools"
+    },
+    {
+      "source": "/customization/finetuning-frameworks/leap-finetune",
+      "destination": "/lfm/fine-tuning/trl"
+    },
+    {
+      "source": "/customization/finetuning-frameworks/datasets",
+      "destination": "/lfm/fine-tuning/datasets"
+    },
+    {
+      "source": "/customization/finetuning-frameworks/trl",
+      "destination": "/lfm/fine-tuning/trl"
+    },
+    {
+      "source": "/customization/finetuning-frameworks/unsloth",
+      "destination": "/lfm/fine-tuning/unsloth"
     },
     {
       "source": "/docs/fine-tuning/datasets",
-      "destination": "/customization/finetuning-frameworks/datasets"
+      "destination": "/lfm/fine-tuning/datasets"
     },
     {
       "source": "/docs/fine-tuning/trl",
-      "destination": "/customization/finetuning-frameworks/trl"
+      "destination": "/lfm/fine-tuning/trl"
     },
     {
       "source": "/docs/fine-tuning/unsloth",
-      "destination": "/customization/finetuning-frameworks/unsloth"
+      "destination": "/lfm/fine-tuning/unsloth"
+    },
+    {
+      "source": "/deployment/getting-started/welcome",
+      "destination": "/lfm/models/complete-library"
+    },
+    {
+      "source": "/deployment/getting-started/connect-ai-tools",
+      "destination": "/lfm/help/connect-ai-tools"
     },
     {
       "source": "/docs/inference/llama-cpp",
@@ -489,20 +495,12 @@
       "destination": "/deployment/on-device/ollama"
     },
     {
-      "source": "/lfm/fine-tuning/trl",
-      "destination": "/customization/finetuning-frameworks/trl"
-    },
-    {
-      "source": "/lfm/fine-tuning/unsloth",
-      "destination": "/customization/finetuning-frameworks/unsloth"
-    },
-    {
       "source": "/lfm/inference",
-      "destination": "/deployment/getting-started/welcome"
+      "destination": "/lfm/models/complete-library"
     },
     {
       "source": "/lfm/fine-tuning",
-      "destination": "/customization/getting-started/welcome"
+      "destination": "/lfm/fine-tuning/trl"
     }
   ],
   "ai": {

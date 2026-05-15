@@ -9,7 +9,7 @@ description: "TRL (Transformer Reinforcement Learning) is a library for fine-tun
 
 LFM models work out-of-the-box with TRL without requiring any custom integration.
 
-Different training methods require specific dataset formats. See [Finetuning Datasets](/customization/finetuning-frameworks/datasets) for format requirements.
+Different training methods require specific dataset formats. See [Datasets](/lfm/fine-tuning/datasets) for format requirements.
 
 ## Installation[​](#installation "Direct link to Installation")
 
@@ -27,7 +27,7 @@ pip install trl>=0.9.0 transformers>=4.55.0 torch>=2.6 peft accelerate
 
 [![Colab link](/images/lfm/fine-tuning/production/uploads/61b8e2ba285851687028d395/vlOyMEjwHa_b_LXysEu2E.png)](https://colab.research.google.com/github/Liquid4All/docs/blob/main/notebooks/💧_LFM2_5_SFT_with_TRL.ipynb)
 
-The `SFTTrainer` makes it easy to fine-tune LFM models on instruction-following or conversational datasets. It handles chat templates, packing, and dataset formatting automatically. SFT training requires [Instruction datasets](/customization/finetuning-frameworks/datasets#instruction-datasets-sft).
+The `SFTTrainer` makes it easy to fine-tune LFM models on instruction-following or conversational datasets. It handles chat templates, packing, and dataset formatting automatically. SFT training requires [Instruction datasets](/lfm/fine-tuning/datasets#instruction-datasets-sft).
 
 ### LoRA Fine-Tuning (Recommended)[​](#lora-fine-tuning-recommended "Direct link to LoRA Fine-Tuning (Recommended)")
 
@@ -132,7 +132,7 @@ trainer.train()
 
 [![Colab link](/images/lfm/fine-tuning/production/uploads/61b8e2ba285851687028d395/vlOyMEjwHa_b_LXysEu2E.png)](https://colab.research.google.com/github/Liquid4All/docs/blob/main/notebooks/💧_LFM2_5_VL_SFT_with_TRL.ipynb)
 
-The `SFTTrainer` also supports fine-tuning Vision Language Models like `LFM2.5-VL-1.6B` on image-text datasets. VLM fine-tuning requires [Vision datasets](/customization/finetuning-frameworks/datasets#vision-datasets-vlm-sft) and a few key differences from text-only SFT:
+The `SFTTrainer` also supports fine-tuning Vision Language Models like `LFM2.5-VL-1.6B` on image-text datasets. VLM fine-tuning requires [Vision datasets](/lfm/fine-tuning/datasets#vision-datasets-vlm-sft) and a few key differences from text-only SFT:
 
 * Uses `AutoModelForImageTextToText` instead of `AutoModelForCausalLM`
 * Uses `AutoProcessor` instead of just a tokenizer
@@ -290,7 +290,7 @@ trainer.train()
 
 [![Colab link](/images/lfm/fine-tuning/production/uploads/61b8e2ba285851687028d395/vlOyMEjwHa_b_LXysEu2E.png)](https://colab.research.google.com/github/Liquid4All/docs/blob/main/notebooks/💧_LFM2_DPO_with_TRL.ipynb)
 
-The `DPOTrainer` implements Direct Preference Optimization, a method to align models with human preferences without requiring a separate reward model. DPO training requires [Preference datasets](/customization/finetuning-frameworks/datasets#preference-datasets-dpo) with chosen and rejected response pairs.
+The `DPOTrainer` implements Direct Preference Optimization, a method to align models with human preferences without requiring a separate reward model. DPO training requires [Preference datasets](/lfm/fine-tuning/datasets#preference-datasets-dpo) with chosen and rejected response pairs.
 
 ### DPO with LoRA (Recommended)[​](#dpo-with-lora-recommended "Direct link to DPO with LoRA (Recommended)")
 
