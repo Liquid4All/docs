@@ -9,14 +9,14 @@ This page covers error types, serialization helpers, and a few platform-specific
 
 <Tabs>
   <Tab title="Swift (iOS / macOS)">
-    Errors surface as `LeapError` values. The most common cases:
+    Errors are subclasses of `LeapException` (`LeapError` is a type alias for `LeapException` provided for backward compatibility). The most common subclasses:
 
-    - **`LeapError.modelLoadingFailure`** — problems reading or validating the model bundle.
-    - **`LeapError.generationFailure`** — unexpected native inference errors.
-    - **`LeapError.promptExceedContextLengthFailure`** — prompt length exceeded the configured context size.
-    - **`LeapError.serializationFailure`** — JSON encoding/decoding problems on chat history or function calls.
+    - **`LeapModelLoadingException`** — problems reading or validating the model bundle.
+    - **`LeapGenerationException`** — unexpected native inference errors.
+    - **`LeapGenerationPromptExceedContextLengthException`** — prompt length exceeded the configured context size.
+    - **`LeapSerializationException`** — JSON encoding/decoding problems on chat history or function calls.
 
-    Handle thrown errors with `do` / `catch` on async streams, or use `onErrorCallback` on the lower-level callback APIs.
+    Handle thrown errors with `do` / `catch` on the async streams returned by `Conversation.generateResponse(...)`, or downcast with `if let err = error as? LeapModelLoadingException { ... }` to inspect a specific subclass.
   </Tab>
   <Tab title="Kotlin (all platforms)">
     All errors are subclasses of `LeapException`:
@@ -38,19 +38,21 @@ This page covers error types, serialization helpers, and a few platform-specific
 
 <Tabs>
   <Tab title="Swift (iOS / macOS)">
-    Use the JSON initializers directly on `ChatMessage` and `ChatMessageContent`:
+    Use `Conversation.exportToJSON()` to get an OpenAI-shaped JSON string, then route restores back through Kotlin's serializer (there is no `ChatMessage(from: [String: Any])` initializer):
 
     ```swift
     // Serialize the conversation history (compact JSON string, OpenAI chat-completions shape)
     let jsonString: String = conversation.exportToJSON()
     let data: Data = Data(jsonString.utf8)
 
-    // Round-trip a single message — `ChatMessage(from:)` accepts an OpenAI-shaped dictionary
-    let json: [String: Any] = ["role": "user", "content": "Hello"]
-    let message = try ChatMessage(from: json)
+    // Restore — `LeapJson.decodeFromString(...)` is the Kotlin-side decoder.
+    // For Swift-only round trips, persist the `jsonString` and pass it back to
+    // `modelRunner.createConversationFromHistory(history:)` after rebuilding the
+    // `[ChatMessage]` list via your shared Kotlin code, or use a server-side
+    // round-trip that talks to your sync backend.
     ```
 
-    Persist `data` to disk, UserDefaults, or your sync backend. On restore, decode the JSON back to `[[String: Any]]`, map each entry through `ChatMessage(from:)`, and rebuild via `modelRunner.createConversationFromHistory(history:)`.
+    Persist `data` to disk, UserDefaults, or your sync backend. On restore, decode the JSON via Kotlin's `LeapJson` (re-exported through SKIE) into a `[ChatMessage]` and rebuild via `modelRunner.createConversationFromHistory(history:)`. There is no Swift-native dictionary-based `ChatMessage` initializer — the Kotlin serializer is the source of truth on both platforms.
   </Tab>
   <Tab title="Kotlin (all platforms)">
     The SDK uses [kotlinx.serialization](https://github.com/Kotlin/kotlinx.serialization) — `@Serializable` is already declared on the relevant types in the core SDK.
@@ -172,7 +174,7 @@ class LeapModelDownloader(
 }
 ```
 
-Refer to the nested status type as `LeapModelDownloader.ModelDownloadStatus.NotOnLocal` / `.DownloadInProgress` / `.Downloaded` — there is no top-level `ai.liquid.leap.downloader.ModelDownloadStatus`.
+Refer to the nested status type as `LeapModelDownloader.ModelDownloadStatus.NotOnLocal` / `.DownloadInProgress` / `.Downloaded` on Android — the Android downloader does not expose a top-level `ai.liquid.leap.downloader.ModelDownloadStatus`. (Apple ships a top-level `ai.liquid.leap.downloader.ModelDownloadStatus` `sealed interface` with a different payload — `DownloadInProgress(progress: Double)` and a `data object Downloaded` with no size — so don't share status-decoding code unmodified across platforms.)
 
 - **`requestDownloadModel`** — `suspend` fire-and-forget prefetch. It enqueues a unique WorkManager download worker; the download itself survives app restarts, and the call returns after staging the work request.
 - **`requestStopDownload`** — `suspend`; cancels an in-flight background download.
@@ -216,14 +218,17 @@ A minimal end-to-end snippet exercising load → conversation → tool registrat
     )
     let conversation = runner.createConversation(systemPrompt: "You are a travel assistant.")
 
-    conversation.registerFunction(weatherFunction)
+    conversation.registerFunction(function: weatherFunction)
 
-    var options = GenerationOptions(temperature: 0.3, minP: 0.15, repetitionPenalty: 1.05)
-    try options.setResponseFormat(type: TripRecommendation.self)
+    let options = GenerationOptions()
+      .with(temperature: 0.3)
+      .with(minP: 0.15)
+      .with(repetitionPenalty: 1.05)
+      .with(jsonSchema: TripRecommendation.jsonSchema())
 
     let userMessage = ChatMessage(
       role: .user,
-      content: [.text("Plan a 3-day trip to Kyoto with food highlights")]
+      textContent: "Plan a 3-day trip to Kyoto with food highlights"
     )
 
     for try await response in conversation.generateResponse(
@@ -236,7 +241,11 @@ A minimal end-to-end snippet exercising load → conversation → tool registrat
   </Tab>
   <Tab title="Kotlin (all platforms)">
     ```kotlin
-    val downloader = LeapDownloader(LeapDownloaderConfig(saveDir = cacheDir))
+    // `LeapDownloaderConfig.saveDir` is a `String` (filesystem path) — on Android,
+    // pass `cacheDir.absolutePath`, not the `File` itself. On Android, prefer
+    // `LeapModelDownloader(application)` (the cross-platform `LeapDownloader` works
+    // too, but doesn't integrate with WorkManager).
+    val downloader = LeapDownloader(LeapDownloaderConfig(saveDir = cacheDir.absolutePath))
     val runner = downloader.loadModel(
         modelName = "LFM2.5-1.2B-Instruct",
         quantizationType = "Q4_K_M"

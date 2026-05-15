@@ -12,38 +12,25 @@ Per-request controls. Leave any field as `null` / `nil` to fall back to the mani
 <Tabs>
   <Tab title="Swift (iOS / macOS)">
     ```swift
-    public struct GenerationOptions {
+    `GenerationOptions` is a Kotlin `data class` bridged into Swift. Kotlin parameter defaults don't survive the ObjC bridge, so the canonical Swift idiom is the parameterless init plus chained `.with(...)` builders:
+
+    ```swift
+    public class GenerationOptions {
       public var temperature: Float?
       public var topP: Float?
       public var minP: Float?
-      public var topK: Int32?
       public var repetitionPenalty: Float?
+      public var topK: Int32?
       public var rngSeed: Int64?
-      public var maxTokens: Int32?
       public var jsonSchemaConstraint: String?
-      public var injectSchemaIntoPrompt: Bool
-      public var functionCallParser: LeapFunctionCallParserProtocol?
-      public var inlineThinkingTags: Bool
-      public var enableThinking: Bool
+      public var functionCallParser: LeapFunctionCallParser?
+      public var injectSchemaIntoPrompt: Bool        // default true
+      public var maxTokens: Int32?
+      public var inlineThinkingTags: Bool            // default false
+      public var enableThinking: Bool                // default false
       public var extras: String?
 
-      public init(
-        temperature: Float? = nil,
-        topP: Float? = nil,
-        minP: Float? = nil,
-        topK: Int32? = nil,
-        repetitionPenalty: Float? = nil,
-        rngSeed: Int64? = nil,
-        maxTokens: Int32? = nil,
-        jsonSchemaConstraint: String? = nil,
-        functionCallParser: LeapFunctionCallParserProtocol? = LFMFunctionCallParser(),
-        injectSchemaIntoPrompt: Bool = true,
-        inlineThinkingTags: Bool = false,
-        enableThinking: Bool = false,
-        extras: String? = nil
-      )
-
-      public mutating func setResponseFormat<T: GeneratableType>(type: T.Type) throws
+      public convenience init()
     }
     ```
 
@@ -54,8 +41,10 @@ Per-request controls. Leave any field as `null` / `nil` to fall back to the mani
         .with(temperature: 0.3)
         .with(minP: 0.15)
         .with(repetitionPenalty: 1.05)
-        .with(jsonSchema: schemaString)
+        .with(jsonSchema: CityFact.jsonSchema())   // or any other schema string
     ```
+
+    For the legacy compat-class path (`Leap.load(...)` flows), `GenerationOptionsCompat` additionally exposes `setResponseFormat(jsonSchema: String)`.
   </Tab>
   <Tab title="Kotlin (all platforms)">
     ```kotlin
@@ -87,7 +76,7 @@ Per-request controls. Leave any field as `null` / `nil` to fall back to the mani
 - **Sampling fields** — `temperature`, `topP`, `minP`, `topK`, and `repetitionPenalty`. Use the model bundle's recommended values; arbitrary defaults from generic tutorials usually underperform.
 - **`rngSeed`** — deterministic sampling seed for tests and reproducible runs.
 - **`maxTokens`** — maximum completion tokens to generate. Prompt tokens do not count toward this cap.
-- **`jsonSchemaConstraint`** — JSON Schema string for constrained generation. Use the `setResponseFormat(type:)` / `setResponseFormatType(...)` helpers instead of writing the schema by hand.
+- **`jsonSchemaConstraint`** — JSON Schema string for constrained generation. Use the higher-level helpers — Swift `options.with(jsonSchema: T.jsonSchema())` / Kotlin `setResponseFormatType<T>()` — instead of writing the schema by hand.
 - **`injectSchemaIntoPrompt`** — when `true` (default), the schema is also appended to the system message for semantic guidance. Set `false` to use only the structural constraint.
 - **`functionCallParser`** — `LFMFunctionCallParser` (default), `HermesFunctionCallParser()`, or `null`/`nil` to disable parsing and surface raw tool-call text in `Chunk`s.
 - **`enableThinking` / `inlineThinkingTags`** — reasoning-mode controls for models that emit `<think>` content.
@@ -99,11 +88,13 @@ Per-request controls. Leave any field as `null` / `nil` to fall back to the mani
   <Tab title="Swift (iOS / macOS)">
     ```swift
     // Compile-time schema synthesis lives in the @Generatable macro.
-    // For ad-hoc inspection:
-    let schemaString = try JSONSchemaGenerator.getJSONSchema(for: CityFact.self)
+    // For ad-hoc inspection (ships in the LeapSDKMacros SPM product):
+    import LeapSDKMacros
+
+    let schemaString = JSONSchemaGenerator.getJSONSchema(for: CityFact.self)
     ```
 
-    `JSONSchemaGenerator.getJSONSchema(for:)` returns the same JSON Schema string the macro emits at compile time. Useful when embedding the schema in the prompt itself, or when you want to debug the schema the model is being constrained against.
+    `JSONSchemaGenerator.getJSONSchema(for:)` is non-throwing — it forwards to the `jsonSchema()` method that the `@Generatable` macro adds to the type, so the schema is produced at compile time. Useful when embedding the schema in the prompt itself, or when you want to debug the schema the model is being constrained against.
 
     See [Constrained Generation](./constrained-generation) for the full `@Generatable` / `@Guide` macro reference.
   </Tab>
@@ -244,7 +235,7 @@ Two parser implementations ship with the SDK on every platform:
 - **`LFMFunctionCallParser`** — default. Handles Liquid Foundation Model (LFM2) Pythonic-style control tokens (`<|tool_call_start|>` / `<|tool_call_end|>`).
 - **`HermesFunctionCallParser`** — Qwen3 and other models using the [Hermes function-calling format](https://github.com/NousResearch/Hermes-Function-Calling).
 
-Implement `LeapFunctionCallParserProtocol` (Swift) / `LeapFunctionCallParser` (Kotlin) to add support for a new format.
+Subclass `LeapFunctionCallParser` (Kotlin `abstract class`, bridged to Swift as a class with the same name) to add support for a new format.
 
 ## Prompt token budgeting
 
