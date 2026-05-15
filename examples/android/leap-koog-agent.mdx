@@ -176,7 +176,7 @@ Load the LEAP model first, then bridge it to a Koog agent. The Koog APIs below a
 ```kotlin
 import ai.liquid.leap.ModelRunner
 import ai.liquid.leap.manifest.ModelSource
-import ai.liquid.leap.model_downloader.LeapModelDownloader
+import ai.liquid.leap.downloader.LeapModelDownloader
 
 class AgentViewModel(application: Application) : AndroidViewModel(application) {
     private val downloader = LeapModelDownloader(application)

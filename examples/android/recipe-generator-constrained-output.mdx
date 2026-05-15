@@ -243,7 +243,7 @@ import ai.liquid.leap.GenerationOptions
 import ai.liquid.leap.ModelRunner
 import ai.liquid.leap.message.ChatMessage
 import ai.liquid.leap.message.MessageResponse
-import ai.liquid.leap.model_downloader.LeapModelDownloader
+import ai.liquid.leap.downloader.LeapModelDownloader
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
@@ -283,7 +283,7 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
 
 ### Generate Structured Recipes
 
-`GenerationOptions.build { setResponseFormatType(Recipe::class) }` tells the engine to constrain the stream to the schema derived from `@Generatable`. The streamed `Chunk` values arrive as JSON; concatenate them and decode at the end with `kotlinx-serialization`.
+`GenerationOptions.build { setResponseFormatType<Recipe>() }` tells the engine to constrain the stream to the schema derived from `@Generatable`. The streamed `Chunk` values arrive as JSON; concatenate them and decode at the end with `kotlinx-serialization`.
 
 ```kotlin
 fun generateRecipe(userInput: String) {
@@ -304,12 +304,12 @@ fun generateRecipe(userInput: String) {
             temperature = 0.3f
             minP = 0.15f
             repetitionPenalty = 1.05f
-            setResponseFormatType(Recipe::class)
+            setResponseFormatType<Recipe>()
         }
 
         try {
             val buffer = StringBuilder()
-            conversation.generateResponse(ChatMessage.user(prompt), options)
+            conversation.generateResponse(ChatMessage(ChatMessage.Role.USER, prompt), options)
                 .onEach { resp ->
                     if (resp is MessageResponse.Chunk) buffer.append(resp.text)
                 }

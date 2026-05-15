@@ -212,7 +212,7 @@ import ai.liquid.leap.GenerationOptions
 import ai.liquid.leap.ModelRunner
 import ai.liquid.leap.message.ChatMessage
 import ai.liquid.leap.message.MessageResponse
-import ai.liquid.leap.model_downloader.LeapModelDownloader
+import ai.liquid.leap.downloader.LeapModelDownloader
 import kotlinx.coroutines.flow.onEach
 
 // Cache the runner on a ViewModel or singleton so the model loads once.
@@ -238,7 +238,7 @@ suspend fun summarizeContent(
     }
 
     val out = StringBuilder()
-    conversation.generateResponse(ChatMessage.user(prompt), options)
+    conversation.generateResponse(ChatMessage(ChatMessage.Role.USER, prompt), options)
         .onEach { resp ->
             if (resp is MessageResponse.Chunk) out.append(resp.text)
         }
