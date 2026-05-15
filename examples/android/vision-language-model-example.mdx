@@ -196,6 +196,7 @@ import ai.liquid.leap.GenerationOptions
 import ai.liquid.leap.ModelRunner
 import ai.liquid.leap.message.ChatMessage
 import ai.liquid.leap.message.ChatMessageContent
+import ai.liquid.leap.message.ImageUtils
 import ai.liquid.leap.message.MessageResponse
 import ai.liquid.leap.downloader.LeapModelDownloader
 import android.app.Application
@@ -205,7 +206,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
-import java.io.ByteArrayOutputStream
 
 class VLMViewModel(application: Application) : AndroidViewModel(application) {
     private val downloader = LeapModelDownloader(application)
@@ -225,16 +225,16 @@ class VLMViewModel(application: Application) : AndroidViewModel(application) {
         val runner = runner ?: return
         viewModelScope.launch(Dispatchers.Default) {
             val bitmap = loadBitmapFromUri(imageUri)
-            val pngBytes = ByteArrayOutputStream().use { out ->
-                bitmap.compress(Bitmap.CompressFormat.PNG, 100, out)
-                out.toByteArray()
-            }
+            // ChatMessageContent.Image expects JPEG bytes — the secondary ctor wraps them in a
+            // `data:image/jpeg;base64,...` URL. Use the SDK's ImageUtils helper rather than
+            // re-encoding by hand.
+            val imageContent = ImageUtils.fromBitmap(bitmap, compressionQuality = 85)
 
             val conversation = runner.createConversation()
             val message = ChatMessage(
                 role = ChatMessage.Role.USER,
                 content = listOf(
-                    ChatMessageContent.Image(pngBytes),
+                    imageContent,
                     ChatMessageContent.Text("Describe this image in detail."),
                 ),
             )
