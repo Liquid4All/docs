@@ -71,7 +71,7 @@ Hold a strong reference for as long as you need to perform generations, then cal
       public func registerFunctions(_ functions: [LeapFunction])
       public func appendToHistory(_ message: ChatMessage)
       public func removeLastMessage()
-      public func exportToJSON() throws -> [[String: Any]]
+      public func exportToJSON() -> String
 
       public func generateResponse(
         userTextMessage: String,
@@ -108,8 +108,6 @@ Hold a strong reference for as long as you need to perform generations, then cal
           message: ChatMessage,
           generationOptions: GenerationOptions? = null
       ): Flow<MessageResponse>
-
-      fun exportToJSONArray(): JSONArray
     }
     ```
   </Tab>
@@ -216,18 +214,23 @@ The async stream is the recommended way to drive generation — both platforms e
 
 ### Export chat history
 
-Both platforms expose a serializer compatible with OpenAI's chat-completions message format. Useful for persistence, analytics, or replaying conversations through a cloud fallback.
+Persisting, replaying, or shipping the conversation to a cloud fallback all boil down to serializing `conversation.history`. Swift exposes `exportToJSON()` (returns a JSON string in OpenAI chat-completions shape); Kotlin uses `kotlinx.serialization` (`ChatMessage` and `ChatMessageContent` are `@Serializable`).
 
 <Tabs>
   <Tab title="Swift (iOS / macOS)">
     ```swift
-    let payload: [[String: Any]] = try conversation.exportToJSON()
+    let jsonString: String = conversation.exportToJSON()
     ```
   </Tab>
   <Tab title="Kotlin (all platforms)">
     ```kotlin
-    val payload: JSONArray = conversation.exportToJSONArray()
+    import kotlinx.serialization.json.Json
+    import kotlinx.serialization.encodeToString
+
+    val jsonString = Json.encodeToString(conversation.history)
     ```
+
+    Add `org.jetbrains.kotlinx:kotlinx-serialization-json` to your dependencies — see [Utilities → Serialization](./utilities#serialization) for the round-trip pattern.
   </Tab>
 </Tabs>
 
@@ -336,7 +339,6 @@ Tune sampling, structured output, tool-call parsing, and reasoning behavior per 
         var extras: String? = null,
     ) {
       inline fun <reified T : Any> setResponseFormatType()
-      fun setResponseFormatType(kClass: KClass<*>)
 
       companion object {
         fun build(buildAction: GenerationOptions.() -> Unit): GenerationOptions
@@ -350,7 +352,7 @@ Tune sampling, structured output, tool-call parsing, and reasoning behavior per 
         minP = 0.15f
         repetitionPenalty = 1.05f
         maxTokens = 512
-        setResponseFormatType(CityFact::class)
+        setResponseFormatType<CityFact>()
     }
     ```
   </Tab>
