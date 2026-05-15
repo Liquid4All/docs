@@ -51,7 +51,7 @@ The `leap-ui` module (introduced in v0.10.0) ships a ready-to-use voice assistan
     }
     ```
 
-    `leap-ui` brings in Compose runtime, foundation, and material3 transitively. If your project doesn't already use Compose, add the standard Compose dependencies too.
+    `leap-ui` depends on Compose runtime, foundation, and material3 internally (with `implementation` scope), so the runtime artifacts are pulled in but their APIs are not re-exported to consumer source. If your project uses Compose directly, declare the same Compose dependencies in your own module.
   </Tab>
 </Tabs>
 
@@ -103,9 +103,11 @@ The `VoiceConversation` adapter looks similar on every platform — both impleme
                     modelName: "LFM2.5-Audio-1.5B",
                     quantizationType: "Q4_0",
                     downloadProgress: { fraction, _ in
+                        // `fraction` is `Double` from the Kotlin (Double, Long) -> Unit
+                        // closure; `setModelProgress.fraction` is `Float`, so cast.
                         Task { @MainActor in
                             self.store.setModelProgress(
-                                fraction: fraction,
+                                fraction: Float(fraction),
                                 message: "Downloading (\(Int(fraction * 100))%)"
                             )
                         }
@@ -258,6 +260,7 @@ The `VoiceConversation` adapter looks similar on every platform — both impleme
   <Tab title="Kotlin (Android / Compose Desktop)">
     ```kotlin
     import ai.liquid.leap.ui.VoiceAssistantWidget
+    import android.os.Bundle
     import androidx.activity.ComponentActivity
     import androidx.activity.compose.setContent
     import androidx.compose.foundation.background
@@ -299,8 +302,11 @@ The store calls into a `VoiceConversation` you provide. A minimal adapter that w
 
 <Tabs>
   <Tab title="Swift (iOS / macOS)">
+    The `VoiceConversation` protocol comes from `LeapUI`, so its `audioSamples` and `onAudioChunk` parameters use `LeapUi.KotlinFloatArray` / `LeapUi.KotlinInt` — not native Swift `[Float]` / `Int32`. The on-device runner lives in `LeapSDK`, which has its own `LeapSDK.KotlinFloatArray`. Bridge between the two via the `floatArrayToNSData` / `nsDataToFloatArray` helpers exposed in both frameworks (see `leap-ui-demo/shared/AppleVoiceConversation.swift` for the canonical pattern).
+
     ```swift
     import LeapModelDownloader
+    import LeapSDK
     import LeapUi
 
     final class AppleVoiceConversation: VoiceConversation {
@@ -310,21 +316,34 @@ The store calls into a `VoiceConversation` you provide. A minimal adapter that w
             self.conversation = conversation
         }
 
+        // Note: this method is `__generateResponse` in the SKIE-generated overlay
+        // because `LeapUI` and `LeapSDK` are separate frameworks with separate Kotlin
+        // runtimes. The runtime-types-as-parameters force the underscore prefix.
         func generateResponse(
-            audioSamples: [Float],
+            audioSamples: LeapUi.KotlinFloatArray,
             sampleRate: Int32,
-            onAudioChunk: @escaping (_ samples: [Float], _ sampleRate: Int32) -> Void
-        ) async throws -> GenerationStats? {
+            onAudioChunk: @escaping (LeapUi.KotlinFloatArray, LeapUi.KotlinInt) -> Void
+        ) async throws -> Leap_sdkGenerationStats? {
+            // LeapUi.KotlinFloatArray -> Swift [Float] (for use inside this method body):
+            let nsData = LeapUi.ArrayConversionsKt.floatArrayToNSData(array: audioSamples)
+            let samples: [Float] = nsData.withUnsafeBytes { Array($0.bindMemory(to: Float.self)) }
+
+            let audioContent = ChatMessageContent.fromFloatSamples(samples, sampleRate: Int(sampleRate))
             let userMessage = ChatMessage(
                 role: .user,
-                content: [ChatMessageContent.fromFloatSamples(audioSamples, sampleRate: Int(sampleRate))]
+                content: [audioContent as ChatMessageContent],
+                reasoningContent: nil,
+                functionCalls: nil
             )
 
-            var stats: GenerationStats?
+            var stats: Leap_sdkGenerationStats?
             for try await response in conversation.generateResponse(message: userMessage) {
                 switch onEnum(of: response) {
                 case .audioSample(let chunk):
-                    onAudioChunk(chunk.samples, Int32(chunk.sampleRate))
+                    // Bridge LeapSDK.KotlinFloatArray -> LeapUi.KotlinFloatArray via NSData.
+                    let data = LeapSDK.ArrayConversionsKt.floatArrayToNSData(array: chunk.samples)
+                    let uiSamples = LeapUi.ArrayConversionsKt.nsDataToFloatArray(data: data)
+                    onAudioChunk(uiSamples, LeapUi.KotlinInt(value: chunk.sampleRate))
                 case .complete(let c):
                     stats = c.stats
                 case .chunk, .reasoningChunk, .functionCalls:
@@ -335,7 +354,9 @@ The store calls into a `VoiceConversation` you provide. A minimal adapter that w
         }
 
         func reset() -> VoiceConversation {
-            AppleVoiceConversation(conversation: conversation.modelRunner.createConversation())
+            AppleVoiceConversation(
+                conversation: conversation.modelRunner.createConversation(systemPrompt: nil)
+            )
         }
     }
     ```
