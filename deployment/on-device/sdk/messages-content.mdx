@@ -39,20 +39,19 @@ description: "ChatMessage, ChatMessageContent, audio format requirements — sam
         val reasoningContent: String? = null,
         val functionCalls: List<LeapFunctionCall>? = null,
     ) {
+        // Convenience secondary ctor for the common "plain text user/assistant message" case.
+        constructor(role: Role, text: String)
+
         enum class Role(val type: String) {
             SYSTEM("system"),
             USER("user"),
             ASSISTANT("assistant"),
             TOOL("tool"),
         }
-
-        fun toJSONObject(): JSONObject
-
-        companion object {
-            fun fromJSONObject(obj: JSONObject): ChatMessage
-        }
     }
     ```
+
+    `ChatMessage` is `@Serializable` — serialize through `kotlinx.serialization.json.Json` rather than ad-hoc `JSONObject` helpers. See [Utilities → Serialization](./utilities#serialization).
   </Tab>
 </Tabs>
 
@@ -72,7 +71,7 @@ Both platforms expose round-trip JSON helpers compatible with OpenAI's `ChatComp
     `ChatMessage(from: [String: Any])` constructs a message from an OpenAI-style payload. Throws `LeapSerializationError` on unrecognized shapes.
   </Tab>
   <Tab title="Kotlin (all platforms)">
-    `ChatMessage.toJSONObject()` / `ChatMessage.fromJSONObject(obj)`. Throws `LeapSerializationException` on unrecognized shapes. See [Utilities → Serialization Support](./utilities#serialization-support).
+    `ChatMessage` is `@Serializable`. Encode with `Json.encodeToString(message)` and decode with `Json.decodeFromString<ChatMessage>(jsonString)` — see [Utilities → Serialization](./utilities#serialization).
   </Tab>
 </Tabs>
 
@@ -101,20 +100,34 @@ Both platforms expose round-trip JSON helpers compatible with OpenAI's `ChatComp
   </Tab>
   <Tab title="Kotlin (all platforms)">
     ```kotlin
-    sealed interface ChatMessageContent {
-        fun clone(): ChatMessageContent
-        fun toJSONObject(): JSONObject
+    sealed class ChatMessageContent {
+        data class Text(val text: String) : ChatMessageContent()
 
-        data class Text(val text: String) : ChatMessageContent
-        data class Image(val jpegByteArray: ByteArray) : ChatMessageContent
-        data class Audio(val wavByteArray: ByteArray) : ChatMessageContent
-        data class AudioPcmF32(val samples: FloatArray, val sampleRate: Int) : ChatMessageContent
+        data class Image(val imageUrl: ImageUrl) : ChatMessageContent() {
+            // Convenience secondary ctor — wraps the bytes in an ImageUrl.
+            constructor(jpegByteArray: ByteArray)
+            val jpegByteArray: ByteArray   // derived property
+        }
+
+        data class Audio(val inputAudio: InputAudio) : ChatMessageContent() {
+            // Convenience secondary ctor — wraps the bytes in an InputAudio.
+            constructor(data: ByteArray)
+            val data: ByteArray            // raw bytes (no `wavByteArray` getter)
+        }
+
+        data class AudioPcmF32(val samples: FloatArray, val sampleRate: Int) : ChatMessageContent()
     }
-
-    fun ChatMessageContent.fromJSONObject(obj: JSONObject): ChatMessageContent
     ```
 
-    Android-specific helper: `ChatMessageContent.Image.fromBitmap(bitmap, compressionQuality = 85)` re-encodes an Android `Bitmap` to JPEG.
+    Serialize via `kotlinx.serialization` (every variant is `@Serializable`).
+
+    Android-specific helper: `ImageUtils.fromBitmap(bitmap, compressionQuality = 85)` (in `ai.liquid.leap.message`) re-encodes an Android `Bitmap` to JPEG and returns a `ChatMessageContent.Image`. It's a `suspend` function — call it from a coroutine.
+
+    ```kotlin
+    import ai.liquid.leap.message.ImageUtils
+
+    val image: ChatMessageContent.Image = ImageUtils.fromBitmap(bitmap, compressionQuality = 85)
+    ```
   </Tab>
 </Tabs>
 
