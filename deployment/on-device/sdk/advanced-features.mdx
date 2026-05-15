@@ -89,11 +89,14 @@ Per-request controls. Leave any field as `null` / `nil` to fall back to the mani
 
     object JSONSchemaGenerator {
       @Throws(LeapGeneratableSchematizationException::class)
-      fun <T : Any> getJSONSchema(klass: KClass<T>, indentSpaces: Int? = null): String
+      fun <T : Any> getJSONSchema(serializer: KSerializer<T>, indentSpaces: Int? = null): String
+
+      @Throws(LeapGeneratableSchematizationException::class)
+      inline fun <reified T : Any> getJSONSchema(indentSpaces: Int? = null): String
     }
     ```
 
-    - `klass` — must be a data class annotated with `@Generatable`.
+    - `serializer` — the `KSerializer<T>` for a data class annotated with `@Generatable` and `@Serializable`. The reified-`T` overload calls `serializer<T>()` for you.
     - `indentSpaces` — non-null formats the output with the given indent (pretty-print).
 
     Throws `LeapGeneratableSchematizationException` if the class can't be translated.
@@ -101,16 +104,18 @@ Per-request controls. Leave any field as `null` / `nil` to fall back to the mani
     ### `GeneratableFactory`
 
     ```kotlin
+    import kotlinx.serialization.json.JsonObject
+
     object GeneratableFactory {
       @Throws(LeapGeneratableDeserializationException::class)
-      fun <T : Any> createFromJSONObject(jsonObject: JSONObject, klass: KClass<T>): T
+      fun <T : Any> createFromJsonObject(jsonObject: JsonObject, serializer: KSerializer<T>): T
 
       @Throws(LeapGeneratableDeserializationException::class)
-      inline fun <reified T : Any> createFromJSONObject(jsonObject: JSONObject): T
+      inline fun <reified T : Any> createFromJsonObject(jsonObject: JsonObject): T
     }
     ```
 
-    The reified-`T` overload is a convenience when the target type can be inferred from context.
+    Note the camelCase `Json` in the method name and the `kotlinx.serialization.json.JsonObject` argument (not `org.json.JSONObject`). The reified-`T` overload is a convenience when the target type can be inferred from context.
 
     ### Annotations
 
