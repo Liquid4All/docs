@@ -53,7 +53,7 @@ Per-request controls. Leave any field as `null` / `nil` to fall back to the mani
         var jsonSchemaConstraint: String? = null,
         var functionCallParser: LeapFunctionCallParser? = LFMFunctionCallParser(),
     ) {
-        fun setResponseFormatType(kClass: KClass<*>)
+        inline fun <reified T : Any> setResponseFormatType()
 
         companion object {
             fun build(buildAction: GenerationOptions.() -> Unit): GenerationOptions
@@ -179,16 +179,19 @@ The full surface is documented in [Function Calling](./function-calling); the ty
         val optional: Boolean = false,
     )
 
-    sealed class LeapFunctionParameterType(description: String? = null) {
-      val description: String? = description
+    sealed class LeapFunctionParameterType(typeDescription: kotlin.String? = null) {
+      var description: kotlin.String? = typeDescription
+        private set
 
-      class String(val enumValues: List<kotlin.String>? = null, description: kotlin.String? = null) : LeapFunctionParameterType(description)
-      class Number(val enumValues: List<kotlin.Number>? = null, description: kotlin.String? = null) : LeapFunctionParameterType(description)
-      class Integer(val enumValues: List<Int>? = null, description: kotlin.String? = null) : LeapFunctionParameterType(description)
-      class Boolean(description: kotlin.String? = null) : LeapFunctionParameterType(description)
-      class Null : LeapFunctionParameterType()
-      class Array(val itemType: LeapFunctionParameterType, description: kotlin.String? = null) : LeapFunctionParameterType(description)
-      class Object(
+      // Nested class names carry a `Leap` prefix so they don't shadow `kotlin.String`,
+      // `kotlin.Number`, etc. at use sites.
+      class LeapStr(val enumValues: List<kotlin.String>? = null, description: kotlin.String? = null) : LeapFunctionParameterType(description)
+      class LeapNum(val enumValues: List<kotlin.Number>? = null, description: kotlin.String? = null) : LeapFunctionParameterType(description)
+      class LeapInt(val enumValues: List<Int>? = null, description: kotlin.String? = null) : LeapFunctionParameterType(description)
+      class LeapBool(description: kotlin.String? = null) : LeapFunctionParameterType(description)
+      class LeapNull : LeapFunctionParameterType()
+      class LeapArr(val itemType: LeapFunctionParameterType, description: kotlin.String? = null) : LeapFunctionParameterType(description)
+      class LeapObj(
         val properties: Map<kotlin.String, LeapFunctionParameterType>,
         val required: List<kotlin.String> = listOf(),
         description: kotlin.String? = null,
@@ -212,27 +215,23 @@ Two parser implementations ship with the SDK on every platform:
 
 Implement `LeapFunctionCallParserProtocol` (Swift) / `LeapFunctionCallParser` (Kotlin) to add support for a new format.
 
-## Backend-specific extras
+## Prompt token budgeting
 
-Some runtime utilities are exposed on the concrete `LiquidInferenceEngineRunner` rather than the cross-platform `ModelRunner` protocol/interface. The most common is **prompt token budgeting** — useful when you need to estimate context usage before sending a long request.
+`getPromptTokensSize(messages:, addBosToken:)` is declared directly on `ModelRunner` — no cast required. Useful when you need to estimate context usage before sending a long request.
 
 <Tabs>
   <Tab title="Swift (iOS / macOS)">
     ```swift
-    if let engine = runner as? LiquidInferenceEngineRunner {
-        let count = engine.getPromptTokensSize(messages: history, addBosToken: true)
-        print("Prompt would consume \(count) tokens")
-    }
+    let count = try await runner.getPromptTokensSize(messages: history, addBosToken: true)
+    print("Prompt would consume \(count) tokens")
     ```
   </Tab>
   <Tab title="Kotlin (all platforms)">
     ```kotlin
-    (runner as? LiquidInferenceEngineRunner)?.let { engine ->
-        val count = engine.getPromptTokensSize(messages = history, addBosToken = true)
-        println("Prompt would consume $count tokens")
-    }
+    val count = runner.getPromptTokensSize(messages = history, addBosToken = true)
+    println("Prompt would consume $count tokens")
     ```
+
+    `getPromptTokensSize` is `suspend` — call it from a coroutine.
   </Tab>
 </Tabs>
-
-These methods are backend-specific and may be elevated to the `ModelRunner` interface in a future release — defensively check the cast.
