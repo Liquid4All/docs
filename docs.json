@@ -61,7 +61,7 @@
             "icon": "brain",
             "pages": [
               {
-                "group": "Model Library",
+                "group": "Liquid Foundation Models",
                 "root": "lfm/models/complete-library",
                 "expanded": false,
                 "pages": [
@@ -70,13 +70,7 @@
                   "lfm/models/audio-models",
                   "lfm/models/liquid-nanos"
                 ]
-              }
-            ]
-          },
-          {
-            "group": "Using LFMs",
-            "icon": "lightbulb",
-            "pages": [
+              },
               "lfm/key-concepts/chat-template",
               "lfm/key-concepts/text-generation-and-prompting",
               "lfm/key-concepts/tool-use"
