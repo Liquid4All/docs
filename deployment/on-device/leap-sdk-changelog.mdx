@@ -37,7 +37,7 @@ v0.10.0 raises the minimum iOS deployment target from 15.0 to **17.0** and macOS
 - **SPM URL change.** Point your Swift Package Manager dependency at `https://github.com/Liquid4All/leap-sdk.git` (not the deprecated `leap-ios` repo).
 - **CocoaPods removed.** The SDK ships exclusively through SPM in v0.10.0 onward.
 - **Toolchain bump.** Xcode 16 and Swift 6.0 are required.
-- **`ModelDownloader` → `LeapModelDownloader`.** The downloader class was renamed; update call sites accordingly. See [Model Loading](/deployment/on-device/sdk/model-loading) for the 0.10.x constructor signature.
+- **Swift downloader name.** In current 0.10.x, Swift code instantiates `ModelDownloader` from the `LeapModelDownloader` SPM product. Android code still uses the Kotlin class `ai.liquid.leap.downloader.LeapModelDownloader`. See [Model Loading](/deployment/on-device/sdk/model-loading) for the constructor signatures.
 
 ## Major additions since 0.9.x
 

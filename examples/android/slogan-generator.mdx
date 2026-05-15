@@ -37,9 +37,9 @@ Before running this example, ensure you have the following:
 
 <Accordion title="Minimum SDK Requirements">
   This example requires:
-  - **Minimum SDK**: API 24 (Android 7.0)
-  - **Target SDK**: API 34 or higher
-  - **Kotlin**: 1.9.0 or higher
+  - **Minimum SDK**: API 31 (Android 12)
+  - **Target SDK**: API 36
+  - **Kotlin**: 2.3.0 or higher
 </Accordion>
 
 <Accordion title="LeapSDK Dependency Setup">
@@ -48,6 +48,7 @@ Before running this example, ensure you have the following:
   ```kotlin
   dependencies {
       implementation("ai.liquid.leap:leap-sdk:0.10.6")
+      implementation("ai.liquid.leap:leap-model-downloader:0.10.6")
 
       // Android UI components
       implementation("androidx.appcompat:appcompat:1.6.1")

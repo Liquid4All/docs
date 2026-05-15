@@ -102,11 +102,11 @@ This page covers error types, serialization helpers, and a few platform-specific
 This section is **Android-only**. iOS / macOS callers use the Swift `ModelDownloader` (shipped in the `LeapModelDownloader` SPM product), which routes transfers through `URLSession` — see [Model Loading → Constructing the downloader](./model-loading#constructing-the-downloader) for background-session configuration. The cross-platform `LeapDownloader` (used directly on JVM, Linux native, Windows native) is a plain async fetcher with no platform background-service hooks.
 </Info>
 
-Beyond the high-level `loadModel` / `loadSimpleModel` / `downloadModel` methods covered in [Model Loading](./model-loading), the Android `LeapModelDownloader` exposes a few lower-level methods for background staging, status polling, and service control.
+Beyond the high-level `loadModel` / `loadSimpleModel` methods covered in [Model Loading](./model-loading), the Android `LeapModelDownloader` exposes a few lower-level methods for WorkManager background staging and status polling.
 
 ### Permission setup
 
-The downloader runs as a [foreground service](https://developer.android.com/develop/background-work/services/fgs) and displays notifications. Declare these in your `AndroidManifest.xml`:
+`requestDownloadModel(...)` enqueues a WorkManager download worker. During transfer, the worker runs in the foreground and displays notifications, so declare these in your `AndroidManifest.xml`:
 
 ```xml
 <uses-permission android:name="android.permission.INTERNET" />
@@ -148,7 +148,7 @@ class LeapModelDownloader(
     suspend fun requestDownloadModel(modelName: String, quantizationType: String, forceDownload: Boolean = false)
     suspend fun requestStopDownload(modelName: String, quantizationType: String)
     suspend fun queryStatus(modelName: String, quantizationType: String): ModelDownloadStatus
-    fun observeDownloadProgress(modelName: String, quantizationType: String): Flow<ProgressData>
+    fun observeDownloadProgress(modelName: String, quantizationType: String): StateFlow<ModelDownloadProgress?>
     fun getModelResourceFolder(modelName: String, quantizationType: String): File
 
     @Deprecated("No longer needed with WorkManager - downloads are managed automatically")
@@ -163,27 +163,39 @@ class LeapModelDownloader(
         ) : ModelDownloadStatus
         data class Downloaded(val totalSizeInBytes: Long) : ModelDownloadStatus
     }
+
+    class ModelDownloadProgress {
+        var totalSizeInBytes: Long
+        var downloadedSizeInBytes: Long
+        val progress: Double
+    }
 }
 ```
 
 Refer to the nested status type as `LeapModelDownloader.ModelDownloadStatus.NotOnLocal` / `.DownloadInProgress` / `.Downloaded` — there is no top-level `ai.liquid.leap.downloader.ModelDownloadStatus`.
 
-- **`requestDownloadModel`** — `suspend` fire-and-forget download via WorkManager. The download itself survives app restarts; the call only stages the work request.
+- **`requestDownloadModel`** — `suspend` fire-and-forget prefetch. It enqueues a unique WorkManager download worker; the download itself survives app restarts, and the call returns after staging the work request.
 - **`requestStopDownload`** — `suspend`; cancels an in-flight background download.
 - **`queryStatus`** — `suspend` one-shot status check.
-- **`observeDownloadProgress`** — `Flow<ProgressData>` for UI updates during a background download. Not suspend — collect the flow from a coroutine.
+- **`observeDownloadProgress`** — `StateFlow<ModelDownloadProgress?>` for UI updates during a background download. It emits `null` when no download is active.
 - **`getModelResourceFolder`** — the directory the SDK will use for this model+quantization on disk.
 - **`requestStopService`** — `@Deprecated` no-op since v0.10.6 (WorkManager handles the worker lifecycle automatically). Kept for source compatibility; new code shouldn't call it.
 
 ### Removing a downloaded model
 
-Use the cross-platform `LeapDownloader.deleteModelResources(...)` to clean up disk:
+Use the Android downloader's resource folder to clean up disk, or construct a cross-platform `LeapDownloader` with the same `saveDir` and call its instance method `deleteModelResources(...)`:
 
 ```kotlin
-LeapDownloader.deleteModelResources(
+val resourceFolder = downloader.getModelResourceFolder(
     modelName = "LFM2-1.2B",
     quantizationType = "Q5_K_M",
-    baseDir = baseDir, // same dir LeapModelDownloader / LeapDownloader was configured with
+)
+resourceFolder.deleteRecursively()
+
+// Equivalent when you know the saveDir:
+LeapDownloader(LeapDownloaderConfig(saveDir = resourceFolder.parentFile!!.absolutePath)).deleteModelResources(
+    modelName = "LFM2-1.2B",
+    quantizationType = "Q5_K_M",
 )
 ```
 

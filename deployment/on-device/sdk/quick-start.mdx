@@ -166,7 +166,7 @@ The LEAP SDK is a Kotlin Multiplatform library: the same `ModelRunner` / `Conver
       ```
     </Accordion>
 
-    Also declare these permissions in `AndroidManifest.xml` — `LeapModelDownloader` runs as a foreground service for reliable downloads:
+    Also declare these permissions in `AndroidManifest.xml` — `LeapModelDownloader.requestDownloadModel(...)` enqueues a WorkManager download worker that runs in the foreground while transferring model files:
 
     ```xml
     <uses-permission android:name="android.permission.INTERNET" />
@@ -242,7 +242,7 @@ The LEAP SDK is a Kotlin Multiplatform library: the same `ModelRunner` / `Conver
 
 ## 3. Load a model
 
-The recommended path is **manifest-based** loading. On every platform, the platform downloader's `loadModel(...)` downloads (if needed) and loads in one call — `LeapModelDownloader.loadModel(...)` on iOS / macOS / Android, `LeapDownloader.loadModel(...)` on JVM and Linux / Windows Kotlin/Native. All paths fetch from the [LEAP Model Library](https://leap.liquid.ai/models) on first use and load from cache thereafter.
+The recommended path is **manifest-based** loading. On every platform, the platform downloader's `loadModel(...)` downloads (if needed) and loads in one call — `ModelDownloader.loadModel(...)` on iOS / macOS, `LeapModelDownloader.loadModel(...)` on Android, and `LeapDownloader.loadModel(...)` on JVM and Linux / Windows Kotlin/Native. All paths fetch from the [LEAP Model Library](https://leap.liquid.ai/models) on first use and load from cache thereafter.
 
 <Tabs>
   <Tab title="Swift (iOS / macOS)">

@@ -16,17 +16,31 @@ Per-request controls. Leave any field as `null` / `nil` to fall back to the mani
       public var temperature: Float?
       public var topP: Float?
       public var minP: Float?
+      public var topK: Int32?
       public var repetitionPenalty: Float?
+      public var rngSeed: Int64?
+      public var maxTokens: Int32?
       public var jsonSchemaConstraint: String?
+      public var injectSchemaIntoPrompt: Bool
       public var functionCallParser: LeapFunctionCallParserProtocol?
+      public var inlineThinkingTags: Bool
+      public var enableThinking: Bool
+      public var extras: String?
 
       public init(
         temperature: Float? = nil,
         topP: Float? = nil,
         minP: Float? = nil,
+        topK: Int32? = nil,
         repetitionPenalty: Float? = nil,
+        rngSeed: Int64? = nil,
+        maxTokens: Int32? = nil,
         jsonSchemaConstraint: String? = nil,
-        functionCallParser: LeapFunctionCallParserProtocol? = LFMFunctionCallParser()
+        functionCallParser: LeapFunctionCallParserProtocol? = LFMFunctionCallParser(),
+        injectSchemaIntoPrompt: Bool = true,
+        inlineThinkingTags: Bool = false,
+        enableThinking: Bool = false,
+        extras: String? = nil
       )
 
       public mutating func setResponseFormat<T: GeneratableType>(type: T.Type) throws
@@ -50,8 +64,15 @@ Per-request controls. Leave any field as `null` / `nil` to fall back to the mani
         var topP: Float? = null,
         var minP: Float? = null,
         var repetitionPenalty: Float? = null,
+        var topK: Int? = null,
+        var rngSeed: Long? = null,
         var jsonSchemaConstraint: String? = null,
         var functionCallParser: LeapFunctionCallParser? = LFMFunctionCallParser(),
+        var injectSchemaIntoPrompt: Boolean = true,
+        var maxTokens: Int? = null,
+        var inlineThinkingTags: Boolean = false,
+        var enableThinking: Boolean = false,
+        var extras: String? = null,
     ) {
         inline fun <reified T : Any> setResponseFormatType()
 
@@ -63,9 +84,14 @@ Per-request controls. Leave any field as `null` / `nil` to fall back to the mani
   </Tab>
 </Tabs>
 
-- **Sampling fields** — use the model card's recommended values; arbitrary defaults from generic tutorials usually underperform.
+- **Sampling fields** — `temperature`, `topP`, `minP`, `topK`, and `repetitionPenalty`. Use the model bundle's recommended values; arbitrary defaults from generic tutorials usually underperform.
+- **`rngSeed`** — deterministic sampling seed for tests and reproducible runs.
+- **`maxTokens`** — maximum completion tokens to generate. Prompt tokens do not count toward this cap.
 - **`jsonSchemaConstraint`** — JSON Schema string for constrained generation. Use the `setResponseFormat(type:)` / `setResponseFormatType(...)` helpers instead of writing the schema by hand.
+- **`injectSchemaIntoPrompt`** — when `true` (default), the schema is also appended to the system message for semantic guidance. Set `false` to use only the structural constraint.
 - **`functionCallParser`** — `LFMFunctionCallParser` (default), `HermesFunctionCallParser()`, or `null`/`nil` to disable parsing and surface raw tool-call text in `Chunk`s.
+- **`enableThinking` / `inlineThinkingTags`** — reasoning-mode controls for models that emit `<think>` content.
+- **`extras`** — backend-specific JSON payload.
 
 ## Constrained generation utilities
 

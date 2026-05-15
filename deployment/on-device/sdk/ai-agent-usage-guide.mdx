@@ -430,7 +430,7 @@ A `ChatViewModel` that loads the model, registers a tool, drives generation, and
     - **Min SDK 31** (Android 12).
     - Use a real device for testing — the emulator may crash loading model bundles.
     - `LeapModelDownloader` (the Android one) requires `POST_NOTIFICATIONS` at runtime on Android 13+ and a few manifest entries — see [Quick Start → Install the SDK](./quick-start#2-install-the-sdk).
-    - Background downloads use WorkManager + a foreground service; the SDK ships notification configuration via `LeapModelDownloaderNotificationConfig`.
+    - Background prefetch uses `requestDownloadModel(...)`, which enqueues the WorkManager downloader and runs it as a foreground worker while files transfer. The SDK ships notification configuration via `LeapModelDownloaderNotificationConfig`.
     - For most cases, hold the runner in a `ViewModel` with `viewModelScope`. Unload via `runBlocking(Dispatchers.IO) { runner.unload() }` in `onCleared()`.
   </Tab>
   <Tab title="JVM / Linux native / Windows native">
