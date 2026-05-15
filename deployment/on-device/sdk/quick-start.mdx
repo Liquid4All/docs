@@ -433,12 +433,16 @@ Both platforms expose the same streaming shape: an async sequence of `MessageRes
     func send(_ text: String) {
         guard let conversation else { return }
         generationTask?.cancel()
-        let userMessage = ChatMessage(role: .user, content: [.text(text)])
+        let userMessage = ChatMessage(role: .user, textContent: text)
+        let options = GenerationOptions()
+            .with(temperature: 0.3)
+            .with(minP: 0.15)
+            .with(repetitionPenalty: 1.05)
         generationTask = Task { [weak self] in
             do {
                 for try await response in conversation.generateResponse(
                     message: userMessage,
-                    generationOptions: GenerationOptions(temperature: 0.3, minP: 0.15, repetitionPenalty: 1.05)
+                    generationOptions: options
                 ) {
                     self?.handle(response)
                 }
@@ -481,7 +485,7 @@ Both platforms expose the same streaming shape: an async sequence of `MessageRes
                 ?.onEach { response ->
                     when (response) {
                         is MessageResponse.Chunk -> _responseText.value += response.text
-                        is MessageResponse.ReasoningChunk -> Log.d(TAG, "Reasoning: ${response.text}")
+                        is MessageResponse.ReasoningChunk -> Log.d(TAG, "Reasoning: ${response.reasoning}")
                         is MessageResponse.FunctionCalls -> handleFunctionCalls(response.functionCalls)
                         is MessageResponse.AudioSample -> audioRenderer.enqueue(response.samples, response.sampleRate)
                         is MessageResponse.Complete -> Log.d(TAG, "Done. Stats: ${response.stats}")
@@ -503,22 +507,28 @@ Cancel the in-flight task (Swift) or coroutine job (Kotlin) to interrupt generat
 If the loaded model is multimodal (and its companion files were detected), you can attach a non-text part — an image, a WAV blob, or raw PCM samples — alongside the text in a `ChatMessage`.
 
 <Info>
-**Multimodality is model-specific.** Most multimodal models we ship are text + one other modality: text + vision (the VLM family) or text + audio (the audio family) — not both in the same checkpoint. Send `.image(...)` parts only to a vision-capable model, and `.audio(...)` / `.fromFloatSamples(...)` parts only to an audio-capable model. Mixing modalities a model wasn't trained on will either fail to load the companion file or produce nonsense. Check the model's [Hugging Face card](https://huggingface.co/LiquidAI) before wiring up a non-text input path.
+**Multimodality is model-specific.** Most multimodal models we ship are text + one other modality: text + vision (the VLM family) or text + audio (the audio family) — not both in the same checkpoint. Send image content (`fromJPEGData(_:)`, `image(url:)`, `fromBitmap(...)` / `fromUIImage(_:)`) only to a vision-capable model, and audio content (`fromWAVData(_:)`, `fromFloatSamples(_:sampleRate:)`) only to an audio-capable model. Mixing modalities a model wasn't trained on will either fail to load the companion file or produce nonsense. Check the model's [Hugging Face card](https://huggingface.co/LiquidAI) before wiring up a non-text input path.
 </Info>
 
 <Tabs>
   <Tab title="Swift (iOS / macOS)">
     ```swift
-    // Text + image (vision-capable model)
+    // Text + image (vision-capable model). Use `ChatMessageContent.fromJPEGData(_:)`
+    // for raw JPEG bytes, or `.image(url:)` for a data URL / remote URL.
     let imageMessage = ChatMessage(
       role: .user,
-      content: [.text("Describe what you see."), .image(jpegData)]
+      content: [.text("Describe what you see."), ChatMessageContent.fromJPEGData(jpegData)],
+      reasoningContent: nil,
+      functionCalls: nil
     )
 
-    // Text + WAV audio (audio-capable model)
+    // Text + WAV audio (audio-capable model). `fromWAVData` validates the header;
+    // use `.audio(data:format:)` if you already know the bytes are a supported format.
     let wavMessage = ChatMessage(
       role: .user,
-      content: [.text("Transcribe and summarize this clip."), .audio(wavData)]
+      content: [.text("Transcribe and summarize this clip."), ChatMessageContent.fromWAVData(wavData)],
+      reasoningContent: nil,
+      functionCalls: nil
     )
 
     // Text + raw PCM samples (audio-capable model)
@@ -527,7 +537,9 @@ If the loaded model is multimodal (and its companion files were detected), you c
       content: [
         .text("Give feedback on my pronunciation."),
         ChatMessageContent.fromFloatSamples(samples, sampleRate: 16000)
-      ]
+      ],
+      reasoningContent: nil,
+      functionCalls: nil
     )
     ```
   </Tab>

@@ -414,7 +414,7 @@ Useful for onboarding flows that prefetch over Wi-Fi or staging models you'll lo
     }
 
     public struct DownloadedModelManifest {
-      public let manifest: ModelManifest
+      public let manifest: Manifest
       public let localModelPath: String
       public let localMultimodalProjectorPath: String?
       public let localAudioDecoderPath: String?
@@ -458,7 +458,7 @@ Per-load runtime overrides. Default values come from the model bundle's manifest
   <Tab title="Swift (iOS / macOS)">
     ```swift
     public struct LiquidInferenceEngineOptions {
-      public var bundlePath: String
+      public let bundlePath: String
       public let cacheOptions: LiquidCacheOptions?
       public let cpuThreads: UInt32?
       public let contextSize: UInt32?
@@ -472,11 +472,17 @@ Per-load runtime overrides. Default values come from the model bundle's manifest
       public let extras: String?
     }
 
-    // Manifest-based variant — accepts cacheOptions + contextSize without bundlePath
+    // Manifest-based variant — used with downloader.loadModel(...). No bundlePath
+    // (the downloader supplies it) and no companion-path / mmap fields (the manifest
+    // pins those). Only cache + tuning fields are exposed:
     public struct LiquidInferenceEngineManifestOptions {
       public let cacheOptions: LiquidCacheOptions?
+      public let cpuThreads: UInt32?
       public let contextSize: UInt32?
-      // …same companion-file and tuning fields…
+      public let nGpuLayers: UInt32?
+      public let audioDecoderUseGpu: Bool       // default false
+      public let chatTemplate: String?
+      public let extras: String?
     }
     ```
 
@@ -583,6 +589,7 @@ data class SamplingParameters(
     val topP: Double? = null,
     val minP: Double? = null,
     val repetitionPenalty: Double? = null,
+    val topK: Int? = null,
 )
 ```
 
@@ -760,7 +767,7 @@ The service requires the `POST_NOTIFICATIONS` runtime permission (Android 13+) t
 
 - The service does not accept caller-supplied `cacheOptions`; it maintains its own KV cache directory and policy. `LeapModelDownloader` forwards first-class load options such as `cpuThreads`, `randomSeed`, `chatTemplate`, `contextSize`, `extras`, and `useMmap`, but intentionally omits `cacheOptions` from the AIDL parcel. Use `forceLocal = true` when you need caller-controlled KV cache settings.
 - First-load wins: when multiple apps request the same model simultaneously, the first call's `ModelLoadingOptions` are applied; subsequent callers receive the shared runner regardless of their options. Read the effective config back via `LeapServiceClient.getLoadedModelConfig`.
-- Models stay loaded until the service is shut down or restarted. `evictUnusedModel` is a no-op by design — eviction would race with in-flight generations.
+- Models stay loaded until the service is shut down or restarted. The service has no public mid-flight eviction API — caller-driven eviction would race with in-flight generations.
 
 ## `ProgressData` / `Manifest`
 
