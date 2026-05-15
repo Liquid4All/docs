@@ -207,8 +207,8 @@ data class Ingredient(
 Annotate the data class with `@Generatable`. LeapSDK derives the JSON schema from the Kotlin types and enforces it during generation — no hand-written schema string required.
 
 ```kotlin
-import ai.liquid.leap.Generatable
-import ai.liquid.leap.Guide
+import ai.liquid.leap.structuredoutput.Generatable
+import ai.liquid.leap.structuredoutput.Guide
 import kotlinx.serialization.Serializable
 
 @Generatable
