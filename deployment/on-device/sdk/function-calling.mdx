@@ -19,23 +19,28 @@ Vision and audio-capable models require companion files. Bundles embed these ref
 
 <Tabs>
   <Tab title="Swift (iOS / macOS)">
+    The Kotlin `LeapFunction` / `LeapFunctionParameter` constructors carry `@ObjCName` annotations on `description:`, so the Swift labels are `functionDescription:` and `parameterDescription:`. `LeapFunctionParameter`'s `optional` parameter has no Swift default — pass `optional: false` for required parameters.
+
     ```swift
     conversation.registerFunction(
-      LeapFunction(
+      function: LeapFunction(
         name: "get_weather",
-        description: "Query the weather of a city",
+        functionDescription: "Query the weather of a city",
         parameters: [
           LeapFunctionParameter(
             name: "city",
-            type: LeapFunctionParameterType.string(StringType()),
-            description: "The city to query weather for"
+            type: LeapFunctionParameterType.LeapStr(enumValues: nil, description: nil),
+            parameterDescription: "The city to query weather for",
+            optional: false
           ),
           LeapFunctionParameter(
             name: "unit",
-            type: LeapFunctionParameterType.string(
-              StringType(enumValues: ["celsius", "fahrenheit"])
+            type: LeapFunctionParameterType.LeapStr(
+              enumValues: ["celsius", "fahrenheit"],
+              description: nil
             ),
-            description: "Temperature unit (celsius or fahrenheit)"
+            parameterDescription: "Temperature unit (celsius or fahrenheit)",
+            optional: false
           ),
         ]
       )
@@ -73,24 +78,26 @@ Vision and audio-capable models require companion files. Bundles embed these ref
 Use normal identifiers — letters, underscores, and digits (not starting with a digit). Most models trained for tool use recognize that shape.
 
 <Info>
-The Kotlin parameter type classes are named with a `Leap` prefix (`LeapStr`, `LeapNum`, `LeapInt`, `LeapBool`, `LeapArr`, `LeapObj`, `LeapNull`) to avoid collisions with Kotlin's built-in `String`, `Number`, `Int`, `Boolean`, etc. The Swift bindings expose the same primitives under cleaner names (`.string(...)`, `.number(...)`, etc.) via SKIE.
+The Kotlin parameter type classes are named with a `Leap` prefix (`LeapStr`, `LeapNum`, `LeapInt`, `LeapBool`, `LeapArr`, `LeapObj`, `LeapNull`) to avoid collisions with Kotlin's built-in `String`, `Number`, `Int`, `Boolean`, etc. The Swift bindings expose the same names — there are no separate `.string(...)` / `.number(...)` aliases; SKIE preserves the Kotlin nested-class names.
 </Info>
 
 ## Handle the response
 
-Function calls arrive as `MessageResponse.functionCalls` (Swift) / `MessageResponse.FunctionCalls` (Kotlin), which wraps a list of `LeapFunctionCall`.
+Function calls arrive as the `MessageResponse.FunctionCalls` variant on both platforms, wrapping a list of `LeapFunctionCall` payloads.
 
 <Tabs>
   <Tab title="Swift (iOS / macOS)">
+    `LeapFunctionCall` is a Kotlin `data class` bridged into Swift. `arguments` is a Kotlin `Map<String, Any?>` exposed as Swift `[String: Any]` (the ObjC bridge collapses `Any?` to non-optional `id`):
+
     ```swift
-    public struct LeapFunctionCall {
-      public let name: String
-      public let arguments: [String: Any?]
+    public class LeapFunctionCall {
+      public var name: String
+      public var arguments: [String: Any]
     }
     ```
 
     ```swift
-    let userMessage = ChatMessage(role: .user, content: [.text("What's the weather in NYC?")])
+    let userMessage = ChatMessage(role: .user, textContent: "What's the weather in NYC?")
 
     for try await response in conversation.generateResponse(message: userMessage) {
         switch onEnum(of: response) {
@@ -147,12 +154,12 @@ Append the tool's output as a `tool`-role message and continue the conversation.
     ```swift
     let toolMessage = ChatMessage(
       role: .tool,
-      content: [.text(#"{"temperature":72,"conditions":"sunny"}"#)]
+      textContent: #"{"temperature":72,"conditions":"sunny"}"#
     )
 
-    guard let current = conversation else { return }
-    let updatedHistory = current.history + [toolMessage]
-    conversation = current.modelRunner.createConversationFromHistory(history: updatedHistory)
+    let updatedHistory = conversation.history + [toolMessage]
+    let nextConversation = conversation.modelRunner.createConversationFromHistory(history: updatedHistory)
+    // Continue generation against `nextConversation`.
     ```
   </Tab>
   <Tab title="Kotlin (all platforms)">
@@ -176,18 +183,29 @@ Then call `generateResponse(...)` on the new conversation to get the model's too
 
 <Tabs>
   <Tab title="Swift (iOS / macOS)">
+    Both types are Kotlin `data class`es bridged into Swift. `@ObjCName` annotations rename the `description` parameter on the Swift inits to `functionDescription:` / `parameterDescription:`.
+
     ```swift
-    public struct LeapFunction: Equatable {
-      public let name: String
-      public let description: String
-      public let parameters: [LeapFunctionParameter]
+    public class LeapFunction {
+      public var name: String
+      public var functionDescription: String       // ObjC-renamed from Kotlin `description`
+      public var parameters: [LeapFunctionParameter]
+
+      public init(name: String, functionDescription: String, parameters: [LeapFunctionParameter])
     }
 
-    public struct LeapFunctionParameter: Equatable {
-      public let name: String
-      public let type: LeapFunctionParameterType
-      public let description: String
-      public let optional: Bool
+    public class LeapFunctionParameter {
+      public var name: String
+      public var type: LeapFunctionParameterType
+      public var parameterDescription: String      // ObjC-renamed from Kotlin `description`
+      public var optional: Bool
+
+      public init(
+        name: String,
+        type: LeapFunctionParameterType,
+        parameterDescription: String,
+        optional: Bool                              // no default in Swift — pass `false` for required
+      )
     }
     ```
   </Tab>
@@ -215,22 +233,27 @@ Then call `generateResponse(...)` on the new conversation to get the model's too
 
 <Tabs>
   <Tab title="Swift (iOS / macOS)">
+    `LeapFunctionParameterType` is a Kotlin `sealed class`. SKIE generates an `onEnum(of:)`-compatible enum view, but the constructors you use to build instances keep the Kotlin nested-class names — there is no `.string(...)` / `.number(...)` alias.
+
     ```swift
-    public indirect enum LeapFunctionParameterType: Codable, Equatable {
-      case string(StringType)
-      case number(NumberType)
-      case integer(IntegerType)
-      case boolean(BooleanType)
-      case array(ArrayType)
-      case object(ObjectType)
-      case null(NullType)
-    }
+    // Direct constructors (use these to build parameter types):
+    LeapFunctionParameterType.LeapStr(enumValues: [String]?, description: String?)
+    LeapFunctionParameterType.LeapNum(enumValues: [NSNumber]?, description: String?)
+    LeapFunctionParameterType.LeapInt(enumValues: [KotlinInt]?, description: String?)
+    LeapFunctionParameterType.LeapBool(description: String?)
+    LeapFunctionParameterType.LeapArr(itemType: LeapFunctionParameterType, description: String?)
+    LeapFunctionParameterType.LeapObj(
+      properties: [String: LeapFunctionParameterType],
+      required: [String],
+      description: String?
+    )
+    LeapFunctionParameterType.LeapNull()   // no description parameter
     ```
 
-    - `StringType`, `NumberType`, `IntegerType` accept `enumValues` to constrain valid values.
-    - `ArrayType` has `itemType` describing element type.
-    - `ObjectType` has `properties: [String: LeapFunctionParameterType]` and `required: [String]`.
-    - All non-`null` types take an optional `description` (only used when nested via `ArrayType.itemType` or object properties — when used directly as `LeapFunctionParameter.type`, the outer `description` wins).
+    - `LeapStr` / `LeapNum` / `LeapInt` accept `enumValues` to constrain valid values.
+    - `LeapArr` has `itemType` describing the element type.
+    - `LeapObj` has `properties: [String: LeapFunctionParameterType]` and `required: [String]`.
+    - The nested `description` is overridden when the type is used directly as `LeapFunctionParameter.type`; it's only consulted when the type is used inside `LeapArr.itemType` or `LeapObj.properties`.
   </Tab>
   <Tab title="Kotlin (all platforms)">
     ```kotlin
@@ -258,21 +281,25 @@ Then call `generateResponse(...)` on the new conversation to get the model's too
     ```swift
     LeapFunction(
       name: "get_weather",
-      description: "Query the weather of cities",
+      functionDescription: "Query the weather of cities",
       parameters: [
         LeapFunctionParameter(
           name: "cities",
-          type: LeapFunctionParameterType.array(
-            ArrayType(itemType: .string(StringType()))
+          type: LeapFunctionParameterType.LeapArr(
+            itemType: LeapFunctionParameterType.LeapStr(enumValues: nil, description: nil),
+            description: nil
           ),
-          description: "Names of the cities to query weather for"
+          parameterDescription: "Names of the cities to query weather for",
+          optional: false
         ),
         LeapFunctionParameter(
           name: "unit",
-          type: LeapFunctionParameterType.string(
-            StringType(enumValues: ["celsius", "fahrenheit"])
+          type: LeapFunctionParameterType.LeapStr(
+            enumValues: ["celsius", "fahrenheit"],
+            description: nil
           ),
-          description: "Temperature unit"
+          parameterDescription: "Temperature unit",
+          optional: false
         ),
       ]
     )
