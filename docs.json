@@ -92,7 +92,7 @@
             ]
           },
           {
-            "group": "On-Device",
+            "group": "Edge Inference",
             "icon": "mobile",
             "pages": [
               "deployment/on-device/llama-cpp",
