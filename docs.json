@@ -61,16 +61,10 @@
             "icon": "brain",
             "pages": [
               "lfm/models/complete-library",
-              {
-                "group": "Browse by type",
-                "icon": "list",
-                "pages": [
-                  "lfm/models/text-models",
-                  "lfm/models/vision-models",
-                  "lfm/models/audio-models",
-                  "lfm/models/liquid-nanos"
-                ]
-              }
+              "lfm/models/text-models",
+              "lfm/models/vision-models",
+              "lfm/models/audio-models",
+              "lfm/models/liquid-nanos"
             ]
           },
           {
