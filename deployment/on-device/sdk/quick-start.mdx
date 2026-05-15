@@ -298,8 +298,8 @@ The recommended path is **manifest-based** loading. On every platform, the platf
     import androidx.lifecycle.viewModelScope
     import ai.liquid.leap.Conversation
     import ai.liquid.leap.ModelRunner
-    import ai.liquid.leap.model_downloader.LeapModelDownloader
-    import ai.liquid.leap.model_downloader.LeapModelDownloaderNotificationConfig
+    import ai.liquid.leap.downloader.LeapModelDownloader
+    import ai.liquid.leap.downloader.LeapModelDownloaderNotificationConfig
     import kotlinx.coroutines.Dispatchers
     import kotlinx.coroutines.flow.MutableStateFlow
     import kotlinx.coroutines.flow.StateFlow
@@ -313,7 +313,7 @@ The recommended path is **manifest-based** loading. On every platform, the platf
             notificationConfig = LeapModelDownloaderNotificationConfig.build {
                 notificationTitleDownloading = "Downloading AI model..."
                 notificationTitleDownloaded = "Model ready!"
-                notificationContentDownloading = "Please wait while the model downloads"
+                notificationContentDownloadingTemplate = "Please wait while the model downloads"
             }
         )
 
@@ -351,8 +351,8 @@ The recommended path is **manifest-based** loading. On every platform, the platf
   </Tab>
   <Tab title="Kotlin (JVM / native)">
     ```kotlin
-    import ai.liquid.leap.LeapDownloader
-    import ai.liquid.leap.LeapDownloaderConfig
+    import ai.liquid.leap.manifest.LeapDownloader
+    import ai.liquid.leap.manifest.LeapDownloaderConfig
     import ai.liquid.leap.message.ChatMessage
     import ai.liquid.leap.message.MessageResponse
     import kotlinx.coroutines.runBlocking
@@ -372,7 +372,9 @@ The recommended path is **manifest-based** loading. On every platform, the platf
 
         val conversation = runner.createConversation(systemPrompt = "You are a helpful assistant.")
 
-        conversation.generateResponse(ChatMessage.user("Hello!")).collect { resp ->
+        conversation.generateResponse(
+            ChatMessage(ChatMessage.Role.USER, "Hello!")
+        ).collect { resp ->
             when (resp) {
                 is MessageResponse.Chunk -> print(resp.text)
                 is MessageResponse.Complete -> println("\n[done]")
@@ -532,7 +534,8 @@ If the loaded model is multimodal (and its companion files were detected), you c
   <Tab title="Kotlin (all platforms)">
     ```kotlin
     // Text + image (vision-capable model)
-    val imageMessage = ChatMessage.user(
+    val imageMessage = ChatMessage(
+        role = ChatMessage.Role.USER,
         content = listOf(
             ChatMessageContent.Text("Describe what you see."),
             ChatMessageContent.Image(jpegBytes)
@@ -540,7 +543,8 @@ If the loaded model is multimodal (and its companion files were detected), you c
     )
 
     // Text + WAV audio (audio-capable model)
-    val wavMessage = ChatMessage.user(
+    val wavMessage = ChatMessage(
+        role = ChatMessage.Role.USER,
         content = listOf(
             ChatMessageContent.Text("Transcribe and summarize this clip."),
             ChatMessageContent.Audio(wavBytes)
@@ -548,7 +552,8 @@ If the loaded model is multimodal (and its companion files were detected), you c
     )
 
     // Text + raw PCM samples (audio-capable model)
-    val pcmMessage = ChatMessage.user(
+    val pcmMessage = ChatMessage(
+        role = ChatMessage.Role.USER,
         content = listOf(
             ChatMessageContent.Text("Give feedback on my pronunciation."),
             ChatMessageContent.AudioPcmF32(samples, sampleRate = 16000)
