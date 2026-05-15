@@ -91,8 +91,11 @@ Constrained generation forces the model to emit JSON matching a schema. Use the 
   </Tab>
   <Tab title="Kotlin (all platforms)">
     ```kotlin
+    import kotlinx.serialization.json.Json
+    import kotlinx.serialization.json.JsonObject
+
     val options = GenerationOptions.build {
-        setResponseFormatType(CityFact::class)
+        setResponseFormatType<CityFact>()
         temperature = 0.3f
         minP = 0.15f
         repetitionPenalty = 1.05f
@@ -102,14 +105,15 @@ Constrained generation forces the model to emit JSON matching a schema. Use the 
         .onEach { response ->
             if (response is MessageResponse.Complete) {
                 val jsonContent = (response.fullMessage.content.first() as ChatMessageContent.Text).text
-                val cityFact: CityFact = GeneratableFactory.createFromJSONObject(JSONObject(jsonContent))
+                val kxObj = Json.parseToJsonElement(jsonContent) as JsonObject
+                val cityFact = GeneratableFactory.createFromJsonObject<CityFact>(kxObj)
                 println(cityFact)
             }
         }
         .collect()
     ```
 
-    If the model's JSON doesn't deserialize cleanly into the data class, `GeneratableFactory.createFromJSONObject` throws `LeapGeneratableDeserializationException`.
+    If the model's JSON doesn't deserialize cleanly into the data class, `GeneratableFactory.createFromJsonObject` throws `LeapGeneratableDeserializationException`.
   </Tab>
 </Tabs>
 
@@ -129,7 +133,7 @@ Some models do better when the JSON Schema is also included in the prompt text. 
   </Tab>
   <Tab title="Kotlin (all platforms)">
     ```kotlin
-    val jsonSchema = JSONSchemaGenerator.getJSONSchema(CityFact::class)
+    val jsonSchema = JSONSchemaGenerator.getJSONSchema<CityFact>()
     conversation.generateResponse(
         "Show the city facts about Tokyo following this JSON Schema: $jsonSchema",
         options
@@ -269,10 +273,14 @@ Even with constrained generation, you should handle parse failures gracefully. T
   </Tab>
   <Tab title="Kotlin (all platforms)">
     ```kotlin
-    fun <T : Any> parse(jsonText: String, kClass: KClass<T>): T? = try {
-        GeneratableFactory.createFromJSONObject(JSONObject(jsonText)) as T
+    import kotlinx.serialization.json.Json
+    import kotlinx.serialization.json.JsonObject
+
+    inline fun <reified T : Any> parse(jsonText: String): T? = try {
+        val kxObj = Json.parseToJsonElement(jsonText) as JsonObject
+        GeneratableFactory.createFromJsonObject<T>(kxObj)
     } catch (e: LeapGeneratableDeserializationException) {
-        Log.e(TAG, "Failed to decode response as ${kClass.simpleName}", e)
+        Log.e(TAG, "Failed to decode response as ${T::class.simpleName}", e)
         null
     }
     ```
