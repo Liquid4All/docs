@@ -41,16 +41,16 @@ This page covers error types, serialization helpers, and a few platform-specific
     Use the JSON initializers directly on `ChatMessage` and `ChatMessageContent`:
 
     ```swift
-    // Serialize the conversation history
-    let payload: [[String: Any]] = try conversation.exportToJSON()
-    let data = try JSONSerialization.data(withJSONObject: payload, options: [])
+    // Serialize the conversation history (compact JSON string, OpenAI chat-completions shape)
+    let jsonString: String = conversation.exportToJSON()
+    let data: Data = Data(jsonString.utf8)
 
-    // Round-trip a single message
+    // Round-trip a single message — `ChatMessage(from:)` accepts an OpenAI-shaped dictionary
     let json: [String: Any] = ["role": "user", "content": "Hello"]
     let message = try ChatMessage(from: json)
     ```
 
-    Persist `data` to disk, UserDefaults, or your sync backend. On restore, decode it back to `[[String: Any]]`, map each entry through `ChatMessage(from:)`, and rebuild via `modelRunner.createConversationFromHistory(history:)`.
+    Persist `data` to disk, UserDefaults, or your sync backend. On restore, decode the JSON back to `[[String: Any]]`, map each entry through `ChatMessage(from:)`, and rebuild via `modelRunner.createConversationFromHistory(history:)`.
   </Tab>
   <Tab title="Kotlin (all platforms)">
     The SDK uses [kotlinx.serialization](https://github.com/Kotlin/kotlinx.serialization) — `@Serializable` is already declared on the relevant types in the core SDK.
@@ -141,33 +141,39 @@ if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
 class LeapModelDownloader(
     private val context: Context,
     modelFileDir: File? = null,
-    private val extraHTTPRequestHeaders: Map<String, String> = mapOf(),
     private val notificationConfig: LeapModelDownloaderNotificationConfig = LeapModelDownloaderNotificationConfig(),
+    private val downloaderConfig: LeapDownloaderConfig = LeapDownloaderConfig(),
+    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
 ) {
-    fun requestDownloadModel(modelName: String, quantizationType: String, forceDownload: Boolean = false)
-    fun requestStopDownload(modelName: String, quantizationType: String)
+    suspend fun requestDownloadModel(modelName: String, quantizationType: String, forceDownload: Boolean = false)
+    suspend fun requestStopDownload(modelName: String, quantizationType: String)
     suspend fun queryStatus(modelName: String, quantizationType: String): ModelDownloadStatus
     fun observeDownloadProgress(modelName: String, quantizationType: String): Flow<ProgressData>
     fun getModelResourceFolder(modelName: String, quantizationType: String): File
-    fun requestStopService()
-}
 
-sealed interface ModelDownloadStatus {
-    data object NotOnLocal : ModelDownloadStatus
-    data class DownloadInProgress(
-        val totalSizeInBytes: Long,
-        val downloadedSizeInBytes: Long,
-    ) : ModelDownloadStatus
-    data class Downloaded(val totalSizeInBytes: Long) : ModelDownloadStatus
+    @Deprecated("No longer needed with WorkManager - downloads are managed automatically")
+    suspend fun requestStopService()
+
+    // `ModelDownloadStatus` is nested under `LeapModelDownloader`.
+    sealed interface ModelDownloadStatus {
+        data object NotOnLocal : ModelDownloadStatus
+        data class DownloadInProgress(
+            val totalSizeInBytes: Long,
+            val downloadedSizeInBytes: Long,
+        ) : ModelDownloadStatus
+        data class Downloaded(val totalSizeInBytes: Long) : ModelDownloadStatus
+    }
 }
 ```
 
-- **`requestDownloadModel`** — fire-and-forget download via WorkManager. Returns immediately; the download survives app restarts.
-- **`requestStopDownload`** — cancel an in-flight background download.
-- **`queryStatus`** — one-shot status check.
-- **`observeDownloadProgress`** — `Flow<ProgressData>` for UI updates during a background download.
+Refer to the nested status type as `LeapModelDownloader.ModelDownloadStatus.NotOnLocal` / `.DownloadInProgress` / `.Downloaded` — there is no top-level `ai.liquid.leap.downloader.ModelDownloadStatus`.
+
+- **`requestDownloadModel`** — `suspend` fire-and-forget download via WorkManager. The download itself survives app restarts; the call only stages the work request.
+- **`requestStopDownload`** — `suspend`; cancels an in-flight background download.
+- **`queryStatus`** — `suspend` one-shot status check.
+- **`observeDownloadProgress`** — `Flow<ProgressData>` for UI updates during a background download. Not suspend — collect the flow from a coroutine.
 - **`getModelResourceFolder`** — the directory the SDK will use for this model+quantization on disk.
-- **`requestStopService`** — gracefully stop the foreground service (it auto-stops when no work is queued, but you can force it).
+- **`requestStopService`** — `@Deprecated` no-op since v0.10.6 (WorkManager handles the worker lifecycle automatically). Kept for source compatibility; new code shouldn't call it.
 
 ### Removing a downloaded model
 
@@ -231,10 +237,10 @@ A minimal end-to-end snippet exercising load → conversation → tool registrat
         temperature = 0.3f
         minP = 0.15f
         repetitionPenalty = 1.05f
-        setResponseFormatType(TripRecommendation::class)
+        setResponseFormatType<TripRecommendation>()
     }
 
-    val userMessage = ChatMessage.user("Plan a 3-day trip to Kyoto with food highlights")
+    val userMessage = ChatMessage(ChatMessage.Role.USER, "Plan a 3-day trip to Kyoto with food highlights")
 
     conversation.generateResponse(userMessage, options).onEach(::process).collect()
     ```
