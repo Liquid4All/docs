@@ -136,7 +136,7 @@ The `VoiceConversation` adapter looks similar on every platform — both impleme
   </Tab>
   <Tab title="Kotlin (Android)">
     ```kotlin
-    import ai.liquid.leap.model_downloader.LeapModelDownloader
+    import ai.liquid.leap.downloader.LeapModelDownloader
     import ai.liquid.leap.ui.VoiceAssistantIntent
     import ai.liquid.leap.ui.VoiceAssistantStore
     import ai.liquid.leap.ui.VoiceAssistantStoreState
@@ -343,11 +343,11 @@ The store calls into a `VoiceConversation` you provide. A minimal adapter that w
   <Tab title="Kotlin (all platforms)">
     ```kotlin
     import ai.liquid.leap.Conversation
-    import ai.liquid.leap.MessageResponse
+    import ai.liquid.leap.audio.FloatAudioBuffer
     import ai.liquid.leap.message.ChatMessage
     import ai.liquid.leap.message.ChatMessageContent
     import ai.liquid.leap.message.GenerationStats
-    import ai.liquid.leap.message.encodePcm16Wav
+    import ai.liquid.leap.message.MessageResponse
     import ai.liquid.leap.ui.VoiceConversation
 
     class LeapVoiceConversation(private val conv: Conversation) : VoiceConversation {
@@ -357,10 +357,10 @@ The store calls into a `VoiceConversation` you provide. A minimal adapter that w
             sampleRate: Int,
             onAudioChunk: (samples: FloatArray, sampleRate: Int) -> Unit,
         ): GenerationStats? {
-            val wavBytes = encodePcm16Wav(audioSamples, sampleRate)
+            // Send raw float32 PCM directly — no WAV re-encode needed.
             val userMessage = ChatMessage(
                 role = ChatMessage.Role.USER,
-                content = listOf(ChatMessageContent.Audio(wavBytes)),
+                content = listOf(ChatMessageContent.AudioPcmF32(audioSamples, sampleRate)),
             )
 
             var stats: GenerationStats? = null
