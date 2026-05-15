@@ -211,9 +211,8 @@ import ai.liquid.leap.structuredoutput.Generatable
 import ai.liquid.leap.structuredoutput.Guide
 import kotlinx.serialization.Serializable
 
-@Generatable
 @Serializable
-@Guide("A complete recipe with metadata, ingredients, and instructions.")
+@Generatable("A complete recipe with metadata, ingredients, and instructions.")
 data class Recipe(
     val name: String,
     val description: String,
@@ -227,8 +226,8 @@ data class Recipe(
     val tags: List<String>,
 )
 
-@Generatable
 @Serializable
+@Generatable("A single recipe ingredient with amount and unit.")
 data class Ingredient(
     val item: String,
     val amount: String,

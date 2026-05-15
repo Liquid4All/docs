@@ -3,7 +3,7 @@ title: "Constrained Generation"
 description: "Generate structured JSON output with compile-time validation — same approach on every platform."
 ---
 
-Constrained generation forces the model to emit JSON matching a schema. Use the language's native facility — Swift macros (`@Generatable` / `@Guide`) or Kotlin annotations (`@Generatable` / `@Guide`) — to define the structure, then set it on `GenerationOptions`. The schema is computed at compile time (Swift) or via reflection at load time (Kotlin), and the model's output decodes directly into your type.
+Constrained generation forces the model to emit JSON matching a schema. Use the language's native facility — Swift macros (`@Generatable` / `@Guide`) or Kotlin annotations (`@Generatable` / `@Guide`) — to define the structure, then set it on `GenerationOptions`. The schema is computed at compile time (Swift) or built from the `kotlinx.serialization` descriptor at runtime (Kotlin), and the model's output decodes directly into your type.
 
 ## Define the structured type
 
@@ -13,6 +13,7 @@ Constrained generation forces the model to emit JSON matching a schema. Use the 
 
     ```swift
     import LeapModelDownloader
+    import LeapSDKMacros
 
     @Generatable("A joke with metadata")
     struct Joke: Codable {
@@ -35,16 +36,26 @@ Constrained generation forces the model to emit JSON matching a schema. Use the 
     </Info>
   </Tab>
   <Tab title="Kotlin (all platforms)">
-    `@Generatable` and `@Guide` are runtime annotations on Kotlin `data class` declarations. All properties must be declared in the primary constructor.
+    `@Generatable` and `@Guide` are `@SerialInfo` annotations applied to `@Serializable` Kotlin `data class` declarations. All properties must be declared in the primary constructor, and the class itself must carry `@kotlinx.serialization.Serializable` so the schema generator can read its descriptor.
 
     ```kotlin
     package ai.liquid.leap.structuredoutput
 
+    @kotlinx.serialization.SerialInfo
+    @Target(AnnotationTarget.CLASS)
+    @Retention(AnnotationRetention.RUNTIME)
     annotation class Generatable(val description: String)
+
+    @kotlinx.serialization.SerialInfo
+    @Target(AnnotationTarget.PROPERTY)
+    @Retention(AnnotationRetention.RUNTIME)
     annotation class Guide(val description: String)
     ```
 
     ```kotlin
+    import kotlinx.serialization.Serializable
+
+    @Serializable
     @Generatable(description = "Facts about a city")
     data class CityFact(
         @Guide(description = "Name of the city")
@@ -60,6 +71,8 @@ Constrained generation forces the model to emit JSON matching a schema. Use the 
         val placeOfInterests: List<String>,
     )
     ```
+
+    The `@Serializable` annotation is required — `JSONSchemaGenerator.getJSONSchema<T>()` resolves the type via `kotlinx.serialization`'s `serializer<T>()` and throws `LeapGeneratableSchematizationException("Type must be @Serializable to generate JSON Schema")` if the type isn't serializable.
   </Tab>
 </Tabs>
 
@@ -68,10 +81,18 @@ Constrained generation forces the model to emit JSON matching a schema. Use the 
 <Tabs>
   <Tab title="Swift (iOS / macOS)">
     ```swift
-    var options = GenerationOptions(temperature: 0.3, minP: 0.15, repetitionPenalty: 1.05)
-    try options.setResponseFormat(type: Joke.self)
+    let options = GenerationOptions()
+        .with(temperature: 0.3)
+        .with(minP: 0.15)
+        .with(repetitionPenalty: 1.05)
+        .with(jsonSchema: Joke.jsonSchema())
 
-    let message = ChatMessage(role: .user, content: [.text("Tell me a programming joke")])
+    let message = ChatMessage(
+        role: .user,
+        content: [.text("Tell me a programming joke")],
+        reasoningContent: nil,
+        functionCalls: nil
+    )
 
     for try await response in conversation.generateResponse(
         message: message,
@@ -124,12 +145,16 @@ Some models do better when the JSON Schema is also included in the prompt text. 
 <Tabs>
   <Tab title="Swift (iOS / macOS)">
     ```swift
-    let schemaString = try JSONSchemaGenerator.getJSONSchema(for: Joke.self)
+    let schemaString = JSONSchemaGenerator.getJSONSchema(for: Joke.self)
     let message = ChatMessage(
         role: .user,
-        content: [.text("Tell me a programming joke following this JSON Schema: \(schemaString)")]
+        content: [.text("Tell me a programming joke following this JSON Schema: \(schemaString)")],
+        reasoningContent: nil,
+        functionCalls: nil
     )
     ```
+
+    `JSONSchemaGenerator.getJSONSchema(for:)` ships in the `LeapSDKMacros` product (no `try` needed; it's non-throwing — it just forwards to the macro-synthesized `Joke.jsonSchema()`).
   </Tab>
   <Tab title="Kotlin (all platforms)">
     ```kotlin
@@ -198,6 +223,9 @@ Composition types are supported as long as the leaf types are supported.
   </Tab>
   <Tab title="Kotlin (all platforms)">
     ```kotlin
+    import kotlinx.serialization.Serializable
+
+    @Serializable
     @Generatable("A recipe with ingredients and instructions")
     data class Recipe(
         @Guide("Name of the dish")
@@ -219,6 +247,7 @@ Composition types are supported as long as the leaf types are supported.
         val nutrition: NutritionInfo? = null,
     )
 
+    @Serializable
     @Generatable("Nutritional information for a recipe")
     data class NutritionInfo(
         @Guide("Calories per serving")
@@ -251,7 +280,7 @@ Smaller, single-responsibility types produce better output than sprawling struct
 
 ### Lower temperature for structured output
 
-Temperature `0.3–0.5` typically improves adherence to the schema. The default `0.7` is biased toward conversational variation that doesn't help when you need parseable JSON.
+Temperature `0.1–0.3` typically improves adherence to the schema — high-temperature sampling adds variation that doesn't help when you need parseable JSON. Use the per-model defaults the LFM model cards recommend (e.g. `0.1` for instruct/VL, `0.3` for LFM2 text) and lower from there if the model strays.
 
 ### Validate the decoded output
 
@@ -289,8 +318,8 @@ Even with constrained generation, you should handle parse failures gracefully. T
 
 ## How it works
 
-1. **Compile/load time** — `@Generatable` produces a JSON Schema for your type. (Swift: compile-time macro; Kotlin: reflective build at load time.)
-2. **Configuration** — `GenerationOptions.setResponseFormat(type:)` / `setResponseFormatType(...)` installs the schema as `jsonSchemaConstraint` on the generation options.
+1. **Compile/load time** — `@Generatable` produces a JSON Schema for your type. (Swift: compile-time macro emits `jsonSchema()`; Kotlin: built at runtime from the `kotlinx.serialization` descriptor.)
+2. **Configuration** — Swift `options.with(jsonSchema: T.jsonSchema())` (or `GenerationOptionsCompat.setResponseFormat(jsonSchema:)`) / Kotlin `setResponseFormatType<T>()` installs the schema as `jsonSchemaConstraint` on the generation options.
 3. **Generation** — the SDK constrains decoding so only tokens that produce schema-valid JSON are emitted. The model's output is guaranteed to parse.
 
 ## Error handling
