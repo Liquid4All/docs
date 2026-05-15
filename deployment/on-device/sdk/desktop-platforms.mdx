@@ -22,7 +22,7 @@ The LEAP SDK is a Kotlin Multiplatform library. The same conversation, model-loa
 | Platform | Architectures | Min OS | Binding | Notes |
 |---|---|---|---|---|
 | **Android** | ARM64 | API 31 (Android 12) | JNI | See [Quick Start](/deployment/on-device/sdk/quick-start). |
-| **JVM Desktop** | macOS ARM64 · Linux x86_64 · Linux aarch64 · Windows x86_64 · Windows aarch64 | JDK 11 | JNI | This page. |
+| **JVM Desktop** | macOS ARM64 · Linux x86_64 · Linux aarch64 · Windows x86_64 · Windows aarch64 | JDK 17 | JNI | This page. |
 | **Linux native** | x86_64 · aarch64 | glibc 2.34+ (Ubuntu 22.04, Debian 12, RHEL 9) | C-interop (Kotlin/Native) | This page. |
 | **Windows native** | x86_64 (MinGW toolchain) | Windows 10+ | C-interop (Kotlin/Native) | This page. |
 | **iOS** | ARM64 (device + simulator) | iOS 17 | C-interop | See [Quick Start](/deployment/on-device/sdk/quick-start). |
@@ -51,11 +51,12 @@ The JVM target supports Kotlin and Java projects on macOS (Apple Silicon), Linux
     dependencies {
         implementation("ai.liquid.leap:leap-sdk:0.10.6")
 
-        // Optional: OpenAI-compatible cloud chat client
-        // implementation("ai.liquid.leap:leap-openai-client:0.10.6")
-
         // Optional: Compose Multiplatform voice widget (also runs on JVM)
         // implementation("ai.liquid.leap:leap-ui:0.10.6")
+
+        // Note: `leap-openai-client` is not published for JVM — it targets only
+        // Android + Apple + Linux/MinGW native. For a JVM-side cloud client, use
+        // any standard OpenAI Java/Kotlin SDK.
     }
 
     application {
@@ -163,7 +164,7 @@ Pass `mmprojPath = "..."` for vision models, or `audioDecoderPath = "..."` (and 
 
 ### Runtime expectations
 
-- **Memory.** Plan for at least `model_size_on_disk + 1 GiB` of free RAM. With `use_mmap=true` (the default since v0.10.4 — see the [changelog](/deployment/on-device/leap-sdk-changelog#mmap-default)) the OS pages weights in lazily, so resident memory grows as the model is exercised rather than at load time.
+- **Memory.** Plan for at least `model_size_on_disk + 1 GiB` of free RAM. With `use_mmap=true` (the default since v0.10.4 — see the [changelog](/deployment/on-device/leap-sdk-changelog#memory-mapped-model-loading-by-default)) the OS pages weights in lazily, so resident memory grows as the model is exercised rather than at load time.
 - **Threads.** The engine defaults to a sensible CPU thread count for the host (`CpuThreadAdvisor.getRecommendedThreadCount()`). Override by passing `ModelLoadingOptions(cpuThreads = N)` through `loadModel(...)` if you need to share the box with other workloads.
 - **GPU acceleration.** Available on macOS (Metal, automatic) and on Linux JVM builds with a CUDA-capable GPU when the matching native variant is on the classpath. GPU offload is configured through the `extras` JSON payload on `ModelLoadingOptions` (advanced use only — most desktop workloads run pure-CPU).
 
@@ -216,7 +217,7 @@ Build with the usual Kotlin/Native link tasks:
 The resulting binary lives at `build/bin/linuxX64/releaseExecutable/`, alongside the `.so` files the plugin installed (`libinference_engine.so`, `libinference_engine_llamacpp_backend.so`, `libie_zip.so`, plus their transitive dependencies). Keep them co-located when you ship — the cinterop manifest bakes `-rpath=$ORIGIN` into the binary so the dynamic linker resolves siblings.
 
 <Warning>
-**Versions 0.10.0, 0.10.1, and 0.10.2 cannot link a working Kotlin/Native executable** due to three separate Maven Central / cinterop issues that have all been fixed in 0.10.5. Maven Central is immutable per GAV, so the older versions cannot be republished — pin to **0.10.5 or newer**. See [the changelog](/deployment/on-device/leap-sdk-changelog#kotlin-native-linux-windows) for the full story.
+**Versions 0.10.0 and 0.10.1 cannot link a working Kotlin/Native executable** due to Maven Central / cinterop issues; v0.10.2 and v0.10.3 were never published, and the fixes shipped across v0.10.4.x and v0.10.6. Maven Central is immutable per GAV, so the older versions cannot be republished — pin to **0.10.6 or newer**. See [the changelog](/deployment/on-device/leap-sdk-changelog#kotlin-native-linux-windows) for the full story.
 </Warning>
 
 ### Manual recipe (if you can't apply the plugin)
@@ -321,7 +322,7 @@ Identical Swift API to iOS — same `ModelDownloader`, `Conversation`, `ChatMess
 )
 ```
 
-The XCFramework slice for macOS ARM64 is in the same zip as the iOS slices. Mac Catalyst (`x86_64-apple-ios13.0-macabi`, `arm64-apple-ios13.0-macabi`) is also included.
+The XCFramework slice for macOS ARM64 is in the same zip as the iOS slices. The released framework ships exactly three slices — `ios-arm64`, `ios-arm64-simulator`, `macos-arm64`; **Mac Catalyst is not supported**, and the iOS simulator slice is ARM64-only (Intel-Mac simulator hosts cannot run it).
 
 ### From Kotlin (JVM, Compose for Desktop)
 

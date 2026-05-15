@@ -237,10 +237,10 @@ Both LEAP and the OpenAI Python streaming client run inside an async context. Th
 
 | Concept | OpenAI | LEAP |
 |---|---|---|
-| Role-tagged messages | `{"role": "user", "content": "..."}` | `ChatMessage(role: .user, content: [.text("...")])` |
-| Streaming responses | `stream=True` iterator | `AsyncThrowingStream` (Swift) / `Flow` (Kotlin) |
-| Function calling | Tool definitions + `tool_calls` field | `registerFunction(LeapFunction)` + `MessageResponse.functionCalls` |
-| Structured output | `response_format = json_schema` | `GenerationOptions.setResponseFormat(type:)` |
+| Role-tagged messages | `{"role": "user", "content": "..."}` | `ChatMessage(role: .user, textContent: "...")` |
+| Streaming responses | `stream=True` iterator | `SkieSwiftFlow<MessageResponse>` (Swift, iterable with `for try await`) / `Flow<MessageResponse>` (Kotlin) |
+| Function calling | Tool definitions + `tool_calls` field | `registerFunction(LeapFunction)` + `MessageResponse.FunctionCalls` |
+| Structured output | `response_format = json_schema` | Swift `options.with(jsonSchema: T.jsonSchema())` / Kotlin `setResponseFormatType<T>()` |
 | Token usage stats | `usage` object on completion | `Complete.stats` (`promptTokens`, `completionTokens`, `tokenPerSecond`) |
 
 ## What's different

@@ -9,7 +9,7 @@ description: "Lightweight client for OpenAI-compatible chat completions APIs —
 
 - **Hybrid on-device + cloud routing.** Run small / fast models on-device with `LeapSDK`, fall back to a larger cloud model for hard prompts.
 - **Standardised cloud API.** Talk to any OpenAI-compatible backend without pulling in a heavier OpenAI SDK.
-- **Streaming first.** SSE streaming is the only mode — non-streaming requests aren't exposed (`stream = true` is the default).
+- **Streaming first.** SSE streaming is the only mode — non-streaming requests aren't exposed. `streamChatCompletion(...)` forces `stream = true` on the outgoing request regardless of the `stream` field on the `ChatCompletionRequest` you pass in.
 
 ## Add the dependency
 
@@ -44,7 +44,7 @@ description: "Lightweight client for OpenAI-compatible chat completions APIs —
 
     Bundles an OkHttp-engine Ktor client. No extra HTTP setup needed.
   </Tab>
-  <Tab title="JVM / native (Gradle)">
+  <Tab title="Kotlin/Native (Gradle)">
     ```kotlin
     dependencies {
         implementation("ai.liquid.leap:leap-sdk:0.10.6")
@@ -52,7 +52,7 @@ description: "Lightweight client for OpenAI-compatible chat completions APIs —
     }
     ```
 
-    Bundles the CIO Ktor engine on JVM, and platform-appropriate engines on Linux native / Windows native. Maven users: use `leap-openai-client-jvm` for the JVM artifact.
+    Targets `linuxX64`, `linuxArm64`, and `mingwX64` (Windows native). **`leap-openai-client` does not publish a JVM target** — `leap-sdk` does, but the OpenAI client lives in Android + Apple + native source sets only. If you need OpenAI-compatible chat completions from a JVM-only host, use any standard OpenAI client (e.g. official OpenAI Java/Kotlin SDK, OkHttp + JSON) — the `LeapSDK` on-device runner has no JVM-specific cloud dependency.
   </Tab>
 </Tabs>
 
@@ -60,10 +60,16 @@ description: "Lightweight client for OpenAI-compatible chat completions APIs —
 
 <Tabs>
   <Tab title="Swift (iOS / macOS)">
+    <Warning>
+    The `leap-sdk-openai-client` Kotlin module does **not** apply the SKIE plugin (only `leap-sdk`, `leap-sdk-model-downloader`, and `leap-ui` do). That means `Flow<ChatCompletionEvent>` is **not** bridged to a Swift `AsyncSequence` and the `onEnum(of:)` helper is **not** generated for `ChatCompletionEvent`. Swift consumers must collect the Kotlin `Flow` through its native collector and downcast each event with `as?`. For most Swift apps that just need cloud chat completions, an off-the-shelf OpenAI Swift client is more ergonomic — use `LeapOpenAIClient` from Swift only if you need to share Kotlin code with Android.
+    </Warning>
+
+    Manual collection pattern (the `Flow<ChatCompletionEvent>.collect(...)` shape varies by Kotlin/Native version — check the framework header in your Xcode build for the exact label):
+
     ```swift
     import LeapOpenAIClient
 
-    let client = OpenAiClient(
+    let client = OpenAiClientKt.openAiClient(
         config: OpenAiClientConfig(
             apiKey: "sk-…",
             baseUrl: "https://api.openai.com/v1"
@@ -79,18 +85,19 @@ description: "Lightweight client for OpenAI-compatible chat completions APIs —
         temperature: 0.7
     )
 
-    for try await event in client.streamChatCompletion(request: request) {
-        switch onEnum(of: event) {
-        case .delta(let d):
-            print(d.content, terminator: "")
-        case .done(let d):
-            if let usage = d.usage {
-                print("\nTokens: \(usage.totalTokens)")
+    // Pseudocode — actual collector signature depends on your Kotlin/Native version
+    // and framework headers. Without SKIE, there is no `for try await` integration.
+    try await client.streamChatCompletion(request: request).collect(
+        collector: FlowCollector { event in
+            if let delta = event as? ChatCompletionEvent.Delta {
+                print(delta.content, terminator: "")
+            } else if let done = event as? ChatCompletionEvent.Done {
+                if let usage = done.usage { print("\nTokens: \(usage.totalTokens)") }
+            } else if let err = event as? ChatCompletionEvent.Error {
+                print("\nError: \(err.message)")
             }
-        case .error(let e):
-            print("\nError: \(e.message)")
         }
-    }
+    )
 
     client.close()  // closes the underlying URLSession-backed HttpClient
     ```
@@ -276,15 +283,23 @@ Route simple prompts to a small on-device LFM; escalate harder prompts to a clou
 
         func send(_ text: String, useCloud: Bool) async throws {
             if useCloud {
+                // Cloud path: leap-sdk-openai-client has no SKIE — collect the Kotlin
+                // Flow manually and downcast each event with `as?`.
                 let request = ChatCompletionRequest(
                     model: "gpt-4o-mini",
                     messages: [ChatMessage.User(content: text)]
                 )
-                for try await event in cloud.streamChatCompletion(request: request) {
-                    if case let .delta(d) = onEnum(of: event) { appendChunk(d.content) }
-                }
+                try await cloud.streamChatCompletion(request: request).collect(
+                    collector: FlowCollector { event in
+                        if let delta = event as? ChatCompletionEvent.Delta {
+                            appendChunk(delta.content)
+                        }
+                    }
+                )
             } else {
-                let userMessage = LeapModelDownloader.ChatMessage(role: .user, content: [.text(text)])
+                // On-device path: leap-sdk has SKIE — `for try await` + `onEnum(of:)`
+                // work as written.
+                let userMessage = ChatMessage(role: .user, textContent: text)
                 for try await response in onDevice.generateResponse(message: userMessage) {
                     if case let .chunk(c) = onEnum(of: response) { appendChunk(c.text) }
                 }
