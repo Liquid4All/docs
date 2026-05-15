@@ -57,14 +57,20 @@
         "tab": "LFM",
         "groups": [
           {
-            "group": "Model Library",
+            "group": "Models",
             "icon": "brain",
             "pages": [
-              "lfm/models/complete-library",
-              "lfm/models/text-models",
-              "lfm/models/vision-models",
-              "lfm/models/audio-models",
-              "lfm/models/liquid-nanos"
+              {
+                "group": "Model Library",
+                "root": "lfm/models/complete-library",
+                "expanded": false,
+                "pages": [
+                  "lfm/models/text-models",
+                  "lfm/models/vision-models",
+                  "lfm/models/audio-models",
+                  "lfm/models/liquid-nanos"
+                ]
+              }
             ]
           },
           {
