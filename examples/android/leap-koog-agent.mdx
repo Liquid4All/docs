@@ -87,17 +87,17 @@ Before running this example, ensure you have the following:
   # Ensure device is connected
   adb devices
 
-  # Create directory
-  adb shell mkdir -p /tmp/models
+  # Create directory (world-readable so the app can read it)
+  adb shell mkdir -p /data/local/tmp/liquid/
 
   # Push the GGUF model file
-  adb push lfm2-1.2b-q5_k_m.gguf /tmp/models/
+  adb push lfm2-1.2b-q5_k_m.gguf /data/local/tmp/liquid/
 
   # Verify deployment
-  adb shell ls -lh /tmp/models/
+  adb shell ls -lh /data/local/tmp/liquid/
   ```
 
-  **Note:** The path `/tmp/models` is used in this example. If you deploy to a different location, update the `modelPath` in your app code accordingly. The example snippets below use `loadSimpleModel(model: ModelSource(...))` to load the sideloaded file; switch to `loadModel(modelName:, quantizationType:)` if you'd rather have the SDK download the model automatically.
+  **Note:** Apps cannot read `/tmp/` on Android — use `/data/local/tmp/<your-namespace>/` for ADB-pushed assets (matches the other Android examples). If you deploy to a different location, update the `modelPath` in your app code accordingly. The example snippets below use `loadSimpleModel(model: ModelSource(...))` to load the sideloaded file; switch to `loadModel(modelName:, quantizationType:)` if you'd rather have the SDK download the model automatically.
 </Accordion>
 
 <Accordion title="Dependencies Setup">
@@ -139,9 +139,9 @@ Follow these steps to build and run AI agents on Android:
    cd LeapSDK-Examples/Android/LeapKoogAgent
    ```
 
-2. **Deploy the model bundle**
+2. **Deploy the model**
    - Follow the ADB commands in the setup section above
-   - Ensure the bundle is at `/tmp/models/lfm2-1.2b-tool.bundle`
+   - Ensure the GGUF is at `/data/local/tmp/liquid/lfm2-1.2b-q5_k_m.gguf`
 
 3. **Open in Android Studio**
    - Launch Android Studio
@@ -188,7 +188,7 @@ class AgentViewModel(application: Application) : AndroidViewModel(application) {
             // Sideloaded GGUF that was pushed via ADB (see Model Setup).
             runner = downloader.loadSimpleModel(
                 model = ModelSource(
-                    modelPath = "/tmp/models/lfm2-1.2b-tool.gguf",
+                    modelPath = "/data/local/tmp/liquid/lfm2-1.2b-q5_k_m.gguf",
                     modelName = "LFM2-1.2B",
                     quantizationId = "Q5_K_M",
                 ),
