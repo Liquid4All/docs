@@ -68,8 +68,9 @@ Both classes return the same `ModelRunner` and share an on-disk model cache when
     class LeapModelDownloader(
         private val context: Context,
         modelFileDir: File? = null,
-        private val extraHTTPRequestHeaders: Map<String, String> = mapOf(),
         private val notificationConfig: LeapModelDownloaderNotificationConfig = LeapModelDownloaderNotificationConfig(),
+        private val downloaderConfig: LeapDownloaderConfig = LeapDownloaderConfig(),
+        private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
     )
     ```
 
@@ -77,8 +78,9 @@ Both classes return the same `ModelRunner` and share an on-disk model cache when
     |---|---|
     | `context` | Activity or Application context. |
     | `modelFileDir` | Override the model cache directory. Defaults to app's external files directory. |
-    | `extraHTTPRequestHeaders` | Extra headers to attach to download requests. |
     | `notificationConfig` | Foreground service notification title/content/icon strings. |
+    | `downloaderConfig` | `LeapDownloaderConfig(saveDir, validateSha256, ...)` — forwarded to the underlying cross-platform `LeapDownloader`. |
+    | `ioDispatcher` | Coroutine dispatcher for blocking I/O. Defaults to `Dispatchers.IO`. |
   </Tab>
   <Tab title="Kotlin (JVM / native)">
     ```kotlin
@@ -523,7 +525,6 @@ Per-load runtime overrides. Default values come from the model bundle's manifest
         var extras: String? = null,
     ) {
         companion object {
-            fun build(action: ModelLoadingOptions.() -> Unit): ModelLoadingOptions
             fun cacheOptions(path: String, maxEntriesDisk: Int = 40): EngineOptions.CacheOptions
         }
     }
@@ -536,10 +537,10 @@ Per-load runtime overrides. Default values come from the model bundle's manifest
             modelName = "LFM2-1.2B",
             quantizationId = "Q5_K_M",
         ),
-        options = ModelLoadingOptions.build {
-            cpuThreads = 6
-            contextSize = 4096
-        }
+        options = ModelLoadingOptions(
+            cpuThreads = 6,
+            contextSize = 4096,
+        )
     )
     ```
 
