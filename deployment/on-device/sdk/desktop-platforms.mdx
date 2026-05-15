@@ -107,9 +107,9 @@ The JVM target supports Kotlin and Java projects on macOS (Apple Silicon), Linux
 `LeapDownloader` is the cross-platform downloader. Point it at a writable directory and call `loadModel(modelName:, quantizationType:)` for manifest-based downloads, or `loadSimpleModel(model: ModelSource(...))` for a GGUF you already have on disk.
 
 ```kotlin
-import ai.liquid.leap.LeapDownloader
-import ai.liquid.leap.LeapDownloaderConfig
-import ai.liquid.leap.ModelSource
+import ai.liquid.leap.manifest.LeapDownloader
+import ai.liquid.leap.manifest.LeapDownloaderConfig
+import ai.liquid.leap.manifest.ModelSource
 import ai.liquid.leap.message.ChatMessage
 import ai.liquid.leap.message.MessageResponse
 import kotlinx.coroutines.runBlocking
@@ -132,7 +132,7 @@ fun main() = runBlocking {
     )
 
     conversation.generateResponse(
-        ChatMessage.user("What is the capital of France?")
+        ChatMessage(ChatMessage.Role.USER, "What is the capital of France?")
     ).collect { response ->
         when (response) {
             is MessageResponse.Chunk -> print(response.text)
