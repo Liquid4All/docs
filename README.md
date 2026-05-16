@@ -177,7 +177,16 @@ The [`check-docs.yaml`](.github/workflows/check-docs.yaml) workflow has a `check
 
 ### Link Snapshot
 
-[`link-snapshot.yaml`](./link-snapshot.yaml) records every URL the docs site has served. The [`check-link-snapshot.yaml`](.github/workflows/check-link-snapshot.yaml) workflow fails any PR that would make a recorded URL stop resolving — add a redirect, leave the page on disk but drop it from navigation, or move the URL to `deleted` in the snapshot. Run `npm install` once to install the pre-commit hook that keeps the snapshot in sync. See [CLAUDE.md](./CLAUDE.md#link-snapshot-contract) for details.
+[`link-snapshot.yaml`](./link-snapshot.yaml) records every URL the docs site has served. The [`check-link-snapshot.yaml`](.github/workflows/check-link-snapshot.yaml) workflow fails any PR that would make a recorded URL stop resolving. Run `npm install` once to install the pre-commit hook that keeps the snapshot in sync.
+
+How it works:
+
+- The pre-commit hook regenerates the snapshot whenever `docs.json` or any `.mdx`/`.md` file is staged.
+- `active:` is **append-only** — new URLs are added, but existing entries are never silently dropped, even after you delete the underlying page.
+- CI re-checks every `active` URL on each PR. A URL is satisfied if it's still in the navigation, still on disk, or reachable via a redirect chain.
+- The only way to retire a URL is to move it to `deleted:` explicitly. This forces every removal to be a deliberate choice — redirect, deprecate-but-keep, or formally retire.
+
+See [CLAUDE.md](./CLAUDE.md#link-snapshot-contract) for the remediation paths and the full resolution algorithm.
 
 ---
 
