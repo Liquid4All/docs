@@ -13,6 +13,13 @@ const SNAPSHOT_HEADER = `# Auto-managed by scripts/generateLinkSnapshot.ts.
 # \`deleted\` with a reason. The CI check skips entries listed under \`deleted\`.
 `;
 
+const DELETED_EXAMPLE = `  deleted:
+    # Minimal form — git history is the canonical record of why this URL was retired:
+    - /lfm/old/experimental-thing
+    # Or, if you want the reason inline:
+    - url: /lfm/another-old-thing
+      reason: "Page retired in DOC-12; no substitute exists."`;
+
 // Directories whose .mdx/.md files map to docs URLs. snippets/ is excluded
 // because it holds reusable fragments, not pages.
 const PAGE_DIRS = ['lfm', 'leap', 'examples', 'deployment'];
@@ -33,10 +40,13 @@ type NavNode =
       tabs?: NavNode[];
     };
 
-interface DeletedEntry {
-  url: string;
-  reason?: string;
-  retired_at?: string;
+// A deleted entry is either a bare URL string (minimal form — commit history
+// is the record of why) or an object with `url` plus optional `reason` /
+// `retired_at` fields if the contributor wants the rationale inline.
+type DeletedEntry = string | { url: string; reason?: string; retired_at?: string };
+
+function deletedUrl(entry: DeletedEntry): string {
+  return typeof entry === 'string' ? entry : entry.url;
 }
 
 interface Snapshot {
@@ -115,7 +125,7 @@ function loadSnapshot(): Snapshot {
   const parsed = YAML.parse(raw) ?? {};
   return {
     active: Array.isArray(parsed.active) ? parsed.active.map(String) : [],
-    deleted: Array.isArray(parsed.deleted) ? parsed.deleted : [],
+    deleted: Array.isArray(parsed.deleted) ? (parsed.deleted as DeletedEntry[]) : [],
   };
 }
 
@@ -134,7 +144,7 @@ function computeUpdatedSnapshot(docs: DocsJson, prev: Snapshot): Snapshot {
   const fromNav = navUrls(docs);
   const fromRedirects = redirectSources(docs);
   const fromDisk = diskPageUrls();
-  const deletedUrls = new Set(prev.deleted.map((d) => d.url));
+  const deletedUrls = new Set(prev.deleted.map(deletedUrl));
   // Start from prior active, minus anything the user has since moved to `deleted`.
   const merged = new Set([...prev.active].filter((url) => !deletedUrls.has(url)));
   for (const url of fromNav) if (!deletedUrls.has(url)) merged.add(url);
@@ -197,7 +207,7 @@ function checkContract(docs: DocsJson, snap: Snapshot): { ok: boolean; failures:
       destination: normalizeUrl(r.destination),
     })),
   };
-  const deleted = new Set(snap.deleted.map((d) => d.url));
+  const deleted = new Set(snap.deleted.map(deletedUrl));
   const failures: string[] = [];
   for (const url of snap.active) {
     if (deleted.has(url)) continue;
@@ -247,7 +257,12 @@ function main(): void {
     console.error('  1. Add a redirect entry under `redirects` in docs.json pointing to a current page.');
     console.error('  2. Keep the underlying .mdx file on disk but remove it from docs.json navigation');
     console.error('     (the URL stays served but undiscoverable — mark the page as deprecated).');
-    console.error('  3. Move the URL from `active` to `deleted` in link-snapshot.yaml with a reason.');
+    console.error('  3. Move the URL from `active` to `deleted` in link-snapshot.yaml. The');
+    console.error('     minimal form is just the URL string; add an inline `reason` if you want');
+    console.error('     it embedded next to the entry (otherwise the commit history is the');
+    console.error('     record). Example:');
+    console.error('');
+    console.error(DELETED_EXAMPLE);
     process.exit(1);
   }
   if (stale) {
