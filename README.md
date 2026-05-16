@@ -29,6 +29,7 @@ This is the **official documentation repository** for Liquid AI. It contains com
   - [Making Changes](#making-changes)
   - [Submitting Changes](#submitting-changes)
   - [Link Check](#link-check)
+  - [Link Snapshot](#link-snapshot)
 - [License](#license)
 
 ---
@@ -172,6 +173,31 @@ For more details on Mintlify setup and configuration, visit the [official Mintli
 ### Link Check
 
 The [`check-docs.yaml`](.github/workflows/check-docs.yaml) workflow has a `check-link` job that examine markdown links. Customize the config in [`link-check.json`](./link-check.json). If a link cannot be accessed (e.g. Github private repo), add the URL pattern to the `ignorePatterns` array.
+
+### Link Snapshot
+
+[`link-snapshot.yaml`](./link-snapshot.yaml) is an append-only record of every URL the docs site has ever served (pages from `docs.json` navigation plus redirect sources). The [`check-link-snapshot.yaml`](.github/workflows/check-link-snapshot.yaml) workflow fails any PR whose changes would cause one of those URLs to stop resolving.
+
+One-time setup so the pre-commit hook keeps the snapshot fresh:
+
+```bash
+npm install
+```
+
+The hook regenerates the snapshot whenever `docs.json` or any `.mdx`/`.md` file is staged.
+
+When the CI check fails on a URL, pick one of three remediations:
+
+1. **Add a redirect** under `redirects` in `docs.json` pointing to a current page.
+2. **Keep the page on disk but remove it from `docs.json` navigation** — the URL stays served but undiscoverable. Add a deprecation note at the top of the page.
+3. **Move the URL** from `active` to `deleted` in `link-snapshot.yaml` with a `reason` and `retired_at` date. Use this only when no good substitute exists.
+
+To regenerate or verify manually:
+
+```bash
+npm run snapshot:update   # regenerate link-snapshot.yaml
+npm run snapshot:check    # verify the contract (what CI runs)
+```
 
 ---
 
