@@ -176,28 +176,7 @@ The [`check-docs.yaml`](.github/workflows/check-docs.yaml) workflow has a `check
 
 ### Link Snapshot
 
-[`link-snapshot.yaml`](./link-snapshot.yaml) is an append-only record of every URL the docs site has ever served (pages from `docs.json` navigation plus redirect sources). The [`check-link-snapshot.yaml`](.github/workflows/check-link-snapshot.yaml) workflow fails any PR whose changes would cause one of those URLs to stop resolving.
-
-One-time setup so the pre-commit hook keeps the snapshot fresh:
-
-```bash
-npm install
-```
-
-The hook regenerates the snapshot whenever `docs.json` or any `.mdx`/`.md` file is staged.
-
-When the CI check fails on a URL, pick one of three remediations:
-
-1. **Add a redirect** under `redirects` in `docs.json` pointing to a current page.
-2. **Keep the page on disk but remove it from `docs.json` navigation** — the URL stays served but undiscoverable. Add a deprecation note at the top of the page.
-3. **Move the URL** from `active` to `deleted` in `link-snapshot.yaml` with a `reason` and `retired_at` date. Use this only when no good substitute exists.
-
-To regenerate or verify manually:
-
-```bash
-npm run snapshot:update   # regenerate link-snapshot.yaml
-npm run snapshot:check    # verify the contract (what CI runs)
-```
+[`link-snapshot.yaml`](./link-snapshot.yaml) records every URL the docs site has served. The [`check-link-snapshot.yaml`](.github/workflows/check-link-snapshot.yaml) workflow fails any PR that would make a recorded URL stop resolving — add a redirect, leave the page on disk but drop it from navigation, or move the URL to `deleted` in the snapshot. Run `npm install` once to install the pre-commit hook that keeps the snapshot in sync. See [CLAUDE.md](./CLAUDE.md#link-snapshot-contract) for details.
 
 ---
 
