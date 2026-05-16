@@ -11,8 +11,9 @@ const SNAPSHOT_HEADER = `# Auto-managed by scripts/generateLinkSnapshot.ts.
 # \`active\` is append-only — pre-commit adds new URLs but never removes them.
 # To intentionally retire a URL without a redirect, move it from \`active\` to
 # \`deleted\`. The CI check skips entries listed under \`deleted\`.
-#
-# Examples of \`deleted\` entries (uncomment and adapt):
+`;
+
+const DELETED_PREAMBLE = `# Examples of \`deleted\` entries (uncomment and adapt):
 #
 # deleted:
 #   # Minimal form — git history is the canonical record of why this was retired:
@@ -139,14 +140,9 @@ function loadSnapshot(): Snapshot {
 }
 
 function serializeSnapshot(snap: Snapshot): string {
-  const body = YAML.stringify(
-    {
-      active: [...snap.active].sort(),
-      deleted: snap.deleted,
-    },
-    { lineWidth: 0 },
-  );
-  return SNAPSHOT_HEADER + body;
+  const activeYaml = YAML.stringify({ active: [...snap.active].sort() }, { lineWidth: 0 });
+  const deletedYaml = YAML.stringify({ deleted: snap.deleted }, { lineWidth: 0 });
+  return SNAPSHOT_HEADER + activeYaml + DELETED_PREAMBLE + deletedYaml;
 }
 
 function computeUpdatedSnapshot(docs: DocsJson, prev: Snapshot): Snapshot {

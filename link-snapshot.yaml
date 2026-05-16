@@ -2,15 +2,6 @@
 # `active` is append-only — pre-commit adds new URLs but never removes them.
 # To intentionally retire a URL without a redirect, move it from `active` to
 # `deleted`. The CI check skips entries listed under `deleted`.
-#
-# Examples of `deleted` entries (uncomment and adapt):
-#
-# deleted:
-#   # Minimal form — git history is the canonical record of why this was retired:
-#   - /lfm/old/experimental-thing
-#   # Or, if you want the reason inline:
-#   - url: /lfm/another-old-thing
-#     reason: "Page retired in DOC-12; no substitute exists."
 active:
   - /customization/finetuning-frameworks/datasets
   - /customization/finetuning-frameworks/leap-finetune
@@ -173,4 +164,12 @@ active:
   - /lfm/models/liquid-nanos
   - /lfm/models/text-models
   - /lfm/models/vision-models
+# Examples of `deleted` entries (uncomment and adapt):
+#
+# deleted:
+#   # Minimal form — git history is the canonical record of why this was retired:
+#   - /lfm/old/experimental-thing
+#   # Or, if you want the reason inline:
+#   - url: /lfm/another-old-thing
+#     reason: "Page retired in DOC-12; no substitute exists."
 deleted: []
