@@ -181,10 +181,11 @@ The [`check-docs.yaml`](.github/workflows/check-docs.yaml) workflow has a `check
 
 How it works:
 
-- The pre-commit hook regenerates the snapshot whenever `docs.json` or any `.mdx`/`.md` file is staged.
-- `active:` is **append-only** — new URLs are added, but existing entries are never silently dropped, even after you delete the underlying page.
-- CI re-checks every `active` URL on each PR. A URL is satisfied if it's still in the navigation, still on disk, or reachable via a redirect chain.
-- The only way to retire a URL is to move it to `deleted:` explicitly. This forces every removal to be a deliberate choice — redirect, deprecate-but-keep, or formally retire.
+- `link-snapshot.yaml` has two sections: `active:` (URLs the site is currently committed to keep serving) and `deleted:` (URLs intentionally retired).
+- The pre-commit hook regenerates the file whenever `docs.json` or any `.mdx`/`.md` file is staged.
+- The `active:` section is **append-only** — new URLs are added when pages are created, but existing entries are never silently dropped, even after you delete the underlying page.
+- CI re-checks every URL in `active:` on each PR. A URL is satisfied if it's still in the navigation, still on disk, or reachable via a redirect chain.
+- The only way to retire a URL is to move it from `active:` to `deleted:` by hand. This forces every removal to be a deliberate choice — redirect, deprecate-but-keep, or formally retire.
 
 See [CLAUDE.md](./CLAUDE.md#link-snapshot-contract) for the remediation paths and the full resolution algorithm.
 
