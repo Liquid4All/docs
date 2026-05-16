@@ -149,6 +149,7 @@ Navigate to the docs directory and start the development server:
 
 ```bash
 cd docs
+npm i
 mintlify dev
 ```
 
