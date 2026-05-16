@@ -218,7 +218,7 @@ deleted:
 | `npm run snapshot:update` | Regenerates `link-snapshot.yaml` (append-only union with existing `active`). The pre-commit hook runs this automatically when `docs.json` or any `.mdx`/`.md` file is staged, then `git add`s the snapshot. |
 | `npm run snapshot:check` | What CI runs. Verifies every `active` URL still resolves and fails non-zero with a per-URL diagnostic otherwise. |
 
-Both subcommands invoke `scripts/generateLinkSnapshot.ts` through `scripts/runScriptWithEnv.sh`, mirroring the `npm run script scripts/<file>.ts` convention from the wider monorepo. New TypeScript scripts should follow that same pattern.
+Both subcommands invoke `scripts/generateLinkSnapshot.ts` directly via `tsx`. New TypeScript scripts should follow the same pattern — a thin `tsx scripts/<file>.ts` entry under `scripts` in `package.json`.
 
 ### Remediation when CI flags a URL
 

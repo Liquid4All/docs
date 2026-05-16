@@ -3,9 +3,8 @@
   "version": "0.0.1",
   "private": true,
   "scripts": {
-    "script": "scripts/runScriptWithEnv.sh",
-    "snapshot:update": "./scripts/runScriptWithEnv.sh scripts/generateLinkSnapshot.ts --update",
-    "snapshot:check": "./scripts/runScriptWithEnv.sh scripts/generateLinkSnapshot.ts --check",
+    "snapshot:update": "tsx scripts/generateLinkSnapshot.ts --update",
+    "snapshot:check": "tsx scripts/generateLinkSnapshot.ts --check",
     "prepare": "husky"
   },
   "devDependencies": {
