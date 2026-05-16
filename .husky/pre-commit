@@ -1,0 +1,6 @@
+#!/usr/bin/env sh
+# Regenerate link-snapshot.yaml when docs structure may have changed.
+if git diff --cached --name-only | grep -qE '^(docs\.json|.*\.mdx?$)'; then
+  npm run snapshot:update --silent || exit 1
+  git add link-snapshot.yaml
+fi
