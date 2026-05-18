@@ -156,7 +156,7 @@ KMP target completion for `leap-openai-client` plus a repo-wide bytecode-hardeni
 - **`jvm`** (Ktor CIO engine) — Maven Central now publishes `ai.liquid.leap:leap-openai-client-jvm:0.10.7`. Pure-JVM desktop / server apps can route OpenAI-compatible chat completions without dragging in Android or KMP targets. (The 0.10.0 — 0.10.6 SPM cascade only shipped Android + Apple + Linux/MinGW K/N + wasmJs metadata; the JVM slice was absent.)
 - **`wasmJs`** (Ktor Js engine) — browser-side chat-completions client matching what `leap-sdk` already targets.
 
-The Apple slice (`LeapOpenAIClient.xcframework`) ships unchanged — same SSE-stream surface, same `OpenAiClientConfig`, same OpenRouter extra-headers support. SKIE is still not applied to this module, so the Kotlin/Native exports remain the same as v0.10.6: `Flow<ChatCompletionEvent>` is not bridged to Swift `AsyncSequence`, and `onEnum(of:)` is not generated for `ChatCompletionEvent`.
+The Apple slice (`LeapOpenAIClient.xcframework`) ships unchanged — same SSE-stream surface, same `OpenAiClientConfig`, same OpenRouter extra-headers support. SKIE is still not applied to this module in v0.10.7, so the Kotlin/Native exports remain the same as v0.10.6: `Flow<ChatCompletionEvent>` is not bridged to Swift `AsyncSequence`, and `onEnum(of:)` is not generated for `ChatCompletionEvent`. **The next release will enable SKIE on `leap-sdk-openai-client`**, bringing `for try await` over the stream, exhaustive `onEnum(of:)` switching, and SKIE-bundled Swift convenience inits — see the [OpenAI client page](/deployment/on-device/sdk/openai-client) for the current pinning guidance.
 
 **Bytecode hardening:**
 

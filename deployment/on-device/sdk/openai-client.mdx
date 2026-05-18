@@ -71,7 +71,9 @@ description: "Lightweight client for OpenAI-compatible chat completions APIs —
 <Tabs>
   <Tab title="Swift (iOS / macOS)">
     <Warning>
-    The `leap-sdk-openai-client` Kotlin module does **not** apply the SKIE plugin (only `leap-sdk`, `leap-sdk-model-downloader`, and `leap-ui` do). That means `Flow<ChatCompletionEvent>` is **not** bridged to a Swift `AsyncSequence` and the `onEnum(of:)` helper is **not** generated for `ChatCompletionEvent`. Swift consumers must collect the Kotlin `Flow` through its native collector and downcast each event with `as?`. For most Swift apps that just need cloud chat completions, an off-the-shelf OpenAI Swift client is more ergonomic — use `LeapOpenAIClient` from Swift only if you need to share Kotlin code with Android.
+    The `leap-sdk-openai-client` Kotlin module does **not** apply the SKIE plugin in v0.10.7 (only `leap-sdk`, `leap-sdk-model-downloader`, and `leap-ui` do). That means `Flow<ChatCompletionEvent>` is **not** bridged to a Swift `AsyncSequence` and the `onEnum(of:)` helper is **not** generated for `ChatCompletionEvent`. Swift consumers on v0.10.7 must collect the Kotlin `Flow` through its native collector and downcast each event with `as?`. For most Swift apps that just need cloud chat completions, an off-the-shelf OpenAI Swift client is more ergonomic — use `LeapOpenAIClient` from Swift only if you need to share Kotlin code with Android.
+
+    **Coming in the next release:** SKIE will be enabled on `leap-sdk-openai-client`, adding the same Swift-friendly surface as `LeapSDK` — `for try await event in client.streamChatCompletion(...)`, `onEnum(of: event)` exhaustive switching, and nested-class Swift names (`ChatCompletionEvent.Delta` instead of the current flattened `ChatCompletionEventDelta`). Swift convenience inits and builders for `OpenAiClientConfig` are also planned. Pin to v0.10.7 if you need the current behavior frozen; otherwise expect the more ergonomic surface to land soon.
     </Warning>
 
     Manual collection pattern (the `Flow<ChatCompletionEvent>.collect(...)` shape varies by Kotlin/Native version — check the framework header in your Xcode build for the exact label):
