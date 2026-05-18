@@ -16,7 +16,7 @@ The LEAP SDK is a Kotlin Multiplatform library: the same `ModelRunner` / `Conver
 <Tabs>
   <Tab title="iOS / macOS">
     - Xcode 16.0+ with Swift 6.0.
-    - iOS **17.0+** or macOS **15.0+** (Mac Catalyst 17.0+ also supported).
+    - iOS **17.0+** or macOS **15.0+** (Apple Silicon only — Mac Catalyst is **not** supported; the shipped XCFrameworks contain only `ios-arm64`, `ios-arm64-simulator`, and `macos-arm64` slices, and `Package.swift` declares only `.iOS(.v17)` / `.macOS(.v15)` platforms).
     - A physical iPhone or iPad with at least 3 GB RAM for best performance. The simulator works for development but runs models much slower.
 
     <Warning>
@@ -104,22 +104,22 @@ The LEAP SDK is a Kotlin Multiplatform library: the same `ModelRunner` / `Conver
       .binaryTarget(
         name: "LeapSDK",
         url: "https://github.com/Liquid4All/leap-sdk/releases/download/v0.10.7/LeapSDK.xcframework.zip",
-        checksum: "236fb6c897d25fc5804be64edc16a9ee73c26678d02e58dab4a1b77ab2e4898f"
+        checksum: "6f2721aa45d7555646f78cbcaedb57aba3d869f56b24d681ad332846e131ae3d"
       ),
       .binaryTarget(
         name: "LeapModelDownloader",
         url: "https://github.com/Liquid4All/leap-sdk/releases/download/v0.10.7/LeapModelDownloader.xcframework.zip",
-        checksum: "a2a57f9c932ef7005d42b33b69d7a67f0ffb65fb79dffa954be99a0225932a61"
+        checksum: "f649aa6c1aa3e87bbeb1073d5aeeb7224879359a24b18eeccc665d24abc725d8"
       ),
       .binaryTarget(
         name: "LeapOpenAIClient",
         url: "https://github.com/Liquid4All/leap-sdk/releases/download/v0.10.7/LeapOpenAIClient.xcframework.zip",
-        checksum: "b661059af8bfb086931099f8fac9f54e957272d5d6bbc9dd36e3e154fddf8222"
+        checksum: "79bc5443a1cce6fcd4c49c91eeb85727034aaca10d3ef69582c061989c3d9b70"
       ),
       .binaryTarget(
         name: "LeapUi",
         url: "https://github.com/Liquid4All/leap-sdk/releases/download/v0.10.7/LeapUi.xcframework.zip",
-        checksum: "694f4b8a8d1a8cd9086ce718a9fc15f4e74c442541b983816fd0eef8cecc7875"
+        checksum: "f1b198cef88c2a37eaf6dc1f36395d6aed024b0c6c2b43724d942e25b60d22e0"
       ),
       ```
 

@@ -79,7 +79,12 @@ description: "Lightweight client for OpenAI-compatible chat completions APIs —
     ```swift
     import LeapOpenAIClient
 
-    let client = OpenAiClientKt.openAiClient(
+    // The Kotlin top-level `fun OpenAiClient(config: OpenAiClientConfig)` exports as
+    // `OpenAiClientKt.OpenAiClient(config:)` (PascalCase preserved from the Kotlin
+    // function name). Without SKIE the K/N export also flattens Kotlin's nested
+    // class names — `ChatMessage.User` → `ChatMessageUser`,
+    // `ChatCompletionEvent.Delta` → `ChatCompletionEventDelta`, etc.
+    let client = OpenAiClientKt.OpenAiClient(
         config: OpenAiClientConfig(
             apiKey: "sk-…",
             baseUrl: "https://api.openai.com/v1"
@@ -89,8 +94,8 @@ description: "Lightweight client for OpenAI-compatible chat completions APIs —
     let request = ChatCompletionRequest(
         model: "gpt-4o-mini",
         messages: [
-            ChatMessage.System(content: "You are a helpful assistant."),
-            ChatMessage.User(content: "What is the capital of Japan?")
+            ChatMessageSystem(content: "You are a helpful assistant."),
+            ChatMessageUser(content: "What is the capital of Japan?")
         ],
         temperature: 0.7
     )
@@ -99,11 +104,11 @@ description: "Lightweight client for OpenAI-compatible chat completions APIs —
     // and framework headers. Without SKIE, there is no `for try await` integration.
     try await client.streamChatCompletion(request: request).collect(
         collector: FlowCollector { event in
-            if let delta = event as? ChatCompletionEvent.Delta {
+            if let delta = event as? ChatCompletionEventDelta {
                 print(delta.content, terminator: "")
-            } else if let done = event as? ChatCompletionEvent.Done {
+            } else if let done = event as? ChatCompletionEventDone {
                 if let usage = done.usage { print("\nTokens: \(usage.totalTokens)") }
-            } else if let err = event as? ChatCompletionEvent.Error {
+            } else if let err = event as? ChatCompletionEventError {
                 print("\nError: \(err.message)")
             }
         }
@@ -294,14 +299,15 @@ Route simple prompts to a small on-device LFM; escalate harder prompts to a clou
         func send(_ text: String, useCloud: Bool) async throws {
             if useCloud {
                 // Cloud path: leap-sdk-openai-client has no SKIE — collect the Kotlin
-                // Flow manually and downcast each event with `as?`.
+                // Flow manually and downcast each event with `as?`. Note the flattened
+                // Swift type names (`ChatMessageUser`, `ChatCompletionEventDelta`).
                 let request = ChatCompletionRequest(
                     model: "gpt-4o-mini",
-                    messages: [ChatMessage.User(content: text)]
+                    messages: [ChatMessageUser(content: text)]
                 )
                 try await cloud.streamChatCompletion(request: request).collect(
                     collector: FlowCollector { event in
-                        if let delta = event as? ChatCompletionEvent.Delta {
+                        if let delta = event as? ChatCompletionEventDelta {
                             appendChunk(delta.content)
                         }
                     }
