@@ -3,7 +3,7 @@ title: "Quick Start"
 description: "Install the LEAP SDK on iOS, macOS, Android, JVM, Linux, or Windows — same API everywhere."
 ---
 
-Latest version: `v0.10.6`
+Latest version: `v0.10.7`
 
 The LEAP SDK is a Kotlin Multiplatform library: the same `ModelRunner` / `Conversation` / `MessageResponse` API runs on every supported target. The code differs only in **language** (Swift vs. Kotlin) and **packaging** (SPM, Gradle, or Kotlin/Native plugin) — the call shapes are identical.
 
@@ -68,7 +68,7 @@ The LEAP SDK is a Kotlin Multiplatform library: the same `ModelRunner` / `Conver
 
     1. In Xcode choose **File → Add Package Dependencies**.
     2. Enter `https://github.com/Liquid4All/leap-sdk.git`.
-    3. Select the `0.10.6` release (or newer).
+    3. Select the `0.10.7` release (or newer).
     4. Add the products you need to your app target.
 
     The package vends five products. Most apps only need one or two:
@@ -94,7 +94,7 @@ The LEAP SDK is a Kotlin Multiplatform library: the same `ModelRunner` / `Conver
     </Info>
 
     <Accordion title="Pin to explicit binary XCFrameworks">
-      For explicit pinning, declare each framework as a `.binaryTarget` in your `Package.swift`. The XCFramework assets live on the `Liquid4All/leap-sdk` v0.10.6 release page — copy the SHA-256 values from there.
+      For explicit pinning, declare each framework as a `.binaryTarget` in your `Package.swift`. The XCFramework assets live on the `Liquid4All/leap-sdk` v0.10.7 release page — copy the SHA-256 values from there.
 
       <Warning>
       The constrained-generation macros (`@Generatable`, `@Guide`) are Swift macros, not XCFrameworks — they ship as the `LeapSDKMacros` source target inside the SPM package and **cannot be installed as a `.binaryTarget`**. If you need them, use the standard SPM package URL above (or add the `LeapSDKMacros` source target separately on top of your binary targets).
@@ -103,22 +103,22 @@ The LEAP SDK is a Kotlin Multiplatform library: the same `ModelRunner` / `Conver
       ```swift
       .binaryTarget(
         name: "LeapSDK",
-        url: "https://github.com/Liquid4All/leap-sdk/releases/download/v0.10.6/LeapSDK.xcframework.zip",
+        url: "https://github.com/Liquid4All/leap-sdk/releases/download/v0.10.7/LeapSDK.xcframework.zip",
         checksum: "236fb6c897d25fc5804be64edc16a9ee73c26678d02e58dab4a1b77ab2e4898f"
       ),
       .binaryTarget(
         name: "LeapModelDownloader",
-        url: "https://github.com/Liquid4All/leap-sdk/releases/download/v0.10.6/LeapModelDownloader.xcframework.zip",
+        url: "https://github.com/Liquid4All/leap-sdk/releases/download/v0.10.7/LeapModelDownloader.xcframework.zip",
         checksum: "a2a57f9c932ef7005d42b33b69d7a67f0ffb65fb79dffa954be99a0225932a61"
       ),
       .binaryTarget(
         name: "LeapOpenAIClient",
-        url: "https://github.com/Liquid4All/leap-sdk/releases/download/v0.10.6/LeapOpenAIClient.xcframework.zip",
+        url: "https://github.com/Liquid4All/leap-sdk/releases/download/v0.10.7/LeapOpenAIClient.xcframework.zip",
         checksum: "b661059af8bfb086931099f8fac9f54e957272d5d6bbc9dd36e3e154fddf8222"
       ),
       .binaryTarget(
         name: "LeapUi",
-        url: "https://github.com/Liquid4All/leap-sdk/releases/download/v0.10.6/LeapUi.xcframework.zip",
+        url: "https://github.com/Liquid4All/leap-sdk/releases/download/v0.10.7/LeapUi.xcframework.zip",
         checksum: "694f4b8a8d1a8cd9086ce718a9fc15f4e74c442541b983816fd0eef8cecc7875"
       ),
       ```
@@ -131,14 +131,14 @@ The LEAP SDK is a Kotlin Multiplatform library: the same `ModelRunner` / `Conver
 
     ```kotlin
     dependencies {
-      implementation("ai.liquid.leap:leap-sdk:0.10.6")
-      implementation("ai.liquid.leap:leap-model-downloader:0.10.6") // Android background downloads
+      implementation("ai.liquid.leap:leap-sdk:0.10.7")
+      implementation("ai.liquid.leap:leap-model-downloader:0.10.7") // Android background downloads
 
       // Optional: OpenAI-compatible cloud chat client
-      // implementation("ai.liquid.leap:leap-openai-client:0.10.6")
+      // implementation("ai.liquid.leap:leap-openai-client:0.10.7")
 
       // Optional: Voice assistant widget (Compose Multiplatform)
-      // implementation("ai.liquid.leap:leap-ui:0.10.6")
+      // implementation("ai.liquid.leap:leap-ui:0.10.7")
     }
     ```
 
@@ -147,7 +147,7 @@ The LEAP SDK is a Kotlin Multiplatform library: the same `ModelRunner` / `Conver
 
       ```toml
       [versions]
-      leapSdk = "0.10.6"
+      leapSdk = "0.10.7"
 
       [libraries]
       leap-sdk = { module = "ai.liquid.leap:leap-sdk", version.ref = "leapSdk" }
@@ -191,11 +191,11 @@ The LEAP SDK is a Kotlin Multiplatform library: the same `ModelRunner` / `Conver
     }
 
     dependencies {
-        implementation("ai.liquid.leap:leap-sdk:0.10.6")
+        implementation("ai.liquid.leap:leap-sdk:0.10.7")
 
         // Optional:
-        // implementation("ai.liquid.leap:leap-openai-client:0.10.6")
-        // implementation("ai.liquid.leap:leap-ui:0.10.6") // Compose for Desktop voice widget
+        // implementation("ai.liquid.leap:leap-openai-client:0.10.7")
+        // implementation("ai.liquid.leap:leap-ui:0.10.7") // Compose for Desktop voice widget
     }
     ```
 
@@ -222,11 +222,11 @@ The LEAP SDK is a Kotlin Multiplatform library: the same `ModelRunner` / `Conver
     // build.gradle.kts
     plugins {
         kotlin("multiplatform") version "2.3.20"
-        id("ai.liquid.leap.nativelibs") version "0.10.6"
+        id("ai.liquid.leap.nativelibs") version "0.10.7"
     }
 
     dependencies {
-        implementation("ai.liquid.leap:leap-sdk:0.10.6")
+        implementation("ai.liquid.leap:leap-sdk:0.10.7")
     }
 
     kotlin {

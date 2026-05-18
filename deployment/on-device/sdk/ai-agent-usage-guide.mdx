@@ -452,7 +452,7 @@ A `ChatViewModel` that loads the model, registers a tool, drives generation, and
     - JVM: JDK 11+. No `Context` parameter, no foreground service, no notifications — `LeapDownloader` is a simple async fetcher with a configurable `saveDir`.
     - Linux native runtime: glibc **2.34+** (Ubuntu 22.04, Debian 12, RHEL 9 or newer). Older hosts fail at process start.
     - Windows native: Windows 10+. DLLs co-locate next to the `.exe` (Windows' standard search order finds them).
-    - **Pin to 0.10.6 or newer** for Kotlin/Native — earlier 0.10.x releases (0.10.0, 0.10.1) have unresolved cinterop / linker issues that prevent producing a working executable; the fixes shipped in the 0.10.4.x point releases (SPM) and 0.10.6 (Android-SDK repo). See [Desktop & Native Platforms](./desktop-platforms).
+    - **Pin to 0.10.7 or newer** for Kotlin/Native — earlier 0.10.x releases (0.10.0, 0.10.1) have unresolved cinterop / linker issues that prevent producing a working executable; the fixes shipped in the 0.10.4.x point releases (SPM) and v0.10.6 / v0.10.7 (Android-SDK repo). See [Desktop & Native Platforms](./desktop-platforms).
   </Tab>
 </Tabs>
 

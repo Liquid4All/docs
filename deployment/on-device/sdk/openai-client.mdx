@@ -19,7 +19,7 @@ description: "Lightweight client for OpenAI-compatible chat completions APIs —
 
     ```swift
     dependencies: [
-        .package(url: "https://github.com/Liquid4All/leap-sdk.git", from: "0.10.6")
+        .package(url: "https://github.com/Liquid4All/leap-sdk.git", from: "0.10.7")
     ]
 
     targets: [
@@ -37,22 +37,32 @@ description: "Lightweight client for OpenAI-compatible chat completions APIs —
   <Tab title="Android (Gradle)">
     ```kotlin
     dependencies {
-      implementation("ai.liquid.leap:leap-sdk:0.10.6")
-      implementation("ai.liquid.leap:leap-openai-client:0.10.6")
+      implementation("ai.liquid.leap:leap-sdk:0.10.7")
+      implementation("ai.liquid.leap:leap-openai-client:0.10.7")
     }
     ```
 
     Bundles an OkHttp-engine Ktor client. No extra HTTP setup needed.
   </Tab>
-  <Tab title="Kotlin/Native (Gradle)">
+  <Tab title="JVM (Gradle)">
     ```kotlin
     dependencies {
-        implementation("ai.liquid.leap:leap-sdk:0.10.6")
-        implementation("ai.liquid.leap:leap-openai-client:0.10.6")
+        implementation("ai.liquid.leap:leap-sdk:0.10.7")
+        implementation("ai.liquid.leap:leap-openai-client:0.10.7")
     }
     ```
 
-    Targets `linuxX64`, `linuxArm64`, and `mingwX64` (Windows native). **`leap-openai-client` does not publish a JVM target** — `leap-sdk` does, but the OpenAI client lives in Android + Apple + native source sets only. If you need OpenAI-compatible chat completions from a JVM-only host, use any standard OpenAI client (e.g. official OpenAI Java/Kotlin SDK, OkHttp + JSON) — the `LeapSDK` on-device runner has no JVM-specific cloud dependency.
+    JVM support landed in v0.10.7 (the `jvm` slice was absent in the v0.10.0–v0.10.6 cascade). Pure-Maven JVM projects should consume the `-jvm` classifier directly: `ai.liquid.leap:leap-openai-client-jvm:0.10.7`. Bundles the CIO Ktor engine.
+  </Tab>
+  <Tab title="Kotlin/Native (Gradle)">
+    ```kotlin
+    dependencies {
+        implementation("ai.liquid.leap:leap-sdk:0.10.7")
+        implementation("ai.liquid.leap:leap-openai-client:0.10.7")
+    }
+    ```
+
+    Targets `linuxX64`, `linuxArm64`, `mingwX64` (Windows native), and `wasmJs` (browser via Ktor Js engine, added in v0.10.7).
   </Tab>
 </Tabs>
 
