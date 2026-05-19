@@ -218,7 +218,9 @@ Resolves the GGUF manifest for the given model + quantization slug, downloads an
     ```
 
     ```kotlin
-    val downloader = LeapDownloader(LeapDownloaderConfig(saveDir = cacheDir))
+    // `saveDir` is a String filesystem path (not java.io.File). On Android pass
+    // `context.cacheDir.absolutePath`; on JVM/native pass any writable directory:
+    val downloader = LeapDownloader(LeapDownloaderConfig(saveDir = "/var/cache/leap"))
 
     val runner = downloader.loadModel(
         modelName = "LFM2-1.2B",
@@ -296,19 +298,33 @@ Use this path when you ship the model as an app asset, `adb push` it for develop
     ```
 
     <Accordion title="Legacy: Leap.load(url:options:)">
-      The 0.9.x-style URL-based loader still works:
+      The 0.9.x-style URL-based loader still works for the common case (auto-detection picks up sibling `mmproj-*.gguf` for vision and audio decoder files whose name contains "audio" and "decoder"):
 
       ```swift
       let runner = try await Leap.load(url: ggufURL)
+      ```
 
+      If you need to override the companion-file picks, build a fully-specified `LiquidInferenceEngineOptions`. The Kotlin/Native ObjC bridge strips default-argument metadata, so the Swift designated init requires every field — there is no `LiquidInferenceEngineOptions(bundlePath: …)` single-arg overload today. Pass `nil` for fields you don't need to set:
+
+      ```swift
       let options = LiquidInferenceEngineOptions(
         bundlePath: ggufURL.path,
-        mmProjPath: mmprojURL.path
+        cacheOptions: nil,
+        cpuThreads: nil,
+        contextSize: nil,
+        nGpuLayers: nil,
+        mmProjPath: mmprojURL.path,
+        audioDecoderPath: nil,
+        chatTemplate: nil,
+        audioTokenizerPath: nil,
+        audioDecoderUseGpu: false,
+        useMmap: nil,
+        extras: nil
       )
       let runner = try await Leap.load(url: ggufURL, options: options, autoDetectCompanionFiles: false)
       ```
 
-      Auto-detection picks up sibling `mmproj-*.gguf` (vision) and audio decoder files (`.gguf`/`.bin` whose name contains "audio" and "decoder"). New code should prefer `loadSimpleModel(model: ModelSource(...))` for race-free, explicit wiring.
+      New code should prefer `loadSimpleModel(model: ModelSource(...))` for race-free, explicit wiring.
     </Accordion>
   </Tab>
   <Tab title="Kotlin (all platforms)">
@@ -489,6 +505,9 @@ Per-load runtime overrides. Default values come from the model bundle's manifest
     Pass `LiquidInferenceEngineManifestOptions` to `ModelDownloader.loadModel(modelName:, quantizationType:, options:, ...)` for manifest-based loads, and `LiquidInferenceEngineOptions` to `Leap.load(url:, options:)` for sideloaded GGUFs:
 
     ```swift
+    // Manifest-based load (preferred — LiquidInferenceEngineManifestOptions has a
+    // SKIE-bundled convenience init in ConvenienceExtensions.swift that lets you
+    // pass just the fields you care about):
     let manifestOpts = LiquidInferenceEngineManifestOptions(
       contextSize: 8192,
       cpuThreads: 6
@@ -498,25 +517,17 @@ Per-load runtime overrides. Default values come from the model bundle's manifest
       quantizationType: "Q4_K_M",
       options: manifestOpts
     )
-
-    // Sideloaded variant (URL-based)
-    let options = LiquidInferenceEngineOptions(
-      bundlePath: ggufURL.path,
-      cpuThreads: 6,
-      contextSize: 8192
-    )
-    let runner = try await Leap.load(url: ggufURL, options: options)
     ```
 
-    **Builder style.** Chain `.with(...)` on `GenerationOptions`, `LiquidInferenceEngineOptions`, or `LiquidInferenceEngineManifestOptions`:
+    **Builder style on the manifest variant** — `LiquidInferenceEngineManifestOptions` exposes `.with(...)` chains that match the Kotlin builder surface:
 
     ```swift
-    let opts = LiquidInferenceEngineOptions(bundlePath: ggufURL.path)
+    let opts = LiquidInferenceEngineManifestOptions(contextSize: 8192)
         .with(cpuThreads: 6)
-        .with(contextSize: 8192)
-        .with(useMmap: false)
         .with(cacheOptions: .enabled(path: cacheDir.path))
     ```
+
+    **Sideloaded `LiquidInferenceEngineOptions` (URL-based load).** The non-manifest variant does NOT ship a Swift convenience init in v0.10.7 — the K/N-generated designated init takes all 12 fields. Either build it fully (verbose) or use `loadSimpleModel(model: ModelSource(...))` on `ModelDownloader` (preferred for new code; see the Sideloaded files section). The builder `.with(...)` overloads exist but they create a new instance internally via the same 12-arg init, so you still need a fully-built starting instance — there is no `LiquidInferenceEngineOptions(bundlePath: …)` 1-arg form today.
   </Tab>
   <Tab title="Kotlin (all platforms)">
     ```kotlin

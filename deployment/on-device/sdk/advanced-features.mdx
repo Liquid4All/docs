@@ -11,7 +11,6 @@ Per-request controls. Leave any field as `null` / `nil` to fall back to the mani
 
 <Tabs>
   <Tab title="Swift (iOS / macOS)">
-    ```swift
     `GenerationOptions` is a Kotlin `data class` bridged into Swift. Kotlin parameter defaults don't survive the ObjC bridge, so the canonical Swift idiom is the parameterless init plus chained `.with(...)` builders:
 
     ```swift

@@ -181,7 +181,11 @@ data class OpenAiClientConfig(
 <Tabs>
   <Tab title="Swift (iOS / macOS)">
     ```swift
-    let client = OpenAiClient(
+    // The leap-sdk-openai-client module has no SKIE plugin applied, so the
+    // top-level Kotlin `fun OpenAiClient(config:)` factory is exported as
+    // `OpenAiClientKt.OpenAiClient(config:)`. See the [Basic usage](#basic-usage)
+    // warning for the full reasoning.
+    let client = OpenAiClientKt.OpenAiClient(
         config: OpenAiClientConfig(
             apiKey: "sk-or-…",
             baseUrl: "https://openrouter.ai/api/v1",
@@ -214,7 +218,7 @@ data class OpenAiClientConfig(
 <Tabs>
   <Tab title="Swift (iOS / macOS)">
     ```swift
-    let client = OpenAiClient(
+    let client = OpenAiClientKt.OpenAiClient(
         config: OpenAiClientConfig(
             apiKey: "anything",  // Required by config but typically unused
             baseUrl: "http://10.0.0.42:8000/v1"
@@ -266,7 +270,7 @@ data class ChatCompletionRequest(
 
 ## Response shape
 
-`streamChatCompletion(request)` returns an `AsyncSequence<ChatCompletionEvent>` (Swift) / `Flow<ChatCompletionEvent>` (Kotlin):
+`streamChatCompletion(request)` returns a `Flow<ChatCompletionEvent>` (Kotlin) — and the same `Flow` is exposed verbatim to Swift in v0.10.7 (no SKIE on this module yet, so it's not bridged to a Swift `AsyncSequence`; collect it via the native `Flow.collect(...)` shape shown above). Events:
 
 | Variant | Meaning |
 |---|---|
@@ -408,7 +412,7 @@ See [Cloud AI Comparison](./cloud-ai-comparison) for a side-by-side feature brea
 
 ## Lifecycle
 
-The platform `OpenAiClient(config:)` factory creates an `HttpClient` internally and ties it to the returned client — call `close()` when you're done.
+The platform `OpenAiClient(config:)` factory (Kotlin `fun OpenAiClient(config:)` → Swift `OpenAiClientKt.OpenAiClient(config:)`) creates an `HttpClient` internally and ties it to the returned client — call `close()` when you're done.
 
 <Tabs>
   <Tab title="Swift (iOS / macOS)">
@@ -416,7 +420,7 @@ The platform `OpenAiClient(config:)` factory creates an `HttpClient` internally 
     deinit { client.close() }
     ```
 
-    The lower-level constructor that accepts an externally-managed `HttpClient` is part of the Kotlin/Ktor surface and isn't a useful entry point from Swift — the Ktor engine machinery isn't bridged into the public Swift API. Use `OpenAiClient(config:)` and let the SDK own the session. If multiple consumers share a client, share the `OpenAiClient` instance and `close()` once at teardown.
+    The lower-level constructor that accepts an externally-managed `HttpClient` is part of the Kotlin/Ktor surface and isn't a useful entry point from Swift — the Ktor engine machinery isn't bridged into the public Swift API. Use `OpenAiClientKt.OpenAiClient(config:)` and let the SDK own the session. If multiple consumers share a client, share the `OpenAiClient` instance and `close()` once at teardown.
   </Tab>
   <Tab title="Kotlin (all platforms)">
     ```kotlin

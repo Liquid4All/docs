@@ -105,7 +105,7 @@ Round-trip the message through `kotlinx.serialization` — there is no separate 
     ChatMessageContent.fromWAVData(_ wavData: Data) -> ChatMessageContent.Audio
     ChatMessageContent.audio(data: Data, format: String = "wav") -> ChatMessageContent.Audio
     ChatMessageContent.fromFloatSamples(_ samples: [Float], sampleRate: Int, channelCount: Int = 1)
-        -> ChatMessageContent.AudioPcmF32
+        -> ChatMessageContent.Audio
 
     // iOS only — UIKit:
     public static func fromUIImage(_ image: UIImage) throws -> ChatMessageContent
@@ -161,7 +161,8 @@ Round-trip the message through `kotlinx.serialization` — there is no separate 
 - **`Text`** — plain text fragment.
 - **`Image`** — JPEG-encoded image bytes. Only vision-capable models can interpret image parts.
 - **`Audio`** — WAV-encoded audio bytes (see [audio format requirements](#audio-format-requirements) below).
-- **`AudioPcmF32`** (Kotlin) / `fromFloatSamples(...)` (Swift) — raw float32 mono PCM in memory. Avoids re-encoding when you already have samples.
+- **`AudioPcmF32`** (Kotlin) — raw float32 mono PCM in memory. Avoids the WAV encoding step when you already have samples; the engine handles framing internally. Kotlin-only.
+- **`fromFloatSamples(...)` (Swift)** — convenience that wraps `[Float]` samples into a `ChatMessageContent.Audio` WAV blob (via `FloatAudioBuffer.makeAudioContent()`). Different from Kotlin's `AudioPcmF32`: this one DOES re-encode through WAV. There is no Swift surface for raw `AudioPcmF32` today.
 
 ## Audio format requirements
 
