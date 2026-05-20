@@ -29,6 +29,7 @@ This is the **official documentation repository** for Liquid AI. It contains com
   - [Making Changes](#making-changes)
   - [Submitting Changes](#submitting-changes)
   - [Link Check](#link-check)
+  - [Link Snapshot](#link-snapshot)
 - [License](#license)
 
 ---
@@ -148,6 +149,7 @@ Navigate to the docs directory and start the development server:
 
 ```bash
 cd docs
+npm i
 mintlify dev
 ```
 
@@ -172,6 +174,20 @@ For more details on Mintlify setup and configuration, visit the [official Mintli
 ### Link Check
 
 The [`check-docs.yaml`](.github/workflows/check-docs.yaml) workflow has a `check-link` job that examine markdown links. Customize the config in [`link-check.json`](./link-check.json). If a link cannot be accessed (e.g. Github private repo), add the URL pattern to the `ignorePatterns` array.
+
+### Link Snapshot
+
+[`link-snapshot.yaml`](./link-snapshot.yaml) records every URL the docs site has served. The [`check-link-snapshot.yaml`](.github/workflows/check-link-snapshot.yaml) workflow fails any PR that would make a recorded URL stop resolving. Run `npm install` once to install the pre-commit hook that keeps the snapshot in sync.
+
+How it works:
+
+- `link-snapshot.yaml` has two sections: `active:` (URLs the site is currently committed to keep serving) and `deleted:` (URLs intentionally retired).
+- The pre-commit hook regenerates the file whenever `docs.json` or any `.mdx`/`.md` file is staged.
+- The `active:` section is **append-only** — new URLs are added when pages are created, but existing entries are never silently dropped, even after you delete the underlying page.
+- CI re-checks every URL in `active:` on each PR. A URL is satisfied if it's still in the navigation, still on disk, or reachable via a redirect chain.
+- The only way to retire a URL is to move it from `active:` to `deleted:` by hand. This forces every removal to be a deliberate choice — redirect, deprecate-but-keep, or formally retire.
+
+See [CLAUDE.md](./CLAUDE.md#link-snapshot-contract) for the remediation paths and the full resolution algorithm.
 
 ---
 

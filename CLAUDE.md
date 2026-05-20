@@ -182,6 +182,23 @@ grep -r '/>' --include="*.mdx" --include="*.md" .
 3. Check if you need to target light/dark mode specifically
 4. For icons using mask-image, set `background-color` instead of `color`
 
+## Link Snapshot Contract
+
+`link-snapshot.yaml` is an append-only ledger of every URL the docs site has promised to keep resolving. The pre-commit hook keeps it in sync; [`check-link-snapshot.yaml`](.github/workflows/check-link-snapshot.yaml) fails any PR that would make a recorded URL stop resolving. Run `npm install` once to install the hook.
+
+A URL in `active` resolves if any of these are true:
+1. It is in the `docs.json` navigation tree.
+2. A matching `.mdx`/`.md` file exists under `lfm/`, `leap/`, `examples/`, or `deployment/`.
+3. It matches a `redirects[*].source` (literal or `:slug*` prefix) whose destination itself resolves (recursive, max depth 5).
+
+When CI flags a URL, pick one (in order of preference):
+
+1. **Add a redirect** in `docs.json` — best when a substitute page exists.
+2. **Deprecate in place** — remove the page from `docs.json` navigation but leave the `.mdx` on disk (the URL stays served, just undiscoverable). Add a `<Note>` deprecation banner.
+3. **Mark deleted** — move the URL from `active` to `deleted` in `link-snapshot.yaml`. Bare URLs are fine; commit history is the record. Use only when no substitute exists.
+
+Don't edit `active` by hand — moving a URL to `deleted` causes the next `snapshot:update` (which the pre-commit hook runs automatically) to drop it from `active`. Manual commands: `npm run snapshot:update` to regenerate, `npm run snapshot:check` to run what CI runs. Both call `scripts/generateLinkSnapshot.ts` via `tsx`; new TypeScript scripts should follow the same `tsx scripts/<file>.ts` pattern.
+
 ## Git Commits
 
 - Never create a single monolithic commit for multi-step work. Break commits into logical units (e.g., infrastructure/scaffolding, feature A, feature B, fixes).
