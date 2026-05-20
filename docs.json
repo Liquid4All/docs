@@ -134,6 +134,7 @@
             "group": "Leap SDK",
             "icon": "rocket",
             "pages": [
+              "deployment/on-device/sdk/overview",
               "deployment/on-device/sdk/quick-start",
               "deployment/on-device/sdk/ai-agent-usage-guide",
               "deployment/on-device/sdk/model-loading",
@@ -352,7 +353,7 @@
     },
     {
       "source": "/leap/edge-sdk/overview",
-      "destination": "/deployment/on-device/sdk/quick-start"
+      "destination": "/deployment/on-device/sdk/overview"
     },
     {
       "source": "/leap/edge-sdk/ios/:slug*",
