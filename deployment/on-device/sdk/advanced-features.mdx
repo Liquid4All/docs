@@ -11,25 +11,25 @@ Per-request controls. Leave any field as `null` / `nil` to fall back to the mani
 
 <Tabs>
   <Tab title="Swift (iOS / macOS)">
+    `GenerationOptions` is a Kotlin `data class` bridged into Swift. Kotlin parameter defaults don't survive the ObjC bridge, so the canonical Swift idiom is the parameterless init plus chained `.with(...)` builders:
+
     ```swift
-    public struct GenerationOptions {
+    public class GenerationOptions {
       public var temperature: Float?
       public var topP: Float?
       public var minP: Float?
       public var repetitionPenalty: Float?
+      public var topK: Int32?
+      public var rngSeed: Int64?
       public var jsonSchemaConstraint: String?
-      public var functionCallParser: LeapFunctionCallParserProtocol?
+      public var functionCallParser: LeapFunctionCallParser?
+      public var injectSchemaIntoPrompt: Bool        // default true
+      public var maxTokens: Int32?
+      public var inlineThinkingTags: Bool            // default false
+      public var enableThinking: Bool                // default false
+      public var extras: String?
 
-      public init(
-        temperature: Float? = nil,
-        topP: Float? = nil,
-        minP: Float? = nil,
-        repetitionPenalty: Float? = nil,
-        jsonSchemaConstraint: String? = nil,
-        functionCallParser: LeapFunctionCallParserProtocol? = LFMFunctionCallParser()
-      )
-
-      public mutating func setResponseFormat<T: GeneratableType>(type: T.Type) throws
+      public convenience init()
     }
     ```
 
@@ -40,8 +40,10 @@ Per-request controls. Leave any field as `null` / `nil` to fall back to the mani
         .with(temperature: 0.3)
         .with(minP: 0.15)
         .with(repetitionPenalty: 1.05)
-        .with(jsonSchema: schemaString)
+        .with(jsonSchema: CityFact.jsonSchema())   // or any other schema string
     ```
+
+    For the legacy compat-class path (`Leap.load(...)` flows), `GenerationOptionsCompat` additionally exposes `setResponseFormat(jsonSchema: String)`.
   </Tab>
   <Tab title="Kotlin (all platforms)">
     ```kotlin
@@ -50,10 +52,17 @@ Per-request controls. Leave any field as `null` / `nil` to fall back to the mani
         var topP: Float? = null,
         var minP: Float? = null,
         var repetitionPenalty: Float? = null,
+        var topK: Int? = null,
+        var rngSeed: Long? = null,
         var jsonSchemaConstraint: String? = null,
         var functionCallParser: LeapFunctionCallParser? = LFMFunctionCallParser(),
+        var injectSchemaIntoPrompt: Boolean = true,
+        var maxTokens: Int? = null,
+        var inlineThinkingTags: Boolean = false,
+        var enableThinking: Boolean = false,
+        var extras: String? = null,
     ) {
-        fun setResponseFormatType(kClass: KClass<*>)
+        inline fun <reified T : Any> setResponseFormatType()
 
         companion object {
             fun build(buildAction: GenerationOptions.() -> Unit): GenerationOptions
@@ -63,9 +72,14 @@ Per-request controls. Leave any field as `null` / `nil` to fall back to the mani
   </Tab>
 </Tabs>
 
-- **Sampling fields** — use the model card's recommended values; arbitrary defaults from generic tutorials usually underperform.
-- **`jsonSchemaConstraint`** — JSON Schema string for constrained generation. Use the `setResponseFormat(type:)` / `setResponseFormatType(...)` helpers instead of writing the schema by hand.
+- **Sampling fields** — `temperature`, `topP`, `minP`, `topK`, and `repetitionPenalty`. Use the model bundle's recommended values; arbitrary defaults from generic tutorials usually underperform.
+- **`rngSeed`** — deterministic sampling seed for tests and reproducible runs.
+- **`maxTokens`** — maximum completion tokens to generate. Prompt tokens do not count toward this cap.
+- **`jsonSchemaConstraint`** — JSON Schema string for constrained generation. Use the higher-level helpers — Swift `options.with(jsonSchema: T.jsonSchema())` / Kotlin `setResponseFormatType<T>()` — instead of writing the schema by hand.
+- **`injectSchemaIntoPrompt`** — when `true` (default), the schema is also appended to the system message for semantic guidance. Set `false` to use only the structural constraint.
 - **`functionCallParser`** — `LFMFunctionCallParser` (default), `HermesFunctionCallParser()`, or `null`/`nil` to disable parsing and surface raw tool-call text in `Chunk`s.
+- **`enableThinking` / `inlineThinkingTags`** — reasoning-mode controls for models that emit `<think>` content.
+- **`extras`** — backend-specific JSON payload.
 
 ## Constrained generation utilities
 
@@ -73,11 +87,13 @@ Per-request controls. Leave any field as `null` / `nil` to fall back to the mani
   <Tab title="Swift (iOS / macOS)">
     ```swift
     // Compile-time schema synthesis lives in the @Generatable macro.
-    // For ad-hoc inspection:
-    let schemaString = try JSONSchemaGenerator.getJSONSchema(for: CityFact.self)
+    // For ad-hoc inspection (ships in the LeapSDKMacros SPM product):
+    import LeapSDKMacros
+
+    let schemaString = JSONSchemaGenerator.getJSONSchema(for: CityFact.self)
     ```
 
-    `JSONSchemaGenerator.getJSONSchema(for:)` returns the same JSON Schema string the macro emits at compile time. Useful when embedding the schema in the prompt itself, or when you want to debug the schema the model is being constrained against.
+    `JSONSchemaGenerator.getJSONSchema(for:)` is non-throwing — it forwards to the `jsonSchema()` method that the `@Generatable` macro adds to the type, so the schema is produced at compile time. Useful when embedding the schema in the prompt itself, or when you want to debug the schema the model is being constrained against.
 
     See [Constrained Generation](./constrained-generation) for the full `@Generatable` / `@Guide` macro reference.
   </Tab>
@@ -89,11 +105,14 @@ Per-request controls. Leave any field as `null` / `nil` to fall back to the mani
 
     object JSONSchemaGenerator {
       @Throws(LeapGeneratableSchematizationException::class)
-      fun <T : Any> getJSONSchema(klass: KClass<T>, indentSpaces: Int? = null): String
+      fun <T : Any> getJSONSchema(serializer: KSerializer<T>, indentSpaces: Int? = null): String
+
+      @Throws(LeapGeneratableSchematizationException::class)
+      inline fun <reified T : Any> getJSONSchema(indentSpaces: Int? = null): String
     }
     ```
 
-    - `klass` — must be a data class annotated with `@Generatable`.
+    - `serializer` — the `KSerializer<T>` for a data class annotated with `@Generatable` and `@Serializable`. The reified-`T` overload calls `serializer<T>()` for you.
     - `indentSpaces` — non-null formats the output with the given indent (pretty-print).
 
     Throws `LeapGeneratableSchematizationException` if the class can't be translated.
@@ -101,16 +120,18 @@ Per-request controls. Leave any field as `null` / `nil` to fall back to the mani
     ### `GeneratableFactory`
 
     ```kotlin
+    import kotlinx.serialization.json.JsonObject
+
     object GeneratableFactory {
       @Throws(LeapGeneratableDeserializationException::class)
-      fun <T : Any> createFromJSONObject(jsonObject: JSONObject, klass: KClass<T>): T
+      fun <T : Any> createFromJsonObject(jsonObject: JsonObject, serializer: KSerializer<T>): T
 
       @Throws(LeapGeneratableDeserializationException::class)
-      inline fun <reified T : Any> createFromJSONObject(jsonObject: JSONObject): T
+      inline fun <reified T : Any> createFromJsonObject(jsonObject: JsonObject): T
     }
     ```
 
-    The reified-`T` overload is a convenience when the target type can be inferred from context.
+    Note the camelCase `Json` in the method name and the `kotlinx.serialization.json.JsonObject` argument (not `org.json.JSONObject`). The reified-`T` overload is a convenience when the target type can be inferred from context.
 
     ### Annotations
 
@@ -179,16 +200,19 @@ The full surface is documented in [Function Calling](./function-calling); the ty
         val optional: Boolean = false,
     )
 
-    sealed class LeapFunctionParameterType(description: String? = null) {
-      val description: String? = description
+    sealed class LeapFunctionParameterType(typeDescription: kotlin.String? = null) {
+      var description: kotlin.String? = typeDescription
+        private set
 
-      class String(val enumValues: List<kotlin.String>? = null, description: kotlin.String? = null) : LeapFunctionParameterType(description)
-      class Number(val enumValues: List<kotlin.Number>? = null, description: kotlin.String? = null) : LeapFunctionParameterType(description)
-      class Integer(val enumValues: List<Int>? = null, description: kotlin.String? = null) : LeapFunctionParameterType(description)
-      class Boolean(description: kotlin.String? = null) : LeapFunctionParameterType(description)
-      class Null : LeapFunctionParameterType()
-      class Array(val itemType: LeapFunctionParameterType, description: kotlin.String? = null) : LeapFunctionParameterType(description)
-      class Object(
+      // Nested class names carry a `Leap` prefix so they don't shadow `kotlin.String`,
+      // `kotlin.Number`, etc. at use sites.
+      class LeapStr(val enumValues: List<kotlin.String>? = null, description: kotlin.String? = null) : LeapFunctionParameterType(description)
+      class LeapNum(val enumValues: List<kotlin.Number>? = null, description: kotlin.String? = null) : LeapFunctionParameterType(description)
+      class LeapInt(val enumValues: List<Int>? = null, description: kotlin.String? = null) : LeapFunctionParameterType(description)
+      class LeapBool(description: kotlin.String? = null) : LeapFunctionParameterType(description)
+      class LeapNull : LeapFunctionParameterType()
+      class LeapArr(val itemType: LeapFunctionParameterType, description: kotlin.String? = null) : LeapFunctionParameterType(description)
+      class LeapObj(
         val properties: Map<kotlin.String, LeapFunctionParameterType>,
         val required: List<kotlin.String> = listOf(),
         description: kotlin.String? = null,
@@ -210,29 +234,25 @@ Two parser implementations ship with the SDK on every platform:
 - **`LFMFunctionCallParser`** — default. Handles Liquid Foundation Model (LFM2) Pythonic-style control tokens (`<|tool_call_start|>` / `<|tool_call_end|>`).
 - **`HermesFunctionCallParser`** — Qwen3 and other models using the [Hermes function-calling format](https://github.com/NousResearch/Hermes-Function-Calling).
 
-Implement `LeapFunctionCallParserProtocol` (Swift) / `LeapFunctionCallParser` (Kotlin) to add support for a new format.
+Subclass `LeapFunctionCallParser` (Kotlin `abstract class`, bridged to Swift as a class with the same name) to add support for a new format.
 
-## Backend-specific extras
+## Prompt token budgeting
 
-Some runtime utilities are exposed on the concrete `LiquidInferenceEngineRunner` rather than the cross-platform `ModelRunner` protocol/interface. The most common is **prompt token budgeting** — useful when you need to estimate context usage before sending a long request.
+`getPromptTokensSize(messages:, addBosToken:)` is declared directly on `ModelRunner` — no cast required. Useful when you need to estimate context usage before sending a long request.
 
 <Tabs>
   <Tab title="Swift (iOS / macOS)">
     ```swift
-    if let engine = runner as? LiquidInferenceEngineRunner {
-        let count = engine.getPromptTokensSize(messages: history, addBosToken: true)
-        print("Prompt would consume \(count) tokens")
-    }
+    let count = try await runner.getPromptTokensSize(messages: history, addBosToken: true)
+    print("Prompt would consume \(count) tokens")
     ```
   </Tab>
   <Tab title="Kotlin (all platforms)">
     ```kotlin
-    (runner as? LiquidInferenceEngineRunner)?.let { engine ->
-        val count = engine.getPromptTokensSize(messages = history, addBosToken = true)
-        println("Prompt would consume $count tokens")
-    }
+    val count = runner.getPromptTokensSize(messages = history, addBosToken = true)
+    println("Prompt would consume $count tokens")
     ```
+
+    `getPromptTokensSize` is `suspend` — call it from a coroutine.
   </Tab>
 </Tabs>
-
-These methods are backend-specific and may be elevated to the `ModelRunner` interface in a future release — defensively check the cast.

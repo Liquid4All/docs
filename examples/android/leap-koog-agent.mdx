@@ -71,9 +71,9 @@ Before running this example, ensure you have the following:
 
 <Accordion title="Minimum SDK Requirements">
   This example requires:
-  - **Minimum SDK**: API 24 (Android 7.0)
-  - **Target SDK**: API 34 or higher
-  - **Kotlin**: 1.9.0 or higher
+  - **Minimum SDK**: API 31 (Android 12)
+  - **Target SDK**: API 36
+  - **Kotlin**: 2.3.0 or higher
 
   **Hardware recommendations:**
   - At least 4GB RAM (agents require more memory for reasoning)
@@ -87,17 +87,17 @@ Before running this example, ensure you have the following:
   # Ensure device is connected
   adb devices
 
-  # Create directory
-  adb shell mkdir -p /tmp/models
+  # Create directory (world-readable so the app can read it)
+  adb shell mkdir -p /data/local/tmp/liquid/
 
   # Push the GGUF model file
-  adb push lfm2-1.2b-q5_k_m.gguf /tmp/models/
+  adb push lfm2-1.2b-q5_k_m.gguf /data/local/tmp/liquid/
 
   # Verify deployment
-  adb shell ls -lh /tmp/models/
+  adb shell ls -lh /data/local/tmp/liquid/
   ```
 
-  **Note:** The path `/tmp/models` is used in this example. If you deploy to a different location, update the `modelPath` in your app code accordingly. The example snippets below use `loadSimpleModel(model: ModelSource(...))` to load the sideloaded file; switch to `loadModel(modelName:, quantizationType:)` if you'd rather have the SDK download the model automatically.
+  **Note:** Apps cannot read `/tmp/` on Android — use `/data/local/tmp/<your-namespace>/` for ADB-pushed assets (matches the other Android examples). If you deploy to a different location, update the `modelPath` in your app code accordingly. The example snippets below use `loadSimpleModel(model: ModelSource(...))` to load the sideloaded file; switch to `loadModel(modelName:, quantizationType:)` if you'd rather have the SDK download the model automatically.
 </Accordion>
 
 <Accordion title="Dependencies Setup">
@@ -106,8 +106,8 @@ Before running this example, ensure you have the following:
   ```kotlin
   dependencies {
       // LeapSDK for on-device AI (0.10.0+)
-      implementation("ai.liquid.leap:leap-sdk:0.10.6")
-      implementation("ai.liquid.leap:leap-model-downloader:0.10.6")
+      implementation("ai.liquid.leap:leap-sdk:0.10.7")
+      implementation("ai.liquid.leap:leap-model-downloader:0.10.7")
 
       // Koog framework for AI agents
       implementation("ai.koog:koog-agents:0.5.0")
@@ -139,9 +139,9 @@ Follow these steps to build and run AI agents on Android:
    cd LeapSDK-Examples/Android/LeapKoogAgent
    ```
 
-2. **Deploy the model bundle**
+2. **Deploy the model**
    - Follow the ADB commands in the setup section above
-   - Ensure the bundle is at `/tmp/models/lfm2-1.2b-tool.bundle`
+   - Ensure the GGUF is at `/data/local/tmp/liquid/lfm2-1.2b-q5_k_m.gguf`
 
 3. **Open in Android Studio**
    - Launch Android Studio
@@ -176,7 +176,7 @@ Load the LEAP model first, then bridge it to a Koog agent. The Koog APIs below a
 ```kotlin
 import ai.liquid.leap.ModelRunner
 import ai.liquid.leap.manifest.ModelSource
-import ai.liquid.leap.model_downloader.LeapModelDownloader
+import ai.liquid.leap.downloader.LeapModelDownloader
 
 class AgentViewModel(application: Application) : AndroidViewModel(application) {
     private val downloader = LeapModelDownloader(application)
@@ -188,7 +188,7 @@ class AgentViewModel(application: Application) : AndroidViewModel(application) {
             // Sideloaded GGUF that was pushed via ADB (see Model Setup).
             runner = downloader.loadSimpleModel(
                 model = ModelSource(
-                    modelPath = "/tmp/models/lfm2-1.2b-tool.gguf",
+                    modelPath = "/data/local/tmp/liquid/lfm2-1.2b-q5_k_m.gguf",
                     modelName = "LFM2-1.2B",
                     quantizationId = "Q5_K_M",
                 ),

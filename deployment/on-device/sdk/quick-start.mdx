@@ -3,9 +3,9 @@ title: "Quick Start"
 description: "Install the LEAP SDK on iOS, macOS, Android, JVM, Linux, or Windows — same API everywhere."
 ---
 
-Latest version: `v0.10.6`
+Latest version: `v0.10.7`
 
-The LEAP SDK is a Kotlin Multiplatform library: the same `ModelRunner` / `Conversation` / `MessageResponse` API runs on every supported target. The code differs only in **language** (Swift vs. Kotlin) and **packaging** (SPM, Gradle, or Kotlin/Native plugin) — the call shapes are identical.
+The Leap SDK is a Kotlin Multiplatform library: the same `ModelRunner` / `Conversation` / `MessageResponse` API runs on every supported target. The code differs only in **language** (Swift vs. Kotlin) and **packaging** (SPM, Gradle, or Kotlin/Native plugin) — the call shapes are identical. For background on what the SDK is and what first-class LFM support means in practice, see the [Overview](/deployment/on-device/sdk/overview).
 
 <Info>
 **Migrating from 0.9.x?** v0.10.0 unifies the SDK into a single Kotlin Multiplatform distribution published from [`Liquid4All/leap-sdk`](https://github.com/Liquid4All/leap-sdk). The standalone `Liquid4All/leap-ios` repo is no longer the source-of-truth. See the [SDK changelog](/deployment/on-device/leap-sdk-changelog#0-9-x-0-10-x-kotlin-multiplatform-unification) for the transition story and drop-in replacements for legacy `Leap.load(...)` / `LiquidEngine(...)` call sites.
@@ -16,7 +16,7 @@ The LEAP SDK is a Kotlin Multiplatform library: the same `ModelRunner` / `Conver
 <Tabs>
   <Tab title="iOS / macOS">
     - Xcode 16.0+ with Swift 6.0.
-    - iOS **17.0+** or macOS **15.0+** (Mac Catalyst 17.0+ also supported).
+    - iOS **17.0+** or macOS **15.0+** (Apple Silicon only — Mac Catalyst is **not** supported; the shipped XCFrameworks contain only `ios-arm64`, `ios-arm64-simulator`, and `macos-arm64` slices, and `Package.swift` declares only `.iOS(.v17)` / `.macOS(.v15)` platforms).
     - A physical iPhone or iPad with at least 3 GB RAM for best performance. The simulator works for development but runs models much slower.
 
     <Warning>
@@ -68,7 +68,7 @@ The LEAP SDK is a Kotlin Multiplatform library: the same `ModelRunner` / `Conver
 
     1. In Xcode choose **File → Add Package Dependencies**.
     2. Enter `https://github.com/Liquid4All/leap-sdk.git`.
-    3. Select the `0.10.6` release (or newer).
+    3. Select the `0.10.7` release (or newer).
     4. Add the products you need to your app target.
 
     The package vends five products. Most apps only need one or two:
@@ -94,7 +94,7 @@ The LEAP SDK is a Kotlin Multiplatform library: the same `ModelRunner` / `Conver
     </Info>
 
     <Accordion title="Pin to explicit binary XCFrameworks">
-      For explicit pinning, declare each framework as a `.binaryTarget` in your `Package.swift`. The XCFramework assets live on the `Liquid4All/leap-sdk` v0.10.6 release page — copy the SHA-256 values from there.
+      For explicit pinning, declare each framework as a `.binaryTarget` in your `Package.swift`. The XCFramework assets live on the `Liquid4All/leap-sdk` v0.10.7 release page — copy the SHA-256 values from there.
 
       <Warning>
       The constrained-generation macros (`@Generatable`, `@Guide`) are Swift macros, not XCFrameworks — they ship as the `LeapSDKMacros` source target inside the SPM package and **cannot be installed as a `.binaryTarget`**. If you need them, use the standard SPM package URL above (or add the `LeapSDKMacros` source target separately on top of your binary targets).
@@ -103,23 +103,23 @@ The LEAP SDK is a Kotlin Multiplatform library: the same `ModelRunner` / `Conver
       ```swift
       .binaryTarget(
         name: "LeapSDK",
-        url: "https://github.com/Liquid4All/leap-sdk/releases/download/v0.10.6/LeapSDK.xcframework.zip",
-        checksum: "236fb6c897d25fc5804be64edc16a9ee73c26678d02e58dab4a1b77ab2e4898f"
+        url: "https://github.com/Liquid4All/leap-sdk/releases/download/v0.10.7/LeapSDK.xcframework.zip",
+        checksum: "6f2721aa45d7555646f78cbcaedb57aba3d869f56b24d681ad332846e131ae3d"
       ),
       .binaryTarget(
         name: "LeapModelDownloader",
-        url: "https://github.com/Liquid4All/leap-sdk/releases/download/v0.10.6/LeapModelDownloader.xcframework.zip",
-        checksum: "a2a57f9c932ef7005d42b33b69d7a67f0ffb65fb79dffa954be99a0225932a61"
+        url: "https://github.com/Liquid4All/leap-sdk/releases/download/v0.10.7/LeapModelDownloader.xcframework.zip",
+        checksum: "f649aa6c1aa3e87bbeb1073d5aeeb7224879359a24b18eeccc665d24abc725d8"
       ),
       .binaryTarget(
         name: "LeapOpenAIClient",
-        url: "https://github.com/Liquid4All/leap-sdk/releases/download/v0.10.6/LeapOpenAIClient.xcframework.zip",
-        checksum: "b661059af8bfb086931099f8fac9f54e957272d5d6bbc9dd36e3e154fddf8222"
+        url: "https://github.com/Liquid4All/leap-sdk/releases/download/v0.10.7/LeapOpenAIClient.xcframework.zip",
+        checksum: "79bc5443a1cce6fcd4c49c91eeb85727034aaca10d3ef69582c061989c3d9b70"
       ),
       .binaryTarget(
         name: "LeapUi",
-        url: "https://github.com/Liquid4All/leap-sdk/releases/download/v0.10.6/LeapUi.xcframework.zip",
-        checksum: "694f4b8a8d1a8cd9086ce718a9fc15f4e74c442541b983816fd0eef8cecc7875"
+        url: "https://github.com/Liquid4All/leap-sdk/releases/download/v0.10.7/LeapUi.xcframework.zip",
+        checksum: "f1b198cef88c2a37eaf6dc1f36395d6aed024b0c6c2b43724d942e25b60d22e0"
       ),
       ```
 
@@ -131,14 +131,14 @@ The LEAP SDK is a Kotlin Multiplatform library: the same `ModelRunner` / `Conver
 
     ```kotlin
     dependencies {
-      implementation("ai.liquid.leap:leap-sdk:0.10.6")
-      implementation("ai.liquid.leap:leap-model-downloader:0.10.6") // Android background downloads
+      implementation("ai.liquid.leap:leap-sdk:0.10.7")
+      implementation("ai.liquid.leap:leap-model-downloader:0.10.7") // Android background downloads
 
       // Optional: OpenAI-compatible cloud chat client
-      // implementation("ai.liquid.leap:leap-openai-client:0.10.6")
+      // implementation("ai.liquid.leap:leap-openai-client:0.10.7")
 
       // Optional: Voice assistant widget (Compose Multiplatform)
-      // implementation("ai.liquid.leap:leap-ui:0.10.6")
+      // implementation("ai.liquid.leap:leap-ui:0.10.7")
     }
     ```
 
@@ -147,7 +147,7 @@ The LEAP SDK is a Kotlin Multiplatform library: the same `ModelRunner` / `Conver
 
       ```toml
       [versions]
-      leapSdk = "0.10.6"
+      leapSdk = "0.10.7"
 
       [libraries]
       leap-sdk = { module = "ai.liquid.leap:leap-sdk", version.ref = "leapSdk" }
@@ -166,7 +166,7 @@ The LEAP SDK is a Kotlin Multiplatform library: the same `ModelRunner` / `Conver
       ```
     </Accordion>
 
-    Also declare these permissions in `AndroidManifest.xml` — `LeapModelDownloader` runs as a foreground service for reliable downloads:
+    Also declare these permissions in `AndroidManifest.xml` — `LeapModelDownloader.requestDownloadModel(...)` enqueues a WorkManager download worker that runs in the foreground while transferring model files:
 
     ```xml
     <uses-permission android:name="android.permission.INTERNET" />
@@ -191,11 +191,11 @@ The LEAP SDK is a Kotlin Multiplatform library: the same `ModelRunner` / `Conver
     }
 
     dependencies {
-        implementation("ai.liquid.leap:leap-sdk:0.10.6")
+        implementation("ai.liquid.leap:leap-sdk:0.10.7")
 
         // Optional:
-        // implementation("ai.liquid.leap:leap-openai-client:0.10.6")
-        // implementation("ai.liquid.leap:leap-ui:0.10.6") // Compose for Desktop voice widget
+        // implementation("ai.liquid.leap:leap-openai-client:0.10.7")
+        // implementation("ai.liquid.leap:leap-ui:0.10.7") // Compose for Desktop voice widget
     }
     ```
 
@@ -222,11 +222,11 @@ The LEAP SDK is a Kotlin Multiplatform library: the same `ModelRunner` / `Conver
     // build.gradle.kts
     plugins {
         kotlin("multiplatform") version "2.3.20"
-        id("ai.liquid.leap.nativelibs") version "0.10.6"
+        id("ai.liquid.leap.nativelibs") version "0.10.7"
     }
 
     dependencies {
-        implementation("ai.liquid.leap:leap-sdk:0.10.6")
+        implementation("ai.liquid.leap:leap-sdk:0.10.7")
     }
 
     kotlin {
@@ -242,7 +242,7 @@ The LEAP SDK is a Kotlin Multiplatform library: the same `ModelRunner` / `Conver
 
 ## 3. Load a model
 
-The recommended path is **manifest-based** loading. On every platform, the platform downloader's `loadModel(...)` downloads (if needed) and loads in one call — `LeapModelDownloader.loadModel(...)` on iOS / macOS / Android, `LeapDownloader.loadModel(...)` on JVM and Linux / Windows Kotlin/Native. All paths fetch from the [LEAP Model Library](https://leap.liquid.ai/models) on first use and load from cache thereafter.
+The recommended path is **manifest-based** loading. On every platform, the platform downloader's `loadModel(...)` downloads (if needed) and loads in one call — `ModelDownloader.loadModel(...)` on iOS / macOS, `LeapModelDownloader.loadModel(...)` on Android, and `LeapDownloader.loadModel(...)` on JVM and Linux / Windows Kotlin/Native. All paths fetch from the [LEAP Model Library](https://leap.liquid.ai/models) on first use and load from cache thereafter.
 
 <Tabs>
   <Tab title="Swift (iOS / macOS)">
@@ -298,8 +298,8 @@ The recommended path is **manifest-based** loading. On every platform, the platf
     import androidx.lifecycle.viewModelScope
     import ai.liquid.leap.Conversation
     import ai.liquid.leap.ModelRunner
-    import ai.liquid.leap.model_downloader.LeapModelDownloader
-    import ai.liquid.leap.model_downloader.LeapModelDownloaderNotificationConfig
+    import ai.liquid.leap.downloader.LeapModelDownloader
+    import ai.liquid.leap.downloader.LeapModelDownloaderNotificationConfig
     import kotlinx.coroutines.Dispatchers
     import kotlinx.coroutines.flow.MutableStateFlow
     import kotlinx.coroutines.flow.StateFlow
@@ -313,7 +313,7 @@ The recommended path is **manifest-based** loading. On every platform, the platf
             notificationConfig = LeapModelDownloaderNotificationConfig.build {
                 notificationTitleDownloading = "Downloading AI model..."
                 notificationTitleDownloaded = "Model ready!"
-                notificationContentDownloading = "Please wait while the model downloads"
+                notificationContentDownloadingTemplate = "Please wait while the model downloads"
             }
         )
 
@@ -351,8 +351,8 @@ The recommended path is **manifest-based** loading. On every platform, the platf
   </Tab>
   <Tab title="Kotlin (JVM / native)">
     ```kotlin
-    import ai.liquid.leap.LeapDownloader
-    import ai.liquid.leap.LeapDownloaderConfig
+    import ai.liquid.leap.manifest.LeapDownloader
+    import ai.liquid.leap.manifest.LeapDownloaderConfig
     import ai.liquid.leap.message.ChatMessage
     import ai.liquid.leap.message.MessageResponse
     import kotlinx.coroutines.runBlocking
@@ -372,7 +372,9 @@ The recommended path is **manifest-based** loading. On every platform, the platf
 
         val conversation = runner.createConversation(systemPrompt = "You are a helpful assistant.")
 
-        conversation.generateResponse(ChatMessage.user("Hello!")).collect { resp ->
+        conversation.generateResponse(
+            ChatMessage(ChatMessage.Role.USER, "Hello!")
+        ).collect { resp ->
             when (resp) {
                 is MessageResponse.Chunk -> print(resp.text)
                 is MessageResponse.Complete -> println("\n[done]")
@@ -431,12 +433,16 @@ Both platforms expose the same streaming shape: an async sequence of `MessageRes
     func send(_ text: String) {
         guard let conversation else { return }
         generationTask?.cancel()
-        let userMessage = ChatMessage(role: .user, content: [.text(text)])
+        let userMessage = ChatMessage(role: .user, textContent: text)
+        let options = GenerationOptions()
+            .with(temperature: 0.3)
+            .with(minP: 0.15)
+            .with(repetitionPenalty: 1.05)
         generationTask = Task { [weak self] in
             do {
                 for try await response in conversation.generateResponse(
                     message: userMessage,
-                    generationOptions: GenerationOptions(temperature: 0.3, minP: 0.15, repetitionPenalty: 1.05)
+                    generationOptions: options
                 ) {
                     self?.handle(response)
                 }
@@ -479,7 +485,7 @@ Both platforms expose the same streaming shape: an async sequence of `MessageRes
                 ?.onEach { response ->
                     when (response) {
                         is MessageResponse.Chunk -> _responseText.value += response.text
-                        is MessageResponse.ReasoningChunk -> Log.d(TAG, "Reasoning: ${response.text}")
+                        is MessageResponse.ReasoningChunk -> Log.d(TAG, "Reasoning: ${response.reasoning}")
                         is MessageResponse.FunctionCalls -> handleFunctionCalls(response.functionCalls)
                         is MessageResponse.AudioSample -> audioRenderer.enqueue(response.samples, response.sampleRate)
                         is MessageResponse.Complete -> Log.d(TAG, "Done. Stats: ${response.stats}")
@@ -501,22 +507,28 @@ Cancel the in-flight task (Swift) or coroutine job (Kotlin) to interrupt generat
 If the loaded model is multimodal (and its companion files were detected), you can attach a non-text part — an image, a WAV blob, or raw PCM samples — alongside the text in a `ChatMessage`.
 
 <Info>
-**Multimodality is model-specific.** Most multimodal models we ship are text + one other modality: text + vision (the VLM family) or text + audio (the audio family) — not both in the same checkpoint. Send `.image(...)` parts only to a vision-capable model, and `.audio(...)` / `.fromFloatSamples(...)` parts only to an audio-capable model. Mixing modalities a model wasn't trained on will either fail to load the companion file or produce nonsense. Check the model's [Hugging Face card](https://huggingface.co/LiquidAI) before wiring up a non-text input path.
+**Multimodality is model-specific.** Most multimodal models we ship are text + one other modality: text + vision (the VLM family) or text + audio (the audio family) — not both in the same checkpoint. Send image content (`fromJPEGData(_:)`, `image(url:)`, `fromBitmap(...)` / `fromUIImage(_:)`) only to a vision-capable model, and audio content (`fromWAVData(_:)`, `fromFloatSamples(_:sampleRate:)`) only to an audio-capable model. Mixing modalities a model wasn't trained on will either fail to load the companion file or produce nonsense. Check the model's [Hugging Face card](https://huggingface.co/LiquidAI) before wiring up a non-text input path.
 </Info>
 
 <Tabs>
   <Tab title="Swift (iOS / macOS)">
     ```swift
-    // Text + image (vision-capable model)
+    // Text + image (vision-capable model). Use `ChatMessageContent.fromJPEGData(_:)`
+    // for raw JPEG bytes, or `.image(url:)` for a data URL / remote URL.
     let imageMessage = ChatMessage(
       role: .user,
-      content: [.text("Describe what you see."), .image(jpegData)]
+      content: [.text("Describe what you see."), ChatMessageContent.fromJPEGData(jpegData)],
+      reasoningContent: nil,
+      functionCalls: nil
     )
 
-    // Text + WAV audio (audio-capable model)
+    // Text + WAV audio (audio-capable model). `fromWAVData` validates the header;
+    // use `.audio(data:format:)` if you already know the bytes are a supported format.
     let wavMessage = ChatMessage(
       role: .user,
-      content: [.text("Transcribe and summarize this clip."), .audio(wavData)]
+      content: [.text("Transcribe and summarize this clip."), ChatMessageContent.fromWAVData(wavData)],
+      reasoningContent: nil,
+      functionCalls: nil
     )
 
     // Text + raw PCM samples (audio-capable model)
@@ -525,14 +537,17 @@ If the loaded model is multimodal (and its companion files were detected), you c
       content: [
         .text("Give feedback on my pronunciation."),
         ChatMessageContent.fromFloatSamples(samples, sampleRate: 16000)
-      ]
+      ],
+      reasoningContent: nil,
+      functionCalls: nil
     )
     ```
   </Tab>
   <Tab title="Kotlin (all platforms)">
     ```kotlin
     // Text + image (vision-capable model)
-    val imageMessage = ChatMessage.user(
+    val imageMessage = ChatMessage(
+        role = ChatMessage.Role.USER,
         content = listOf(
             ChatMessageContent.Text("Describe what you see."),
             ChatMessageContent.Image(jpegBytes)
@@ -540,7 +555,8 @@ If the loaded model is multimodal (and its companion files were detected), you c
     )
 
     // Text + WAV audio (audio-capable model)
-    val wavMessage = ChatMessage.user(
+    val wavMessage = ChatMessage(
+        role = ChatMessage.Role.USER,
         content = listOf(
             ChatMessageContent.Text("Transcribe and summarize this clip."),
             ChatMessageContent.Audio(wavBytes)
@@ -548,7 +564,8 @@ If the loaded model is multimodal (and its companion files were detected), you c
     )
 
     // Text + raw PCM samples (audio-capable model)
-    val pcmMessage = ChatMessage.user(
+    val pcmMessage = ChatMessage(
+        role = ChatMessage.Role.USER,
         content = listOf(
             ChatMessageContent.Text("Give feedback on my pronunciation."),
             ChatMessageContent.AudioPcmF32(samples, sampleRate = 16000)

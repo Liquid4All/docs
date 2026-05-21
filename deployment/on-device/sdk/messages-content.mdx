@@ -3,76 +3,87 @@ title: "Messages & Content"
 description: "ChatMessage, ChatMessageContent, audio format requirements — same shape on every platform."
 ---
 
-`ChatMessage` and `ChatMessageContent` mirror the OpenAI chat-completions message schema. The same fields exist on iOS / macOS (`struct ChatMessage`, `enum ChatMessageContent`) and the Kotlin platforms (`data class ChatMessage`, `sealed interface ChatMessageContent`).
+`ChatMessage` and `ChatMessageContent` mirror the OpenAI chat-completions message schema. Both are declared once in `commonMain` (`data class ChatMessage`, `sealed class ChatMessageContent`) and Kotlin/Native + SKIE bridge the Kotlin types into Swift — there are no separate "native" Swift declarations.
 
 ## `ChatMessage`
 
 <Tabs>
   <Tab title="Swift (iOS / macOS)">
+    The Swift class is generated from the Kotlin `data class`. Kotlin parameter defaults don't propagate, so the primary init requires all four arguments explicitly:
+
     ```swift
-    public struct ChatMessage {
-      public var role: ChatMessageRole
+    public class ChatMessage {
+      public var role: ChatMessage.Role
       public var content: [ChatMessageContent]
       public var reasoningContent: String?
       public var functionCalls: [LeapFunctionCall]?
 
+      // Primary init — pass `reasoningContent: nil, functionCalls: nil` for ordinary messages.
       public init(
-        role: ChatMessageRole,
+        role: ChatMessage.Role,
         content: [ChatMessageContent],
-        reasoningContent: String? = nil,
-        functionCalls: [LeapFunctionCall]? = nil
+        reasoningContent: String?,
+        functionCalls: [LeapFunctionCall]?
       )
 
-      public init(from json: [String: Any]) throws
-    }
+      // Secondary inits (from Kotlin secondary constructors):
+      public init(role: ChatMessage.Role, content: ChatMessageContent)  // single content
+      public init(role: ChatMessage.Role, textContent: String)          // plain text
 
-    public enum ChatMessageRole: String {
-      case user, system, assistant, tool
+      public enum Role {
+        case system, user, assistant, tool
+      }
     }
     ```
   </Tab>
   <Tab title="Kotlin (all platforms)">
     ```kotlin
+    @Serializable(with = ChatMessageJsonSerializer::class)
     data class ChatMessage(
         val role: Role,
         val content: List<ChatMessageContent>,
-        val reasoningContent: String? = null,
-        val functionCalls: List<LeapFunctionCall>? = null,
+        @SerialName("reasoning_content") val reasoningContent: String? = null,
+        @SerialName("tool_calls") val functionCalls: List<LeapFunctionCall>? = null,
     ) {
+        // Single-content secondary ctor (wraps the part in a list, drops defaults).
+        constructor(role: Role, content: ChatMessageContent)
+        // Plain-text secondary ctor (parameter name is `textContent`).
+        constructor(role: Role, textContent: String)
+
         enum class Role(val type: String) {
             SYSTEM("system"),
             USER("user"),
             ASSISTANT("assistant"),
-            TOOL("tool"),
-        }
+            TOOL("tool");
 
-        fun toJSONObject(): JSONObject
-
-        companion object {
-            fun fromJSONObject(obj: JSONObject): ChatMessage
+            companion object {
+                fun fromTypeString(type: String): Role  // throws LeapSerializationException on unknown values
+            }
         }
     }
     ```
+
+    `ChatMessage` is `@Serializable` via the dedicated `ChatMessageJsonSerializer` — encode/decode through `kotlinx.serialization.json.Json` rather than ad-hoc `JSONObject` helpers. See [Utilities → Serialization](./utilities#serialization).
   </Tab>
 </Tabs>
 
 ### Fields
 
 - **`role`** — the speaker (`user`, `system`, `assistant`, or `tool`). Use `tool` when appending function-call results back into the history.
-- **`content`** — ordered fragments. Supported part types: `Text`, `Image` (JPEG bytes), `Audio` (WAV bytes), and on Kotlin `AudioPcmF32` for raw float samples.
+- **`content`** — ordered fragments. Supported part types: `Text`, `Image` (JPEG bytes wrapped in a data URL), `Audio` (WAV bytes or `input_audio` payload), and on Kotlin `AudioPcmF32` for raw float samples.
 - **`reasoningContent`** — text emitted by reasoning models inside `<think>` / `</think>` tags. `null` for non-reasoning responses.
-- **`functionCalls`** — calls returned by `MessageResponse.functionCalls` on the previous turn, included when appending tool-call results to history.
+- **`functionCalls`** — calls returned by `MessageResponse.FunctionCalls` on the previous turn, included when appending tool-call results to history.
 
 ### Serialization
 
-Both platforms expose round-trip JSON helpers compatible with OpenAI's `ChatCompletionRequestMessage`.
+Round-trip the message through `kotlinx.serialization` — there is no separate "from `[String: Any]`" initializer on either platform.
 
 <Tabs>
   <Tab title="Swift (iOS / macOS)">
-    `ChatMessage(from: [String: Any])` constructs a message from an OpenAI-style payload. Throws `LeapSerializationError` on unrecognized shapes.
+    Encode with `LeapJson.encodeToString` (or your own `JSONEncoder` against the OpenAI shape) and decode with the matching Kotlin serializer. See [Utilities → Serialization](./utilities#serialization) for examples that route through `LeapJson`.
   </Tab>
   <Tab title="Kotlin (all platforms)">
-    `ChatMessage.toJSONObject()` / `ChatMessage.fromJSONObject(obj)`. Throws `LeapSerializationException` on unrecognized shapes. See [Utilities → Serialization Support](./utilities#serialization-support).
+    `ChatMessage` is `@Serializable`. Encode with `Json.encodeToString(message)` and decode with `Json.decodeFromString<ChatMessage>(jsonString)` — see [Utilities → Serialization](./utilities#serialization). On error, expect a `LeapSerializationException` (not `LeapSerializationError`).
   </Tab>
 </Tabs>
 
@@ -80,48 +91,78 @@ Both platforms expose round-trip JSON helpers compatible with OpenAI's `ChatComp
 
 <Tabs>
   <Tab title="Swift (iOS / macOS)">
-    ```swift
-    public enum ChatMessageContent {
-      case text(String)
-      case image(Data)   // JPEG bytes
-      case audio(Data)   // WAV bytes
+    `ChatMessageContent` is the Kotlin `sealed class` bridged to Swift — switch on its subclasses with SKIE's `onEnum(of:)` helper. There is no native Swift `enum`, no positional `.image(_:)` / `.audio(_:)` factory, and no `init(from json:)`. Use the static factories on the Swift overlay:
 
-      public init(from json: [String: Any]) throws
-    }
+    ```swift
+    // Text (cross-platform):
+    ChatMessageContent.text(_ text: String) -> ChatMessageContent
+
+    // Image:
+    ChatMessageContent.fromJPEGData(_ jpegData: Data) -> ChatMessageContent.Image
+    ChatMessageContent.image(url: String) -> ChatMessageContent.Image           // data URL or remote URL
+
+    // Audio:
+    ChatMessageContent.fromWAVData(_ wavData: Data) -> ChatMessageContent.Audio
+    ChatMessageContent.audio(data: Data, format: String = "wav") -> ChatMessageContent.Audio
+    ChatMessageContent.fromFloatSamples(_ samples: [Float], sampleRate: Int, channelCount: Int = 1)
+        -> ChatMessageContent.Audio
+
+    // iOS only — UIKit:
+    public static func fromUIImage(_ image: UIImage) throws -> ChatMessageContent
+    // (JPEG quality is fixed at 0.85; no compressionQuality parameter is exposed.)
     ```
 
-    Helper initializers simplify interop with platform-native buffers:
+    `fromUIImage` is iOS-only and takes only the image — JPEG compression quality is hard-coded to `0.85` in the overlay (`leap-sdk/src/iosMain/.../ChatMessageContentExtensionsIos.kt`). There is no `fromNSImage` factory; on macOS, convert your `NSImage` to JPEG `Data` yourself and pass it through `fromJPEGData(_:)`.
 
-    - `ChatMessageContent.fromUIImage(image, compressionQuality:)` — UIKit
-    - `ChatMessageContent.fromNSImage(image, compressionQuality:)` — AppKit
-    - `ChatMessageContent.fromWAVData(data)` — pass-through validator
-    - `ChatMessageContent.fromFloatSamples(samples, sampleRate:, channelCount:)` — wrap raw float32 PCM into a WAV blob
-
-    On the wire, image parts are encoded as OpenAI-style `image_url` payloads and audio parts as `input_audio` arrays with Base64 data.
+    On the wire, image parts are encoded as OpenAI-style `image_url` payloads (with a `data:image/jpeg;base64,...` URL) and audio parts as `input_audio` arrays with Base64 data.
   </Tab>
   <Tab title="Kotlin (all platforms)">
     ```kotlin
-    sealed interface ChatMessageContent {
-        fun clone(): ChatMessageContent
-        fun toJSONObject(): JSONObject
+    sealed class ChatMessageContent {
+        data class Text(val text: String) : ChatMessageContent()
 
-        data class Text(val text: String) : ChatMessageContent
-        data class Image(val jpegByteArray: ByteArray) : ChatMessageContent
-        data class Audio(val wavByteArray: ByteArray) : ChatMessageContent
-        data class AudioPcmF32(val samples: FloatArray, val sampleRate: Int) : ChatMessageContent
+        data class Image(val imageUrl: ImageUrl) : ChatMessageContent() {
+            // Convenience secondary ctor — wraps the bytes in a data: URL.
+            constructor(jpegByteArray: ByteArray)
+            val jpegByteArray: ByteArray   // derived property: decodes the data: URL
+
+            // Nested wrapper for the OpenAI `image_url` wire shape.
+            data class ImageUrl(val url: String)
+        }
+
+        data class Audio(val inputAudio: InputAudio) : ChatMessageContent() {
+            // Convenience secondary ctor — wraps the bytes in an InputAudio.
+            constructor(data: ByteArray)
+            val data: ByteArray            // derived property: decodes the base64 InputAudio payload
+
+            data class InputAudio(val data: String, val format: String)  // base64-encoded `data`
+        }
+
+        // Convenience helpers (declared on the sealed class) wrap raw PCM into Audio:
+        fun toWavBytes(): ByteArray        // on AudioPcmF32 — encodes float samples as 16-bit PCM WAV
+        fun toAudio(): Audio               // on AudioPcmF32 — same bytes wrapped as ChatMessageContent.Audio
+
+        data class AudioPcmF32(val samples: FloatArray, val sampleRate: Int) : ChatMessageContent()
     }
-
-    fun ChatMessageContent.fromJSONObject(obj: JSONObject): ChatMessageContent
     ```
 
-    Android-specific helper: `ChatMessageContent.Image.fromBitmap(bitmap, compressionQuality = 85)` re-encodes an Android `Bitmap` to JPEG.
+    Serialize via `kotlinx.serialization` (every variant is `@Serializable`).
+
+    Android-specific helper: `ImageUtils.fromBitmap(bitmap, compressionQuality = 85)` (in `ai.liquid.leap.message`) re-encodes an Android `Bitmap` to JPEG and returns a `ChatMessageContent.Image`. It's a `suspend` function — call it from a coroutine.
+
+    ```kotlin
+    import ai.liquid.leap.message.ImageUtils
+
+    val image: ChatMessageContent.Image = ImageUtils.fromBitmap(bitmap, compressionQuality = 85)
+    ```
   </Tab>
 </Tabs>
 
 - **`Text`** — plain text fragment.
 - **`Image`** — JPEG-encoded image bytes. Only vision-capable models can interpret image parts.
 - **`Audio`** — WAV-encoded audio bytes (see [audio format requirements](#audio-format-requirements) below).
-- **`AudioPcmF32`** (Kotlin) / `fromFloatSamples(...)` (Swift) — raw float32 mono PCM in memory. Avoids re-encoding when you already have samples.
+- **`AudioPcmF32`** (Kotlin) — raw float32 mono PCM in memory. Avoids the WAV encoding step when you already have samples; the engine handles framing internally. Kotlin-only.
+- **`fromFloatSamples(...)` (Swift)** — convenience that wraps `[Float]` samples into a `ChatMessageContent.Audio` WAV blob (via `FloatAudioBuffer.makeAudioContent()`). Different from Kotlin's `AudioPcmF32`: this one DOES re-encode through WAV. There is no Swift surface for raw `AudioPcmF32` today.
 
 ## Audio format requirements
 
@@ -168,8 +209,10 @@ The engine **only accepts WAV**. M4A, MP3, AAC, OGG, and other compressed format
         role: .user,
         content: [
             .text("What is being said in this audio?"),
-            .audio(wavData)
-        ]
+            ChatMessageContent.fromWAVData(wavData)
+        ],
+        reasoningContent: nil,
+        functionCalls: nil
     )
     ```
   </Tab>
@@ -205,7 +248,9 @@ The engine **only accepts WAV**. M4A, MP3, AAC, OGG, and other compressed format
 
     let message = ChatMessage(
         role: .user,
-        content: [.text("Transcribe this audio"), audioContent]
+        content: [.text("Transcribe this audio"), audioContent],
+        reasoningContent: nil,
+        functionCalls: nil
     )
     ```
   </Tab>
@@ -252,7 +297,7 @@ The engine **only accepts WAV**. M4A, MP3, AAC, OGG, and other compressed format
     recorder.stop()
 
     let wavData = try Data(contentsOf: audioURL)
-    let audioContent: ChatMessageContent = .audio(wavData)
+    let audioContent: ChatMessageContent = ChatMessageContent.fromWAVData(wavData)
     ```
   </Tab>
   <Tab title="Kotlin (Android)">

@@ -22,7 +22,7 @@ The VLMExample showcases cutting-edge multimodal AI capabilities:
 - **On-device Inference** - Complete privacy with local VLM processing
 - **Interactive Q&A** - Ask questions about images and get contextual answers
 
-This example demonstrates the **LFM2-VL-1.6B** model, a vision-language model that can understand and reason about visual content.
+This example demonstrates the **LFM2.5-VL-1.6B** model, a vision-language model that can understand and reason about visual content.
 
 ## What are Vision Language Models?
 
@@ -59,9 +59,9 @@ Before running this example, ensure you have the following:
 
 <Accordion title="Minimum SDK Requirements">
   This example requires:
-  - **Minimum SDK**: API 24 (Android 7.0)
-  - **Target SDK**: API 34 or higher
-  - **Kotlin**: 1.9.0 or higher
+  - **Minimum SDK**: API 31 (Android 12)
+  - **Target SDK**: API 36
+  - **Kotlin**: 2.3.0 or higher
 
   **Hardware recommendations:**
   - At least 4GB RAM (6GB+ recommended for better performance)
@@ -69,7 +69,7 @@ Before running this example, ensure you have the following:
 </Accordion>
 
 <Accordion title="VLM Model Bundle Deployment">
-  This example requires the **LFM2-VL-1.6B** vision language model bundle.
+  This example requires the **LFM2.5-VL-1.6B** vision language model bundle.
 
   **Step 1: Obtain the model bundle**
 
@@ -92,8 +92,8 @@ Before running this example, ensure you have the following:
   ```kotlin
   dependencies {
       // LeapSDK for VLM processing (0.10.0+)
-      implementation("ai.liquid.leap:leap-sdk:0.10.6")
-      implementation("ai.liquid.leap:leap-model-downloader:0.10.6")
+      implementation("ai.liquid.leap:leap-sdk:0.10.7")
+      implementation("ai.liquid.leap:leap-model-downloader:0.10.7")
 
       // Coil for image loading
       implementation("io.coil-kt:coil-compose:2.5.0")
@@ -196,8 +196,9 @@ import ai.liquid.leap.GenerationOptions
 import ai.liquid.leap.ModelRunner
 import ai.liquid.leap.message.ChatMessage
 import ai.liquid.leap.message.ChatMessageContent
+import ai.liquid.leap.message.ImageUtils
 import ai.liquid.leap.message.MessageResponse
-import ai.liquid.leap.model_downloader.LeapModelDownloader
+import ai.liquid.leap.downloader.LeapModelDownloader
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
@@ -205,7 +206,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
-import java.io.ByteArrayOutputStream
 
 class VLMViewModel(application: Application) : AndroidViewModel(application) {
     private val downloader = LeapModelDownloader(application)
@@ -225,16 +225,16 @@ class VLMViewModel(application: Application) : AndroidViewModel(application) {
         val runner = runner ?: return
         viewModelScope.launch(Dispatchers.Default) {
             val bitmap = loadBitmapFromUri(imageUri)
-            val pngBytes = ByteArrayOutputStream().use { out ->
-                bitmap.compress(Bitmap.CompressFormat.PNG, 100, out)
-                out.toByteArray()
-            }
+            // ChatMessageContent.Image expects JPEG bytes — the secondary ctor wraps them in a
+            // `data:image/jpeg;base64,...` URL. Use the SDK's ImageUtils helper rather than
+            // re-encoding by hand.
+            val imageContent = ImageUtils.fromBitmap(bitmap, compressionQuality = 85)
 
             val conversation = runner.createConversation()
             val message = ChatMessage(
                 role = ChatMessage.Role.USER,
                 content = listOf(
-                    ChatMessageContent.Image(pngBytes),
+                    imageContent,
                     ChatMessageContent.Text("Describe this image in detail."),
                 ),
             )
@@ -336,40 +336,66 @@ fun ImageAnalysisDisplay(analysis: ImageAnalysis) {
 
 ### Interactive Q&A Mode
 
-Allow users to ask questions about images:
+Reuse the streaming pipeline above but parameterize the question. The image is encoded via `ImageUtils.fromBitmap(...)` (suspend, JPEG-encodes internally) and combined with the user's question into a single `ChatMessage`:
 
 ```kotlin
-fun askQuestionAboutImage(bitmap: Bitmap, question: String): String {
-    return vlmModel.generateFromImage(
-        image = bitmap,
-        prompt = "Answer this question about the image: $question",
-        maxTokens = 150
+suspend fun askQuestionAboutImage(
+    runner: ModelRunner,
+    bitmap: Bitmap,
+    question: String,
+    options: GenerationOptions,
+): String {
+    val conversation = runner.createConversation()
+    val message = ChatMessage(
+        role = ChatMessage.Role.USER,
+        content = listOf(
+            ImageUtils.fromBitmap(bitmap, compressionQuality = 85),
+            ChatMessageContent.Text("Answer this question about the image: $question"),
+        ),
     )
+
+    val builder = StringBuilder()
+    conversation.generateResponse(message, options).collect { response ->
+        if (response is MessageResponse.Chunk) builder.append(response.text)
+    }
+    return builder.toString()
 }
 
-// Example usage
-val answer1 = askQuestionAboutImage(bitmap, "What is the main object in this image?")
-val answer2 = askQuestionAboutImage(bitmap, "What colors are prominent?")
-val answer3 = askQuestionAboutImage(bitmap, "Is this indoors or outdoors?")
+// Example usage (inside a coroutine):
+// val answer = askQuestionAboutImage(runner, bitmap, "What colors are prominent?", options)
 ```
 
 ### Memory Management
 
-Vision models require more memory. Implement proper lifecycle handling:
+Vision models require more memory. Free the runner when the activity goes to the background by calling `ModelRunner.unload()`:
 
 ```kotlin
+class VLMViewModel(application: Application) : AndroidViewModel(application) {
+    private var runner: ModelRunner? = null
+
+    suspend fun releaseModel() {
+        runner?.unload()
+        runner = null
+    }
+
+    suspend fun initializeModel() {
+        if (runner != null) return // already loaded — don't re-download
+        // ...same loadModel(...) path as above; assign to runner
+    }
+}
+
 override fun onStop() {
     super.onStop()
-    // Release model when app goes to background to free memory
-    viewModel.releaseModel()
+    lifecycleScope.launch { viewModel.releaseModel() }
 }
 
 override fun onStart() {
     super.onStart()
-    // Reload model when app returns to foreground
-    viewModel.initializeModel()
+    lifecycleScope.launch { viewModel.initializeModel() }
 }
 ```
+
+`ModelRunner.unload()` is `suspend` (per `ai.liquid.leap.ModelRunner`), so call it from a coroutine scope.
 
 ## Results
 

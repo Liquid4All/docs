@@ -60,30 +60,34 @@ Hold a strong reference for as long as you need to perform generations, then cal
 
 <Tabs>
   <Tab title="Swift (iOS / macOS)">
+    `Conversation` is a Kotlin `interface` bridged to Swift as a protocol — the get-only properties surface as `{ get }` in Swift. The generation methods return a SKIE-bridged `SkieSwiftFlow<MessageResponse>` (iterable with `for try await`):
+
     ```swift
-    public class Conversation {
-      public let modelRunner: ModelRunner
-      public private(set) var history: [ChatMessage]
-      public private(set) var functions: [LeapFunction]
-      public private(set) var isGenerating: Bool
+    public protocol Conversation {
+      var modelRunner: ModelRunner { get }
+      var history: [ChatMessage] { get }
+      var functions: [LeapFunction] { get }
+      var isGenerating: Bool { get }
 
-      public func registerFunction(_ function: LeapFunction)
-      public func registerFunctions(_ functions: [LeapFunction])
-      public func appendToHistory(_ message: ChatMessage)
-      public func removeLastMessage()
-      public func exportToJSON() throws -> [[String: Any]]
+      func registerFunction(function: LeapFunction)
+      func registerFunctions(functions: [LeapFunction])
+      func appendToHistory(message: ChatMessage)
+      func removeLastMessage()
+      func exportToJSON() -> String
 
-      public func generateResponse(
+      func generateResponse(
         userTextMessage: String,
-        generationOptions: GenerationOptions? = nil
-      ) -> AsyncThrowingStream<MessageResponse, Error>
+        generationOptions: GenerationOptions?
+      ) -> SkieSwiftFlow<MessageResponse>
 
-      public func generateResponse(
+      func generateResponse(
         message: ChatMessage,
-        generationOptions: GenerationOptions? = nil
-      ) -> AsyncThrowingStream<MessageResponse, Error>
+        generationOptions: GenerationOptions?
+      ) -> SkieSwiftFlow<MessageResponse>
     }
     ```
+
+    Kotlin parameter defaults don't propagate through Kotlin/Native, so the Swift method labels match the Kotlin parameter names (`function:`, `functions:`, `message:`) and `generationOptions` must be passed explicitly. A `ConvenienceExtensions.swift` overlay adds `generateResponse(message:)` without the options argument for the common case.
   </Tab>
   <Tab title="Kotlin (all platforms)">
     ```kotlin
@@ -108,8 +112,6 @@ Hold a strong reference for as long as you need to perform generations, then cal
           message: ChatMessage,
           generationOptions: GenerationOptions? = null
       ): Flow<MessageResponse>
-
-      fun exportToJSONArray(): JSONArray
     }
     ```
   </Tab>
@@ -123,7 +125,7 @@ Hold a strong reference for as long as you need to perform generations, then cal
 
 - **`history`** — a snapshot copy of the chat messages. Mutations don't affect generation. Once the stream emits `Complete`, `history` includes the final assistant reply.
 - **`isGenerating`** — `true` while a generation is in flight. Starting a second generation while one is running is blocked.
-- **`functions`** (Swift only field, registered via `registerFunction` on both platforms) — tool definitions the model may invoke.
+- **`functions`** — tool definitions the model may invoke. Registered through `registerFunction(_:)` / `registerFunctions(_:)` on both platforms.
 
 ### Streaming generation
 
@@ -132,13 +134,17 @@ The async stream is the recommended way to drive generation — both platforms e
 <Tabs>
   <Tab title="Swift (iOS / macOS)">
     ```swift
-    let user = ChatMessage(role: .user, content: [.text("Hello! What can you do?")])
+    let user = ChatMessage(role: .user, textContent: "Hello! What can you do?")
+    let options = GenerationOptions()
+      .with(temperature: 0.3)
+      .with(minP: 0.15)
+      .with(repetitionPenalty: 1.05)
 
     Task {
       do {
         for try await response in conversation.generateResponse(
           message: user,
-          generationOptions: GenerationOptions(temperature: 0.3, minP: 0.15, repetitionPenalty: 1.05)
+          generationOptions: options
         ) {
           switch onEnum(of: response) {
           case .chunk(let c):
@@ -148,6 +154,10 @@ The async stream is the recommended way to drive generation — both platforms e
           case .functionCalls(let payload):
             handleFunctionCalls(payload.functionCalls)
           case .audioSample(let audio):
+            // `audio.samples` is a `KotlinFloatArray` from Kotlin/Native — bridge to
+            // `[Float]` via NSData if your renderer expects a Swift array:
+            //   let nsData = LeapSDK.ArrayConversionsKt.floatArrayToNSData(array: audio.samples)
+            //   let floats = nsData.withUnsafeBytes { Array($0.bindMemory(to: Float.self)) }
             audioRenderer.enqueue(audio.samples, sampleRate: Int(audio.sampleRate))
           case .complete(let completion):
             let text = completion.fullMessage.content.compactMap { part -> String? in
@@ -216,18 +226,23 @@ The async stream is the recommended way to drive generation — both platforms e
 
 ### Export chat history
 
-Both platforms expose a serializer compatible with OpenAI's chat-completions message format. Useful for persistence, analytics, or replaying conversations through a cloud fallback.
+Persisting, replaying, or shipping the conversation to a cloud fallback all boil down to serializing `conversation.history`. Swift exposes `exportToJSON()` (returns a JSON string in OpenAI chat-completions shape); Kotlin uses `kotlinx.serialization` (`ChatMessage` and `ChatMessageContent` are `@Serializable`).
 
 <Tabs>
   <Tab title="Swift (iOS / macOS)">
     ```swift
-    let payload: [[String: Any]] = try conversation.exportToJSON()
+    let jsonString: String = conversation.exportToJSON()
     ```
   </Tab>
   <Tab title="Kotlin (all platforms)">
     ```kotlin
-    val payload: JSONArray = conversation.exportToJSONArray()
+    import kotlinx.serialization.json.Json
+    import kotlinx.serialization.encodeToString
+
+    val jsonString = Json.encodeToString(conversation.history)
     ```
+
+    Add `org.jetbrains.kotlinx:kotlinx-serialization-json` to your dependencies — see [Utilities → Serialization](./utilities#serialization) for the round-trip pattern.
   </Tab>
 </Tabs>
 
@@ -252,11 +267,11 @@ A sealed type with one case per kind of incremental output the engine emits.
   <Tab title="Kotlin (all platforms)">
     ```kotlin
     sealed interface MessageResponse {
-      class Chunk(val text: String) : MessageResponse
-      class ReasoningChunk(val reasoning: String) : MessageResponse
-      class FunctionCalls(val functionCalls: List<LeapFunctionCall>) : MessageResponse
-      class AudioSample(val samples: FloatArray, val sampleRate: Int) : MessageResponse
-      class Complete(
+      data class Chunk(val text: String) : MessageResponse
+      data class ReasoningChunk(val reasoning: String) : MessageResponse
+      data class FunctionCalls(val functionCalls: List<LeapFunctionCall>) : MessageResponse
+      data class AudioSample(val samples: FloatArray, val sampleRate: Int) : MessageResponse
+      data class Complete(
         val fullMessage: ChatMessage,
         val finishReason: GenerationFinishReason,
         val stats: GenerationStats?,
@@ -270,7 +285,7 @@ A sealed type with one case per kind of incremental output the engine emits.
 - **`ReasoningChunk`** — thinking-style tokens emitted by reasoning models (wrapped between `<think>` / `</think>` upstream). Only fires when `GenerationOptions.enableThinking = true` *and* the model supports it.
 - **`FunctionCalls`** — one or more tool invocations the model wants you to execute. See [Function Calling](./function-calling).
 - **`AudioSample`** — float32 mono PCM frames from audio-capable checkpoints. The sample rate is constant for a generation; route the frames to a renderer.
-- **`Complete`** — final marker. `fullMessage` is the assembled assistant `ChatMessage` (also present in `conversation.history`). `stats` holds token counts and `tokenPerSecond` (may be `null` on some backends).
+- **`Complete`** — final marker. `fullMessage` is the assembled assistant `ChatMessage` (also present in `conversation.history`). `stats` is nullable (`GenerationStats?`); when present it holds `promptTokens`, `completionTokens`, `totalTokens`, `tokenPerSecond` (non-nullable `Float`), and `cachedPromptTokens`.
 
 ### `GenerationFinishReason`
 
@@ -290,33 +305,53 @@ Tune sampling, structured output, tool-call parsing, and reasoning behavior per 
 
 <Tabs>
   <Tab title="Swift (iOS / macOS)">
+    `GenerationOptions` is a Kotlin `data class` bridged into Swift. Kotlin parameter defaults don't survive the ObjC bridge, so the canonical Swift idiom is the parameterless init plus chained `.with(...)` builders from `ConvenienceExtensions.swift`:
+
     ```swift
-    public struct GenerationOptions {
+    public class GenerationOptions {
       public var temperature: Float?
       public var topP: Float?
       public var minP: Float?
-      public var topK: Int32?
       public var repetitionPenalty: Float?
+      public var topK: Int32?
       public var rngSeed: Int64?
-      public var maxTokens: Int32?
       public var jsonSchemaConstraint: String?
+      public var functionCallParser: LeapFunctionCallParser?
       public var injectSchemaIntoPrompt: Bool        // default true
-      public var functionCallParser: LeapFunctionCallParserProtocol?
+      public var maxTokens: Int32?
       public var inlineThinkingTags: Bool            // default false
       public var enableThinking: Bool                // default false
       public var extras: String?
 
-      public init(/* all fields as optional kwargs */)
-      public mutating func setResponseFormat<T: GeneratableType>(type: T.Type) throws
+      public convenience init()                      // builder entry point
+
+      // Builders (chainable):
+      public func with(temperature: Float) -> GenerationOptions
+      public func with(topP: Float) -> GenerationOptions
+      public func with(minP: Float) -> GenerationOptions
+      public func with(repetitionPenalty: Float) -> GenerationOptions
+      public func with(topK: Int32) -> GenerationOptions
+      public func with(rngSeed: Int64) -> GenerationOptions
+      public func with(jsonSchema: String) -> GenerationOptions
+      public func with(maxTokens: Int32) -> GenerationOptions
+      public func with(injectSchemaIntoPrompt: Bool) -> GenerationOptions
+      public func with(inlineThinkingTags: Bool) -> GenerationOptions
+      public func with(enableThinking: Bool) -> GenerationOptions
     }
     ```
 
+    For constrained generation, pass the schema string produced by the `@Generatable` macro into the JSON-schema builder:
+
     ```swift
-    var options = GenerationOptions(temperature: 0.3, minP: 0.15, repetitionPenalty: 1.05, maxTokens: 512)
-    try options.setResponseFormat(type: CityFact.self)
+    let options = GenerationOptions()
+        .with(temperature: 0.3)
+        .with(minP: 0.15)
+        .with(repetitionPenalty: 1.05)
+        .with(maxTokens: 512)
+        .with(jsonSchema: CityFact.jsonSchema())
     ```
 
-    Builder style is available too — chain `.with(temperature:)`, `.with(topP:)`, `.with(maxTokens:)`, etc.
+    The Apple-only `GenerationOptionsCompat` sibling type (used by legacy `Leap.load(...)` flows) additionally exposes `setResponseFormat(jsonSchema: String)` — see [Constrained Generation](./constrained-generation).
   </Tab>
   <Tab title="Kotlin (all platforms)">
     ```kotlin
@@ -336,7 +371,6 @@ Tune sampling, structured output, tool-call parsing, and reasoning behavior per 
         var extras: String? = null,
     ) {
       inline fun <reified T : Any> setResponseFormatType()
-      fun setResponseFormatType(kClass: KClass<*>)
 
       companion object {
         fun build(buildAction: GenerationOptions.() -> Unit): GenerationOptions
@@ -350,7 +384,7 @@ Tune sampling, structured output, tool-call parsing, and reasoning behavior per 
         minP = 0.15f
         repetitionPenalty = 1.05f
         maxTokens = 512
-        setResponseFormatType(CityFact::class)
+        setResponseFormatType<CityFact>()
     }
     ```
   </Tab>
@@ -359,7 +393,7 @@ Tune sampling, structured output, tool-call parsing, and reasoning behavior per 
 - **Sampling fields** (`temperature`, `topP`, `minP`, `topK`, `repetitionPenalty`) — standard sampling knobs. Use the values from the LEAP bundle manifest (`sampling_parameters` under `generation_time_parameters` in each model's `<Quant>.json` on [LiquidAI/LeapBundles](https://huggingface.co/LiquidAI/LeapBundles)); they're tuned per checkpoint by the training team and differ from the HF model card defaults (the manifest values are the llama.cpp-engine path the SDK runs). Arbitrary "0.7" defaults from generic AI tutorials usually underperform.
 - **`rngSeed`** — set for deterministic / reproducible output (testing, debugging). Default is non-deterministic.
 - **`maxTokens`** — cap the response length. The model stops after this many completion tokens (prompt tokens don't count). Defaults to "until EOS or context limit." Useful for cost control with constrained output.
-- **`jsonSchemaConstraint`** — JSON Schema string for constrained generation. Use the higher-level `setResponseFormat(type:)` / `setResponseFormatType(...)` helpers with `@Generatable` types. See [Constrained Generation](./constrained-generation).
+- **`jsonSchemaConstraint`** — JSON Schema string for constrained generation. Use the higher-level helpers — Swift `options.with(jsonSchema: T.jsonSchema())` (or `GenerationOptionsCompat.setResponseFormat(jsonSchema:)`) / Kotlin `setResponseFormatType<T>()` — with `@Generatable` types. See [Constrained Generation](./constrained-generation).
 - **`injectSchemaIntoPrompt`** — when `true` (default), the schema is appended to the system message for semantic guidance *in addition* to the structural constraint at decode time. Set `false` to skip the prompt injection (matches `llama-server` grammar mode) — saves prompt tokens for large schemas.
 - **`functionCallParser`** — picks the tokenizer expected by the model. `LFMFunctionCallParser` (default) for Liquid Foundation Models; `HermesFunctionCallParser()` for Hermes/Qwen3 formats; `null` to receive raw tool-call text in `Chunk`s.
 - **`enableThinking`** — turn on reasoning mode for models that support it (e.g. LFM2.5-Thinking). Reasoning tokens arrive as `ReasoningChunk`s.

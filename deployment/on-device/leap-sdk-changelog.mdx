@@ -3,7 +3,7 @@ title: "Changelog"
 description: "Release notes for the LEAP SDK, including the 0.9.x → 0.10.x Kotlin Multiplatform transition."
 ---
 
-Latest release: **v0.10.6** ([GitHub](https://github.com/Liquid4All/leap-sdk/releases/tag/v0.10.6)).
+Latest release: **v0.10.7** ([GitHub](https://github.com/Liquid4All/leap-sdk/releases/tag/v0.10.7)).
 
 This page covers user-visible changes in the LEAP SDK across releases. For per-build commit detail, see the release notes on [`Liquid4All/leap-sdk`](https://github.com/Liquid4All/leap-sdk/releases).
 
@@ -37,7 +37,7 @@ v0.10.0 raises the minimum iOS deployment target from 15.0 to **17.0** and macOS
 - **SPM URL change.** Point your Swift Package Manager dependency at `https://github.com/Liquid4All/leap-sdk.git` (not the deprecated `leap-ios` repo).
 - **CocoaPods removed.** The SDK ships exclusively through SPM in v0.10.0 onward.
 - **Toolchain bump.** Xcode 16 and Swift 6.0 are required.
-- **`ModelDownloader` → `LeapModelDownloader`.** The downloader class was renamed; update call sites accordingly. See [Model Loading](/deployment/on-device/sdk/model-loading) for the 0.10.x constructor signature.
+- **Swift downloader name.** In current 0.10.x, Swift code instantiates `ModelDownloader` from the `LeapModelDownloader` SPM product. Android code still uses the Kotlin class `ai.liquid.leap.downloader.LeapModelDownloader`. See [Model Loading](/deployment/on-device/sdk/model-loading) for the constructor signatures.
 
 ## Major additions since 0.9.x
 
@@ -146,6 +146,34 @@ val runner = downloader.loadModel(
 ```
 
 ## Per-release notes
+
+### v0.10.7 — 2026-05-18
+
+KMP target completion for `leap-openai-client` plus a repo-wide bytecode-hardening pass. iOS / macOS Swift surface is unchanged from v0.10.6 — this is a Kotlin/JVM ergonomics release for non-Apple consumers.
+
+**New targets on `leap-openai-client`** ([PR #256](https://github.com/Liquid4All/leap-android-sdk/pull/256)):
+
+- **`jvm`** (Ktor CIO engine) — Maven Central now publishes `ai.liquid.leap:leap-openai-client-jvm:0.10.7`. Pure-JVM desktop / server apps can route OpenAI-compatible chat completions without dragging in Android or KMP targets. (The 0.10.0 — 0.10.6 SPM cascade only shipped Android + Apple + Linux/MinGW K/N + wasmJs metadata; the JVM slice was absent.)
+- **`wasmJs`** (Ktor Js engine) — browser-side chat-completions client matching what `leap-sdk` already targets.
+
+The Apple slice (`LeapOpenAIClient.xcframework`) ships unchanged — same SSE-stream surface, same `OpenAiClientConfig`, same OpenRouter extra-headers support. SKIE is still not applied to this module in v0.10.7, so the Kotlin/Native exports remain the same as v0.10.6: `Flow<ChatCompletionEvent>` is not bridged to Swift `AsyncSequence`, and `onEnum(of:)` is not generated for `ChatCompletionEvent`. **The next release will enable SKIE on `leap-sdk-openai-client`**, bringing `for try await` over the stream, exhaustive `onEnum(of:)` switching, and SKIE-bundled Swift convenience inits — see the [OpenAI client page](/deployment/on-device/sdk/openai-client) for the current pinning guidance.
+
+**Bytecode hardening:**
+
+- The `leap-sdk-jvm`, `leap-openai-client-jvm`, `leap-ui-jvm`, and `leap-ui-android` artifacts had been silently shipping Java 17 / Java 21 bytecode against the project's stated JVM-target-11 stance. All ten published JVM / Android slices now consistently emit class-file major version `0x37` (Java 11). Consumers running on JDK 11 — particularly long-running services and JDK-11-pinned Android Gradle builds — are no longer at risk of `UnsupportedClassVersionError`.
+
+**Internal: KMP build centralization** (no consumer-visible API change):
+
+- Root-level `subprojects { tasks.withType<KotlinCompile>().configureEach { compilerOptions { jvmTarget.set(JvmTarget.JVM_11) } } }` replaces 17 per-site `JVM_11` pins.
+- Karma + headless Chrome runner for `wasmJs` targets centralized into the same `subprojects {}` block — replaces 3 per-site copies. Future modules pick up both patterns automatically.
+
+**Test coverage:**
+
+- `OpenAiClientTest`'s seven SSE-stream + auth-header + error-event + malformed-chunk cases were promoted from `androidHostTest` to `commonTest`. They now also run on `jvmTest`, `macosArm64Test`, `iosSimulatorArm64Test`, `linuxX64Test`, `mingwX64Test`, and `wasmJsTest`.
+
+**iOS surface (unchanged from v0.10.6):**
+
+The four XCFrameworks (`LeapSDK`, `LeapModelDownloader`, `LeapOpenAIClient`, `LeapUi`) ship the same Swift APIs as v0.10.6. The v0.10.6 ObjC class rename to `ModelDownloader`, the dual-import guard, the dynamic `LeapModelDownloader` framework, and the `LeapDownloaderConfig()` parameterless init all remain in place.
 
 ### v0.10.6 — 2026-05-12
 

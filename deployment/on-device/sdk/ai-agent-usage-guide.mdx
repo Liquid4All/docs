@@ -49,6 +49,9 @@ Every agent has the same shape: send a `ChatMessage`, iterate the response strea
                 Task { await dispatch(call) }
             }
         case .audioSample(let audio):
+            // `audio.samples` is `KotlinFloatArray` — bridge to `[Float]` via
+            // `LeapSDK.ArrayConversionsKt.floatArrayToNSData(array:)` if your
+            // renderer expects a Swift array (see the demo in leap-ui-demo/shared/).
             audioPlayer.enqueue(audio.samples, sampleRate: Int(audio.sampleRate))
         case .complete(let completion):
             currentText = ""
@@ -88,7 +91,7 @@ The defining feature of an agent: the model emits `FunctionCalls`, you execute t
     ```swift
     func agentLoop(initialQuestion: String) async throws {
         var workingConv = conversation!
-        var pending = ChatMessage(role: .user, content: [.text(initialQuestion)])
+        var pending = ChatMessage(role: .user, textContent: initialQuestion)
 
         while true {
             var toolCalls: [LeapFunctionCall] = []
@@ -107,14 +110,16 @@ The defining feature of an agent: the model emits `FunctionCalls`, you execute t
 
             if toolCalls.isEmpty { break }   // Agent is done
 
-            // Execute tools, append results, loop
-            let toolMessages = await toolCalls.asyncMap { call in
+            // Execute tools sequentially, append results, loop.
+            // (Swift's stdlib has no `asyncMap`; use a `for await` accumulation pass.)
+            var toolMessages: [ChatMessage] = []
+            for call in toolCalls {
                 let result = await runtimeDispatch(call)
-                return ChatMessage(role: .tool, content: [.text(result)])
+                toolMessages.append(ChatMessage(role: .tool, textContent: result))
             }
             let updatedHistory = workingConv.history + toolMessages
             workingConv = workingConv.modelRunner.createConversationFromHistory(history: updatedHistory)
-            pending = ChatMessage(role: .user, content: [.text("")])  // empty turn — let the model continue
+            pending = ChatMessage(role: .user, textContent: "")  // empty turn — let the model continue
         }
     }
     ```
@@ -148,7 +153,7 @@ The defining feature of an agent: the model emits `FunctionCalls`, you execute t
                 )
             }
             val updatedHistory = workingConv.history + toolMessages
-            workingConv = modelRunner.createConversationFromHistory(updatedHistory)
+            workingConv = workingConv.modelRunner.createConversationFromHistory(updatedHistory)
             pending = ChatMessage(role = ChatMessage.Role.USER, content = listOf(ChatMessageContent.Text("")))
         }
     }
@@ -161,7 +166,7 @@ Define `runtimeDispatch(_:)` as your tool-call → result router: validate argum
 ## Multimodal inputs
 
 <Info>
-**Multimodality is model-specific.** Most multimodal models ship as text + one other modality (vision OR audio), not both. Send `.image(...)` parts only to a vision-capable model and `.audio(...)` parts only to an audio-capable model. Verify on the model's [Hugging Face card](https://huggingface.co/LiquidAI) before wiring up the input.
+**Multimodality is model-specific.** Most multimodal models ship as text + one other modality (vision OR audio), not both. Send image parts (Swift `ChatMessageContent.fromJPEGData(_:)` / Kotlin `ImageUtils.fromBitmap(...)`) only to a vision-capable model, and audio parts (Swift `ChatMessageContent.fromWAVData(_:)` / Kotlin `ChatMessageContent.Audio(...)`) only to an audio-capable model. Verify on the model's [Hugging Face card](https://huggingface.co/LiquidAI) before wiring up the input.
 </Info>
 
 <Tabs>
@@ -170,20 +175,26 @@ Define `runtimeDispatch(_:)` as your tool-call → result router: validate argum
     // Vision-capable model
     let imageMessage = ChatMessage(
       role: .user,
-      content: [.text("Describe what you see."), .image(jpegData)]
+      content: [.text("Describe what you see."), ChatMessageContent.fromJPEGData(jpegData)],
+      reasoningContent: nil,
+      functionCalls: nil
     )
 
     // Audio-capable model — WAV blob
     let audioMessage = ChatMessage(
       role: .user,
-      content: [.text("Transcribe."), .audio(wavData)]
+      content: [.text("Transcribe."), ChatMessageContent.fromWAVData(wavData)],
+      reasoningContent: nil,
+      functionCalls: nil
     )
 
     // Audio-capable model — raw float32 PCM samples (no WAV re-encode)
     let pcmMessage = ChatMessage(
       role: .user,
       content: [.text("How's my pronunciation?"),
-                ChatMessageContent.fromFloatSamples(samples, sampleRate: 16000)]
+                ChatMessageContent.fromFloatSamples(samples, sampleRate: 16000)],
+      reasoningContent: nil,
+      functionCalls: nil
     )
     ```
   </Tab>
@@ -272,10 +283,14 @@ A `ChatViewModel` that loads the model, registers a tool, drives generation, and
             generationTask = Task { [weak self] in
                 defer { Task { @MainActor in self?.isGenerating = false } }
                 do {
-                    let userMessage = ChatMessage(role: .user, content: [.text(text)])
+                    let userMessage = ChatMessage(role: .user, textContent: text)
+                    let options = GenerationOptions()
+                        .with(temperature: 0.3)
+                        .with(minP: 0.15)
+                        .with(repetitionPenalty: 1.05)
                     for try await response in conversation.generateResponse(
                         message: userMessage,
-                        generationOptions: GenerationOptions(temperature: 0.3, minP: 0.15, repetitionPenalty: 1.05)
+                        generationOptions: options
                     ) {
                         await MainActor.run { self?.handle(response) }
                     }
@@ -314,11 +329,11 @@ A `ChatViewModel` that loads the model, registers a tool, drives generation, and
     import androidx.lifecycle.viewModelScope
     import ai.liquid.leap.Conversation
     import ai.liquid.leap.GenerationOptions
-    import ai.liquid.leap.MessageResponse
+    import ai.liquid.leap.message.MessageResponse
     import ai.liquid.leap.ModelRunner
     import ai.liquid.leap.message.ChatMessage
     import ai.liquid.leap.message.ChatMessageContent
-    import ai.liquid.leap.model_downloader.LeapModelDownloader
+    import ai.liquid.leap.downloader.LeapModelDownloader
     import kotlinx.coroutines.*
     import kotlinx.coroutines.flow.*
 
@@ -430,14 +445,14 @@ A `ChatViewModel` that loads the model, registers a tool, drives generation, and
     - **Min SDK 31** (Android 12).
     - Use a real device for testing — the emulator may crash loading model bundles.
     - `LeapModelDownloader` (the Android one) requires `POST_NOTIFICATIONS` at runtime on Android 13+ and a few manifest entries — see [Quick Start → Install the SDK](./quick-start#2-install-the-sdk).
-    - Background downloads use WorkManager + a foreground service; the SDK ships notification configuration via `LeapModelDownloaderNotificationConfig`.
+    - Background prefetch uses `requestDownloadModel(...)`, which enqueues the WorkManager downloader and runs it as a foreground worker while files transfer. The SDK ships notification configuration via `LeapModelDownloaderNotificationConfig`.
     - For most cases, hold the runner in a `ViewModel` with `viewModelScope`. Unload via `runBlocking(Dispatchers.IO) { runner.unload() }` in `onCleared()`.
   </Tab>
   <Tab title="JVM / Linux native / Windows native">
     - JVM: JDK 11+. No `Context` parameter, no foreground service, no notifications — `LeapDownloader` is a simple async fetcher with a configurable `saveDir`.
     - Linux native runtime: glibc **2.34+** (Ubuntu 22.04, Debian 12, RHEL 9 or newer). Older hosts fail at process start.
     - Windows native: Windows 10+. DLLs co-locate next to the `.exe` (Windows' standard search order finds them).
-    - **Pin to 0.10.5+** for Kotlin/Native — earlier 0.10.x releases have unresolved cinterop / linker issues that prevent producing a working executable. See [Desktop & Native Platforms](./desktop-platforms).
+    - **Pin to 0.10.7 or newer** for Kotlin/Native — earlier 0.10.x releases (0.10.0, 0.10.1) have unresolved cinterop / linker issues that prevent producing a working executable; the fixes shipped in the 0.10.4.x point releases (SPM) and v0.10.6 / v0.10.7 (Android-SDK repo). See [Desktop & Native Platforms](./desktop-platforms).
   </Tab>
 </Tabs>
 

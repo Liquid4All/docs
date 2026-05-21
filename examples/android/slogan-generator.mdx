@@ -37,9 +37,9 @@ Before running this example, ensure you have the following:
 
 <Accordion title="Minimum SDK Requirements">
   This example requires:
-  - **Minimum SDK**: API 24 (Android 7.0)
-  - **Target SDK**: API 34 or higher
-  - **Kotlin**: 1.9.0 or higher
+  - **Minimum SDK**: API 31 (Android 12)
+  - **Target SDK**: API 36
+  - **Kotlin**: 2.3.0 or higher
 </Accordion>
 
 <Accordion title="LeapSDK Dependency Setup">
@@ -47,7 +47,8 @@ Before running this example, ensure you have the following:
 
   ```kotlin
   dependencies {
-      implementation("ai.liquid.leap:leap-sdk:0.10.6")
+      implementation("ai.liquid.leap:leap-sdk:0.10.7")
+      implementation("ai.liquid.leap:leap-model-downloader:0.10.7")
 
       // Android UI components
       implementation("androidx.appcompat:appcompat:1.6.1")
@@ -147,7 +148,7 @@ import ai.liquid.leap.GenerationOptions
 import ai.liquid.leap.ModelRunner
 import ai.liquid.leap.message.ChatMessage
 import ai.liquid.leap.message.MessageResponse
-import ai.liquid.leap.model_downloader.LeapModelDownloader
+import ai.liquid.leap.downloader.LeapModelDownloader
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.onEach
@@ -191,7 +192,7 @@ class MainActivity : AppCompatActivity() {
                 minP = 0.15f
                 repetitionPenalty = 1.05f
             }
-            conversation.generateResponse(ChatMessage.user(prompt), options)
+            conversation.generateResponse(ChatMessage(ChatMessage.Role.USER, prompt), options)
                 .onEach { resp ->
                     if (resp is MessageResponse.Chunk) {
                         sloganOutput.append(resp.text)

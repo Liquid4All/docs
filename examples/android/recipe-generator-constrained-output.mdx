@@ -63,9 +63,9 @@ Before running this example, ensure you have the following:
 
 <Accordion title="Minimum SDK Requirements">
   This example requires:
-  - **Minimum SDK**: API 24 (Android 7.0)
-  - **Target SDK**: API 34 or higher
-  - **Kotlin**: 1.9.0 or higher
+  - **Minimum SDK**: API 31 (Android 12)
+  - **Target SDK**: API 36
+  - **Kotlin**: 2.3.0 or higher
   - **LeapSDK**: 0.10.0 or higher
   - **Internet connectivity**: Required for first-time model download
 </Accordion>
@@ -105,8 +105,8 @@ Before running this example, ensure you have the following:
   ```kotlin
   dependencies {
       // LeapSDK + the Android downloader module
-      implementation("ai.liquid.leap:leap-sdk:0.10.6")
-      implementation("ai.liquid.leap:leap-model-downloader:0.10.6")
+      implementation("ai.liquid.leap:leap-sdk:0.10.7")
+      implementation("ai.liquid.leap:leap-model-downloader:0.10.7")
 
       // Kotlin serialization for type-safe parsing
       implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")
@@ -148,7 +148,7 @@ Follow these steps to generate structured recipes:
 
 3. **Gradle sync**
    - Wait for Gradle to sync all dependencies
-   - Ensure LeapSDK 0.10.6 is downloaded
+   - Ensure LeapSDK 0.10.7 is downloaded
 
 4. **Run the app**
    - Connect your Android device or start an emulator
@@ -207,13 +207,12 @@ data class Ingredient(
 Annotate the data class with `@Generatable`. LeapSDK derives the JSON schema from the Kotlin types and enforces it during generation — no hand-written schema string required.
 
 ```kotlin
-import ai.liquid.leap.Generatable
-import ai.liquid.leap.Guide
+import ai.liquid.leap.structuredoutput.Generatable
+import ai.liquid.leap.structuredoutput.Guide
 import kotlinx.serialization.Serializable
 
-@Generatable
 @Serializable
-@Guide("A complete recipe with metadata, ingredients, and instructions.")
+@Generatable("A complete recipe with metadata, ingredients, and instructions.")
 data class Recipe(
     val name: String,
     val description: String,
@@ -227,8 +226,8 @@ data class Recipe(
     val tags: List<String>,
 )
 
-@Generatable
 @Serializable
+@Generatable("A single recipe ingredient with amount and unit.")
 data class Ingredient(
     val item: String,
     val amount: String,
@@ -243,7 +242,7 @@ import ai.liquid.leap.GenerationOptions
 import ai.liquid.leap.ModelRunner
 import ai.liquid.leap.message.ChatMessage
 import ai.liquid.leap.message.MessageResponse
-import ai.liquid.leap.model_downloader.LeapModelDownloader
+import ai.liquid.leap.downloader.LeapModelDownloader
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
@@ -283,7 +282,7 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
 
 ### Generate Structured Recipes
 
-`GenerationOptions.build { setResponseFormatType(Recipe::class) }` tells the engine to constrain the stream to the schema derived from `@Generatable`. The streamed `Chunk` values arrive as JSON; concatenate them and decode at the end with `kotlinx-serialization`.
+`GenerationOptions.build { setResponseFormatType<Recipe>() }` tells the engine to constrain the stream to the schema derived from `@Generatable`. The streamed `Chunk` values arrive as JSON; concatenate them and decode at the end with `kotlinx-serialization`.
 
 ```kotlin
 fun generateRecipe(userInput: String) {
@@ -304,12 +303,12 @@ fun generateRecipe(userInput: String) {
             temperature = 0.3f
             minP = 0.15f
             repetitionPenalty = 1.05f
-            setResponseFormatType(Recipe::class)
+            setResponseFormatType<Recipe>()
         }
 
         try {
             val buffer = StringBuilder()
-            conversation.generateResponse(ChatMessage.user(prompt), options)
+            conversation.generateResponse(ChatMessage(ChatMessage.Role.USER, prompt), options)
                 .onEach { resp ->
                     if (resp is MessageResponse.Chunk) buffer.append(resp.text)
                 }
