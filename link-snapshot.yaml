@@ -58,6 +58,7 @@ active:
   - /deployment/on-device/sdk/messages-content
   - /deployment/on-device/sdk/model-loading
   - /deployment/on-device/sdk/openai-client
+  - /deployment/on-device/sdk/overview
   - /deployment/on-device/sdk/quick-start
   - /deployment/on-device/sdk/utilities
   - /deployment/on-device/sdk/voice-assistant
