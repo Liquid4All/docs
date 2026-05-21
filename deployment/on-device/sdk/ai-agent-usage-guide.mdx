@@ -58,6 +58,8 @@ Every agent has the same shape: send a `ChatMessage`, iterate the response strea
             if let stats = completion.stats {
                 log("Done: \(stats.totalTokens) tokens at \(stats.tokenPerSecond) tok/s")
             }
+        case .error(let err):
+            log("Generation failed: \(err.message)")
         }
     }
     ```
@@ -76,6 +78,7 @@ Every agent has the same shape: send a `ChatMessage`, iterate the response strea
                 _text.value = ""
                 Log.d(TAG, "Done: ${response.stats?.totalTokens} tokens at ${response.stats?.tokenPerSecond} tok/s")
             }
+            is MessageResponse.Error -> Log.e(TAG, "Generation failed: ${response.message}", response.throwable)
         }
     }
     ```
@@ -103,8 +106,10 @@ The defining feature of an agent: the model emits `FunctionCalls`, you execute t
                     toolCalls.append(contentsOf: payload.functionCalls)
                 case .complete:
                     break
-                default:
+                case .reasoningChunk, .audioSample:
                     break
+                case .error(let err):
+                    throw NSError(domain: "AgentLoop", code: 1, userInfo: [NSLocalizedDescriptionKey: err.message])
                 }
             }
 
@@ -139,7 +144,10 @@ The defining feature of an agent: the model emits `FunctionCalls`, you execute t
                 when (response) {
                     is MessageResponse.Chunk -> appendUI(response.text)
                     is MessageResponse.FunctionCalls -> toolCalls.addAll(response.functionCalls)
-                    else -> {}
+                    is MessageResponse.ReasoningChunk -> {}
+                    is MessageResponse.AudioSample -> {}
+                    is MessageResponse.Complete -> {}
+                    is MessageResponse.Error -> throw response.throwable
                 }
             }
 
@@ -317,6 +325,8 @@ A `ChatViewModel` that loads the model, registers a tool, drives generation, and
                 if let stats = c.stats {
                     print("\nFinished — \(stats.totalTokens) tokens at \(stats.tokenPerSecond) tok/s")
                 }
+            case .error(let err):
+                errorMessage = "Generation failed: \(err.message)"
             }
         }
     }
@@ -408,6 +418,7 @@ A `ChatViewModel` that loads the model, registers a tool, drives generation, and
                 is MessageResponse.FunctionCalls -> response.functionCalls.forEach { dispatch(it) }
                 is MessageResponse.AudioSample -> audioRenderer.enqueue(response.samples, response.sampleRate)
                 is MessageResponse.Complete -> Log.d(TAG, "Done: ${response.stats?.totalTokens} tokens")
+                is MessageResponse.Error -> _errorMessage.value = "Generation failed: ${response.message}"
             }
         }
 

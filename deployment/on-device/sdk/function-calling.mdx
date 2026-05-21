@@ -108,6 +108,8 @@ Function calls arrive as the `MessageResponse.FunctionCalls` variant on both pla
             }
         case .chunk, .reasoningChunk, .audioSample, .complete:
             break
+        case .error(let err):
+            print("Generation failed: \(err.message)")
         }
     }
     ```
@@ -134,7 +136,9 @@ Function calls arrive as the `MessageResponse.FunctionCalls` variant on both pla
                 // Tool calls are also surfaced on the assembled assistant message:
                 response.fullMessage.functionCalls?.forEach { /* ... */ }
             }
-            else -> {}
+            is MessageResponse.ReasoningChunk -> {}
+            is MessageResponse.AudioSample -> {}
+            is MessageResponse.Error -> Log.e(TAG, "Generation failed: ${response.message}", response.throwable)
         }
     }.collect()
     ```

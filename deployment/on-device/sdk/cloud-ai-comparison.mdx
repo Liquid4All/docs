@@ -127,6 +127,8 @@ Cloud APIs deliver deltas; you concatenate them. LEAP delivers `MessageResponse`
             print("\nDone! Tokens: \(completion.stats?.totalTokens ?? 0)")
         case .reasoningChunk, .audioSample, .functionCalls:
             break
+        case .error(let err):
+            print("\nGeneration failed: \(err.message)")
         }
     }
     ```
@@ -137,7 +139,10 @@ Cloud APIs deliver deltas; you concatenate them. LEAP delivers `MessageResponse`
         when (response) {
             is MessageResponse.Chunk -> print(response.text)
             is MessageResponse.Complete -> println("\nDone! Tokens: ${response.stats?.totalTokens}")
-            else -> {}
+            is MessageResponse.ReasoningChunk -> {}
+            is MessageResponse.FunctionCalls -> {}
+            is MessageResponse.AudioSample -> {}
+            is MessageResponse.Error -> println("\nGeneration failed: ${response.message}")
         }
     }.collect()
     ```

@@ -49,13 +49,13 @@ The JVM target supports Kotlin and Java projects on macOS (Apple Silicon), Linux
     }
 
     dependencies {
-        implementation("ai.liquid.leap:leap-sdk:0.10.7")
+        implementation("ai.liquid.leap:leap-sdk:0.10.8")
 
         // Optional: OpenAI-compatible cloud chat client (JVM support added in v0.10.7)
-        // implementation("ai.liquid.leap:leap-openai-client:0.10.7")
+        // implementation("ai.liquid.leap:leap-openai-client:0.10.8")
 
         // Optional: Compose Multiplatform voice widget (also runs on JVM)
-        // implementation("ai.liquid.leap:leap-ui:0.10.7")
+        // implementation("ai.liquid.leap:leap-ui:0.10.8")
     }
 
     application {
@@ -75,7 +75,7 @@ The JVM target supports Kotlin and Java projects on macOS (Apple Silicon), Linux
     }
 
     dependencies {
-        implementation 'ai.liquid.leap:leap-sdk:0.10.7'
+        implementation 'ai.liquid.leap:leap-sdk:0.10.8'
     }
 
     application {
@@ -89,7 +89,7 @@ The JVM target supports Kotlin and Java projects on macOS (Apple Silicon), Linux
       <dependency>
         <groupId>ai.liquid.leap</groupId>
         <artifactId>leap-sdk-jvm</artifactId>
-        <version>0.10.7</version>
+        <version>0.10.8</version>
       </dependency>
     </dependencies>
     ```
@@ -137,7 +137,10 @@ fun main() = runBlocking {
         when (response) {
             is MessageResponse.Chunk -> print(response.text)
             is MessageResponse.Complete -> println("\n[${response.stats?.totalTokens} tokens]")
-            else -> {}
+            is MessageResponse.ReasoningChunk -> {}
+            is MessageResponse.FunctionCalls -> {}
+            is MessageResponse.AudioSample -> {}
+            is MessageResponse.Error -> System.err.println("\n[error] ${response.message}")
         }
     }
 
@@ -194,11 +197,11 @@ dependencyResolutionManagement {
 // build.gradle.kts
 plugins {
     kotlin("multiplatform") version "2.3.20"
-    id("ai.liquid.leap.nativelibs") version "0.10.7"
+    id("ai.liquid.leap.nativelibs") version "0.10.8"
 }
 
 dependencies {
-    implementation("ai.liquid.leap:leap-sdk:0.10.7")
+    implementation("ai.liquid.leap:leap-sdk:0.10.8")
 }
 
 kotlin {
@@ -227,7 +230,7 @@ plugins {
 }
 
 dependencies {
-    implementation("ai.liquid.leap:leap-sdk:0.10.7")
+    implementation("ai.liquid.leap:leap-sdk:0.10.8")
 }
 
 val nativesDir = layout.buildDirectory.dir("bin/linuxX64/releaseExecutable")
@@ -241,7 +244,7 @@ kotlin {
 
 val leapSdkNatives by configurations.creating
 dependencies {
-    leapSdkNatives("ai.liquid.leap:leap-sdk-linuxx64:0.10.7:natives@zip")
+    leapSdkNatives("ai.liquid.leap:leap-sdk-linuxx64:0.10.8:natives@zip")
 }
 
 val installLeapNatives by tasks.registering(Copy::class) {
@@ -259,8 +262,8 @@ tasks.named("linkReleaseExecutableLinuxX64") { dependsOn(installLeapNatives) }
 
 The Maven coordinates for the `-natives.zip` artifacts:
 
-- `ai.liquid.leap:leap-sdk-linuxx64:0.10.7:natives@zip`
-- `ai.liquid.leap:leap-sdk-linuxarm64:0.10.7:natives@zip`
+- `ai.liquid.leap:leap-sdk-linuxx64:0.10.8:natives@zip`
+- `ai.liquid.leap:leap-sdk-linuxarm64:0.10.8:natives@zip`
 
 ## Windows native (MinGW x64)
 
@@ -269,11 +272,11 @@ The same Kotlin/Native flow works for Windows x86_64 via the MinGW-w64 toolchain
 ```kotlin
 plugins {
     kotlin("multiplatform") version "2.3.20"
-    id("ai.liquid.leap.nativelibs") version "0.10.7"
+    id("ai.liquid.leap.nativelibs") version "0.10.8"
 }
 
 dependencies {
-    implementation("ai.liquid.leap:leap-sdk:0.10.7")
+    implementation("ai.liquid.leap:leap-sdk:0.10.8")
 }
 
 kotlin {
@@ -291,7 +294,7 @@ The plugin installs `inference_engine.dll`, `libinference_engine_llamacpp_backen
 
 The Maven coordinates for the `-natives.zip` artifact:
 
-- `ai.liquid.leap:leap-sdk-mingwx64:0.10.7:natives@zip`
+- `ai.liquid.leap:leap-sdk-mingwx64:0.10.8:natives@zip`
 
 <Info>
 **Building from macOS or Linux for Windows?** Kotlin/Native does not support cross-compiling to MinGW from a non-Windows host as of 2.3.20 — the build must run on Windows (native or in CI). GitHub Actions `windows-latest` works without extra setup.
@@ -316,7 +319,7 @@ Identical Swift API to iOS — same `ModelDownloader`, `Conversation`, `ChatMess
 ```swift
 .binaryTarget(
   name: "LeapSDK",
-  url: "https://github.com/Liquid4All/leap-sdk/releases/download/v0.10.7/LeapSDK.xcframework.zip",
+  url: "https://github.com/Liquid4All/leap-sdk/releases/download/v0.10.8/LeapSDK.xcframework.zip",
   checksum: "6f2721aa45d7555646f78cbcaedb57aba3d869f56b24d681ad332846e131ae3d"
 )
 ```
@@ -329,8 +332,8 @@ If you're targeting macOS as a JVM host — for example with Compose Multiplatfo
 
 ```kotlin
 dependencies {
-    implementation("ai.liquid.leap:leap-sdk:0.10.7")
-    implementation("ai.liquid.leap:leap-ui:0.10.7") // Compose voice widget runs on JVM too
+    implementation("ai.liquid.leap:leap-sdk:0.10.8")
+    implementation("ai.liquid.leap:leap-ui:0.10.8") // Compose voice widget runs on JVM too
 }
 ```
 
