@@ -168,6 +168,12 @@ The async stream is the recommended way to drive generation — both platforms e
             if let stats = completion.stats {
               print("Prompt tokens: \(stats.promptTokens), completion: \(stats.completionTokens)")
             }
+          case .error(let err):
+            // SKIE bridges `Flow` as an `AsyncSequence` with `Failure = Never`, so the
+            // surrounding `for try await` cannot observe a thrown error from the Kotlin
+            // side. Generation failures surface as this in-band `.error` case (added in
+            // v0.10.8) — handle it here and present `err.message` to the user.
+            print("\nGeneration failed:", err.message)
           }
         }
       } catch {
@@ -199,6 +205,7 @@ The async stream is the recommended way to drive generation — both platforms e
                             is MessageResponse.FunctionCalls -> handleFunctionCalls(response.functionCalls)
                             is MessageResponse.AudioSample -> audioRenderer.enqueue(response.samples, response.sampleRate)
                             is MessageResponse.Complete -> Log.d(TAG, "Done. Stats: ${response.stats}")
+                            is MessageResponse.Error -> Log.e(TAG, "Generation failed: ${response.message}", response.throwable)
                         }
                     }
                     ?.catch { e -> Log.e(TAG, "Generation failed", e) }
@@ -216,9 +223,13 @@ The async stream is the recommended way to drive generation — both platforms e
     }
     ```
 
-    Errors propagate as `LeapGenerationException` through the flow — handle with `.catch { ... }`.
+    Generation errors arrive **two ways** since v0.10.8: as a terminal `MessageResponse.Error(throwable, message)` value emitted before the flow closes (so Swift consumers, which see a SKIE-bridged `AsyncSequence` with `Failure = Never`, can react), **and** as a `LeapGenerationException` thrown when the flow closes (so `Flow.catch { ... }` and `try`/`catch` keep working). Pick one path or the other — they describe the same failure.
   </Tab>
 </Tabs>
+
+<Warning>
+**Terminal-operator caveat (Kotlin, v0.10.8+).** Terminal operators that stop after the first matching event — `first()`, `first { ... }`, `take(1)` — may now consume the in-band `MessageResponse.Error` value and complete *normally*, where previously they would have propagated the underlying `LeapGenerationException` exceptionally. Pattern-match on the result before acting (or keep a `.catch { }` operator wired up) if your retry pipeline depended on exceptional completion.
+</Warning>
 
 <Info>
 **Cancellation.** Cancelling the Swift `Task` or the Kotlin coroutine `Job` stops generation and frees native resources. On both platforms cancellation is cooperative — the engine checks between tokens, so there's at most one extra token of slack after `cancel()`.
@@ -259,6 +270,7 @@ A sealed type with one case per kind of incremental output the engine emits.
       case functionCalls(FunctionCalls)        // FunctionCalls.functionCalls — [LeapFunctionCall]
       case audioSample(AudioSample)            // AudioSample.samples, .sampleRate — PCM frames
       case complete(Complete)                  // Complete.fullMessage, .finishReason, .stats
+      case error(Error)                        // Error.throwable, .message — generation failure (v0.10.8+)
     }
     ```
 
@@ -276,6 +288,11 @@ A sealed type with one case per kind of incremental output the engine emits.
         val finishReason: GenerationFinishReason,
         val stats: GenerationStats?,
       ) : MessageResponse
+      // v0.10.8+
+      data class Error(
+        val throwable: Throwable,
+        val message: String = throwable.message ?: throwable::class.simpleName ?: throwable.toString(),
+      ) : MessageResponse
     }
     ```
   </Tab>
@@ -285,7 +302,8 @@ A sealed type with one case per kind of incremental output the engine emits.
 - **`ReasoningChunk`** — thinking-style tokens emitted by reasoning models (wrapped between `<think>` / `</think>` upstream). Only fires when `GenerationOptions.enableThinking = true` *and* the model supports it.
 - **`FunctionCalls`** — one or more tool invocations the model wants you to execute. See [Function Calling](./function-calling).
 - **`AudioSample`** — float32 mono PCM frames from audio-capable checkpoints. The sample rate is constant for a generation; route the frames to a renderer.
-- **`Complete`** — final marker. `fullMessage` is the assembled assistant `ChatMessage` (also present in `conversation.history`). `stats` is nullable (`GenerationStats?`); when present it holds `promptTokens`, `completionTokens`, `totalTokens`, `tokenPerSecond` (non-nullable `Float`), and `cachedPromptTokens`.
+- **`Complete`** — final marker for a successful generation. `fullMessage` is the assembled assistant `ChatMessage` (also present in `conversation.history`). `stats` is nullable (`GenerationStats?`); when present it holds `promptTokens`, `completionTokens`, `totalTokens`, `tokenPerSecond` (non-nullable `Float`), and `cachedPromptTokens`.
+- **`Error`** _(v0.10.8+)_ — terminal failure event. `throwable` is the underlying cause (typically a `LeapGenerationException` or one of its subclasses); `message` defaults to `throwable.message`, falling back to the throwable's simple class name. Emitted as the final event before the flow closes — Kotlin consumers can additionally rely on `Flow.catch { }` / `try`/`catch`, but Swift consumers (which see a SKIE-bridged `AsyncSequence` with `Failure = Never`) must handle this case to detect generation failures. Partial output that arrived before the error is **not** appended to `conversation.history`. The data-class `equals` / `hashCode` falls back to reference equality on `throwable` — see the per-field comparison note in the SDK Kotlin docs if you need value-style equality.
 
 ### `GenerationFinishReason`
 

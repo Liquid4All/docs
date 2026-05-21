@@ -3,7 +3,7 @@ title: "Changelog"
 description: "Release notes for the LEAP SDK, including the 0.9.x → 0.10.x Kotlin Multiplatform transition."
 ---
 
-Latest release: **v0.10.7** ([GitHub](https://github.com/Liquid4All/leap-sdk/releases/tag/v0.10.7)).
+Latest release: **v0.10.8** ([GitHub](https://github.com/Liquid4All/leap-sdk/releases/tag/v0.10.8)).
 
 This page covers user-visible changes in the LEAP SDK across releases. For per-build commit detail, see the release notes on [`Liquid4All/leap-sdk`](https://github.com/Liquid4All/leap-sdk/releases).
 
@@ -147,6 +147,55 @@ val runner = downloader.loadModel(
 
 ## Per-release notes
 
+### v0.10.8 — 2026-05-21
+
+SKIE finally lands on `leap-sdk-openai-client`, closing the last Apple-side gap in the unified KMP surface. In the same release, generation errors gain an in-band representation so they survive the SKIE `Flow` → `AsyncSequence` bridge.
+
+**SKIE applied to `leap-sdk-openai-client`** ([PR #258](https://github.com/Liquid4All/leap-android-sdk/pull/258)):
+
+- `client.streamChatCompletion(request:)` is now a Swift `AsyncSequence` — collect with `for try await event in client.streamChatCompletion(...)` instead of the v0.10.6 / v0.10.7 manual `Flow.collect(collector: FlowCollector { ... })` shape.
+- `onEnum(of: event)` switches exhaustively over `ChatCompletionEvent` — the compiler errors on a missing case.
+- Nested Kotlin class names are preserved on the Swift side: `ChatCompletionEvent.Delta`, `ChatCompletionEvent.Done`, `ChatCompletionEvent.Error` (previously K/N flattened these to `ChatCompletionEventDelta`, etc.). `ChatMessage.System` / `ChatMessage.User` / `ChatMessage.Assistant` follow the same convention now.
+- The top-level Kotlin `fun OpenAiClient(config:)` factory exports as a real Swift convenience init — Swift call sites can drop the `OpenAiClientKt.` prefix and just write `OpenAiClient(config: ...)`.
+- `LeapOpenAIClient.xcframework` is now a distributable framework (`skie { build { produceDistributableFramework() } }`) that bundles the SKIE-generated Swift wrappers, so a plain `import LeapOpenAIClient` is enough — no companion SKIE setup in consumer projects.
+- The Kotlin / JVM / wasmJs / K/N surface is unchanged — same `OpenAiClient(config:)` constructor, same `Flow<ChatCompletionEvent>`, same `ChatCompletionEvent.Delta` / `.Done` / `.Error` cases, same `OpenAiClientConfig` shape and OpenRouter extra-headers support.
+
+See [OpenAI-Compatible Client](/deployment/on-device/sdk/openai-client) for the updated Swift call sites.
+
+**In-band `MessageResponse.Error` (Kotlin) / `LiquidMessageResponse.Error` (Swift compat layer)** ([PR #258](https://github.com/Liquid4All/leap-android-sdk/pull/258)):
+
+`Conversation.generateResponse(...)` now emits a terminal `MessageResponse.Error(throwable, message)` value **before** closing the underlying channel with the same throwable. This closes a Swift gap: SKIE bridges Kotlin `Flow` to a Swift `AsyncSequence` with `Failure = Never`, so a thrown `LeapGenerationException` could not be observed from Swift — `for await response in conversation.generateResponse(...)` simply terminated silently. With the new in-band case, Swift consumers `switch onEnum(of: response)` over the `.error` arm and surface the failure to the user; Kotlin consumers using `Flow.catch { }` / `try/catch` keep working unchanged because the exceptional close is still emitted.
+
+```kotlin
+sealed interface MessageResponse {
+  // ... existing cases ...
+  data class Error(
+    val throwable: Throwable,
+    val message: String = throwable.message ?: throwable::class.simpleName ?: throwable.toString(),
+  ) : MessageResponse
+}
+```
+
+**Public API: additive** — binary-compatible — but exhaustive consumers need a small fix:
+
+- **Kotlin:** add `is MessageResponse.Error -> { ... }` to any exhaustive `when (response)` over `MessageResponse`, or an `else -> { }` fallback. Statement-position `when` blocks compile with a warning today; expression-position `when` blocks (returning a value) won't compile until the new arm is added.
+- **Swift:** add `case .error(let err): ...` to any `switch onEnum(of: response)` or `switch onEnum(of: liquidResponse)` — the Swift compiler enforces exhaustiveness, so call sites stop compiling against v0.10.8 until updated.
+
+The same shape mirrors to the iOS compat layer as `LiquidMessageResponse.Error(throwable, message)` for callers still on the 0.9.x `LiquidConversation` API surface.
+
+<Warning>
+**Terminal-operator caveat (Kotlin).** Terminal operators that stop after the first matching event — `first()`, `first { ... }`, `take(1)` — may now consume the in-band `MessageResponse.Error` value and complete *normally*, where previously they would have propagated the underlying exception. Pattern-match on the result before acting (or keep a `.catch { }` operator wired up) if your retry pipeline depended on exceptional completion.
+</Warning>
+
+The `Flow` returned by `generateResponse` is now backed by an unlimited-capacity buffer (`buffer(Channel.UNLIMITED)`) so the terminal `Error` emission can never be dropped under collector backpressure — losing it would silently strand Swift callers. Generated token volume is bounded by the model's max-tokens setting, so the memory cost is negligible.
+
+**Toolchain bumps** (no consumer-visible effect):
+
+- Kotlin 2.3.20 → **2.3.21**.
+- SKIE 0.10.11 → **0.10.12**.
+
+iOS / macOS Swift consumers don't need to bump Xcode or Swift — the Xcode 16 / Swift 6 baseline from v0.10.0 still holds.
+
 ### v0.10.7 — 2026-05-18
 
 KMP target completion for `leap-openai-client` plus a repo-wide bytecode-hardening pass. iOS / macOS Swift surface is unchanged from v0.10.6 — this is a Kotlin/JVM ergonomics release for non-Apple consumers.
@@ -156,7 +205,7 @@ KMP target completion for `leap-openai-client` plus a repo-wide bytecode-hardeni
 - **`jvm`** (Ktor CIO engine) — Maven Central now publishes `ai.liquid.leap:leap-openai-client-jvm:0.10.7`. Pure-JVM desktop / server apps can route OpenAI-compatible chat completions without dragging in Android or KMP targets. (The 0.10.0 — 0.10.6 SPM cascade only shipped Android + Apple + Linux/MinGW K/N + wasmJs metadata; the JVM slice was absent.)
 - **`wasmJs`** (Ktor Js engine) — browser-side chat-completions client matching what `leap-sdk` already targets.
 
-The Apple slice (`LeapOpenAIClient.xcframework`) ships unchanged — same SSE-stream surface, same `OpenAiClientConfig`, same OpenRouter extra-headers support. SKIE is still not applied to this module in v0.10.7, so the Kotlin/Native exports remain the same as v0.10.6: `Flow<ChatCompletionEvent>` is not bridged to Swift `AsyncSequence`, and `onEnum(of:)` is not generated for `ChatCompletionEvent`. **The next release will enable SKIE on `leap-sdk-openai-client`**, bringing `for try await` over the stream, exhaustive `onEnum(of:)` switching, and SKIE-bundled Swift convenience inits — see the [OpenAI client page](/deployment/on-device/sdk/openai-client) for the current pinning guidance.
+The Apple slice (`LeapOpenAIClient.xcframework`) ships unchanged — same SSE-stream surface, same `OpenAiClientConfig`, same OpenRouter extra-headers support. SKIE is still not applied to this module in v0.10.7, so the Kotlin/Native exports remain the same as v0.10.6: `Flow<ChatCompletionEvent>` is not bridged to Swift `AsyncSequence`, and `onEnum(of:)` is not generated for `ChatCompletionEvent`. **[v0.10.8](#v0-10-8-2026-05-21) enables SKIE on `leap-sdk-openai-client`** — see that entry for the new Swift surface (`for try await` over the stream, exhaustive `onEnum(of:)` switching, SKIE-bundled `OpenAiClient(config:)` convenience init). Pin to v0.10.7 only if you need the pre-SKIE surface frozen.
 
 **Bytecode hardening:**
 
