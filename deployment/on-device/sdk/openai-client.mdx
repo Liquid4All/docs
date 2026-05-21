@@ -19,7 +19,7 @@ description: "Lightweight client for OpenAI-compatible chat completions APIs —
 
     ```swift
     dependencies: [
-        .package(url: "https://github.com/Liquid4All/leap-sdk.git", from: "0.10.7")
+        .package(url: "https://github.com/Liquid4All/leap-sdk.git", from: "0.10.8")
     ]
 
     targets: [
@@ -37,8 +37,8 @@ description: "Lightweight client for OpenAI-compatible chat completions APIs —
   <Tab title="Android (Gradle)">
     ```kotlin
     dependencies {
-      implementation("ai.liquid.leap:leap-sdk:0.10.7")
-      implementation("ai.liquid.leap:leap-openai-client:0.10.7")
+      implementation("ai.liquid.leap:leap-sdk:0.10.8")
+      implementation("ai.liquid.leap:leap-openai-client:0.10.8")
     }
     ```
 
@@ -47,18 +47,18 @@ description: "Lightweight client for OpenAI-compatible chat completions APIs —
   <Tab title="JVM (Gradle)">
     ```kotlin
     dependencies {
-        implementation("ai.liquid.leap:leap-sdk:0.10.7")
-        implementation("ai.liquid.leap:leap-openai-client:0.10.7")
+        implementation("ai.liquid.leap:leap-sdk:0.10.8")
+        implementation("ai.liquid.leap:leap-openai-client:0.10.8")
     }
     ```
 
-    JVM support landed in v0.10.7 (the `jvm` slice was absent in the v0.10.0–v0.10.6 cascade). Pure-Maven JVM projects should consume the `-jvm` classifier directly: `ai.liquid.leap:leap-openai-client-jvm:0.10.7`. Bundles the CIO Ktor engine.
+    JVM support landed in v0.10.7 (the `jvm` slice was absent in the v0.10.0–v0.10.6 cascade). Pure-Maven JVM projects should consume the `-jvm` classifier directly: `ai.liquid.leap:leap-openai-client-jvm:0.10.8`. Bundles the CIO Ktor engine.
   </Tab>
   <Tab title="Kotlin/Native (Gradle)">
     ```kotlin
     dependencies {
-        implementation("ai.liquid.leap:leap-sdk:0.10.7")
-        implementation("ai.liquid.leap:leap-openai-client:0.10.7")
+        implementation("ai.liquid.leap:leap-sdk:0.10.8")
+        implementation("ai.liquid.leap:leap-openai-client:0.10.8")
     }
     ```
 
@@ -70,23 +70,14 @@ description: "Lightweight client for OpenAI-compatible chat completions APIs —
 
 <Tabs>
   <Tab title="Swift (iOS / macOS)">
-    <Warning>
-    The `leap-sdk-openai-client` Kotlin module does **not** apply the SKIE plugin in v0.10.7 (only `leap-sdk`, `leap-sdk-model-downloader`, and `leap-ui` do). That means `Flow<ChatCompletionEvent>` is **not** bridged to a Swift `AsyncSequence` and the `onEnum(of:)` helper is **not** generated for `ChatCompletionEvent`. Swift consumers on v0.10.7 must collect the Kotlin `Flow` through its native collector and downcast each event with `as?`. For most Swift apps that just need cloud chat completions, an off-the-shelf OpenAI Swift client is more ergonomic — use `LeapOpenAIClient` from Swift only if you need to share Kotlin code with Android.
-
-    **Coming in the next release:** SKIE will be enabled on `leap-sdk-openai-client`, adding the same Swift-friendly surface as `LeapSDK` — `for try await event in client.streamChatCompletion(...)`, `onEnum(of: event)` exhaustive switching, and nested-class Swift names (`ChatCompletionEvent.Delta` instead of the current flattened `ChatCompletionEventDelta`). Swift convenience inits and builders for `OpenAiClientConfig` are also planned. Pin to v0.10.7 if you need the current behavior frozen; otherwise expect the more ergonomic surface to land soon.
-    </Warning>
-
-    Manual collection pattern (the `Flow<ChatCompletionEvent>.collect(...)` shape varies by Kotlin/Native version — check the framework header in your Xcode build for the exact label):
+    <Info>
+    **New in v0.10.8.** SKIE is now applied to `leap-sdk-openai-client`, matching `LeapSDK` / `LeapModelDownloader` / `LeapUI`. Swift consumers get a real `AsyncSequence`, exhaustive `onEnum(of:)` switching, nested Kotlin class names (`ChatCompletionEvent.Delta` instead of the previously flattened `ChatCompletionEventDelta`), and an `OpenAiClient(config:)` convenience init — no more `OpenAiClientKt.` prefix. If you need the pre-SKIE manual-collector surface frozen for some reason, pin to `0.10.7`; otherwise use the v0.10.8 surface below.
+    </Info>
 
     ```swift
     import LeapOpenAIClient
 
-    // The Kotlin top-level `fun OpenAiClient(config: OpenAiClientConfig)` exports as
-    // `OpenAiClientKt.OpenAiClient(config:)` (PascalCase preserved from the Kotlin
-    // function name). Without SKIE the K/N export also flattens Kotlin's nested
-    // class names — `ChatMessage.User` → `ChatMessageUser`,
-    // `ChatCompletionEvent.Delta` → `ChatCompletionEventDelta`, etc.
-    let client = OpenAiClientKt.OpenAiClient(
+    let client = OpenAiClient(
         config: OpenAiClientConfig(
             apiKey: "sk-…",
             baseUrl: "https://api.openai.com/v1"
@@ -96,28 +87,31 @@ description: "Lightweight client for OpenAI-compatible chat completions APIs —
     let request = ChatCompletionRequest(
         model: "gpt-4o-mini",
         messages: [
-            ChatMessageSystem(content: "You are a helpful assistant."),
-            ChatMessageUser(content: "What is the capital of Japan?")
+            ChatMessage.System(content: "You are a helpful assistant."),
+            ChatMessage.User(content: "What is the capital of Japan?")
         ],
         temperature: 0.7
     )
 
-    // Pseudocode — actual collector signature depends on your Kotlin/Native version
-    // and framework headers. Without SKIE, there is no `for try await` integration.
-    try await client.streamChatCompletion(request: request).collect(
-        collector: FlowCollector { event in
-            if let delta = event as? ChatCompletionEventDelta {
-                print(delta.content, terminator: "")
-            } else if let done = event as? ChatCompletionEventDone {
-                if let usage = done.usage { print("\nTokens: \(usage.totalTokens)") }
-            } else if let err = event as? ChatCompletionEventError {
-                print("\nError: \(err.message)")
-            }
+    for try await event in client.streamChatCompletion(request: request) {
+        switch onEnum(of: event) {
+        case .delta(let delta):
+            print(delta.content, terminator: "")
+        case .done(let done):
+            if let usage = done.usage { print("\nTokens: \(usage.totalTokens)") }
+        case .error(let err):
+            print("\nError: \(err.message)")
         }
-    )
+    }
 
     client.close()  // closes the underlying URLSession-backed HttpClient
     ```
+
+    `onEnum(of:)` gives exhaustive switching — the Swift compiler errors if a new `ChatCompletionEvent` case is added.
+
+    <Note>
+    SKIE bridges Kotlin `Flow` to a Swift `AsyncSequence` with `Failure = Never`, so transport-level failures (network drop, TLS error, etc.) silently terminate the stream rather than throwing. Only HTTP-level errors (non-2xx response) arrive as in-band `.error` events; malformed SSE chunks are logged and skipped. If you need to react to silent termination, track whether `.done` was observed and treat a stream that ended without it as a transport failure.
+    </Note>
   </Tab>
   <Tab title="Kotlin (all platforms)">
     ```kotlin
@@ -181,11 +175,7 @@ data class OpenAiClientConfig(
 <Tabs>
   <Tab title="Swift (iOS / macOS)">
     ```swift
-    // The leap-sdk-openai-client module has no SKIE plugin applied, so the
-    // top-level Kotlin `fun OpenAiClient(config:)` factory is exported as
-    // `OpenAiClientKt.OpenAiClient(config:)`. See the [Basic usage](#basic-usage)
-    // warning for the full reasoning.
-    let client = OpenAiClientKt.OpenAiClient(
+    let client = OpenAiClient(
         config: OpenAiClientConfig(
             apiKey: "sk-or-…",
             baseUrl: "https://openrouter.ai/api/v1",
@@ -218,7 +208,7 @@ data class OpenAiClientConfig(
 <Tabs>
   <Tab title="Swift (iOS / macOS)">
     ```swift
-    let client = OpenAiClientKt.OpenAiClient(
+    let client = OpenAiClient(
         config: OpenAiClientConfig(
             apiKey: "anything",  // Required by config but typically unused
             baseUrl: "http://10.0.0.42:8000/v1"
@@ -270,13 +260,13 @@ data class ChatCompletionRequest(
 
 ## Response shape
 
-`streamChatCompletion(request)` returns a `Flow<ChatCompletionEvent>` (Kotlin) — and the same `Flow` is exposed verbatim to Swift in v0.10.7 (no SKIE on this module yet, so it's not bridged to a Swift `AsyncSequence`; collect it via the native `Flow.collect(...)` shape shown above). Events:
+`streamChatCompletion(request)` returns a `Flow<ChatCompletionEvent>` (Kotlin) — SKIE bridges this as a Swift `AsyncSequence` since v0.10.8, so Swift consumers can iterate it with `for try await event in client.streamChatCompletion(request: ...)`. Events:
 
 | Variant | Meaning |
 |---|---|
 | `Delta(content: String)` | Text chunk from the model. May be empty for role-only deltas. |
 | `Done(usage: Usage?)` | Stream finished. `usage` is non-`null` when the API includes token counts. |
-| `Error(message: String)` | HTTP error or stream parsing failure. |
+| `Error(message: String)` | Non-2xx HTTP response. Malformed SSE chunks are logged and skipped — they do not emit an `Error` event. |
 
 ```kotlin
 data class Usage(val promptTokens: Int, val completionTokens: Int, val totalTokens: Int)
@@ -304,24 +294,17 @@ Route simple prompts to a small on-device LFM; escalate harder prompts to a clou
 
         func send(_ text: String, useCloud: Bool) async throws {
             if useCloud {
-                // Cloud path: leap-sdk-openai-client has no SKIE — collect the Kotlin
-                // Flow manually and downcast each event with `as?`. Note the flattened
-                // Swift type names (`ChatMessageUser`, `ChatCompletionEventDelta`).
+                // Cloud path — same SKIE-bridged surface as on-device since v0.10.8.
                 let request = ChatCompletionRequest(
                     model: "gpt-4o-mini",
-                    messages: [ChatMessageUser(content: text)]
+                    messages: [ChatMessage.User(content: text)]
                 )
-                try await cloud.streamChatCompletion(request: request).collect(
-                    collector: FlowCollector { event in
-                        if let delta = event as? ChatCompletionEventDelta {
-                            appendChunk(delta.content)
-                        }
-                    }
-                )
+                for try await event in cloud.streamChatCompletion(request: request) {
+                    if case let .delta(d) = onEnum(of: event) { appendChunk(d.content) }
+                }
             } else {
-                // On-device path: leap-sdk has SKIE — `for try await` + `onEnum(of:)`
-                // work as written.
-                let userMessage = ChatMessage(role: .user, textContent: text)
+                // On-device path.
+                let userMessage = LeapSDK.ChatMessage(role: .user, textContent: text)
                 for try await response in onDevice.generateResponse(message: userMessage) {
                     if case let .chunk(c) = onEnum(of: response) { appendChunk(c.text) }
                 }
@@ -412,7 +395,7 @@ See [Cloud AI Comparison](./cloud-ai-comparison) for a side-by-side feature brea
 
 ## Lifecycle
 
-The platform `OpenAiClient(config:)` factory (Kotlin `fun OpenAiClient(config:)` → Swift `OpenAiClientKt.OpenAiClient(config:)`) creates an `HttpClient` internally and ties it to the returned client — call `close()` when you're done.
+The `OpenAiClient(config:)` factory (Kotlin `fun OpenAiClient(config:)` — exported as a SKIE-bundled Swift convenience init since v0.10.8) creates an `HttpClient` internally and ties it to the returned client — call `close()` when you're done.
 
 <Tabs>
   <Tab title="Swift (iOS / macOS)">
@@ -420,7 +403,7 @@ The platform `OpenAiClient(config:)` factory (Kotlin `fun OpenAiClient(config:)`
     deinit { client.close() }
     ```
 
-    The lower-level constructor that accepts an externally-managed `HttpClient` is part of the Kotlin/Ktor surface and isn't a useful entry point from Swift — the Ktor engine machinery isn't bridged into the public Swift API. Use `OpenAiClientKt.OpenAiClient(config:)` and let the SDK own the session. If multiple consumers share a client, share the `OpenAiClient` instance and `close()` once at teardown.
+    The lower-level constructor that accepts an externally-managed `HttpClient` is part of the Kotlin/Ktor surface and isn't a useful entry point from Swift — the Ktor engine machinery isn't bridged into the public Swift API. Use `OpenAiClient(config:)` and let the SDK own the session. If multiple consumers share a client, share the `OpenAiClient` instance and `close()` once at teardown.
   </Tab>
   <Tab title="Kotlin (all platforms)">
     ```kotlin
