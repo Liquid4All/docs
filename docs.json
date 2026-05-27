@@ -82,7 +82,8 @@
             "pages": [
               "lfm/fine-tuning/datasets",
               "lfm/fine-tuning/trl",
-              "lfm/fine-tuning/unsloth"
+              "lfm/fine-tuning/unsloth",
+              "lfm/fine-tuning/leap-finetune"
             ]
           },
           {
@@ -273,7 +274,7 @@
     },
     {
       "source": "/customization/finetuning-frameworks/leap-finetune",
-      "destination": "/lfm/fine-tuning/trl"
+      "destination": "/lfm/fine-tuning/leap-finetune"
     },
     {
       "source": "/customization/finetuning-frameworks/datasets",

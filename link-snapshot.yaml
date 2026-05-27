@@ -112,6 +112,7 @@ active:
   - /leap/edge-sdk/overview
   - /lfm/fine-tuning
   - /lfm/fine-tuning/datasets
+  - /lfm/fine-tuning/leap-finetune
   - /lfm/fine-tuning/trl
   - /lfm/fine-tuning/unsloth
   - /lfm/getting-started/connect-ai-tools
