@@ -42,7 +42,6 @@ active:
   - /deployment/on-device/ios/openai-client
   - /deployment/on-device/ios/utilities
   - /deployment/on-device/ios/voice-assistant
-  - /deployment/on-device/leap-sdk
   - /deployment/on-device/leap-sdk-changelog
   - /deployment/on-device/llama-cpp
   - /deployment/on-device/lm-studio
