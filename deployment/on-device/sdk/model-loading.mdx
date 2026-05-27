@@ -58,7 +58,7 @@ All downloader classes return the same `ModelRunner` type. They share an on-disk
 
       ```swift
       let downloader = LeapDownloader(
-        config: LeapDownloaderConfig(saveDir: modelsDir, validateSha256: true)
+        config: LeapDownloaderConfig.with(saveDir: modelsDir, validateSha256: true)
       )
       ```
     </Accordion>
@@ -124,7 +124,7 @@ Resolves the GGUF manifest for the given model + quantization slug, downloads an
 
     ```swift
     let downloader = ModelDownloader(
-      config: LeapDownloaderConfig(saveDir: modelsDir, validateSha256: true)
+      config: LeapDownloaderConfig.with(saveDir: modelsDir, validateSha256: true)
     )
 
     let runner = try await downloader.loadModel(
@@ -146,7 +146,7 @@ Resolves the GGUF manifest for the given model + quantization slug, downloads an
 
       ```swift
       let downloader = LeapDownloader(
-        config: LeapDownloaderConfig(saveDir: modelsDir, validateSha256: true)
+        config: LeapDownloaderConfig.with(saveDir: modelsDir, validateSha256: true)
       )
 
       let runner = try await downloader.loadModel(

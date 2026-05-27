@@ -260,7 +260,7 @@ A `ChatViewModel` that loads the model, registers a tool, drives generation, and
         private let downloader: ModelDownloader = {
             let caches = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first!.path
             let modelsDir = (caches as NSString).appendingPathComponent("leap_models")
-            return ModelDownloader(config: LeapDownloaderConfig(saveDir: modelsDir))
+            return ModelDownloader(config: LeapDownloaderConfig.with(saveDir: modelsDir))
         }()
         private var modelRunner: ModelRunner?
         private var conversation: Conversation?

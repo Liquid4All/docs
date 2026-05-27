@@ -43,7 +43,7 @@ Cloud APIs create a thin client that points at a remote endpoint. LEAP downloads
 
     let caches = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first!.path
     let modelsDir = (caches as NSString).appendingPathComponent("leap_models")
-    let downloader = ModelDownloader(config: LeapDownloaderConfig(saveDir: modelsDir))
+    let downloader = ModelDownloader(config: LeapDownloaderConfig.with(saveDir: modelsDir))
 
     let runner = try await downloader.loadModel(
         modelName: "LFM2.5-1.2B-Instruct",
@@ -166,7 +166,7 @@ Both LEAP and the OpenAI Python streaming client run inside an async context. Th
         private let downloader: ModelDownloader = {
             let caches = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first!.path
             let modelsDir = (caches as NSString).appendingPathComponent("leap_models")
-            return ModelDownloader(config: LeapDownloaderConfig(saveDir: modelsDir))
+            return ModelDownloader(config: LeapDownloaderConfig.with(saveDir: modelsDir))
         }()
 
         func loadModel() async {
