@@ -7,7 +7,7 @@ description: "Liquid Foundation Models (LFMs) are a new class of multimodal arch
 
 All of our models share the following capabilities:
 
-- 32k token context length for extended conversations and document processing
+- 32K token context length for extended conversations and document processing (128K for LFM2.5-8B-A1B)
 - Designed for fast inference with [Transformers](/deployment/gpu-inference/transformers), [llama.cpp](/deployment/on-device/llama-cpp), [vLLM](/deployment/gpu-inference/vllm), [MLX](/deployment/on-device/mlx), [Ollama](/deployment/on-device/ollama), and [LEAP](/deployment/on-device/sdk/quick-start)
 - Trainable via SFT, DPO, and GRPO with [TRL](/lfm/fine-tuning/trl) and [Unsloth](/lfm/fine-tuning/unsloth)
 
@@ -64,6 +64,7 @@ Quantization reduces model size and speeds up inference with minimal quality los
 | [LFM2.5-1.2B-Base](/lfm/models/lfm25-1.2b-base) | [✓](https://huggingface.co/LiquidAI/LFM2.5-1.2B-Base) | [✓](https://huggingface.co/LiquidAI/LFM2.5-1.2B-Base-GGUF) | ✗ | [✓](https://huggingface.co/LiquidAI/LFM2.5-1.2B-Base-ONNX) | Yes (TRL) |
 | [LFM2.5-1.2B-JP](/lfm/models/lfm25-1.2b-jp) | [✓](https://huggingface.co/LiquidAI/LFM2.5-1.2B-JP) | [✓](https://huggingface.co/LiquidAI/LFM2.5-1.2B-JP-GGUF) | [✓](https://huggingface.co/LiquidAI/LFM2.5-1.2B-JP-MLX-8bit) | [✓](https://huggingface.co/LiquidAI/LFM2.5-1.2B-JP-ONNX) | Yes (TRL) |
 | [LFM2.5-350M](/lfm/models/lfm25-350m) | [✓](https://huggingface.co/LiquidAI/LFM2.5-350M) | [✓](https://huggingface.co/LiquidAI/LFM2.5-350M-GGUF) | [✓](https://huggingface.co/LiquidAI/LFM2.5-350M-MLX-8bit) | [✓](https://huggingface.co/LiquidAI/LFM2.5-350M-ONNX) | Yes (TRL) |
+| [LFM2.5-8B-A1B](/lfm/models/lfm25-8b-a1b) | [✓](https://huggingface.co/LiquidAI/LFM2.5-8B-A1B) | [✓](https://huggingface.co/LiquidAI/LFM2.5-8B-A1B-GGUF) | [✓](https://huggingface.co/LiquidAI/LFM2.5-8B-A1B-MLX-8bit) | [✓](https://huggingface.co/LiquidAI/LFM2.5-8B-A1B-ONNX) | Yes (TRL) |
 | LFM2 Models | | | | | |
 | [LFM2-8B-A1B](/lfm/models/lfm2-8b-a1b) | [✓](https://huggingface.co/LiquidAI/LFM2-8B-A1B) | [✓](https://huggingface.co/LiquidAI/LFM2-8B-A1B-GGUF) | [✓](https://huggingface.co/mlx-community/LFM2-8B-A1B-8bit) | [✓](https://huggingface.co/onnx-community/LFM2-8B-A1B-ONNX) | Yes (TRL) |
 | [LFM2-2.6B](/lfm/models/lfm2-2.6b) | [✓](https://huggingface.co/LiquidAI/LFM2-2.6B) | [✓](https://huggingface.co/LiquidAI/LFM2-2.6B-GGUF) | [✓](https://huggingface.co/mlx-community/LFM2-2.6B-8bit) | [✓](https://huggingface.co/onnx-community/LFM2-2.6B-ONNX) | Yes (TRL) |
