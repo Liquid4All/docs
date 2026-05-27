@@ -1,0 +1,63 @@
+---
+title: "LFM2.5-8B-A1B"
+description: "8B parameter Mixture-of-Experts model with 1.5B active parameters for fast, reliable tool calling and 128K context"
+---
+
+import { TextTransformers } from "/snippets/quickstart/text-transformers.mdx";
+import { TextVllm } from "/snippets/quickstart/text-vllm.mdx";
+import { TextSglang } from "/snippets/quickstart/text-sglang.mdx";
+import { TextLlamacpp } from "/snippets/quickstart/text-llamacpp.mdx";
+
+<a href="/lfm/models/text-models" className="back-button">← Back to Text Models</a>
+
+LFM2.5-8B-A1B is Liquid AI's on-device personal assistant. Designed to power real-life applications, chaining tool calls, and following complex instructions on modest devices. Built on the LFM2.5 MoE architecture with 8B total parameters and only 1.5B active per forward pass, it delivers compressed performance—competitive with much bigger models on instruction following and agentic tasks—while supporting a 128K token context window.
+
+<div style={{display: 'flex', gap: '0.5rem', margin: '0.5rem 0 1.5rem 0'}}>
+  <a href="https://huggingface.co/LiquidAI/LFM2.5-8B-A1B" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#fbbf24'}}><span style={{color: '#000'}}>HF</span></a>
+  <a href="https://huggingface.co/LiquidAI/LFM2.5-8B-A1B-GGUF" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#60a5fa'}}><span style={{color: '#000'}}>GGUF</span></a>
+  <a href="https://huggingface.co/LiquidAI/LFM2.5-8B-A1B-MLX-8bit" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#c4b5fd'}}><span style={{color: '#000'}}>MLX</span></a>
+  <a href="https://huggingface.co/LiquidAI/LFM2.5-8B-A1B-ONNX" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#86efac'}}><span style={{color: '#000'}}>ONNX</span></a>
+</div>
+
+## Specifications
+
+| Property | Value |
+|----------|-------|
+| Parameters | 8B (1.5B active) |
+| Context Length | 128K tokens |
+| Architecture | LFM2.5 (MoE) |
+
+<div className="use-cases">
+<CardGroup cols={3}>
+
+<Card title="128K Context" icon="text-width">
+  Extended context window for long documents and conversations
+</Card>
+
+<Card title="MoE Efficiency" icon="microchip">
+  8B quality, 1.5B inference cost
+</Card>
+
+<Card title="Tool Calling" icon="wrench">
+  Native function calling for agentic workflows
+</Card>
+
+</CardGroup>
+</div>
+
+## Quick Start
+
+<Tabs>
+  <Tab title="Transformers">
+    <TextTransformers modelId="LiquidAI/LFM2.5-8B-A1B" samplingParams="do_sample=True, temperature=0.1, top_k=50, repetition_penalty=1.05, "></TextTransformers>
+  </Tab>
+  <Tab title="llama.cpp">
+    <TextLlamacpp ggufRepo="LiquidAI/LFM2.5-8B-A1B-GGUF" samplingFlags="--temp 0.1 --top-k 50 --repeat-penalty 1.05"></TextLlamacpp>
+  </Tab>
+  <Tab title="vLLM">
+    <TextVllm modelId="LiquidAI/LFM2.5-8B-A1B" samplingParams="temperature=0.1, top_k=50, repetition_penalty=1.05, "></TextVllm>
+  </Tab>
+  <Tab title="SGLang">
+    <TextSglang modelId="LiquidAI/LFM2.5-8B-A1B" toolCallParser="lfm2"></TextSglang>
+  </Tab>
+</Tabs>
