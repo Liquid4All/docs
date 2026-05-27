@@ -1,0 +1,31 @@
+---
+title: "Leap SDK"
+description: "Liquid AI's official on-device inference SDK with first-class support for Liquid Foundation Models. Runs on iOS, macOS, Android, JVM desktop, Linux, and Windows."
+---
+
+<Tip>
+  Use the Leap SDK for first-class LFM support on mobile, desktop, and embedded devices — with validated defaults, multimodal inference, constrained generation, and one-call model fetching from the LEAP Model Library.
+</Tip>
+
+The **Leap SDK** is Liquid AI's official on-device inference SDK and the **only SDK with first-class support for [Liquid Foundation Models](https://www.liquid.ai/blog/liquid-foundation-models-our-first-series-of-generative-ai-models) (LFMs)**. Every published Liquid checkpoint is supported, validated, and shipped through this SDK on day-one.
+
+It's a Kotlin Multiplatform library: the same `ModelRunner` / `Conversation` / `MessageResponse` API runs on iOS, macOS, Android, JVM desktop, Linux native, Windows native, and (preview) wasmJs.
+
+## Key Features
+
+- **Day-one model coverage** — new LFM checkpoints land in the SDK release that announces them, with no manual quant conversion or template-mismatch debugging.
+- **Multimodal support** — vision (LFM2-VL) and audio (LFM2.5-Audio) use the same API as text.
+- **Constrained generation** — Kotlin annotations and Swift macros produce JSON Schemas the engine enforces at decode time.
+- **One-call model fetching** — `LeapModelDownloader.loadModel(...)` resolves, downloads, caches, and returns a ready `ModelRunner`.
+- **On-device by default** — no cloud round-trip, no per-token cost, full privacy, full offline operation.
+
+## Getting Started
+
+<CardGroup cols={2}>
+  <Card title="Full Documentation" icon="book" href="/deployment/on-device/sdk/overview">
+    SDK overview, architecture, and feature deep-dives.
+  </Card>
+  <Card title="Quick Start" icon="rocket" href="/deployment/on-device/sdk/quick-start">
+    Install via SPM or Gradle, load a model, stream a response.
+  </Card>
+</CardGroup>

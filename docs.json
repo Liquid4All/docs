@@ -89,6 +89,7 @@
             "group": "Edge Inference",
             "icon": "mobile",
             "pages": [
+              "deployment/on-device/leap-sdk",
               "deployment/on-device/llama-cpp",
               "deployment/on-device/lm-studio",
               "deployment/on-device/mlx",
