@@ -76,7 +76,7 @@ SNIPPET_CONFIG = {
     },
     "text-vllm": {
         "component_name": "TextVllm",
-        "props": "{ modelId, samplingParams }",
+        "props": "{ modelId, samplingParams, maxTokens }",
         "replacement_group": "text",
         "source": "config",
         "sections": [
@@ -90,7 +90,7 @@ SNIPPET_CONFIG = {
                  "\n"
                  'llm = LLM(model="${modelId}")\n'
                  "\n"
-                 "sampling_params = SamplingParams(${samplingParams}max_tokens=512)\n"
+                 "sampling_params = SamplingParams(${samplingParams}max_tokens=${maxTokens || 512})\n"
                  "\n"
                  'output = llm.chat("What is machine learning?", sampling_params)\n'
                  "print(output[0].outputs[0].text)"
