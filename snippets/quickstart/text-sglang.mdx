@@ -1,4 +1,4 @@
-export const TextSglang = ({ modelId, toolCallParser }) => (
+export const TextSglang = ({ modelId, toolCallParser, samplingParams }) => (
 <div>
 <p><strong>Install:</strong></p>
 <pre className="shiki shiki-themes github-light github-dark" style={{backgroundColor: '#fff', '--shiki-dark-bg': '#24292e', color: '#24292e', '--shiki-dark': '#e1e4e8'}} language="bash">
@@ -32,7 +32,7 @@ client = OpenAI(base_url="http://localhost:30000/v1", api_key="None")
 response = client.chat.completions.create(
     model="${modelId}",
     messages=[{"role": "user", "content": "What is machine learning?"}],
-    temperature=0.3,
+    ${samplingParams || "temperature=0.3,"}
 )
 
 print(response.choices[0].message.content)`.split('\n').map((line, i) => <span key={i} className="line">{line}{'\n'}</span>)}
