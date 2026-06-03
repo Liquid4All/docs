@@ -11,7 +11,7 @@ The `leap-ui` module (introduced in v0.10.0) ships a ready-to-use voice assistan
 - **macOS** — bridged to AppKit via `VoiceAssistantNSViewController`. SwiftUI hosts via `NSViewControllerRepresentable` + `NSHostingController`.
 - **Android** — direct Compose for Android.
 - **JVM Desktop** — Compose for Desktop. Same Maven artifact; you provide audio I/O implementations (the demo apps in `leap-ui-demo/` ship patterns you can adapt).
-- **Web (Wasm, experimental)** — present in the source tree (`leap-ui-demo/web`) but not yet covered by the stable release notes through v0.10.8 — treat as preview.
+- **Web (Wasm, experimental)** — present in the source tree (`leap-ui-demo/web`) but not yet covered by the stable release notes through v0.10.9 — treat as preview.
 
 ## Add the dependency
 
@@ -21,7 +21,7 @@ The `leap-ui` module (introduced in v0.10.0) ships a ready-to-use voice assistan
 
     ```swift
     dependencies: [
-        .package(url: "https://github.com/Liquid4All/leap-sdk.git", from: "0.10.8")
+        .package(url: "https://github.com/Liquid4All/leap-sdk.git", from: "0.10.9")
     ]
 
     targets: [
@@ -46,8 +46,8 @@ The `leap-ui` module (introduced in v0.10.0) ships a ready-to-use voice assistan
   <Tab title="Android / JVM (Gradle)">
     ```kotlin
     dependencies {
-        implementation("ai.liquid.leap:leap-sdk:0.10.8")
-        implementation("ai.liquid.leap:leap-ui:0.10.8")
+        implementation("ai.liquid.leap:leap-sdk:0.10.9")
+        implementation("ai.liquid.leap:leap-ui:0.10.9")
     }
     ```
 
