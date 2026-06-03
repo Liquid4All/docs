@@ -110,7 +110,7 @@ description: "Lightweight client for OpenAI-compatible chat completions APIs —
     `onEnum(of:)` gives exhaustive switching — the Swift compiler errors if a new `ChatCompletionEvent` case is added.
 
     <Note>
-    SKIE bridges Kotlin `Flow` to a Swift `AsyncSequence` with `Failure = Never`, so transport-level failures (network drop, TLS error, etc.) silently terminate the stream rather than throwing. Only HTTP-level errors (non-2xx response) arrive as in-band `.error` events; malformed SSE chunks are logged and skipped. If you need to react to silent termination, track whether `.done` was observed and treat a stream that ended without it as a transport failure.
+    Errors are delivered **in-band**: a non-2xx HTTP response arrives as a `.error` event — handle it in the `switch` and show `err.message`. Malformed SSE chunks are logged and skipped (no event is emitted). Transport-level failures (network drop, TLS error) are *not* delivered to the bridged stream as `.error` events and are not rethrown to Swift, so a `do`/`catch` around the loop won't catch them — guard connectivity at a higher level (request timeouts, reachability checks) instead.
     </Note>
   </Tab>
   <Tab title="Kotlin (all platforms)">
@@ -256,7 +256,7 @@ data class ChatCompletionRequest(
 )
 ```
 
-`ChatMessage` (the OpenAI-client one, distinct from `LeapSDK.ChatMessage`) is a sealed type with three cases — `System`, `User`, `Assistant`.
+`ChatMessage` (the OpenAI-client one, distinct from the on-device `ChatMessage` in `LeapSDK` / `LeapModelDownloader`) is a sealed type with three cases — `System`, `User`, `Assistant`.
 
 ## Response shape
 
@@ -295,16 +295,20 @@ Route simple prompts to a small on-device LFM; escalate harder prompts to a clou
         func send(_ text: String, useCloud: Bool) async throws {
             if useCloud {
                 // Cloud path — same SKIE-bridged surface as on-device since v0.10.8.
+                // Both imported modules expose a `ChatMessage`, so qualify each by the
+                // module it comes from: `LeapOpenAIClient.ChatMessage` (cloud) and
+                // `LeapModelDownloader.ChatMessage` (on-device — LeapModelDownloader
+                // re-exports the LeapSDK types, so the type lives in that module here).
                 let request = ChatCompletionRequest(
                     model: "gpt-4o-mini",
-                    messages: [ChatMessage.User(content: text)]
+                    messages: [LeapOpenAIClient.ChatMessage.User(content: text)]
                 )
                 for try await event in cloud.streamChatCompletion(request: request) {
                     if case let .delta(d) = onEnum(of: event) { appendChunk(d.content) }
                 }
             } else {
                 // On-device path.
-                let userMessage = LeapSDK.ChatMessage(role: .user, textContent: text)
+                let userMessage = LeapModelDownloader.ChatMessage(role: .user, textContent: text)
                 for try await response in onDevice.generateResponse(message: userMessage) {
                     if case let .chunk(c) = onEnum(of: response) { appendChunk(c.text) }
                 }

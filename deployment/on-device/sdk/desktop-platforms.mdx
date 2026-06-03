@@ -40,7 +40,7 @@ The JVM target supports Kotlin and Java projects on macOS (Apple Silicon), Linux
   <Tab title="Gradle (Kotlin DSL)">
     ```kotlin
     plugins {
-        kotlin("jvm") version "2.3.20"
+        kotlin("jvm") version "2.3.21"
         application
     }
 
@@ -66,7 +66,7 @@ The JVM target supports Kotlin and Java projects on macOS (Apple Silicon), Linux
   <Tab title="Gradle (Groovy DSL)">
     ```groovy
     plugins {
-        id 'org.jetbrains.kotlin.jvm' version '2.3.20'
+        id 'org.jetbrains.kotlin.jvm' version '2.3.21'
         id 'application'
     }
 
@@ -196,7 +196,7 @@ dependencyResolutionManagement {
 ```kotlin
 // build.gradle.kts
 plugins {
-    kotlin("multiplatform") version "2.3.20"
+    kotlin("multiplatform") version "2.3.21"
     id("ai.liquid.leap.nativelibs") version "0.10.9"
 }
 
@@ -226,7 +226,7 @@ The resulting binary lives at `build/bin/linuxX64/releaseExecutable/`, alongside
 
 ```kotlin
 plugins {
-    kotlin("multiplatform") version "2.3.20"
+    kotlin("multiplatform") version "2.3.21"
 }
 
 dependencies {
@@ -271,7 +271,7 @@ The same Kotlin/Native flow works for Windows x86_64 via the MinGW-w64 toolchain
 
 ```kotlin
 plugins {
-    kotlin("multiplatform") version "2.3.20"
+    kotlin("multiplatform") version "2.3.21"
     id("ai.liquid.leap.nativelibs") version "0.10.9"
 }
 
@@ -297,7 +297,7 @@ The Maven coordinates for the `-natives.zip` artifact:
 - `ai.liquid.leap:leap-sdk-mingwx64:0.10.9:natives@zip`
 
 <Info>
-**Building from macOS or Linux for Windows?** Kotlin/Native does not support cross-compiling to MinGW from a non-Windows host as of 2.3.20 — the build must run on Windows (native or in CI). GitHub Actions `windows-latest` works without extra setup.
+**Building from macOS or Linux for Windows?** Kotlin/Native does not support cross-compiling to MinGW from a non-Windows host as of 2.3.21 — the build must run on Windows (native or in CI). GitHub Actions `windows-latest` works without extra setup.
 </Info>
 
 ## macOS (Apple Silicon)

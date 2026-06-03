@@ -186,7 +186,7 @@ See [OpenAI-Compatible Client](/deployment/on-device/sdk/openai-client) for the 
 
 **In-band `MessageResponse.Error` (Kotlin) / `LiquidMessageResponse.Error` (Swift compat layer)** ([PR #258](https://github.com/Liquid4All/leap-android-sdk/pull/258)):
 
-`Conversation.generateResponse(...)` now emits a terminal `MessageResponse.Error(throwable, message)` value **before** closing the underlying channel with the same throwable. This closes a Swift gap: SKIE bridges Kotlin `Flow` to a Swift `AsyncSequence` with `Failure = Never`, so a thrown `LeapGenerationException` could not be observed from Swift — `for await response in conversation.generateResponse(...)` simply terminated silently. With the new in-band case, Swift consumers `switch onEnum(of: response)` over the `.error` arm and surface the failure to the user; Kotlin consumers using `Flow.catch { }` / `try/catch` keep working unchanged because the exceptional close is still emitted.
+`Conversation.generateResponse(...)` now emits a terminal `MessageResponse.Error(throwable, message)` value **before** closing the underlying channel with the same throwable. This closes a Swift gap: SKIE bridges Kotlin `Flow` to a Swift `AsyncSequence` that does not rethrow Kotlin exceptions, so a thrown `LeapGenerationException` could not be surfaced to a Swift consumer iterating the stream. With the new in-band case, Swift consumers `switch onEnum(of: response)` over the `.error` arm and surface the failure to the user; Kotlin consumers using `Flow.catch { }` / `try/catch` keep working unchanged because the exceptional close is still emitted.
 
 ```kotlin
 sealed interface MessageResponse {

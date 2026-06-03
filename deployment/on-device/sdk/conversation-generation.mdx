@@ -169,10 +169,9 @@ The async stream is the recommended way to drive generation — both platforms e
               print("Prompt tokens: \(stats.promptTokens), completion: \(stats.completionTokens)")
             }
           case .error(let err):
-            // SKIE bridges `Flow` as an `AsyncSequence` with `Failure = Never`, so the
-            // surrounding `for try await` cannot observe a thrown error from the Kotlin
-            // side. Generation failures surface as this in-band `.error` case (added in
-            // v0.10.8) — handle it here and present `err.message` to the user.
+            // Generation failures surface as this in-band `.error` case (added in
+            // v0.10.8). The SKIE-bridged stream does not rethrow the Kotlin exception
+            // to Swift, so handle the failure here and present `err.message` to the user.
             print("\nGeneration failed:", err.message)
           }
         }
@@ -208,7 +207,9 @@ The async stream is the recommended way to drive generation — both platforms e
                             is MessageResponse.Error -> Log.e(TAG, "Generation failed: ${response.message}", response.throwable)
                         }
                     }
-                    ?.catch { e -> Log.e(TAG, "Generation failed", e) }
+                    // The flow also closes with the same throwable after the in-band
+                    // `Error` above; swallow it here so the failure isn't logged twice.
+                    ?.catch { }
                     ?.collect()
             }
         }
@@ -223,7 +224,7 @@ The async stream is the recommended way to drive generation — both platforms e
     }
     ```
 
-    Generation errors arrive **two ways** since v0.10.8: as a terminal `MessageResponse.Error(throwable, message)` value emitted before the flow closes (so Swift consumers, which see a SKIE-bridged `AsyncSequence` with `Failure = Never`, can react), **and** as a `LeapGenerationException` thrown when the flow closes (so `Flow.catch { ... }` and `try`/`catch` keep working). Pick one path or the other — they describe the same failure.
+    Generation errors arrive **two ways** since v0.10.8: as a terminal `MessageResponse.Error(throwable, message)` value emitted before the flow closes (so Swift consumers, whose SKIE-bridged `AsyncSequence` does not rethrow the Kotlin exception, can react in-band), **and** as a `LeapGenerationException` thrown when the flow closes (so Kotlin's `Flow.catch { ... }` and `try`/`catch` keep working). Pick one path or the other — they describe the same failure.
   </Tab>
 </Tabs>
 
@@ -303,7 +304,7 @@ A sealed type with one case per kind of incremental output the engine emits.
 - **`FunctionCalls`** — one or more tool invocations the model wants you to execute. See [Function Calling](./function-calling).
 - **`AudioSample`** — float32 mono PCM frames from audio-capable checkpoints. The sample rate is constant for a generation; route the frames to a renderer.
 - **`Complete`** — final marker for a successful generation. `fullMessage` is the assembled assistant `ChatMessage` (also present in `conversation.history`). `stats` is nullable (`GenerationStats?`); when present it holds `promptTokens`, `completionTokens`, `totalTokens`, `tokenPerSecond` (non-nullable `Float`), and `cachedPromptTokens`.
-- **`Error`** _(v0.10.8+)_ — terminal failure event. `throwable` is the underlying cause (typically a `LeapGenerationException` or one of its subclasses); `message` defaults to `throwable.message`, falling back to the throwable's simple class name. Emitted as the final event before the flow closes — Kotlin consumers can additionally rely on `Flow.catch { }` / `try`/`catch`, but Swift consumers (which see a SKIE-bridged `AsyncSequence` with `Failure = Never`) must handle this case to detect generation failures. Partial output that arrived before the error is **not** appended to `conversation.history`. The data-class `equals` / `hashCode` falls back to reference equality on `throwable` — see the per-field comparison note in the SDK Kotlin docs if you need value-style equality.
+- **`Error`** _(v0.10.8+)_ — terminal failure event. `throwable` is the underlying cause (typically a `LeapGenerationException` or one of its subclasses); `message` defaults to `throwable.message`, falling back to the throwable's simple class name. Emitted as the final event before the flow closes — Kotlin consumers can additionally rely on `Flow.catch { }` / `try`/`catch`, but Swift consumers (whose SKIE-bridged `AsyncSequence` does not rethrow the Kotlin exception) must handle this case to detect generation failures. Partial output that arrived before the error is **not** appended to `conversation.history`. The data-class `equals` / `hashCode` falls back to reference equality on `throwable` — see the per-field comparison note in the SDK Kotlin docs if you need value-style equality.
 
 ### `GenerationFinishReason`
 

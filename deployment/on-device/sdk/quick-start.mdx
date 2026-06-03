@@ -29,7 +29,7 @@ The Leap SDK is a Kotlin Multiplatform library: the same `ModelRunner` / `Conver
       plugins {
           id("com.android.application") version "8.13.2" apply false
           id("com.android.library") version "8.13.2" apply false
-          id("org.jetbrains.kotlin.android") version "2.3.20" apply false
+          id("org.jetbrains.kotlin.android") version "2.3.21" apply false
       }
       ```
     - A working Android device that supports `arm64-v8a` with [developer mode enabled](https://developer.android.com/studio/debug/dev-options) and 3 GB+ of RAM.
@@ -50,7 +50,7 @@ The Leap SDK is a Kotlin Multiplatform library: the same `ModelRunner` / `Conver
     The `leap-sdk` JAR bundles the JNI binaries for every supported OS/arch — no extra setup needed.
   </Tab>
   <Tab title="Linux / Windows native">
-    - Kotlin **2.3.20+** and Gradle 8.x for the Kotlin/Native build.
+    - Kotlin **2.3.21+** and Gradle 8.x for the Kotlin/Native build.
     - **Linux runtime:** glibc **2.34+** (Ubuntu 22.04, Debian 12, RHEL 9, or newer).
     - **Windows runtime:** Windows 10+.
 
@@ -182,7 +182,7 @@ The Leap SDK is a Kotlin Multiplatform library: the same `ModelRunner` / `Conver
   <Tab title="JVM Desktop">
     ```kotlin
     plugins {
-        kotlin("jvm") version "2.3.20"
+        kotlin("jvm") version "2.3.21"
         application
     }
 
@@ -221,7 +221,7 @@ The Leap SDK is a Kotlin Multiplatform library: the same `ModelRunner` / `Conver
     ```kotlin
     // build.gradle.kts
     plugins {
-        kotlin("multiplatform") version "2.3.20"
+        kotlin("multiplatform") version "2.3.21"
         id("ai.liquid.leap.nativelibs") version "0.10.9"
     }
 
@@ -477,8 +477,9 @@ Both platforms expose the same streaming shape: an async sequence of `MessageRes
             }.joined()
             print("Final:", text)
         case .error(let err):
-            // In-band failure (v0.10.8+) — SKIE bridges `Flow` with `Failure = Never`,
-            // so generation failures arrive here instead of on the `catch` block above.
+            // In-band failure (v0.10.8+) — the SKIE-bridged stream does not rethrow the
+            // Kotlin exception to Swift, so generation failures arrive here, not on a
+            // `catch` block around the loop.
             print("Generation failed:", err.message)
         }
     }

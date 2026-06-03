@@ -527,7 +527,7 @@ Per-load runtime overrides. Default values come from the model bundle's manifest
         .with(cacheOptions: .enabled(path: cacheDir.path))
     ```
 
-    **Sideloaded `LiquidInferenceEngineOptions` (URL-based load).** The non-manifest variant does NOT ship a Swift convenience init through v0.10.8 — the K/N-generated designated init takes all 12 fields. Either build it fully (verbose) or use `loadSimpleModel(model: ModelSource(...))` on `ModelDownloader` (preferred for new code; see the Sideloaded files section). The builder `.with(...)` overloads exist but they create a new instance internally via the same 12-arg init, so you still need a fully-built starting instance — there is no `LiquidInferenceEngineOptions(bundlePath: …)` 1-arg form today.
+    **Sideloaded `LiquidInferenceEngineOptions` (URL-based load).** The non-manifest variant does NOT ship a Swift convenience init through v0.10.9 — the K/N-generated designated init takes all 12 fields. Either build it fully (verbose) or use `loadSimpleModel(model: ModelSource(...))` on `ModelDownloader` (preferred for new code; see the Sideloaded files section). The builder `.with(...)` overloads exist but they create a new instance internally via the same 12-arg init, so you still need a fully-built starting instance — there is no `LiquidInferenceEngineOptions(bundlePath: …)` 1-arg form today.
   </Tab>
   <Tab title="Kotlin (all platforms)">
     ```kotlin
