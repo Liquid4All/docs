@@ -9,7 +9,7 @@
 |----------|--------------|---------|
 | Standard text | `snippets/quickstart/text-transformers.mdx`, `text-vllm.mdx`, `text-llamacpp.mdx` | LFM2.5-8B-A1B, 1.2B-Instruct, Thinking, JP, 350M; LFM2-8B-A1B, 2.6B, 2.6B-Exp, 1.2B, 700M, 350M |
 | Vision | `snippets/quickstart/vl-transformers.mdx`, `vl-vllm.mdx`, `vl-llamacpp.mdx` | LFM2.5-VL-1.6B; LFM2-VL-3B, VL-1.6B, VL-450M |
-| Audio | Inline (unique code) | LFM2.5-Audio-1.5B, LFM2-Audio-1.5B |
+| Audio | Inline (unique code) | LFM2.5-Audio-1.5B, LFM2.5-Audio-1.5B-JP, LFM2-Audio-1.5B |
 | ColBERT | Inline (PyLate) | LFM2-ColBERT-350M |
 | Nanos | Inline (custom prompts/temps) | Extract, RAG, Transcript, Math, ENJP-MT, PII-Extract-JP |
 
@@ -27,6 +27,7 @@
 | **LFM2.5 Vision & Audio** |
 | VL-1.6B | `LiquidAI/LFM2.5-VL-1.6B` | VL (v5 req) | VL (--image) | VL (custom wheel) | NO (PR#14069) | Yes | Yes | |
 | Audio-1.5B | `LiquidAI/LFM2.5-Audio-1.5B` | liquid-audio | Custom binary | NO | NO | NO | Yes | |
+| Audio-1.5B-JP | `LiquidAI/LFM2.5-Audio-1.5B-JP` | liquid-audio | Custom binary | NO | NO | NO | NO | Japanese |
 | **LFM2 Text** |
 | 8B-A1B | `LiquidAI/LFM2-8B-A1B` | Standard | Standard | Standard | Standard | Yes | Yes | MoE |
 | 2.6B | `LiquidAI/LFM2-2.6B` | Standard | Standard | Standard | Standard | Yes | Yes | |
@@ -41,6 +42,8 @@
 | **LFM2 Audio** |
 | Audio-1.5B | `LiquidAI/LFM2-Audio-1.5B` | liquid-audio | Custom binary | NO | NO | NO | NO | Deprecated |
 | **Nanos** |
+| VL-1.6B-Extract | `LiquidAI/LFM2.5-VL-1.6B-Extract` | temp=0, do_sample=False | VL (--image) | VL (custom wheel) | -- | NO | NO | Image schema extraction |
+| VL-450M-Extract | `LiquidAI/LFM2.5-VL-450M-Extract` | temp=0, do_sample=False | VL (--image) | VL (custom wheel) | -- | NO | NO | Compact image schema extraction |
 | 1.2B-Extract | `LiquidAI/LFM2-1.2B-Extract` | temp=0, do_sample=False | temp=0 | -- | -- | NO | Yes | Single-turn, schema prompt |
 | 350M-Extract | `LiquidAI/LFM2-350M-Extract` | temp=0, do_sample=False | temp=0 | -- | -- | NO | Yes | Single-turn, schema prompt |
 | 1.2B-RAG | `LiquidAI/LFM2-1.2B-RAG` | temp=0, do_sample=False | temp=0 | -- | -- | NO | Yes | Single-turn |

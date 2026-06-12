@@ -72,6 +72,7 @@ active:
   - /deployment/tools/model-bundling/quick-start
   - /deployment/tools/model-bundling/reference
   - /docs/fine-tuning/datasets
+  - /docs/fine-tuning/leap-finetune
   - /docs/fine-tuning/trl
   - /docs/fine-tuning/unsloth
   - /docs/fine-tuning/workbench
@@ -112,6 +113,7 @@ active:
   - /leap/edge-sdk/overview
   - /lfm/fine-tuning
   - /lfm/fine-tuning/datasets
+  - /lfm/fine-tuning/leap-finetune
   - /lfm/fine-tuning/trl
   - /lfm/fine-tuning/unsloth
   - /lfm/getting-started/connect-ai-tools
@@ -161,8 +163,11 @@ active:
   - /lfm/models/lfm25-350m
   - /lfm/models/lfm25-8b-a1b
   - /lfm/models/lfm25-audio-1.5b
+  - /lfm/models/lfm25-audio-1.5b-jp
   - /lfm/models/lfm25-vl-1.6b
+  - /lfm/models/lfm25-vl-1.6b-extract
   - /lfm/models/lfm25-vl-450m
+  - /lfm/models/lfm25-vl-450m-extract
   - /lfm/models/liquid-nanos
   - /lfm/models/text-models
   - /lfm/models/vision-models
