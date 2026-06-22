@@ -1,9 +1,13 @@
 ---
 title: "LFM2-1.2B-RAG"
-description: "1.2B parameter model optimized for Retrieval-Augmented Generation"
+description: "1.2B parameter RAG model (deprecated - use LFM2.5-1.2B-Instruct with retrieval models instead)"
 ---
 
 <a href="/lfm/models/liquid-nanos" className="back-button">← Back to Liquid Nanos</a>
+
+<Warning>
+This model is deprecated. For generation, use [LFM2.5-1.2B-Instruct](/lfm/models/lfm25-1.2b-instruct). For retrieval, pair it with [LFM2.5-Embedding-350M](/lfm/models/lfm25-embedding-350m) or [LFM2.5-ColBERT-350M](/lfm/models/lfm25-colbert-350m) as part of your RAG pipeline.
+</Warning>
 
 LFM2-1.2B-RAG is optimized for answering questions grounded in provided context documents. It excels at extracting relevant information from retrieved documents while avoiding hallucination.
 

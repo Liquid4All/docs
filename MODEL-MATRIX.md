@@ -29,16 +29,16 @@
 | Audio-1.5B | `LiquidAI/LFM2.5-Audio-1.5B` | liquid-audio | Custom binary | NO | NO | NO | Yes | |
 | Audio-1.5B-JP | `LiquidAI/LFM2.5-Audio-1.5B-JP` | liquid-audio | Custom binary | NO | NO | NO | NO | Japanese |
 | **LFM2 Text** |
-| 8B-A1B | `LiquidAI/LFM2-8B-A1B` | Standard | Standard | Standard | Standard | Yes | Yes | MoE |
 | 2.6B | `LiquidAI/LFM2-2.6B` | Standard | Standard | Standard | Standard | Yes | Yes | |
 | 2.6B-Exp | `LiquidAI/LFM2-2.6B-Exp` | Standard | Standard | Standard | Standard | NO | NO | |
-| 1.2B | `LiquidAI/LFM2-1.2B` | Standard | Standard | Standard | Standard | Yes | Yes | Deprecated |
 | 700M | `LiquidAI/LFM2-700M` | Standard | Standard | Standard | Standard | Yes | Yes | |
-| 350M | `LiquidAI/LFM2-350M` | Standard | Standard | Standard | Standard | Yes | Yes | |
+| 8B-A1B | `LiquidAI/LFM2-8B-A1B` | Standard | Standard | Standard | Standard | Yes | Yes | Deprecated; use LFM2.5-8B-A1B |
+| 1.2B | `LiquidAI/LFM2-1.2B` | Standard | Standard | Standard | Standard | Yes | Yes | Deprecated |
+| 350M | `LiquidAI/LFM2-350M` | Standard | Standard | Standard | Standard | Yes | Yes | Deprecated; use LFM2.5-350M |
 | **LFM2 Vision** |
 | VL-3B | `LiquidAI/LFM2-VL-3B` | VL (v5 req) | VL | VL (custom wheel) | NO (PR#14069) | Yes | Yes | |
 | VL-1.6B | `LiquidAI/LFM2-VL-1.6B` | VL (v5 req) | VL | VL (custom wheel) | NO (PR#14069) | Yes | Yes | Deprecated |
-| VL-450M | `LiquidAI/LFM2-VL-450M` | VL (v5 req) | VL | VL (custom wheel) | NO (PR#14069) | Yes | Yes | |
+| VL-450M | `LiquidAI/LFM2-VL-450M` | VL (v5 req) | VL | VL (custom wheel) | NO (PR#14069) | Yes | Yes | Deprecated; use LFM2.5-VL-450M |
 | **LFM2 Audio** |
 | Audio-1.5B | `LiquidAI/LFM2-Audio-1.5B` | liquid-audio | Custom binary | NO | NO | NO | NO | Deprecated |
 | **Nanos** |
@@ -46,14 +46,14 @@
 | ColBERT-350M | `LiquidAI/LFM2.5-ColBERT-350M` | PyLate only | GGUF | -- | -- | NO | NO | Late-interaction retrieval |
 | VL-1.6B-Extract | `LiquidAI/LFM2.5-VL-1.6B-Extract` | temp=0, do_sample=False | VL (--image) | VL (custom wheel) | -- | NO | NO | Image schema extraction |
 | VL-450M-Extract | `LiquidAI/LFM2.5-VL-450M-Extract` | temp=0, do_sample=False | VL (--image) | VL (custom wheel) | -- | NO | NO | Compact image schema extraction |
-| 1.2B-Extract | `LiquidAI/LFM2-1.2B-Extract` | temp=0, do_sample=False | temp=0 | -- | -- | NO | Yes | Single-turn, schema prompt |
-| 350M-Extract | `LiquidAI/LFM2-350M-Extract` | temp=0, do_sample=False | temp=0 | -- | -- | NO | Yes | Single-turn, schema prompt |
-| 1.2B-RAG | `LiquidAI/LFM2-1.2B-RAG` | temp=0, do_sample=False | temp=0 | -- | -- | NO | Yes | Single-turn |
 | 2.6B-Transcript | `LiquidAI/LFM2-2.6B-Transcript` | temp=0.3 | temp=0.3 | -- | -- | NO | Yes | Structured input |
-| ColBERT-350M | `LiquidAI/LFM2-ColBERT-350M` | PyLate only | NO | NO | NO | NO | NO | Late-interaction retrieval |
 | 350M-ENJP-MT | `LiquidAI/LFM2-350M-ENJP-MT` | Standard | Standard | -- | -- | Yes | Yes | System prompt controls direction |
 | 350M-Math | `LiquidAI/LFM2-350M-Math` | Standard | Standard | -- | -- | NO | Yes | |
 | 350M-PII-JP | `LiquidAI/LFM2-350M-PII-Extract-JP` | temp=0 | temp=0 | -- | -- | NO | NO | Japanese-specific |
+| 1.2B-Extract | `LiquidAI/LFM2-1.2B-Extract` | temp=0, do_sample=False | temp=0 | -- | -- | NO | Yes | Deprecated; use LFM2.5-1.2B-Instruct |
+| 350M-Extract | `LiquidAI/LFM2-350M-Extract` | temp=0, do_sample=False | temp=0 | -- | -- | NO | Yes | Deprecated; use LFM2.5-350M |
+| 1.2B-RAG | `LiquidAI/LFM2-1.2B-RAG` | temp=0, do_sample=False | temp=0 | -- | -- | NO | Yes | Deprecated; use LFM2.5-1.2B-Instruct + retrieval models |
+| ColBERT-350M | `LiquidAI/LFM2-ColBERT-350M` | PyLate only | NO | NO | NO | NO | NO | Deprecated; use LFM2.5-ColBERT-350M |
 | 1.2B-Tool | `LiquidAI/LFM2-1.2B-Tool` | -- | -- | -- | -- | NO | Yes | Deprecated, migration guide |
 
 ## Version Pins
