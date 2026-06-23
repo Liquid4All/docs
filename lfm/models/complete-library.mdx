@@ -9,9 +9,16 @@ All of our models share the following capabilities:
 
 - 32K token context length for extended conversations and document processing (128K for LFM2.5-8B-A1B)
 - Designed for fast inference with [Transformers](/deployment/gpu-inference/transformers), [llama.cpp](/deployment/on-device/llama-cpp), [vLLM](/deployment/gpu-inference/vllm), [MLX](/deployment/on-device/mlx), [Ollama](/deployment/on-device/ollama), and [LEAP](/deployment/on-device/sdk/quick-start)
-- Trainable via SFT, DPO, and GRPO with [TRL](/lfm/fine-tuning/trl) and [Unsloth](/lfm/fine-tuning/unsloth)
+- Trainable via SFT, DPO, VLM, and GRPO workflows with [LEAP Finetune](/lfm/fine-tuning/leap-finetune), [TRL](/lfm/fine-tuning/trl), and [Unsloth](/lfm/fine-tuning/unsloth)
 
 </div>
+
+<Panel>
+  - [Liquid Playground](https://playground.liquid.ai/chat?model=cmk0wefde000204jp2knb2qr8)
+  - [HuggingFace Collections](https://huggingface.co/LiquidAI/collections)
+  - [LEAP Finetune](https://github.com/Liquid4All/leap-finetune)
+  - [OpenRouter API](https://openrouter.ai/liquid)
+</Panel>
 
 ## Model Families
 
@@ -66,32 +73,37 @@ Quantization reduces model size and speeds up inference with minimal quality los
 | [LFM2.5-350M](/lfm/models/lfm25-350m) | [✓](https://huggingface.co/LiquidAI/LFM2.5-350M) | [✓](https://huggingface.co/LiquidAI/LFM2.5-350M-GGUF) | [✓](https://huggingface.co/LiquidAI/LFM2.5-350M-MLX-8bit) | [✓](https://huggingface.co/LiquidAI/LFM2.5-350M-ONNX) | Yes (TRL) |
 | [LFM2.5-8B-A1B](/lfm/models/lfm25-8b-a1b) | [✓](https://huggingface.co/LiquidAI/LFM2.5-8B-A1B) | [✓](https://huggingface.co/LiquidAI/LFM2.5-8B-A1B-GGUF) | [✓](https://huggingface.co/LiquidAI/LFM2.5-8B-A1B-MLX-8bit) | [✓](https://huggingface.co/LiquidAI/LFM2.5-8B-A1B-ONNX) | Yes (TRL) |
 | LFM2 Models | | | | | |
-| [LFM2-8B-A1B](/lfm/models/lfm2-8b-a1b) | [✓](https://huggingface.co/LiquidAI/LFM2-8B-A1B) | [✓](https://huggingface.co/LiquidAI/LFM2-8B-A1B-GGUF) | [✓](https://huggingface.co/mlx-community/LFM2-8B-A1B-8bit) | [✓](https://huggingface.co/onnx-community/LFM2-8B-A1B-ONNX) | Yes (TRL) |
 | [LFM2-2.6B](/lfm/models/lfm2-2.6b) | [✓](https://huggingface.co/LiquidAI/LFM2-2.6B) | [✓](https://huggingface.co/LiquidAI/LFM2-2.6B-GGUF) | [✓](https://huggingface.co/mlx-community/LFM2-2.6B-8bit) | [✓](https://huggingface.co/onnx-community/LFM2-2.6B-ONNX) | Yes (TRL) |
 | [LFM2-2.6B-Exp](/lfm/models/lfm2-2.6b-exp) | [✓](https://huggingface.co/LiquidAI/LFM2-2.6B-Exp) | [✓](https://huggingface.co/LiquidAI/LFM2-2.6B-Exp-GGUF) | ✗ | ✗ | Yes (TRL) |
-| [LFM2-1.2B](/lfm/models/lfm2-1.2b) Deprecated | [✓](https://huggingface.co/LiquidAI/LFM2-1.2B) | [✓](https://huggingface.co/LiquidAI/LFM2-1.2B-GGUF) | [✓](https://huggingface.co/mlx-community/LFM2-1.2B-8bit) | [✓](https://huggingface.co/onnx-community/LFM2-1.2B-ONNX) | Yes (TRL) |
 | [LFM2-700M](/lfm/models/lfm2-700m) | [✓](https://huggingface.co/LiquidAI/LFM2-700M) | [✓](https://huggingface.co/LiquidAI/LFM2-700M-GGUF) | [✓](https://huggingface.co/mlx-community/LFM2-700M-8bit) | [✓](https://huggingface.co/onnx-community/LFM2-700M-ONNX) | Yes (TRL) |
-| [LFM2-350M](/lfm/models/lfm2-350m) | [✓](https://huggingface.co/LiquidAI/LFM2-350M) | [✓](https://huggingface.co/LiquidAI/LFM2-350M-GGUF) | [✓](https://huggingface.co/mlx-community/LFM2-350M-8bit) | [✓](https://huggingface.co/onnx-community/LFM2-350M-ONNX) | Yes (TRL) |
+| [LFM2-8B-A1B](/lfm/models/lfm2-8b-a1b) Deprecated | [✓](https://huggingface.co/LiquidAI/LFM2-8B-A1B) | [✓](https://huggingface.co/LiquidAI/LFM2-8B-A1B-GGUF) | [✓](https://huggingface.co/mlx-community/LFM2-8B-A1B-8bit) | [✓](https://huggingface.co/onnx-community/LFM2-8B-A1B-ONNX) | Yes (TRL) |
+| [LFM2-1.2B](/lfm/models/lfm2-1.2b) Deprecated | [✓](https://huggingface.co/LiquidAI/LFM2-1.2B) | [✓](https://huggingface.co/LiquidAI/LFM2-1.2B-GGUF) | [✓](https://huggingface.co/mlx-community/LFM2-1.2B-8bit) | [✓](https://huggingface.co/onnx-community/LFM2-1.2B-ONNX) | Yes (TRL) |
+| [LFM2-350M](/lfm/models/lfm2-350m) Deprecated | [✓](https://huggingface.co/LiquidAI/LFM2-350M) | [✓](https://huggingface.co/LiquidAI/LFM2-350M-GGUF) | [✓](https://huggingface.co/mlx-community/LFM2-350M-8bit) | [✓](https://huggingface.co/onnx-community/LFM2-350M-ONNX) | Yes (TRL) |
 | **Vision Language Models** | | | | | |
 | LFM2.5 Models (Latest Release) | | | | | |
 | [LFM2.5-VL-1.6B](/lfm/models/lfm25-vl-1.6b) | [✓](https://huggingface.co/LiquidAI/LFM2.5-VL-1.6B) | [✓](https://huggingface.co/LiquidAI/LFM2.5-VL-1.6B-GGUF) | [✓](https://huggingface.co/mlx-community/LFM2.5-VL-1.6B-8bit) | [✓](https://huggingface.co/LiquidAI/LFM2.5-VL-1.6B-ONNX) | Yes (TRL) |
 | [LFM2.5-VL-450M](/lfm/models/lfm25-vl-450m) | [✓](https://huggingface.co/LiquidAI/LFM2.5-VL-450M) | [✓](https://huggingface.co/LiquidAI/LFM2.5-VL-450M-GGUF) | ✗ | [✓](https://huggingface.co/LiquidAI/LFM2.5-VL-450M-ONNX) | Yes (TRL) |
 | LFM2 Models | | | | | |
 | [LFM2-VL-3B](/lfm/models/lfm2-vl-3b) | [✓](https://huggingface.co/LiquidAI/LFM2-VL-3B) | [✓](https://huggingface.co/LiquidAI/LFM2-VL-3B-GGUF) | [✓](https://huggingface.co/mlx-community/LFM2-VL-3B-8bit) | [✓](https://huggingface.co/onnx-community/LFM2-VL-3B-ONNX) | Yes (TRL) |
-| [LFM2-VL-1.6B](/lfm/models/lfm2-vl-1.6b) | [✓](https://huggingface.co/LiquidAI/LFM2-VL-1.6B) | [✓](https://huggingface.co/LiquidAI/LFM2-VL-1.6B-GGUF) | [✓](https://huggingface.co/mlx-community/LFM2-VL-1.6B-8bit) | [✓](https://huggingface.co/onnx-community/LFM2-VL-1.6B-ONNX) | Yes (TRL) |
-| [LFM2-VL-450M](/lfm/models/lfm2-vl-450m) | [✓](https://huggingface.co/LiquidAI/LFM2-VL-450M) | [✓](https://huggingface.co/LiquidAI/LFM2-VL-450M-GGUF) | [✓](https://huggingface.co/mlx-community/LFM2-VL-450M-8bit) | [✓](https://huggingface.co/onnx-community/LFM2-VL-450M-ONNX) | Yes (TRL) |
+| [LFM2-VL-1.6B](/lfm/models/lfm2-vl-1.6b) Deprecated | [✓](https://huggingface.co/LiquidAI/LFM2-VL-1.6B) | [✓](https://huggingface.co/LiquidAI/LFM2-VL-1.6B-GGUF) | [✓](https://huggingface.co/mlx-community/LFM2-VL-1.6B-8bit) | [✓](https://huggingface.co/onnx-community/LFM2-VL-1.6B-ONNX) | Yes (TRL) |
+| [LFM2-VL-450M](/lfm/models/lfm2-vl-450m) Deprecated | [✓](https://huggingface.co/LiquidAI/LFM2-VL-450M) | [✓](https://huggingface.co/LiquidAI/LFM2-VL-450M-GGUF) | [✓](https://huggingface.co/mlx-community/LFM2-VL-450M-8bit) | [✓](https://huggingface.co/onnx-community/LFM2-VL-450M-ONNX) | Yes (TRL) |
 | **Audio Models** | | | | | |
 | LFM2.5 Models (Latest Release) | | | | | |
 | [LFM2.5-Audio-1.5B](/lfm/models/lfm25-audio-1.5b) | [✓](https://huggingface.co/LiquidAI/LFM2.5-Audio-1.5B) | [✓](https://huggingface.co/LiquidAI/LFM2.5-Audio-1.5B-GGUF) | ✗ | [✓](https://huggingface.co/LiquidAI/LFM2.5-Audio-1.5B-ONNX) | Yes (TRL) |
+| [LFM2.5-Audio-1.5B-JP](/lfm/models/lfm25-audio-1.5b-jp) | [✓](https://huggingface.co/LiquidAI/LFM2.5-Audio-1.5B-JP) | [✓](https://huggingface.co/LiquidAI/LFM2.5-Audio-1.5B-JP-GGUF) | ✗ | ✗ | Yes (TRL) |
 | LFM2 Models | | | | | |
 | [LFM2-Audio-1.5B](/lfm/models/lfm2-audio-1.5b) | [✓](https://huggingface.co/LiquidAI/LFM2-Audio-1.5B) | [✓](https://huggingface.co/LiquidAI/LFM2-Audio-1.5B-GGUF) | ✗ | ✗ | No |
 | **Liquid Nanos** | | | | | |
-| [LFM2-1.2B-Extract](/lfm/models/lfm2-1.2b-extract) | [✓](https://huggingface.co/LiquidAI/LFM2-1.2B-Extract) | [✓](https://huggingface.co/LiquidAI/LFM2-1.2B-Extract-GGUF) | ✗ | [✓](https://huggingface.co/onnx-community/LFM2-1.2B-Extract-ONNX) | Yes (TRL) |
-| [LFM2-350M-Extract](/lfm/models/lfm2-350m-extract) | [✓](https://huggingface.co/LiquidAI/LFM2-350M-Extract) | [✓](https://huggingface.co/LiquidAI/LFM2-350M-Extract-GGUF) | ✗ | [✓](https://huggingface.co/onnx-community/LFM2-350M-Extract-ONNX) | Yes (TRL) |
+| [LFM2.5-VL-1.6B-Extract](/lfm/models/lfm25-vl-1.6b-extract) | [✓](https://huggingface.co/LiquidAI/LFM2.5-VL-1.6B-Extract) | [✓](https://huggingface.co/LiquidAI/LFM2.5-VL-1.6B-Extract-GGUF) | ✗ | ✗ | Yes (TRL) |
+| [LFM2.5-VL-450M-Extract](/lfm/models/lfm25-vl-450m-extract) | [✓](https://huggingface.co/LiquidAI/LFM2.5-VL-450M-Extract) | [✓](https://huggingface.co/LiquidAI/LFM2.5-VL-450M-Extract-GGUF) | ✗ | ✗ | Yes (TRL) |
+| [LFM2.5-Embedding-350M](/lfm/models/lfm25-embedding-350m) | [✓](https://huggingface.co/LiquidAI/LFM2.5-Embedding-350M) | [✓](https://huggingface.co/LiquidAI/LFM2.5-Embedding-350M-GGUF) | ✗ | ✗ | Yes (sentence-transformers) |
+| [LFM2.5-ColBERT-350M](/lfm/models/lfm25-colbert-350m) | [✓](https://huggingface.co/LiquidAI/LFM2.5-ColBERT-350M) | [✓](https://huggingface.co/LiquidAI/LFM2.5-ColBERT-350M-GGUF) | ✗ | ✗ | Yes (PyLate) |
 | [LFM2-350M-ENJP-MT](/lfm/models/lfm2-350m-enjp-mt) | [✓](https://huggingface.co/LiquidAI/LFM2-350M-ENJP-MT) | [✓](https://huggingface.co/LiquidAI/LFM2-350M-ENJP-MT-GGUF) | [✓](https://huggingface.co/mlx-community/LFM2-350M-ENJP-MT-8bit) | [✓](https://huggingface.co/onnx-community/LFM2-350M-ENJP-MT-ONNX) | Yes (TRL) |
-| [LFM2-1.2B-RAG](/lfm/models/lfm2-1.2b-rag) | [✓](https://huggingface.co/LiquidAI/LFM2-1.2B-RAG) | [✓](https://huggingface.co/LiquidAI/LFM2-1.2B-RAG-GGUF) | ✗ | [✓](https://huggingface.co/onnx-community/LFM2-1.2B-RAG-ONNX) | Yes (TRL) |
-| [LFM2-1.2B-Tool](/lfm/models/lfm2-1.2b-tool) Deprecated | [✓](https://huggingface.co/LiquidAI/LFM2-1.2B-Tool) | [✓](https://huggingface.co/LiquidAI/LFM2-1.2B-Tool-GGUF) | ✗ | [✓](https://huggingface.co/onnx-community/LFM2-1.2B-Tool-ONNX) | Yes (TRL) |
 | [LFM2-350M-Math](/lfm/models/lfm2-350m-math) | [✓](https://huggingface.co/LiquidAI/LFM2-350M-Math) | [✓](https://huggingface.co/LiquidAI/LFM2-350M-Math-GGUF) | ✗ | [✓](https://huggingface.co/onnx-community/LFM2-350M-Math-ONNX) | Yes (TRL) |
 | [LFM2-350M-PII-Extract-JP](/lfm/models/lfm2-350m-pii-extract-jp) | [✓](https://huggingface.co/LiquidAI/LFM2-350M-PII-Extract-JP) | [✓](https://huggingface.co/LiquidAI/LFM2-350M-PII-Extract-JP-GGUF) | ✗ | ✗ | Yes (TRL) |
-| [LFM2-ColBERT-350M](/lfm/models/lfm2-colbert-350m) | [✓](https://huggingface.co/LiquidAI/LFM2-ColBERT-350M) | ✗ | ✗ | ✗ | Yes (PyLate) |
 | [LFM2-2.6B-Transcript](/lfm/models/lfm2-2.6b-transcript) | [✓](https://huggingface.co/LiquidAI/LFM2-2.6B-Transcript) | [✓](https://huggingface.co/LiquidAI/LFM2-2.6B-Transcript-GGUF) | ✗ | [✓](https://huggingface.co/onnx-community/LFM2-2.6B-Transcript-ONNX) | Yes (TRL) |
+| [LFM2-1.2B-Extract](/lfm/models/lfm2-1.2b-extract) Deprecated | [✓](https://huggingface.co/LiquidAI/LFM2-1.2B-Extract) | [✓](https://huggingface.co/LiquidAI/LFM2-1.2B-Extract-GGUF) | ✗ | [✓](https://huggingface.co/onnx-community/LFM2-1.2B-Extract-ONNX) | Yes (TRL) |
+| [LFM2-350M-Extract](/lfm/models/lfm2-350m-extract) Deprecated | [✓](https://huggingface.co/LiquidAI/LFM2-350M-Extract) | [✓](https://huggingface.co/LiquidAI/LFM2-350M-Extract-GGUF) | ✗ | [✓](https://huggingface.co/onnx-community/LFM2-350M-Extract-ONNX) | Yes (TRL) |
+| [LFM2-1.2B-RAG](/lfm/models/lfm2-1.2b-rag) Deprecated | [✓](https://huggingface.co/LiquidAI/LFM2-1.2B-RAG) | [✓](https://huggingface.co/LiquidAI/LFM2-1.2B-RAG-GGUF) | ✗ | [✓](https://huggingface.co/onnx-community/LFM2-1.2B-RAG-ONNX) | Yes (TRL) |
+| [LFM2-ColBERT-350M](/lfm/models/lfm2-colbert-350m) Deprecated | [✓](https://huggingface.co/LiquidAI/LFM2-ColBERT-350M) | ✗ | ✗ | ✗ | Yes (PyLate) |
+| [LFM2-1.2B-Tool](/lfm/models/lfm2-1.2b-tool) Deprecated | [✓](https://huggingface.co/LiquidAI/LFM2-1.2B-Tool) | [✓](https://huggingface.co/LiquidAI/LFM2-1.2B-Tool-GGUF) | ✗ | [✓](https://huggingface.co/onnx-community/LFM2-1.2B-Tool-ONNX) | Yes (TRL) |

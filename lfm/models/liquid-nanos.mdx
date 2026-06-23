@@ -26,23 +26,41 @@ icon: "sparkles"
 </CardGroup>
 </div>
 
-## LFM2 Nanos
-
 <Note>Many Nanos require specific prompting formats to work correctly. See each model's page for usage guidelines.</Note>
 
+<h2>LFM2.5 Nanos &nbsp;&nbsp;<Badge shape="rounded" icon="circle-check" color="green" size="lg">Latest release</Badge></h2>
+
+<CardGroup cols={2}>
+
+<Card title="LFM2.5-Embedding-350M" href="/lfm/models/lfm25-embedding-350m">
+  350M · <Badge shape="pill" color="orange">Retrieval</Badge>
+
+  Dense bi-encoder for the smallest, fastest multilingual vector index.
+</Card>
+
+<Card title="LFM2.5-ColBERT-350M" href="/lfm/models/lfm25-colbert-350m">
+  350M · <Badge shape="pill" color="orange">Retrieval</Badge>
+
+  Late-interaction retriever for higher accuracy and reranking quality.
+</Card>
+
+<Card title="LFM2.5-VL-1.6B-Extract" href="/lfm/models/lfm25-vl-1.6b-extract">
+  1.6B · <Badge shape="pill" color="blue">Vision Extraction</Badge>
+
+  Extract user-defined fields from images into structured JSON.
+</Card>
+
+<Card title="LFM2.5-VL-450M-Extract" href="/lfm/models/lfm25-vl-450m-extract">
+  450M · <Badge shape="pill" color="blue">Vision Extraction</Badge>
+
+  Compact image-to-JSON extraction model for edge workflows.
+</Card>
+
+</CardGroup>
+
+## LFM2 Nanos
+
 <CardGroup cols={3}>
-
-<Card title="LFM2-1.2B-Extract" href="/lfm/models/lfm2-1.2b-extract">
-  1.2B · <Badge shape="pill" color="blue">Extraction</Badge>
-
-  Extract structured JSON from unstructured documents.
-</Card>
-
-<Card title="LFM2-350M-Extract" href="/lfm/models/lfm2-350m-extract">
-  350M · <Badge shape="pill" color="blue">Extraction</Badge>
-
-  Fastest extraction model for edge deployment.
-</Card>
 
 <Card title="LFM2-350M-PII-Extract-JP" href="/lfm/models/lfm2-350m-pii-extract-jp">
   350M · <Badge shape="pill" color="blue">Extraction</Badge>
@@ -56,18 +74,6 @@ icon: "sparkles"
   Private, on-device meeting summarization from transcripts.
 </Card>
 
-<Card title="LFM2-1.2B-RAG" href="/lfm/models/lfm2-1.2b-rag">
-  1.2B · <Badge shape="pill" color="green">RAG</Badge>
-
-  Answer questions grounded in provided context documents.
-</Card>
-
-<Card title="LFM2-ColBERT-350M" href="/lfm/models/lfm2-colbert-350m">
-  350M · <Badge shape="pill" color="orange">Retrieval</Badge>
-
-  Multi-language document embeddings for retrieval and reranking.
-</Card>
-
 <Card title="LFM2-350M-ENJP-MT" href="/lfm/models/lfm2-350m-enjp-mt">
   350M · <Badge shape="pill" color="red">Translation</Badge>
 
@@ -78,6 +84,30 @@ icon: "sparkles"
   350M · <Badge shape="pill" color="yellow">Reasoning</Badge>
 
   Tiny reasoning model for math problem solving.
+</Card>
+
+<Card title="LFM2-1.2B-Extract" href="/lfm/models/lfm2-1.2b-extract">
+  1.2B · <Badge shape="pill" color="gray">Deprecated</Badge>
+
+  Use LFM2.5-1.2B-Instruct for structured extraction.
+</Card>
+
+<Card title="LFM2-350M-Extract" href="/lfm/models/lfm2-350m-extract">
+  350M · <Badge shape="pill" color="gray">Deprecated</Badge>
+
+  Use LFM2.5-350M for compact extraction workflows.
+</Card>
+
+<Card title="LFM2-1.2B-RAG" href="/lfm/models/lfm2-1.2b-rag">
+  1.2B · <Badge shape="pill" color="gray">Deprecated</Badge>
+
+  Use LFM2.5-1.2B-Instruct with LFM2.5 retrieval models.
+</Card>
+
+<Card title="LFM2-ColBERT-350M" href="/lfm/models/lfm2-colbert-350m">
+  350M · <Badge shape="pill" color="gray">Deprecated</Badge>
+
+  Use LFM2.5-ColBERT-350M instead.
 </Card>
 
 <Card title="LFM2-1.2B-Tool" href="/lfm/models/lfm2-1.2b-tool">

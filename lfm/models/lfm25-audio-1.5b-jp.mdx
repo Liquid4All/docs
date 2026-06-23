@@ -1,0 +1,148 @@
+---
+title: "LFM2.5-Audio-1.5B-JP"
+description: "1.5B Japanese-focused audio/text model for TTS, ASR, and voice chat"
+---
+
+<a href="/lfm/models/audio-models" className="back-button">← Back to Audio Models</a>
+
+LFM2.5-Audio-1.5B-JP is the Japanese-focused variant of LFM2.5-Audio-1.5B. It uses the same audio/text architecture and runtime path as the English model, with Japanese-focused ASR, TTS, and interleaved voice chat behavior.
+
+<div style={{display: 'flex', gap: '0.5rem', margin: '0.5rem 0 1.5rem 0'}}>
+  <a href="https://huggingface.co/LiquidAI/LFM2.5-Audio-1.5B-JP" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#fbbf24'}}><span style={{color: '#000'}}>HF</span></a>
+  <a href="https://huggingface.co/LiquidAI/LFM2.5-Audio-1.5B-JP-GGUF" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#60a5fa'}}><span style={{color: '#000'}}>GGUF</span></a>
+</div>
+
+## Specifications
+
+| Property | Value |
+|----------|-------|
+| Parameters | 1.5B (1.2B LM + 115M audio encoder) |
+| Context Length | 32K tokens |
+| Audio Output | 24kHz |
+| Supported Language | Japanese |
+
+<div className="use-cases">
+<CardGroup cols={3}>
+
+<Card title="Japanese TTS" icon="volume-high">
+  Natural Japanese speech synthesis
+</Card>
+
+<Card title="Japanese ASR" icon="ear-listen">
+  Japanese speech recognition
+</Card>
+
+<Card title="Voice Chat" icon="waveform">
+  Interleaved Japanese audio/text
+</Card>
+
+</CardGroup>
+</div>
+
+## Quick Start
+
+<Tabs>
+  <Tab title="liquid-audio">
+    **Install:**
+    ```bash
+    pip install liquid-audio
+    pip install "liquid-audio[demo]"  # optional, for demo dependencies
+    pip install flash-attn --no-build-isolation  # optional, for flash attention 2
+    ```
+
+    **Multi-Turn Chat:**
+    ```python
+    import torch
+    import soundfile as sf
+    from liquid_audio import LFM2AudioModel, LFM2AudioProcessor, ChatState, LFMModality
+
+    HF_REPO = "LiquidAI/LFM2.5-Audio-1.5B-JP"
+    processor = LFM2AudioProcessor.from_pretrained(HF_REPO).eval()
+    model = LFM2AudioModel.from_pretrained(HF_REPO).eval()
+
+    chat = ChatState(processor)
+    chat.new_turn("system")
+    chat.add_text("Respond with interleaved text and audio.")
+    chat.end_turn()
+
+    chat.new_turn("user")
+    wav, sampling_rate = sf.read("question_jp.wav", dtype="float32")
+    wav = torch.from_numpy(wav).unsqueeze(0)
+    chat.add_audio(wav, sampling_rate)
+    chat.end_turn()
+
+    chat.new_turn("assistant")
+
+    text_out, audio_out, modality_out = [], [], []
+    for t in model.generate_interleaved(**chat, max_new_tokens=512, audio_temperature=1.0, audio_top_k=4):
+        if t.numel() == 1:
+            print(processor.text.decode(t), end="", flush=True)
+            text_out.append(t)
+            modality_out.append(LFMModality.TEXT)
+        else:
+            audio_out.append(t)
+            modality_out.append(LFMModality.AUDIO_OUT)
+
+    audio_codes = torch.stack(audio_out[:-1], 1).unsqueeze(0)
+    waveform = processor.decode(audio_codes)
+    sf.write("answer_jp.wav", waveform.cpu()[0], 24_000)
+    ```
+
+    **Japanese ASR:**
+    ```python
+    chat = ChatState(processor)
+    chat.new_turn("system")
+    chat.add_text("Perform ASR in japanese.")
+    chat.end_turn()
+    ```
+
+    **Japanese TTS:**
+    ```python
+    chat = ChatState(processor)
+    chat.new_turn("system")
+    chat.add_text("Perform TTS in japanese.")
+    chat.end_turn()
+    ```
+  </Tab>
+
+  <Tab title="llama.cpp">
+    **Setup:**
+    ```bash
+    export CKPT=/path/to/LFM2.5-Audio-1.5B-JP-GGUF
+    export INPUT_WAV=/path/to/input.wav
+    export OUTPUT_WAV=/path/to/output.wav
+    ```
+
+    **ASR (Audio to Text):**
+    ```bash
+    ./llama-liquid-audio-cli -m $CKPT/LFM2.5-Audio-1.5B-JP-Q4_0.gguf \
+      -mm $CKPT/mmproj-LFM2.5-Audio-1.5B-JP-Q4_0.gguf \
+      -mv $CKPT/vocoder-LFM2.5-Audio-1.5B-JP-Q4_0.gguf \
+      --tts-speaker-file $CKPT/tokenizer-LFM2.5-Audio-1.5B-JP-Q4_0.gguf \
+      -sys "Perform ASR in japanese." --audio $INPUT_WAV
+    ```
+
+    **TTS (Text to Audio):**
+    ```bash
+    ./llama-liquid-audio-cli -m $CKPT/LFM2.5-Audio-1.5B-JP-Q4_0.gguf \
+      -mm $CKPT/mmproj-LFM2.5-Audio-1.5B-JP-Q4_0.gguf \
+      -mv $CKPT/vocoder-LFM2.5-Audio-1.5B-JP-Q4_0.gguf \
+      --tts-speaker-file $CKPT/tokenizer-LFM2.5-Audio-1.5B-JP-Q4_0.gguf \
+      -sys "Perform TTS in japanese." -p "こんにちは。今日はどのようなご用件でしょうか。" --output $OUTPUT_WAV
+    ```
+
+    **Interleaved Mode:**
+    ```bash
+    ./llama-liquid-audio-cli -m $CKPT/LFM2.5-Audio-1.5B-JP-Q4_0.gguf \
+      -mm $CKPT/mmproj-LFM2.5-Audio-1.5B-JP-Q4_0.gguf \
+      -mv $CKPT/vocoder-LFM2.5-Audio-1.5B-JP-Q4_0.gguf \
+      --tts-speaker-file $CKPT/tokenizer-LFM2.5-Audio-1.5B-JP-Q4_0.gguf \
+      -sys "Respond with interleaved text and audio." \
+      --audio $INPUT_WAV --output $OUTPUT_WAV
+    ```
+
+    <Info>
+    Use the same llama.cpp audio runners as LFM2.5-Audio-1.5B.
+    </Info>
+  </Tab>
+</Tabs>

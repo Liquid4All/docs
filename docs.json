@@ -36,7 +36,7 @@
   "logo": {
     "light": "/logo/light.svg",
     "dark": "/logo/dark.svg",
-    "href": "/lfm/getting-started/welcome"
+    "href": "/lfm/models/complete-library"
   },
   "navbar": {
     "links": [
@@ -80,6 +80,7 @@
             "group": "Fine-tuning",
             "icon": "sliders",
             "pages": [
+              "lfm/fine-tuning/leap-finetune",
               "lfm/fine-tuning/datasets",
               "lfm/fine-tuning/trl",
               "lfm/fine-tuning/unsloth"
@@ -274,7 +275,7 @@
     },
     {
       "source": "/customization/finetuning-frameworks/leap-finetune",
-      "destination": "/lfm/fine-tuning/trl"
+      "destination": "/lfm/fine-tuning/leap-finetune"
     },
     {
       "source": "/customization/finetuning-frameworks/datasets",
@@ -299,6 +300,10 @@
     {
       "source": "/docs/fine-tuning/unsloth",
       "destination": "/lfm/fine-tuning/unsloth"
+    },
+    {
+      "source": "/docs/fine-tuning/leap-finetune",
+      "destination": "/lfm/fine-tuning/leap-finetune"
     },
     {
       "source": "/deployment/getting-started/welcome",
@@ -502,7 +507,7 @@
     },
     {
       "source": "/lfm/fine-tuning",
-      "destination": "/lfm/fine-tuning/trl"
+      "destination": "/lfm/fine-tuning/leap-finetune"
     }
   ],
   "ai": {
