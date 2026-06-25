@@ -185,6 +185,7 @@
             "group": "Laptop Examples",
             "icon": "laptop",
             "pages": [
+              "examples/laptop-examples/leonie-example",
               "examples/laptop-examples/invoice-extractor-tool-with-liquid-nanos",
               "examples/laptop-examples/audio-to-text-in-real-time",
               "examples/laptop-examples/lfm2-english-to-korean",

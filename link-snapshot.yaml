@@ -105,6 +105,7 @@ active:
   - /examples/laptop-examples/browser-control
   - /examples/laptop-examples/flight-search-assistant
   - /examples/laptop-examples/invoice-extractor-tool-with-liquid-nanos
+  - /examples/laptop-examples/leonie-example
   - /examples/laptop-examples/lfm2-english-to-korean
   - /examples/laptop-examples/meeting-summarization
   - /examples/web/audio-webgpu-demo
