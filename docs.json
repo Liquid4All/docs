@@ -103,8 +103,8 @@
             "icon": "microchip",
             "pages": [
               "deployment/gpu-inference/transformers",
-              "deployment/gpu-inference/vllm",
-              "deployment/gpu-inference/sglang"
+              "deployment/gpu-inference/sglang",
+              "deployment/gpu-inference/vllm"
             ]
           },
           {
