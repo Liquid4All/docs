@@ -8,7 +8,7 @@ description: "Liquid Foundation Models (LFMs) are a new class of multimodal arch
 All of our models share the following capabilities:
 
 - 32K token context length for extended conversations and document processing (128K for LFM2.5-8B-A1B)
-- Designed for fast inference with [Transformers](/deployment/gpu-inference/transformers), [llama.cpp](/deployment/on-device/llama-cpp), [vLLM](/deployment/gpu-inference/vllm), [MLX](/deployment/on-device/mlx), [Ollama](/deployment/on-device/ollama), and [LEAP](/deployment/on-device/sdk/quick-start)
+- Designed for fast inference with [Transformers](/deployment/gpu-inference/transformers), [llama.cpp](/deployment/on-device/llama-cpp), [vLLM](/deployment/gpu-inference/vllm), [SGLang](/deployment/gpu-inference/sglang), [MLX](/deployment/on-device/mlx), [Ollama](/deployment/on-device/ollama), and [LEAP](/deployment/on-device/sdk/quick-start)
 - Trainable via SFT, DPO, VLM, and GRPO workflows with [LEAP Finetune](/lfm/fine-tuning/leap-finetune), [TRL](/lfm/fine-tuning/trl), and [Unsloth](/lfm/fine-tuning/unsloth)
 
 </div>
@@ -20,9 +20,9 @@ All of our models share the following capabilities:
   - [OpenRouter API](https://openrouter.ai/liquid)
 </Panel>
 
-## Model Families
+Start with the model family that matches your input and output shape, then choose a runtime based on where you want to run it. Use the complete matrix below when you need exact repository and format availability.
 
-<Note>Choose a model based on your desired functionalities. Each individual model card has specific details on deployment and customization.</Note>
+## Model Families
 
 <CardGroup cols={2}>
 
@@ -44,9 +44,31 @@ All of our models share the following capabilities:
 
 </CardGroup>
 
-## Model Formats
+## Common Workflows
 
-All LFM2 models are available in multiple formats for flexible deployment:
+<CardGroup cols={2}>
+
+<Card title="GPU Serving" icon="server" href="/deployment/gpu-inference/vllm">
+  Use [vLLM](/deployment/gpu-inference/vllm) or [SGLang](/deployment/gpu-inference/sglang) for high-throughput serving, and [Transformers](/deployment/gpu-inference/transformers) for direct Python inference.
+</Card>
+
+<Card title="Local and On-Device" icon="laptop" href="/deployment/on-device/llama-cpp">
+  Use [llama.cpp](/deployment/on-device/llama-cpp), [Ollama](/deployment/on-device/ollama), [MLX](/deployment/on-device/mlx), or the [LEAP SDK](/deployment/on-device/sdk/quick-start) depending on platform and packaging needs.
+</Card>
+
+<Card title="Fine-Tuning" icon="sliders" href="/lfm/fine-tuning/leap-finetune">
+  Start with [LEAP Finetune](/lfm/fine-tuning/leap-finetune) for managed workflows, or use [TRL](/lfm/fine-tuning/trl) and [Unsloth](/lfm/fine-tuning/unsloth) for framework-level control.
+</Card>
+
+<Card title="Model Repositories" icon="database" href="https://huggingface.co/LiquidAI/collections">
+  Browse LiquidAI collections on Hugging Face for model weights, GGUF exports, MLX packages, ONNX exports, and model cards.
+</Card>
+
+</CardGroup>
+
+## Formats
+
+Use the format that matches your runtime and deployment target:
 
 - **GGUF** — Best for local CPU/GPU inference on any platform. Use with [llama.cpp](/deployment/on-device/llama-cpp), [LM Studio](/deployment/on-device/lm-studio), or [Ollama](/deployment/on-device/ollama). Append `-GGUF` to any model name.
 - **MLX** — Best for Mac users with Apple Silicon. Leverages unified memory for fast inference via [MLX](/deployment/on-device/mlx). Browse at [mlx-community](https://huggingface.co/mlx-community/collections?search=LFM).
@@ -60,7 +82,7 @@ Quantization reduces model size and speeds up inference with minimal quality los
 - **MLX** — Available in `3bit`, `4bit`, `5bit`, `6bit`, `8bit`, and `BF16`. `8bit` is recommended.
 - **ONNX** — Supports `FP32`, `FP16`, `Q4`, and `Q8` (MoE models also support `Q4F16`). `Q4` is recommended for most deployments.
 
-## Model Chart
+## Complete Model Matrix
 
 | Model | HF | GGUF | MLX | ONNX | Trainable? |
 | ----- | -- | ---- | --- | ---- | ---------- |
