@@ -485,6 +485,7 @@ Per-load runtime overrides. Default values come from the model bundle's manifest
       public let audioDecoderUseGpu: Bool       // default false
       public let chatTemplate: String?
       public let useMmap: Bool?
+      public let loraAdapters: [LoraAdapterConfig]?   // LoRA adapters to apply at load
       public let extras: String?
     }
 
@@ -538,6 +539,7 @@ Per-load runtime overrides. Default values come from the model bundle's manifest
         var cacheOptions: EngineOptions.CacheOptions? = null,
         var contextSize: Int? = 8192,
         var useMmap: Boolean? = null,
+        var loraAdapters: List<LoraAdapterConfig>? = null,
         var extras: String? = null,
     ) {
         companion object {
@@ -579,6 +581,7 @@ Fields:
 - **`cacheOptions`** — KV cache reuse (see next section). On Kotlin this is an `EngineOptions.CacheOptions` value with explicit `enabled` master switch (replaces the v0.10.4 `cacheDir: String?`).
 - **`mmProjPath` / `audioDecoderPath` / `audioTokenizerPath`** (Swift) — companion file overrides. Leave `nil` to auto-detect siblings of the GGUF file. On Kotlin these are passed via `ModelSource`.
 - **`chatTemplate`** — advanced override for backend chat templating.
+- **`loraAdapters`** — LoRA adapters to apply when the model loads (`null`/empty loads none). The active set can also be changed after loading. See [LoRA adapters](./advanced-features#lora-adapters) for runtime swaps, scale semantics, and the memory/caching model.
 - **`extras`** — backend-specific configuration payload (JSON string).
 
 <Info>

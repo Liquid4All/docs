@@ -256,3 +256,107 @@ Subclass `LeapFunctionCallParser` (Kotlin `abstract class`, bridged to Swift as 
     `getPromptTokensSize` is `suspend` — call it from a coroutine.
   </Tab>
 </Tabs>
+
+## LoRA adapters
+
+LoRA (Low-Rank Adaptation) adapters specialize a base model — for tone, domain, or task — without shipping a separate full checkpoint. Supply adapters as `.gguf` files; multiple can be active at once and their contributions stack. An adapter is described by a path and a scale:
+
+<Tabs>
+  <Tab title="Swift (iOS / macOS)">
+    ```swift
+    public struct LoraAdapterConfig {
+      public let path: String   // path to the adapter .gguf
+      public let scale: Float   // per-adapter strength multiplier
+    }
+    ```
+  </Tab>
+  <Tab title="Kotlin (all platforms)">
+    ```kotlin
+    data class LoraAdapterConfig(val path: String, val scale: Float)
+    ```
+  </Tab>
+</Tabs>
+
+<Note>
+LoRA is supported on the **llama.cpp** backend (`.gguf` checkpoints). The ExecuTorch (`.bundle`) and LFM2-audio backends do not support LoRA adapter swaps and will throw / report an error if asked.
+</Note>
+
+### Load adapters at model load
+
+Pass `loraAdapters` in the load options (see [Runtime options](./model-loading#runtime-options)):
+
+<Tabs>
+  <Tab title="Swift (iOS / macOS)">
+    ```swift
+    let options = LiquidInferenceEngineOptions(
+      bundlePath: modelURL.path,
+      loraAdapters: [LoraAdapterConfig(path: adapterURL.path, scale: 1.0)]
+    )
+    let runner = try await LiquidInferenceEngineRunner.create(options: options)
+    ```
+  </Tab>
+  <Tab title="Kotlin (all platforms)">
+    ```kotlin
+    val runner = downloader.loadSimpleModel(
+        model = ModelSource(modelPath = path, modelName = "LFM2-1.2B", quantizationId = "Q4_K_M"),
+        options = ModelLoadingOptions(
+            loraAdapters = listOf(LoraAdapterConfig(path = adapterPath, scale = 1.0f)),
+        ),
+    )
+    ```
+  </Tab>
+</Tabs>
+
+### Swap adapters at runtime
+
+`setLoraAdapters(...)` on the runner **fully replaces** the active set. Pass an empty list to clear all adapters and return to the base model.
+
+<Tabs>
+  <Tab title="Swift (iOS / macOS)">
+    ```swift
+    // Replace the active set
+    try await runner.setLoraAdapters([LoraAdapterConfig(path: otherAdapterURL.path, scale: 0.5)])
+
+    // Clear all adapters → back to the base model
+    try await runner.setLoraAdapters([])
+    ```
+  </Tab>
+  <Tab title="Kotlin (all platforms)">
+    ```kotlin
+    // Replace the active set
+    runner.setLoraAdapters(listOf(LoraAdapterConfig(path = otherAdapterPath, scale = 0.5f)))
+
+    // Clear all adapters → back to the base model
+    runner.setLoraAdapters(emptyList())
+    ```
+
+    `setLoraAdapters` is `suspend` — call it from a coroutine.
+  </Tab>
+</Tabs>
+
+The swap is **safe to call concurrently with generation**: it is serialized behind any in-flight generation (and `unload`) and applied once that generation completes. The call suspends until the swap has been applied.
+
+### Scales
+
+`scale` is an independent per-adapter multiplier applied to that adapter's contribution. Scales do **not** need to sum to 1:
+
+- `1.0` applies the adapter at full strength.
+- Values below `1.0` blend it more lightly; values above `1.0` over-drive it.
+- Multiple adapters can each be `1.0` at the same time — they stack additively.
+
+Stacking several adapters at high scales piles up large weight deltas and can push the model out of distribution, degrading output (incoherence, repetition). Tune scales down when combining. A `scale` of `0.0` does **not** remove an adapter — it stays loaded and contributes nothing; drop it from the list to deactivate it.
+
+### Memory and lifecycle
+
+<Warning>
+Clearing or dropping an adapter only **deactivates** it — it does **not** free memory. The engine keeps every distinct adapter it has loaded (keyed by file path) resident for the lifetime of the loaded model.
+</Warning>
+
+- Re-activating a previously-used adapter is cheap (no reload from disk).
+- The adapter cache grows with the number of **distinct adapter paths** activated over the runner's life, not with the size of the currently-active set.
+- Adapter memory is reclaimed only when the model is **unloaded** (`runner.unload()`), which drops the whole cache.
+- To bound memory while rotating through many large adapters, unload and recreate the runner rather than relying on `setLoraAdapters([])`.
+
+### Model service (Android)
+
+When generating through the [Leap Model Service](./model-loading#leap-model-service-android), the swap targets the runner shared by the loaded model, so it affects **every session** bound to that model. `ServiceSession.setLoraAdapters(...)` suspends until the service acknowledges the swap and throws `LoraAdapterException` on failure. Load-at-init `loraAdapters` are carried across the AIDL boundary in `ModelLoadingOptionsParcel`.
