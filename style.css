@@ -283,9 +283,9 @@ body > div.antialiased {
 
 /* Global content links - purple underline with hover effect */
 /* Scope to main content area only, exclude navigation/sidebar/tables */
-article a:not([class*="block"]):not(table a),
-[role="main"] a:not([class*="block"]):not(table a),
-.prose a:not([class*="block"]):not(table a) {
+article a:not([class*="block"]):not([aria-label="Navigate to header"]):not(table a),
+[role="main"] a:not([class*="block"]):not([aria-label="Navigate to header"]):not(table a),
+.prose a:not([class*="block"]):not([aria-label="Navigate to header"]):not(table a) {
   text-decoration: none !important;
   color: inherit !important;
   font-weight: 600 !important;
@@ -297,11 +297,24 @@ article a:not([class*="block"]):not(table a),
   transition: color 0.15s ease, background-size 0.15s ease !important;
 }
 
-article a:not([class*="block"]):not(table a):hover,
-[role="main"] a:not([class*="block"]):not(table a):hover,
-.prose a:not([class*="block"]):not(table a):hover {
+article a:not([class*="block"]):not([aria-label="Navigate to header"]):not(table a):hover,
+[role="main"] a:not([class*="block"]):not([aria-label="Navigate to header"]):not(table a):hover,
+.prose a:not([class*="block"]):not([aria-label="Navigate to header"]):not(table a):hover {
   color: #864bc4 !important;
   background-size: 100% 1.5px !important;
+}
+
+/* Heading permalink icons should not inherit prose-link underlines */
+article :is(h1, h2, h3, h4, h5, h6) a[href^="#"],
+[role="main"] :is(h1, h2, h3, h4, h5, h6) a[href^="#"],
+.prose :is(h1, h2, h3, h4, h5, h6) a[href^="#"],
+article a[href^="#"][aria-label*="link" i],
+[role="main"] a[href^="#"][aria-label*="link" i],
+.prose a[href^="#"][aria-label*="link" i] {
+  background-image: none !important;
+  background-size: 0 0 !important;
+  padding-bottom: 0 !important;
+  text-decoration: none !important;
 }
 
 /* Default table styling - applies to all tables */
@@ -708,4 +721,3 @@ table:has(thead th:nth-child(6):not(:nth-child(7))) td:first-child a:hover {
 .dark .card-group a[href^="/docs/models/"]:not([href*="text-models"]):not([href*="vision-models"]):not([href*="audio-models"]):not([href*="liquid-nanos"]):not([href*="complete-library"])::before {
   background-color: #9ca3af !important;
 }
-
