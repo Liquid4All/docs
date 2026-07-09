@@ -597,45 +597,39 @@ table:has(thead th:nth-child(7):not(:nth-child(8))) td:first-child a:hover {
   color: #86efac !important;
 }
 
-/* Normal table text links - purple, matching prose links. */
+/* Normal table links - match model-name link treatment, not green checkmarks. */
 :root:not(.dark) table:not(:has(thead th:nth-child(6))) a {
-  color: #864bc4 !important;
-  font-weight: 600 !important;
+  color: inherit !important;
+  font-weight: 500 !important;
+  padding: 0.25rem 0.4rem !important;
+  margin: -0.25rem -0.4rem !important;
+  border-radius: 4px !important;
   background-image: none !important;
-  text-decoration-line: underline !important;
-  text-decoration-color: #864bc4 !important;
-  text-decoration-thickness: 1px !important;
-  text-underline-offset: 3px !important;
-  padding: 0 !important;
-  border-radius: 0 !important;
-  line-height: 1.45 !important;
-  transition: color 0.15s ease, text-decoration-thickness 0.15s ease !important;
+  text-decoration: none !important;
+  transition: background-color 0.15s ease, color 0.15s ease !important;
 }
 
 :root:not(.dark) table:not(:has(thead th:nth-child(6))) a:hover {
   color: #864bc4 !important;
-  background-color: transparent !important;
-  text-decoration-thickness: 1.5px !important;
+  background-color: rgba(134, 75, 196, 0.1) !important;
+  background-image: none !important;
 }
 
 .dark table:not(:has(thead th:nth-child(6))) a {
-  color: #a78bfa !important;
-  font-weight: 600 !important;
+  color: inherit !important;
+  font-weight: 500 !important;
+  padding: 0.25rem 0.4rem !important;
+  margin: -0.25rem -0.4rem !important;
+  border-radius: 4px !important;
   background-image: none !important;
-  text-decoration-line: underline !important;
-  text-decoration-color: #a78bfa !important;
-  text-decoration-thickness: 1px !important;
-  text-underline-offset: 3px !important;
-  padding: 0 !important;
-  border-radius: 0 !important;
-  line-height: 1.45 !important;
-  transition: color 0.15s ease, text-decoration-thickness 0.15s ease !important;
+  text-decoration: none !important;
+  transition: background-color 0.15s ease, color 0.15s ease !important;
 }
 
 .dark table:not(:has(thead th:nth-child(6))) a:hover {
-  color: #c4b5fd !important;
-  background-color: transparent !important;
-  text-decoration-thickness: 1.5px !important;
+  color: #a78bfa !important;
+  background-color: rgba(167, 139, 250, 0.15) !important;
+  background-image: none !important;
 }
 
 /* Code block styling - ensure visible background contrast */
