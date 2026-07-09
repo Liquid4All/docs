@@ -225,26 +225,26 @@ Everything else transfers directly:
 
 ### Serving swap
 
-- [ ] Runtime meets minimum version requirements
-- [ ] Model ID swapped
-- [ ] Chat template comes from the model
-- [ ] Sampling updated for LFM defaults
-- [ ] Tool parser configured if tool calling is in scope
-- [ ] Context length validated against production p95
+- Runtime meets minimum version requirements
+- Model ID swapped
+- Chat template comes from the model
+- Sampling updated for LFM defaults
+- Tool parser configured if tool calling is in scope
+- Context length validated against production p95
 
 ### Evaluation
 
-- [ ] Comparison stays within the same deployment class
-- [ ] Latency and throughput measured at production prompt lengths and concurrency
-- [ ] Quantized artifact evaluated if you plan to ship quantized
+- Comparison stays within the same deployment class
+- Latency and throughput measured at production prompt lengths and concurrency
+- Quantized artifact evaluated if you plan to ship quantized
 
 ### Fine-tuning
 
-- [ ] LoRA `target_modules` updated to LFM names
-- [ ] Trainable-parameter count sanity-checked
-- [ ] Training data reformatted with the LFM chat template
-- [ ] Tool-call training data uses the native Pythonic format
-- [ ] Held-out eval set frozen before training
+- LoRA `target_modules` updated to LFM names
+- Trainable-parameter count sanity-checked
+- Training data reformatted with the LFM chat template
+- Tool-call training data uses the native Pythonic format
+- Held-out eval set frozen before training
 
 ## Related docs
 

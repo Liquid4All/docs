@@ -281,47 +281,6 @@ body > div.antialiased {
   color: inherit !important;
 }
 
-/* Markdown task lists - remove duplicate bullets and align checkboxes. */
-.mdx-content ul.contains-task-list,
-article ul.contains-task-list,
-[role="main"] ul.contains-task-list,
-.prose ul.contains-task-list {
-  list-style: none !important;
-  padding-left: 0 !important;
-  margin-left: 0 !important;
-}
-
-.mdx-content li.task-list-item,
-article li.task-list-item,
-[role="main"] li.task-list-item,
-.prose li.task-list-item {
-  display: flex !important;
-  align-items: flex-start !important;
-  gap: 0.5rem !important;
-  list-style: none !important;
-  padding-left: 0 !important;
-  margin: 0.55rem 0 !important;
-}
-
-.mdx-content li.task-list-item::marker,
-article li.task-list-item::marker,
-[role="main"] li.task-list-item::marker,
-.prose li.task-list-item::marker {
-  content: "" !important;
-}
-
-.mdx-content li.task-list-item > input[type="checkbox"],
-article li.task-list-item > input[type="checkbox"],
-[role="main"] li.task-list-item > input[type="checkbox"],
-.prose li.task-list-item > input[type="checkbox"] {
-  flex: 0 0 auto !important;
-  width: 0.85rem !important;
-  height: 0.85rem !important;
-  margin: 0.25rem 0 0 !important;
-  accent-color: #864bc4 !important;
-  opacity: 1 !important;
-}
-
 /* Global content links - purple underline with hover effect */
 /* Scope to main content area only, exclude navigation/sidebar/tables */
 article a:not([class*="block"]):not([aria-label="Navigate to header"]):not(table a),
