@@ -1,0 +1,78 @@
+---
+title: "Hardware Evaluation"
+description: "Profile Liquid Foundation Models for latency, throughput, and memory on your target hardware."
+---
+
+Use this guide when you are evaluating LFMs on a specific board, accelerator, mobile device, or server. The goal is to measure latency, throughput, memory behavior, and quantization trade-offs on the hardware you plan to ship.
+
+## Recommended models
+
+Start with **LFM2.5-350M**. It is small enough to bring up quickly on almost any target and is the first model many silicon partners profile.
+
+Then scale through the family to map the performance curve:
+
+1. **LFM2.5-350M**: bring-up and baseline
+2. **LFM2.5-1.2B-Instruct**: standard dense datapoint
+3. **LFM2.5-8B-A1B**: MoE with 1.5B active parameters, useful for testing sparse-model behavior on your memory subsystem
+4. **LFM2.5-VL-450M** and **LFM2.5-Audio-1.5B**: multimodal datapoints when your target supports vision or audio workloads
+
+The LFM2 and LFM2.5 architecture interleaves short convolutions with grouped-query attention. In practice, that means less KV-cache pressure and better long-context latency scaling than pure-attention models of the same size. Your profiling should make that behavior visible.
+
+## Setup by framework
+
+| Framework | Guide | Typical target |
+| --- | --- | --- |
+| Transformers | [Transformers](/deployment/gpu-inference/transformers) | GPU baseline, correctness check |
+| vLLM | [vLLM](/deployment/gpu-inference/vllm) | GPU serving |
+| SGLang | [SGLang](/deployment/gpu-inference/sglang) | GPU serving |
+| llama.cpp | [llama.cpp](/deployment/on-device/llama-cpp) | CPU, embedded, custom silicon |
+| Ollama | [Ollama](/deployment/on-device/ollama) | Local development |
+| MLX | [MLX](/deployment/on-device/mlx) | Apple Silicon |
+| ONNX | [ONNX](/deployment/on-device/onnx) | NPUs and accelerator toolchains |
+| LEAP SDK | [Quick Start](/deployment/on-device/sdk/quick-start) | iOS and Android apps |
+
+For most silicon evaluations, **llama.cpp with GGUF** or **ONNX** is the fastest path to numbers on your target.
+
+## Quantization
+
+LFMs are routinely deployed quantized on device. Major models ship pre-quantized, so choose the quantization level that fits your memory budget. Lower precision reduces memory and usually improves throughput.
+
+- **GGUF ladder:** `Q4_0`, `Q4_K_M`, `Q5_K_M`, `Q6_K`, `Q8_0`, `F16`
+- **MLX:** 4-bit, 5-bit, 6-bit, 8-bit, and bf16 repos per model
+- **ONNX:** per-model `-ONNX` repos
+
+`Q4_K_M` is the default recommendation for CPU and edge deployments. Move up the ladder if your quality bar requires it.
+
+Profile at least two quantization levels, such as `Q4_K_M` and `Q8_0`, so you can see the memory, quality, and throughput trade-off on your hardware instead of measuring only one point.
+
+## Benchmarking methodology
+
+Report end-to-end latency with prefill and decode separated:
+
+- Time to first token
+- Decode tokens per second
+- P50 and P95 latency, after one warmup iteration
+
+Use these prompt and output lengths:
+
+| Input tokens | Output tokens |
+| --- | --- |
+| 256 | 100 |
+| 512 | 100 |
+| 1024 | 100 |
+
+Report peak memory at each context length:
+
+- 256 tokens
+- 512 tokens
+- 1024 tokens
+- 2048 tokens
+- 4096 tokens
+
+This gives you a clear view of scaling behavior, KV-cache efficiency, and deployment headroom.
+
+## Related docs
+
+- [Complete Model Library](/lfm/models/complete-library)
+- [Use Case Evaluation](/guides/use-case-evaluation)
+- [Migration Guide](/guides/migration-guide)

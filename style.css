@@ -597,6 +597,55 @@ table:has(thead th:nth-child(7):not(:nth-child(8))) td:first-child a:hover {
   color: #86efac !important;
 }
 
+/* Normal table links - match model-name link treatment, not green checkmarks. */
+:root:not(.dark) table:not(:has(thead th:nth-child(6))) a {
+  display: inline-block !important;
+  color: inherit !important;
+  font-weight: 500 !important;
+  line-height: 1.25 !important;
+  padding: 0.2rem 0.35rem !important;
+  margin: 0.05rem 0.1rem 0.05rem -0.35rem !important;
+  border-radius: 4px !important;
+  background-image: none !important;
+  background-color: transparent !important;
+  border-bottom: 0 !important;
+  box-shadow: 0 1px 0 #864bc4 !important;
+  text-decoration: none !important;
+  text-decoration-line: none !important;
+  transition: background-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease !important;
+}
+
+:root:not(.dark) table:not(:has(thead th:nth-child(6))) a:hover {
+  color: #864bc4 !important;
+  background-color: rgba(134, 75, 196, 0.1) !important;
+  background-image: none !important;
+  box-shadow: 0 1.5px 0 #864bc4 !important;
+}
+
+.dark table:not(:has(thead th:nth-child(6))) a {
+  display: inline-block !important;
+  color: inherit !important;
+  font-weight: 500 !important;
+  line-height: 1.25 !important;
+  padding: 0.2rem 0.35rem !important;
+  margin: 0.05rem 0.1rem 0.05rem -0.35rem !important;
+  border-radius: 4px !important;
+  background-image: none !important;
+  background-color: transparent !important;
+  border-bottom: 0 !important;
+  box-shadow: 0 1px 0 #a78bfa !important;
+  text-decoration: none !important;
+  text-decoration-line: none !important;
+  transition: background-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease !important;
+}
+
+.dark table:not(:has(thead th:nth-child(6))) a:hover {
+  color: #a78bfa !important;
+  background-color: rgba(167, 139, 250, 0.15) !important;
+  background-image: none !important;
+  box-shadow: 0 1.5px 0 #a78bfa !important;
+}
+
 /* Code block styling - ensure visible background contrast */
 /* Inline code */
 :root:not(.dark) code:not(pre code) {
