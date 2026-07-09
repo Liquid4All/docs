@@ -597,6 +597,43 @@ table:has(thead th:nth-child(7):not(:nth-child(8))) td:first-child a:hover {
   color: #86efac !important;
 }
 
+/* Normal table text links - purple, matching prose links. */
+:root:not(.dark) table:not(:has(thead th:nth-child(6))) a {
+  color: #864bc4 !important;
+  font-weight: 600 !important;
+  background-image: linear-gradient(#864bc4, #864bc4) !important;
+  background-size: 100% 1px !important;
+  background-position: left top 100% !important;
+  background-repeat: no-repeat !important;
+  padding: 0 0 3px !important;
+  border-radius: 0 !important;
+  transition: color 0.15s ease, background-size 0.15s ease !important;
+}
+
+:root:not(.dark) table:not(:has(thead th:nth-child(6))) a:hover {
+  color: #864bc4 !important;
+  background-color: transparent !important;
+  background-size: 100% 1.5px !important;
+}
+
+.dark table:not(:has(thead th:nth-child(6))) a {
+  color: #a78bfa !important;
+  font-weight: 600 !important;
+  background-image: linear-gradient(#a78bfa, #a78bfa) !important;
+  background-size: 100% 1px !important;
+  background-position: left top 100% !important;
+  background-repeat: no-repeat !important;
+  padding: 0 0 3px !important;
+  border-radius: 0 !important;
+  transition: color 0.15s ease, background-size 0.15s ease !important;
+}
+
+.dark table:not(:has(thead th:nth-child(6))) a:hover {
+  color: #c4b5fd !important;
+  background-color: transparent !important;
+  background-size: 100% 1.5px !important;
+}
+
 /* Code block styling - ensure visible background contrast */
 /* Inline code */
 :root:not(.dark) code:not(pre code) {
