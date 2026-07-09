@@ -1,19 +1,14 @@
 export const VlVllm = ({ modelId }) => (
 <div>
 <p><strong>Install:</strong></p>
-<pre className="shiki shiki-themes github-light github-dark" style={{backgroundColor: '#fff', '--shiki-dark-bg': '#24292e', color: '#24292e', '--shiki-dark': '#e1e4e8'}} language="bash">
-<code language="bash">
-{`uv pip install vllm==0.19.0`.split('\n').map((line, i) => <span key={i} className="line">{line}{'\n'}</span>)}
-</code>
-</pre>
-<pre className="shiki shiki-themes github-light github-dark" style={{backgroundColor: '#fff', '--shiki-dark-bg': '#24292e', color: '#24292e', '--shiki-dark': '#e1e4e8'}} language="bash">
-<code language="bash">
-{`uv pip install transformers==5.5.0 pillow`.split('\n').map((line, i) => <span key={i} className="line">{line}{'\n'}</span>)}
-</code>
-</pre>
+<CodeBlock language="bash">
+{`uv pip install vllm==0.19.0`}
+</CodeBlock>
+<CodeBlock language="bash">
+{`uv pip install transformers==5.5.0 pillow`}
+</CodeBlock>
 <p><strong>Run:</strong></p>
-<pre className="shiki shiki-themes github-light github-dark" style={{backgroundColor: '#fff', '--shiki-dark-bg': '#24292e', color: '#24292e', '--shiki-dark': '#e1e4e8'}} language="python">
-<code language="python">
+<CodeBlock language="python">
 {`from vllm import LLM, SamplingParams
 
 IMAGE_URL = "http://images.cocodataset.org/val2017/000000039769.jpg"
@@ -39,8 +34,7 @@ messages = [{
 }]
 
 outputs = llm.chat(messages, sampling_params)
-print(outputs[0].outputs[0].text)`.split('\n').map((line, i) => <span key={i} className="line">{line}{'\n'}</span>)}
-</code>
-</pre>
+print(outputs[0].outputs[0].text)`}
+</CodeBlock>
 </div>
 );

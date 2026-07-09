@@ -418,6 +418,63 @@ table:has(thead th:nth-child(6):not(:nth-child(7))) tbody tr:has(td:nth-child(2)
   padding-left: 1rem !important;
 }
 
+/* Model overview table with Family column - only for 7-column tables */
+table:has(thead th:nth-child(7):not(:nth-child(8))) {
+  table-layout: fixed !important;
+  font-size: 0.8rem !important;
+  margin: 0 !important;
+}
+
+table:has(thead th:nth-child(7):not(:nth-child(8))) td:first-child,
+table:has(thead th:nth-child(7):not(:nth-child(8))) th:first-child {
+  width: 30% !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+table:has(thead th:nth-child(7):not(:nth-child(8))) td:nth-child(2),
+table:has(thead th:nth-child(7):not(:nth-child(8))) th:nth-child(2) {
+  width: 18% !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+table:has(thead th:nth-child(7):not(:nth-child(8))) td:nth-child(3),
+table:has(thead th:nth-child(7):not(:nth-child(8))) th:nth-child(3),
+table:has(thead th:nth-child(7):not(:nth-child(8))) td:nth-child(4),
+table:has(thead th:nth-child(7):not(:nth-child(8))) th:nth-child(4),
+table:has(thead th:nth-child(7):not(:nth-child(8))) td:nth-child(5),
+table:has(thead th:nth-child(7):not(:nth-child(8))) th:nth-child(5),
+table:has(thead th:nth-child(7):not(:nth-child(8))) td:nth-child(6),
+table:has(thead th:nth-child(7):not(:nth-child(8))) th:nth-child(6) {
+  width: 8% !important;
+  text-align: center !important;
+  padding: 0.5rem 0 !important;
+}
+
+table:has(thead th:nth-child(7):not(:nth-child(8))) td:nth-child(7),
+table:has(thead th:nth-child(7):not(:nth-child(8))) th:nth-child(7) {
+  width: 20% !important;
+  text-align: center !important;
+  padding: 0.5rem 0 !important;
+  white-space: nowrap !important;
+}
+
+table:has(thead th:nth-child(7):not(:nth-child(8))) thead tr {
+  background: linear-gradient(135deg, #e9d5f5 0%, #d4c4e3 100%) !important;
+  border-top: 3px solid #864bc4 !important;
+}
+
+table:has(thead th:nth-child(7):not(:nth-child(8))) thead th {
+  color: #1f2937 !important;
+}
+
+table:has(thead th:nth-child(7):not(:nth-child(8))) tbody tr:has(td:first-child strong) {
+  background: linear-gradient(135deg, #e9d5f5 0%, #d4c4e3 100%) !important;
+}
+
 /* Table links (checkmarks) - green, no underline */
 table a {
   text-decoration: none !important;
@@ -437,7 +494,8 @@ table a:hover {
 }
 
 /* Model name links (first column) - subtle text, no underline, just hover effect */
-table:has(thead th:nth-child(6):not(:nth-child(7))) td:first-child a {
+table:has(thead th:nth-child(6):not(:nth-child(7))) td:first-child a,
+table:has(thead th:nth-child(7):not(:nth-child(8))) td:first-child a {
   color: inherit !important;
   font-weight: 500 !important;
   padding: 0.25rem 0.4rem !important;
@@ -448,17 +506,20 @@ table:has(thead th:nth-child(6):not(:nth-child(7))) td:first-child a {
   transition: background-color 0.15s ease, color 0.15s ease !important;
 }
 
-table:has(thead th:nth-child(6):not(:nth-child(7))) td:first-child a:hover {
+table:has(thead th:nth-child(6):not(:nth-child(7))) td:first-child a:hover,
+table:has(thead th:nth-child(7):not(:nth-child(8))) td:first-child a:hover {
   color: #864bc4 !important;
   background-color: rgba(134, 75, 196, 0.1) !important;
   background-image: none !important;
 }
 
-.dark table:has(thead th:nth-child(6):not(:nth-child(7))) td:first-child a {
+.dark table:has(thead th:nth-child(6):not(:nth-child(7))) td:first-child a,
+.dark table:has(thead th:nth-child(7):not(:nth-child(8))) td:first-child a {
   color: inherit !important;
 }
 
-.dark table:has(thead th:nth-child(6):not(:nth-child(7))) td:first-child a:hover {
+.dark table:has(thead th:nth-child(6):not(:nth-child(7))) td:first-child a:hover,
+.dark table:has(thead th:nth-child(7):not(:nth-child(8))) td:first-child a:hover {
   color: #a78bfa !important;
   background-color: rgba(167, 139, 250, 0.15) !important;
 }
@@ -708,4 +769,3 @@ table:has(thead th:nth-child(6):not(:nth-child(7))) td:first-child a:hover {
 .dark .card-group a[href^="/docs/models/"]:not([href*="text-models"]):not([href*="vision-models"]):not([href*="audio-models"]):not([href*="liquid-nanos"]):not([href*="complete-library"])::before {
   background-color: #9ca3af !important;
 }
-
