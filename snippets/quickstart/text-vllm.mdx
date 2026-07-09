@@ -1,14 +1,11 @@
 export const TextVllm = ({ modelId, samplingParams, maxTokens }) => (
 <div>
 <p><strong>Install:</strong></p>
-<pre className="shiki shiki-themes github-light github-dark" style={{backgroundColor: '#fff', '--shiki-dark-bg': '#24292e', color: '#24292e', '--shiki-dark': '#e1e4e8'}} language="bash">
-<code language="bash">
-{`pip install vllm==0.14`.split('\n').map((line, i) => <span key={i} className="line">{line}{'\n'}</span>)}
-</code>
-</pre>
+<CodeBlock language="bash">
+{`pip install vllm==0.14`}
+</CodeBlock>
 <p><strong>Run:</strong></p>
-<pre className="shiki shiki-themes github-light github-dark" style={{backgroundColor: '#fff', '--shiki-dark-bg': '#24292e', color: '#24292e', '--shiki-dark': '#e1e4e8'}} language="python">
-<code language="python">
+<CodeBlock language="python">
 {`from vllm import LLM, SamplingParams
 
 llm = LLM(model="${modelId}")
@@ -16,8 +13,7 @@ llm = LLM(model="${modelId}")
 sampling_params = SamplingParams(${samplingParams}max_tokens=${maxTokens || 512})
 
 output = llm.chat("What is machine learning?", sampling_params)
-print(output[0].outputs[0].text)`.split('\n').map((line, i) => <span key={i} className="line">{line}{'\n'}</span>)}
-</code>
-</pre>
+print(output[0].outputs[0].text)`}
+</CodeBlock>
 </div>
 );
