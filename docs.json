@@ -80,6 +80,7 @@
             "group": "Fine-tuning",
             "icon": "sliders",
             "pages": [
+              "lfm/fine-tuning/overview",
               "lfm/fine-tuning/leap-finetune",
               "lfm/fine-tuning/datasets",
               "lfm/fine-tuning/trl",
@@ -114,6 +115,15 @@
               "deployment/gpu-inference/modal",
               "deployment/gpu-inference/baseten",
               "deployment/gpu-inference/fal"
+            ]
+          },
+          {
+            "group": "Guides",
+            "icon": "book-open",
+            "pages": [
+              "guides/hardware-evaluation",
+              "guides/use-case-evaluation",
+              "guides/migration-guide"
             ]
           },
           {
@@ -507,7 +517,7 @@
     },
     {
       "source": "/lfm/fine-tuning",
-      "destination": "/lfm/fine-tuning/leap-finetune"
+      "destination": "/lfm/fine-tuning/overview"
     }
   ],
   "ai": {

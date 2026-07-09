@@ -1,0 +1,51 @@
+---
+title: "Overview"
+description: "Decide when to fine-tune an LFM and choose the right training workflow."
+---
+
+Fine-tuning is the next step when prompt changes, template fixes, constrained decoding, and better tool descriptions are not enough. Use it when the base model misses your task's semantic boundary or needs to learn a production-specific output style.
+
+## Before you fine-tune
+
+Exhaust the cheaper levers first:
+
+- Verify that prompts use the model's [chat template](/lfm/key-concepts/chat-template)
+- Reset generation parameters using the [prompting guide](/lfm/key-concepts/text-generation-and-prompting)
+- Use constrained decoding for strict JSON or grammar-bound outputs
+- Improve tool descriptions and validate the native [tool-use format](/lfm/key-concepts/tool-use)
+- Evaluate the right model size and deployment class with the [use case evaluation guide](/guides/use-case-evaluation)
+
+If the model still misses the task, fine-tune.
+
+## Recommended stack
+
+[LEAP Finetune](https://github.com/Liquid4All/leap-finetune) is Liquid's open-source training stack for the full customization loop:
+
+- SFT, LoRA, DPO, and GRPO
+- Text, vision, and MoE model support
+- Distributed training on local GPUs, SLURM, Kubernetes, or Modal
+- Dataset formatting and validation
+- GGUF export and quantization for deployment
+
+You can also use [TRL](/lfm/fine-tuning/trl) or [Unsloth](/lfm/fine-tuning/unsloth) directly if those already fit your workflow.
+
+## Typical workflow
+
+1. Load a base model from Hugging Face. Start from the current LFM2.5 checkpoint for your target size.
+2. Prepare 500 to 5,000 task examples. Quality and distribution matter more than volume; match production inputs.
+3. Train with LoRA for the first pass. A 1.2B LoRA run can take minutes to tens of minutes on a single modern GPU.
+4. Evaluate on a held-out set that you froze before training.
+5. Iterate on data, prompts, and hyperparameters before scaling to larger runs.
+
+## Two rules that save the most pain
+
+Train with the model's own chat template. Use `apply_chat_template` and keep training formatting character-for-character identical to production.
+
+For tool calling, train on the native Pythonic tool-call format. The [migration guide](/guides/migration-guide) explains how LFMs differ from OpenAI-style JSON tool calls and how to adapt parsers safely.
+
+## Fine-tuning docs
+
+- [LEAP Finetune](/lfm/fine-tuning/leap-finetune)
+- [Datasets](/lfm/fine-tuning/datasets)
+- [TRL](/lfm/fine-tuning/trl)
+- [Unsloth](/lfm/fine-tuning/unsloth)

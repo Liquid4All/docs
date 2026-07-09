@@ -110,10 +110,14 @@ active:
   - /examples/web/audio-webgpu-demo
   - /examples/web/hand-voice-racer
   - /examples/web/vl-webgpu-demo
+  - /guides/hardware-evaluation
+  - /guides/migration-guide
+  - /guides/use-case-evaluation
   - /leap/edge-sdk/overview
   - /lfm/fine-tuning
   - /lfm/fine-tuning/datasets
   - /lfm/fine-tuning/leap-finetune
+  - /lfm/fine-tuning/overview
   - /lfm/fine-tuning/trl
   - /lfm/fine-tuning/unsloth
   - /lfm/getting-started/connect-ai-tools

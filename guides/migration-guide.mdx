@@ -1,0 +1,253 @@
+---
+title: "Migration Guide"
+description: "Move from Qwen, Llama, or Gemma to LFMs while avoiding the common migration pitfalls."
+---
+
+This guide is for teams already running Qwen, Llama, or Gemma who want to evaluate Liquid Foundation Models as replacements. LFMs load and serve through the same frameworks you already use, so most migrations are a model ID and config change. The details that usually matter are sampling defaults, chat templates, tool-call parsing, and LoRA module names.
+
+Use this alongside [Use Case Evaluation](/guides/use-case-evaluation) for model selection and benchmarking methodology.
+
+## Model mapping
+
+Pick the LFM in the same deployment class as your current model. Compare within class; benchmarking a 1.2B LFM against a 32B Qwen does not tell you whether it fits your deployment.
+
+| If you run | Evaluate | Notes |
+| --- | --- | --- |
+| Qwen3-0.6B, Llama-3.2-1B, Gemma-3-270M/1B | [LFM2.5-350M](https://huggingface.co/LiquidAI/LFM2.5-350M) | Classification, extraction, routing. Also consider LFM2.5-230M. |
+| Qwen3-1.7B, Llama-3.2-3B, Gemma-3-4B | [LFM2.5-1.2B-Instruct](https://huggingface.co/LiquidAI/LFM2.5-1.2B-Instruct) | The default dense workhorse. |
+| Qwen3-4B/8B, Llama-3.1-8B, Gemma-3-12B | [LFM2.5-8B-A1B](https://huggingface.co/LiquidAI/LFM2.5-8B-A1B) | MoE with 8B total and 1.5B active parameters. |
+| Qwen3-14B/32B and larger dense models | [LFM2-24B-A2B](https://huggingface.co/LiquidAI/LFM2-24B-A2B) | 24B total and roughly 2.3B active parameters. |
+| Qwen3 thinking mode or DeepSeek distills | [LFM2.5-1.2B-Thinking](https://huggingface.co/LiquidAI/LFM2.5-1.2B-Thinking) | Reasoning traces at 1.2B. |
+| Qwen2.5-VL-3B/7B, Llama-3.2-Vision, Gemma-3 vision | [LFM2.5-VL-450M](https://huggingface.co/LiquidAI/LFM2.5-VL-450M) or [LFM2.5-VL-1.6B](https://huggingface.co/LiquidAI/LFM2.5-VL-1.6B) | Use `-Extract` variants for image to strict JSON. |
+| Whisper plus separate TTS | [LFM2.5-Audio-1.5B](https://huggingface.co/LiquidAI/LFM2.5-Audio-1.5B) | ASR, TTS, and speech-to-speech in one model. |
+
+See the [Complete Model Library](/lfm/models/complete-library) for the full catalog.
+
+LFM2.5 dense models support 32K context, and LFM2.5-8B-A1B supports 128K. If you rely on 128K context in a small dense Qwen or Llama model, check your production context distribution before assuming this is a blocker. Most sub-8B deployments do not exceed 8K tokens.
+
+## Runtime-by-runtime migration
+
+Minimum versions:
+
+- `transformers >= 5.2.0`
+- vLLM `>= 0.23.0`
+
+Runtime docs:
+
+- [Transformers](/deployment/gpu-inference/transformers)
+- [vLLM](/deployment/gpu-inference/vllm)
+- [SGLang](/deployment/gpu-inference/sglang)
+- [llama.cpp](/deployment/on-device/llama-cpp)
+- [Ollama](/deployment/on-device/ollama)
+- [MLX](/deployment/on-device/mlx)
+- [ONNX](/deployment/on-device/onnx)
+- [LM Studio](/deployment/on-device/lm-studio)
+
+<Tabs>
+  <Tab title="Transformers">
+    Change the model ID and use the model's chat template:
+
+    ```python
+    from transformers import AutoModelForCausalLM, AutoTokenizer
+
+    model_id = "LiquidAI/LFM2.5-1.2B-Instruct"
+    model = AutoModelForCausalLM.from_pretrained(
+        model_id,
+        dtype="bfloat16",
+        device_map="auto",
+    )
+    tokenizer = AutoTokenizer.from_pretrained(model_id)
+
+    inputs = tokenizer.apply_chat_template(
+        [{"role": "user", "content": "What is C. elegans?"}],
+        add_generation_prompt=True,
+        return_tensors="pt",
+        return_dict=True,
+    ).to(model.device)
+
+    out = model.generate(
+        **inputs,
+        max_new_tokens=512,
+        do_sample=True,
+        temperature=0.1,
+        top_k=50,
+        repetition_penalty=1.05,
+    )
+    ```
+
+    Do not reuse literal Llama-style or Gemma-style prompt strings. They will usually run, but quality will degrade.
+
+    See [Transformers](/deployment/gpu-inference/transformers).
+  </Tab>
+
+  <Tab title="vLLM">
+    Serve the model behind an OpenAI-compatible endpoint:
+
+    ```bash
+    vllm serve LiquidAI/LFM2.5-1.2B-Instruct
+    ```
+
+    Your OpenAI-client code stays mostly unchanged:
+
+    ```python
+    client.chat.completions.create(
+        model="LiquidAI/LFM2.5-1.2B-Instruct",
+        messages=messages,
+        temperature=0.1,
+        extra_body={"top_k": 50, "repetition_penalty": 1.05},
+    )
+    ```
+
+    If you use OpenAI-style `tools=[...]`, configure the LFM tool-call parser before switching traffic. See [Tool calling](#tool-calling) below and the [vLLM guide](/deployment/gpu-inference/vllm).
+  </Tab>
+
+  <Tab title="SGLang">
+    Serve the model through SGLang's OpenAI-compatible API and keep your client integration mostly unchanged:
+
+    ```bash
+    sglang serve --model-path LiquidAI/LFM2.5-1.2B-Instruct --tool-call-parser lfm2
+    ```
+
+    Use LFM sampling defaults and configure the LFM tool-call parser if your evaluation includes tools.
+
+    See [SGLang](/deployment/gpu-inference/sglang).
+  </Tab>
+
+  <Tab title="llama.cpp">
+    Pull the official GGUF and choose the quantization level you plan to deploy:
+
+    ```bash
+    llama-server -hf LiquidAI/LFM2.5-1.2B-Instruct-GGUF:Q4_K_M
+    ```
+
+    The GGUF embeds the correct chat template. Do not override it with an old Qwen or Llama template.
+
+    See [llama.cpp](/deployment/on-device/llama-cpp).
+  </Tab>
+
+  <Tab title="Ollama / LM Studio">
+    Use the official GGUF artifact and keep the embedded chat template:
+
+    ```bash
+    ollama run hf.co/LiquidAI/LFM2.5-1.2B-Instruct-GGUF:Q4_K_M
+    ```
+
+    If you are using LM Studio, select the matching GGUF quantization and avoid overriding the prompt template with a previous Qwen, Llama, or Gemma template.
+
+    See [Ollama](/deployment/on-device/ollama) and [LM Studio](/deployment/on-device/lm-studio).
+  </Tab>
+
+  <Tab title="MLX / ONNX">
+    Per-precision repos exist for each model, including `-MLX-4bit` through `-MLX-8bit` and `-ONNX`. Swap the repo ID in `mlx-lm` or your ONNX Runtime pipeline.
+
+    See [MLX](/deployment/on-device/mlx) and [ONNX](/deployment/on-device/onnx).
+  </Tab>
+
+  <Tab title="LEAP SDK">
+    The [LEAP SDK](/deployment/on-device/sdk/quick-start) gives iOS and Android apps a supported runtime with function calling and constrained generation included.
+  </Tab>
+</Tabs>
+
+## Chat template and sampling
+
+LFMs use a ChatML-style format:
+
+```text
+<|startoftext|><|im_start|>system
+You are a helpful assistant trained by Liquid AI.<|im_end|>
+<|im_start|>user
+What is C. elegans?<|im_end|>
+<|im_start|>assistant
+```
+
+Roles are `system`, `user`, `assistant`, and `tool`. Vision-language models use an `<image>` sentinel. See [Chat template](/lfm/key-concepts/chat-template).
+
+Migration notes:
+
+- **From Qwen:** ChatML is familiar, but token details differ. Use `apply_chat_template`; do not reuse literal Qwen strings.
+- **From Llama:** replace `<|begin_of_text|>` and `<|start_header_id|>` prompt builders.
+- **From Gemma:** replace `<start_of_turn>` builders. LFMs support a real `system` role.
+
+Recommended starting sampling values:
+
+| Param | LFM2.5 recommendation | Common carry-over mistake |
+| --- | --- | --- |
+| `temperature` | `0.1` | `0.6` to `0.7`, which can cause drift |
+| `top_k` | `50` | disabled |
+| `repetition_penalty` | `1.05` | `1.0` |
+
+For deterministic classification, extraction, and structured output, use greedy decoding. See [Text generation and prompting](/lfm/key-concepts/text-generation-and-prompting).
+
+## Tool calling
+
+LFMs natively emit a Pythonic tool-call list, not OpenAI-style JSON:
+
+```text
+<|tool_call_start|>[get_candidate_status(candidate_id="12345")]<|tool_call_end|>
+```
+
+If you swap an agent to an LFM and let a generic JSON parser run, tool calls can appear broken. The format is different.
+
+What to do:
+
+1. Pass tools through `tokenizer.apply_chat_template(messages, tools=[...])` or the serving runtime's supported tool mechanism.
+2. Parse the Pythonic call list between `<|tool_call_start|>` and `<|tool_call_end|>`.
+3. On vLLM or SGLang, configure the LFM tool-call parser instead of a generic JSON parser.
+4. Return results as `tool` role messages, with JSON content if useful.
+5. For strict schemas, use constrained decoding. See [Constrained Generation](/deployment/on-device/sdk/constrained-generation).
+6. If you fine-tune for tool calling, train on the native Pythonic format and convert to any internal DSL after parsing.
+
+## Migrating your fine-tuning pipeline
+
+LFMs are standard Hugging Face causal LMs, so TRL and Unsloth-style pipelines carry over with two LFM-specific corrections.
+
+First, update LoRA `target_modules`. LFM2 and LFM2.5 use a conv-attention hybrid with different module names than Llama-family models:
+
+```python
+# LFM2 / LFM2.5
+target_modules = ["w1", "w2", "w3", "q_proj", "k_proj", "v_proj", "out_proj", "in_proj"]
+
+# Llama/Qwen/Gemma configs are wrong for LFMs:
+# o_proj/gate_proj/up_proj/down_proj do not exist.
+```
+
+Before a long run, call `model.print_trainable_parameters()`. You should see millions of trainable parameters, and the LoRA module count should be in the expected range for your model size. If it is near zero, the module names are wrong.
+
+Second, format training examples with the LFM chat template. Training data formatted with your previous model's template creates a silent distribution mismatch.
+
+Everything else transfers directly:
+
+- [LEAP Finetune](https://github.com/Liquid4All/leap-finetune) for SFT, LoRA, DPO, GRPO, text, VLM, MoE, local, SLURM, Kubernetes, Modal, and GGUF export workflows
+- Existing [TRL](/lfm/fine-tuning/trl) or [Unsloth](/lfm/fine-tuning/unsloth) setups
+- Starting LoRA recipe: `r=16`, `alpha=32`, learning rate around `2e-4` to `3e-4`, 3 to 5 epochs, bf16
+
+## Migration checklist
+
+### Serving swap
+
+- [ ] Runtime meets minimum version requirements
+- [ ] Model ID swapped
+- [ ] Chat template comes from the model
+- [ ] Sampling updated for LFM defaults
+- [ ] Tool parser configured if tool calling is in scope
+- [ ] Context length validated against production p95
+
+### Evaluation
+
+- [ ] Comparison stays within the same deployment class
+- [ ] Latency and throughput measured at production prompt lengths and concurrency
+- [ ] Quantized artifact evaluated if you plan to ship quantized
+
+### Fine-tuning
+
+- [ ] LoRA `target_modules` updated to LFM names
+- [ ] Trainable-parameter count sanity-checked
+- [ ] Training data reformatted with the LFM chat template
+- [ ] Tool-call training data uses the native Pythonic format
+- [ ] Held-out eval set frozen before training
+
+## Related docs
+
+- [Hardware Evaluation](/guides/hardware-evaluation)
+- [Use Case Evaluation](/guides/use-case-evaluation)
+- [Fine-tuning Overview](/lfm/fine-tuning/overview)
