@@ -132,6 +132,7 @@
             "pages": [
               "lfm/help/faqs",
               "lfm/help/troubleshooting",
+              "lfm/help/deprecations",
               "lfm/help/contributing",
               "lfm/help/connect-ai-tools",
               "lfm/help/model-license"
