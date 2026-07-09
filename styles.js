@@ -186,6 +186,19 @@
       color: #e5e7eb !important;
     }
 
+    /* Heading permalink icons should not inherit prose-link underlines */
+    article :is(h1, h2, h3, h4, h5, h6) a[href^="#"],
+    [role="main"] :is(h1, h2, h3, h4, h5, h6) a[href^="#"],
+    .prose :is(h1, h2, h3, h4, h5, h6) a[href^="#"],
+    article a[href^="#"][aria-label*="link" i],
+    [role="main"] a[href^="#"][aria-label*="link" i],
+    .prose a[href^="#"][aria-label*="link" i] {
+      background-image: none !important;
+      background-size: 0 0 !important;
+      padding-bottom: 0 !important;
+      text-decoration: none !important;
+    }
+
     /* Colab button sizing */
     a[href*="colab.research.google.com"] img,
     img[alt*="Colab"],
