@@ -599,13 +599,19 @@ table:has(thead th:nth-child(7):not(:nth-child(8))) td:first-child a:hover {
 
 /* Normal table links - match model-name link treatment, not green checkmarks. */
 :root:not(.dark) table:not(:has(thead th:nth-child(6))) a {
+  display: inline-block !important;
   color: inherit !important;
   font-weight: 500 !important;
-  padding: 0.25rem 0.4rem !important;
-  margin: -0.25rem -0.4rem !important;
+  line-height: 1.25 !important;
+  padding: 0.2rem 0.35rem !important;
+  margin: 0.05rem 0.1rem 0.05rem -0.35rem !important;
   border-radius: 4px !important;
   background-image: none !important;
+  background-color: transparent !important;
+  border-bottom: 0 !important;
+  box-shadow: none !important;
   text-decoration: none !important;
+  text-decoration-line: none !important;
   transition: background-color 0.15s ease, color 0.15s ease !important;
 }
 
@@ -616,13 +622,19 @@ table:has(thead th:nth-child(7):not(:nth-child(8))) td:first-child a:hover {
 }
 
 .dark table:not(:has(thead th:nth-child(6))) a {
+  display: inline-block !important;
   color: inherit !important;
   font-weight: 500 !important;
-  padding: 0.25rem 0.4rem !important;
-  margin: -0.25rem -0.4rem !important;
+  line-height: 1.25 !important;
+  padding: 0.2rem 0.35rem !important;
+  margin: 0.05rem 0.1rem 0.05rem -0.35rem !important;
   border-radius: 4px !important;
   background-image: none !important;
+  background-color: transparent !important;
+  border-bottom: 0 !important;
+  box-shadow: none !important;
   text-decoration: none !important;
+  text-decoration-line: none !important;
   transition: background-color 0.15s ease, color 0.15s ease !important;
 }
 
