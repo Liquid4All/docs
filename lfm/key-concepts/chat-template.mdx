@@ -3,14 +3,9 @@ title: "Chat Template"
 description: "The chat template defines how conversations are structured using special tokens and roles. LFM2 uses a ChatML-like chat template to structure conversations as follows:"
 ---
 
-```
-<|startoftext|><|im_start|>system
-You are a helpful assistant trained by Liquid AI.<|im_end|>
-<|im_start|>user
-What is C. elegans?<|im_end|>
-<|im_start|>assistant
-It's a tiny nematode that lives in temperate soil environments.<|im_end|>
-```
+import { ChatMLExample } from "/snippets/key-concepts/chatml-example.mdx";
+
+<ChatMLExample />
 
 Conversations are formatted using special tokens:
 

@@ -3,6 +3,8 @@ title: "Tool Use"
 description: "LFM2.5 and LFM2 models support tool use (function calling), enabling models to interact with APIs, databases, and external services to provide accurate, up-to-date information."
 ---
 
+import { ToolCallTokenExample } from "/snippets/key-concepts/tool-call-token-example.mdx";
+
 ## Overview
 
 The tool use workflow follows four steps:
@@ -124,10 +126,7 @@ response = tokenizer.decode(
 
 The model outputs a tool call wrapped in special tokens:
 
-```
-<|tool_call_start|>[get_candidate_status(candidate_id="12345")]<|tool_call_end|>
-Checking the current status of candidate ID 12345.
-```
+<ToolCallTokenExample />
 
 Parse the tool call and execute the function externally. Here we use a mock function that simulates what would typically be an API call to your recruitment system:
 
