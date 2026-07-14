@@ -7,10 +7,10 @@ import { ChatMLExample } from "/snippets/key-concepts/chatml-example.mdx";
 import { ToolCallTokenExample } from "/snippets/key-concepts/tool-call-token-example.mdx";
 
 This guide is for teams already running Qwen, Llama, or Gemma who want to evaluate Liquid Foundation Models (LFMs) as replacements. LFMs load and serve through the same frameworks you already use, so most migrations are a model ID and configuration change. The details that usually matter are:
-- deployment runtime choice (see [Deployment runtimes](#deployment-runtimes)), 
-- chat templates (see [Chat Template](#chat-template)), 
-- sampling configuration (see [Sampling Configuration](#sampling-configuration)), 
-- tool-call parsing (see [Tool Use](#tool-use)), and 
+- deployment runtime choice (see [Deployment runtimes](#deployment-runtimes)),
+- chat templates (see [Chat Template](#chat-template)),
+- sampling configuration (see [Sampling Configuration](#sampling-configuration)),
+- tool-call parsing (see [Tool Use](#tool-use)), and
 - LoRA module names (see [Fine-tuning](#fine-tuning)).
 
 Use this alongside [Use Case Evaluation](/guides/use-case-evaluation) for model selection and benchmarking methodology.
@@ -34,7 +34,7 @@ See the [Complete Model Library](/lfm/models/complete-library) for the full cata
 
 Across runtimes, avoid carrying over hand-written Qwen, Llama, or Gemma prompt templates. Use the model-provided chat template, and configure the `lfm2` tool-call parser in vLLM or SGLang when tool use is in scope.
 
-For GPU inference, see [Transformers](/deployment/gpu-inference/transformers), [vLLM](/deployment/gpu-inference/vllm), or [SGLang](/deployment/gpu-inference/sglang). 
+For GPU inference, see [Transformers](/deployment/gpu-inference/transformers), [vLLM](/deployment/gpu-inference/vllm), or [SGLang](/deployment/gpu-inference/sglang).
 
 For edge and on-device inference, see [llama.cpp](/deployment/on-device/llama-cpp), [Ollama](/deployment/on-device/ollama), [LM Studio](/deployment/on-device/lm-studio), [MLX](/deployment/on-device/mlx), [ONNX](/deployment/on-device/onnx), or the [LEAP SDK](/deployment/on-device/sdk/quick-start).
 
