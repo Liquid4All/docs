@@ -172,6 +172,8 @@ active:
   - /lfm/models/lfm25-audio-1.5b-jp
   - /lfm/models/lfm25-colbert-350m
   - /lfm/models/lfm25-embedding-350m
+  - /lfm/models/lfm25-encoder-230m
+  - /lfm/models/lfm25-encoder-350m
   - /lfm/models/lfm25-vl-1.6b
   - /lfm/models/lfm25-vl-1.6b-extract
   - /lfm/models/lfm25-vl-450m
