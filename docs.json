@@ -189,7 +189,8 @@
             "icon": "rocket",
             "pages": [
               "examples/index",
-              "examples/connect-ai-tools"
+              "examples/connect-ai-tools",
+              "examples/agent-harnesses"
             ]
           },
           {

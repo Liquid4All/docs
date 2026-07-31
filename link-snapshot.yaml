@@ -89,6 +89,7 @@ active:
   - /docs/inference/sglang
   - /docs/inference/transformers
   - /docs/inference/vllm
+  - /examples/agent-harnesses
   - /examples/android/leap-koog-agent
   - /examples/android/recipe-generator-constrained-output
   - /examples/android/slogan-generator
