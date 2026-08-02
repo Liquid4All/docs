@@ -24,7 +24,7 @@ local URL yours prints. You point your harness at that URL.
 
 ### Model configuration
 
-[LFM2.5-2.6B](/lfm/models/lfm2.5-2.6b) is a dense 2.6B-parameter model built for on-device deployment. It runs fast on
+[LFM2.5-2.6B](/lfm/models/lfm25-2.6b) is a dense 2.6B-parameter model built for on-device deployment. It runs fast on
 consumer hardware and supports tool calling, which makes it a good fit for agentic workloads.
 
 The two settings worth choosing up front are the quantization and the context length. Both
@@ -73,7 +73,10 @@ Install one backend and start it with tool calling enabled.
       --port 8080 \
       -c 131072 \
       -fa on \
-      -ngl 99
+      -ngl 99 \
+      --temp 0.2 \
+      --top-k 80 \
+      --repeat-penalty 1.05
     ```
 
     | Flag       | Meaning                                           |
@@ -325,7 +328,7 @@ Now, you have your agent harness running fully locally on your machine.
 
 ## References
 
-- [LFM2.5-2.6B](/lfm/models/lfm2.5-2.6b)
+- [LFM2.5-2.6B](/lfm/models/lfm25-2.6b)
 - [llama.cpp deployment](/deployment/on-device/llama-cpp)
 - [vLLM deployment](/deployment/gpu-inference/vllm)
 - [SGLang deployment](/deployment/gpu-inference/sglang)
