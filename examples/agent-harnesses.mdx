@@ -45,7 +45,7 @@ vLLM and SGLang run the full-precision weights on GPU.
 **Context length**. Agents consume context quickly. If you hit truncation or context-overflow errors mid-run, raise the served
 context or trim the agent's history.
 LFM2.5-2.6B supports up to 128K tokens. The examples serve the full window, but if you're
-memory-constrained, serve a smaller window, which is usually plenty for a single agent task.
+memory-constrained, serve a smaller window such as 32K tokens, which is usually plenty for a single agent task.
 
 
 ### Start a server
@@ -114,7 +114,7 @@ Install one backend and start it with tool calling enabled.
     `mlx_lm.server` exposes an OpenAI-compatible endpoint:
 
     ```bash
-    mlx_lm.server --model mlx-community/LFM2.5-2.6B-4bit --port 8080
+    mlx_lm.server --model LiquidAI/LFM2.5-2.6B-MLX --port 8080
     ```
     Confirm your `mlx-lm` version forwards tools to the chat template.
   </Tab>
@@ -266,7 +266,7 @@ port with the one your server prints. Only the exact commands differ per harness
     ```bash
     openclaw dashboard
     ```
-    This opens the Control UI in your browser, where you enter the task below.
+    This opens the Control UI in your browser, where you enter your task.
   </Tab>
   <Tab title="Pi">
     Docs: [Pi models documentation](https://pi.dev/docs/latest/models).
