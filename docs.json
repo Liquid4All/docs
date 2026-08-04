@@ -1,7 +1,7 @@
 {
   "$schema": "https://mintlify.com/docs.json",
   "banner": {
-    "content": "🚀 New: LFM2.5-VL-450M — our smallest vision model is now available! [Learn more →](/lfm/models/lfm25-vl-450m)",
+    "content": "🚀 New: LFM2.5-2.6B — our on-device agentic model is now available! [Learn more →](/lfm/models/lfm25-2.6b)",
     "dismissible": true
   },
   "theme": "mint",
@@ -189,7 +189,8 @@
             "icon": "rocket",
             "pages": [
               "examples/index",
-              "examples/connect-ai-tools"
+              "examples/connect-ai-tools",
+              "examples/agent-harnesses"
             ]
           },
           {

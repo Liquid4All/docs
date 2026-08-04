@@ -1,0 +1,321 @@
+---
+title: "Run local agents with LFMs"
+description: "Run local agents with LFMs by connecting a locally served model to agent harnesses like Hermes Agent, OpenClaw, and Pi."
+---
+
+This guide shows how to run an agent harness fully locally with an LFM. 
+The pattern is the same for every harness: they all talk to an OpenAI-compatible
+endpoint, so you serve the model once and then point your agent harness of choice, such as [Hermes Agent](https://hermes-agent.nousresearch.com), [OpenClaw](https://openclaw.ai),
+and [Pi](https://pi.dev), at it.
+
+## Serve the model locally
+
+Any server that exposes an OpenAI-compatible `/v1` endpoint works. Install one backend and
+start it with tool calling enabled. Each backend serves on its own default port, so note the
+local URL yours prints. You point your harness at that URL.
+
+<Note>
+  Each backend uses its own default port, so your endpoint depends on which one you run.
+  llama.cpp and MLX use `8080`, vLLM uses `8000`, SGLang uses `30000`, and LM Studio uses `1234`.
+  The examples in this guide use `http://localhost:8080/v1`. When you configure a harness,
+  replace the port with your server's.
+</Note>
+
+### Model configuration
+
+[LFM2.5-2.6B](/lfm/models/lfm25-2.6b) is a dense 2.6B-parameter model built for on-device deployment. It runs fast on
+consumer hardware and supports tool calling, which makes it a good fit for agentic workloads.
+
+The two settings worth choosing up front are the quantization and the context length. Both
+trade memory for quality or capacity, so pick them to fit your hardware.
+
+**Quantization.** Because LFM2.5-2.6B is small, you have room to trade size for quality.
+For the GGUF quants, which cover llama.cpp and LM Studio, we recommend starting with `Q4_K_M` and stepping up to `Q8_0` or `BF16` depending on your available memory.
+
+| Quant    | Size    | Notes                                                    |
+| -------- | ------- | -------------------------------------------------------- |
+| `Q4_K_M` | 1.67 GB | Best balance of size and quality (recommended)           |
+| `Q6_K`   | 2.22 GB | Better quality                                           |
+| `Q8_0`   | 2.87 GB | Near-lossless and a safe choice for tool-heavy agentic work |
+| `BF16`   | 5.4 GB  | Full precision for maximum fidelity and benchmarking       |
+
+MLX uses its own quantization. Pick the 4-bit, 6-bit, 8-bit, or bf16 build from the MLX repo.
+vLLM and SGLang run the full-precision weights on GPU.
+
+**Context length**. Agents consume context quickly. If you hit truncation or context-overflow errors mid-run, raise the served
+context or trim the agent's history.
+LFM2.5-2.6B supports up to 128K tokens. The examples serve the full window, but if you're
+memory-constrained, serve a smaller window such as 32K tokens, which is usually plenty for a single agent task.
+
+
+### Start a server
+
+Install one backend and start it with tool calling enabled.
+
+<Tabs>
+  <Tab title="llama.cpp">
+    **Install:**
+
+    ```bash
+    brew install llama.cpp        # macOS
+    winget install llama.cpp      # Windows
+    ```
+    For Linux and build-from-source options, see the [llama.cpp guide](/deployment/on-device/llama-cpp).
+
+    **Run:**
+
+    The `-hf` flag auto-downloads the GGUF. 
+
+    ```bash
+    llama-server -hf LiquidAI/LFM2.5-2.6B-GGUF:Q4_K_M \
+      --jinja \
+      --port 8080 \
+      -c 131072 \
+      -fa on \
+      -ngl 99 \
+      --temp 0.1 \
+      --top-k 50 \
+      --repeat-penalty 1.1
+    ```
+
+    | Flag       | Meaning                                           |
+    | ---------- | ------------------------------------------------- |
+    | `--jinja`  | **Enables tool calling** via the model's template |
+    | `-c 131072` | Context window (128K)                            |
+    | `-fa on`   | Flash attention (needs a Metal or CUDA build)     |
+    | `-ngl 99`  | Offload all layers to GPU                         |
+  </Tab>
+  <Tab title="LM Studio">
+    **Install:**
+
+    Download and install [LM Studio](https://lmstudio.ai), then search for **LFM2.5-2.6B** in
+    the model catalog and download the `Q4_K_M` GGUF. See the
+    [LM Studio guide](/deployment/on-device/lm-studio).
+
+    **Run:**
+
+    Open the **Developer / Local Server** tab, then:
+
+    1. Load the **LFM2.5-2.6B** model.
+    2. Enable **tool use** in the model settings.
+    3. Set the context length in the model settings.
+    4. Click **Start Server**. It serves at `http://localhost:1234`.
+  </Tab>
+  <Tab title="MLX">
+    **Install** (Apple Silicon only):
+
+    ```bash
+    pip install mlx-lm
+    ```
+    See the [MLX guide](/deployment/on-device/mlx).
+
+    **Run:**
+
+    `mlx_lm.server` exposes an OpenAI-compatible endpoint:
+
+    ```bash
+    mlx_lm.server --model LiquidAI/LFM2.5-2.6B-MLX --port 8080
+    ```
+    Confirm your `mlx-lm` version forwards tools to the chat template.
+  </Tab>
+  <Tab title="vLLM">
+    **Install:**
+
+    ```bash
+    pip install vllm
+    ```
+    For GPU servers rather than laptops. See the [vLLM guide](/deployment/gpu-inference/vllm).
+
+    **Run:**
+
+    Tool calling requires explicit flags:
+
+    ```bash
+    vllm serve LiquidAI/LFM2.5-2.6B \
+      --enable-auto-tool-choice \
+      --tool-call-parser lfm2
+    ```
+    Serves at `http://localhost:8000/v1`.
+  </Tab>
+  <Tab title="SGLang">
+    **Install:**
+
+    ```bash
+    uv pip install "sglang>=0.5.10"
+    ```
+    For GPU servers rather than laptops. See the [SGLang guide](/deployment/gpu-inference/sglang).
+
+    **Run:**
+
+    Tool calling requires an explicit parser flag:
+
+    ```bash
+    sglang serve \
+      --model-path LiquidAI/LFM2.5-2.6B \
+      --host 0.0.0.0 \
+      --port 30000 \
+      --tool-call-parser lfm2
+    ```
+    Serves at `http://localhost:30000/v1`.
+  </Tab>
+</Tabs>
+
+Check that the model is loaded and reachable (replace `8080` with your server's port):
+
+```bash
+curl http://localhost:8080/v1/models
+```
+
+## Connect your agent harness
+
+Every harness connects the same way: install it, point it at your local server, then run.
+The examples below use `http://localhost:8080/v1` and model id `LFM2.5-2.6B`. Replace the
+port with the one your server prints. Only the exact commands differ per harness.
+
+<Tabs>
+  <Tab title="Hermes Agent">
+    Docs: [Custom / self-hosted providers](https://hermes-agent.nousresearch.com/docs/integrations/providers#custom--self-hosted-llm-providers).
+
+    **Install:**
+
+    ```bash
+    curl -fsSL https://hermes-agent.nousresearch.com/install.sh | bash
+    hermes setup
+    ```
+
+    **Configure:**
+
+    Use the interactive wizard:
+
+    ```bash
+    hermes model
+    # choose "Custom endpoint (self-hosted / vLLM / etc.)"
+    # API base URL: http://localhost:8080/v1
+    # API key:      (leave empty for local)
+    # Model name:   LFM2.5-2.6B
+    ```
+
+    Or set it directly, then **enable tool-use enforcement** (without it, the model tends to
+    *describe* actions instead of calling tools):
+
+    ```bash
+    hermes config set model.provider custom
+    hermes config set model.base_url http://localhost:8080/v1
+    hermes config set model.default LFM2.5-2.6B
+    hermes config set model.context_length 131072
+    hermes config set model.api_mode chat_completions
+    hermes config set agent.tool_use_enforcement true
+    ```
+
+    **Run:**
+
+    ```bash
+    hermes
+    ```
+  > [!Note]
+  > If `web_search` is missing from the model's available tools, it may be due to `search` or `browser` being listed in `agent.disabled_toolsets`. Remove both entries in `hermes config edit` and restart Hermes.
+  </Tab>
+  <Tab title="OpenClaw">
+    Docs: [Getting started](https://docs.openclaw.ai/start/getting-started) and [Local models](https://docs.openclaw.ai/gateway/local-models).
+
+    **Install:**
+
+    ```bash
+    curl -fsSL https://openclaw.ai/install.sh | bash   # macOS / Linux
+    openclaw onboard --install-daemon
+    ```
+
+    **Configure:**
+
+    Add a custom OpenAI-compatible provider (JSON5) under `models.providers`. Tool calling is
+    on by default for custom providers.
+
+    ```json5
+    {
+      models: {
+        mode: "merge",
+        providers: {
+          local: {
+            baseUrl: "http://localhost:8080/v1",
+            apiKey: "sk-local",          // a local marker is accepted for loopback
+            api: "openai-completions",
+            models: [
+              {
+                id: "LFM2.5-2.6B",
+                name: "LFM2.5-2.6B",
+                input: ["text"],
+                contextWindow: 131072,
+                maxTokens: 8192,
+                cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
+              },
+            ],
+          },
+        },
+      },
+    }
+    ```
+
+    Select it as the active model:
+
+    ```json5
+    { agents: { defaults: { model: { primary: "local/LFM2.5-2.6B" } } } }
+    ```
+
+    **Run:**
+
+    ```bash
+    openclaw dashboard
+    ```
+    This opens the Control UI in your browser, where you enter your task.
+  </Tab>
+  <Tab title="Pi">
+    Docs: [Pi models documentation](https://pi.dev/docs/latest/models).
+
+    **Install:**
+
+    ```bash
+    npm install -g --ignore-scripts @earendil-works/pi-coding-agent   # recommended
+    # or: curl -fsSL https://pi.dev/install.sh | sh
+    ```
+
+    **Configure:**
+
+    Add the provider to `~/.pi/agent/models.json` (the file reloads when you run `/model`, so
+    no restart is needed):
+
+    ```json
+    {
+      "providers": {
+        "local": {
+          "baseUrl": "http://localhost:8080/v1",
+          "api": "openai-completions",
+          "apiKey": "local",
+          "models": [{ "id": "LFM2.5-2.6B" }]
+        }
+      }
+    }
+    ```
+
+    `apiKey` can be any placeholder for a keyless local server. If Pi flags unsupported
+    features, add a `compat` block, e.g. `"compat": { "supportsReasoningEffort": false }`.
+
+    **Run:**
+
+    ```bash
+    pi
+    ```
+    Then select the model with `/model`.
+  </Tab>
+</Tabs>
+
+Now, you have your agent harness running fully locally on your machine. 
+
+## References
+
+- [LFM2.5-2.6B](/lfm/models/lfm25-2.6b)
+- [llama.cpp deployment](/deployment/on-device/llama-cpp)
+- [vLLM deployment](/deployment/gpu-inference/vllm)
+- [SGLang deployment](/deployment/gpu-inference/sglang)
+- [Hermes Agent documentation](https://hermes-agent.nousresearch.com/docs/)
+- [OpenClaw documentation](https://docs.openclaw.ai/)
+- [Pi documentation](https://pi.dev/docs/)
