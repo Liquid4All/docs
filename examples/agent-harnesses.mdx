@@ -1,12 +1,12 @@
 ---
 title: "Run local agents with LFMs"
-description: "Run local agents with LFMs by connecting a locally served model to agent harnesses like Pi, Hermes Agent, and OpenClaw."
+description: "Run local agents with LFMs by connecting a locally served model to agent harnesses like Hermes Agent, OpenClaw, and Pi."
 ---
 
 This guide shows how to run an agent harness fully locally with an LFM. 
 The pattern is the same for every harness: they all talk to an OpenAI-compatible
-endpoint, so you serve the model once and then point your agent harness of choice, such as [Pi](https://pi.dev), [Hermes Agent](https://hermes-agent.nousresearch.com),
-and [OpenClaw](https://openclaw.ai), at it.
+endpoint, so you serve the model once and then point your agent harness of choice, such as [Hermes Agent](https://hermes-agent.nousresearch.com), [OpenClaw](https://openclaw.ai),
+and [Pi](https://pi.dev), at it.
 
 ## Serve the model locally
 
@@ -16,8 +16,7 @@ local URL yours prints. You point your harness at that URL.
 
 <Note>
   Each backend uses its own default port, so your endpoint depends on which one you run.
-  llama.cpp and MLX use `8080`, vLLM uses `8000`, SGLang uses `30000`, LM Studio uses `1234`,
-  and Ollama uses `11434`.
+  llama.cpp and MLX use `8080`, vLLM uses `8000`, SGLang uses `30000`, and LM Studio uses `1234`.
   The examples in this guide use `http://localhost:8080/v1`. When you configure a harness,
   replace the port with your server's.
 </Note>
@@ -31,7 +30,7 @@ The two settings worth choosing up front are the quantization and the context le
 trade memory for quality or capacity, so pick them to fit your hardware.
 
 **Quantization.** Because LFM2.5-2.6B is small, you have room to trade size for quality.
-For the GGUF quants, which cover llama.cpp, LM Studio, and Ollama, we recommend starting with `Q4_K_M` and stepping up to `Q8_0` or `BF16` depending on your available memory.
+For the GGUF quants, which cover llama.cpp and LM Studio, we recommend starting with `Q4_K_M` and stepping up to `Q8_0` or `BF16` depending on your available memory.
 
 | Quant    | Size    | Notes                                                    |
 | -------- | ------- | -------------------------------------------------------- |
@@ -81,7 +80,7 @@ Install one backend and start it with tool calling enabled.
 
     | Flag       | Meaning                                           |
     | ---------- | ------------------------------------------------- |
-    | `--jinja`  | **Enables tool calling** via the model's template [TODO: verify] |
+    | `--jinja`  | **Enables tool calling** via the model's template |
     | `-c 131072` | Context window (128K)                            |
     | `-fa on`   | Flash attention (needs a Metal or CUDA build)     |
     | `-ngl 99`  | Offload all layers to GPU                         |
@@ -90,7 +89,7 @@ Install one backend and start it with tool calling enabled.
     **Install:**
 
     Download and install [LM Studio](https://lmstudio.ai), then search for **LFM2.5-2.6B** in
-    the model catalog and download the `Q4_K_M` GGUF. [VERIFY availability] See the
+    the model catalog and download the `Q4_K_M` GGUF. See the
     [LM Studio guide](/deployment/on-device/lm-studio).
 
     **Run:**
@@ -117,24 +116,7 @@ Install one backend and start it with tool calling enabled.
     ```bash
     mlx_lm.server --model mlx-community/LFM2.5-2.6B-4bit --port 8080
     ```
-    Confirm your `mlx-lm` version forwards tools to the chat template. [VERIFY MLX repo/quant + tool-calling support]
-  </Tab>
-  <Tab title="Ollama">
-    **Install:**
-
-    ```bash
-    brew install ollama                           # macOS
-    curl -fsSL https://ollama.com/install.sh | sh # Linux
-    ```
-    See the [Ollama guide](/deployment/on-device/ollama) for Windows and other options.
-
-    **Run:**
-
-    ```bash
-    ollama pull LFM2.5-2.6B                          # [VERIFY exact Ollama tag]
-    ollama serve                                     # serves http://localhost:11434
-    ```
-    Confirm the model tag supports tool calling. [VERIFY Ollama tool-calling support]
+    Confirm your `mlx-lm` version forwards tools to the chat template.
   </Tab>
   <Tab title="vLLM">
     **Install:**
@@ -191,44 +173,6 @@ The examples below use `http://localhost:8080/v1` and model id `LFM2.5-2.6B`. Re
 port with the one your server prints. Only the exact commands differ per harness.
 
 <Tabs>
-  <Tab title="Pi">
-    Docs: [Pi models documentation](https://pi.dev/docs/latest/models).
-
-    **Install:**
-
-    ```bash
-    npm install -g --ignore-scripts @earendil-works/pi-coding-agent   # recommended
-    # or: curl -fsSL https://pi.dev/install.sh | sh
-    ```
-
-    **Configure:**
-
-    Add the provider to `~/.pi/agent/models.json` (the file reloads when you run `/model`, so
-    no restart is needed):
-
-    ```json
-    {
-      "providers": {
-        "local": {
-          "baseUrl": "http://localhost:8080/v1",
-          "api": "openai-completions",
-          "apiKey": "local",
-          "models": [{ "id": "LFM2.5-2.6B" }]
-        }
-      }
-    }
-    ```
-
-    `apiKey` can be any placeholder for a keyless local server. If Pi flags unsupported
-    features, add a `compat` block, e.g. `"compat": { "supportsReasoningEffort": false }`.
-
-    **Run:**
-
-    ```bash
-    pi
-    ```
-    Then select the model with `/model`.
-  </Tab>
   <Tab title="Hermes Agent">
     Docs: [Custom / self-hosted providers](https://hermes-agent.nousresearch.com/docs/integrations/providers#custom--self-hosted-llm-providers).
 
@@ -322,6 +266,44 @@ port with the one your server prints. Only the exact commands differ per harness
     ```
     This opens the Control UI in your browser, where you enter the task below.
   </Tab>
+  <Tab title="Pi">
+    Docs: [Pi models documentation](https://pi.dev/docs/latest/models).
+
+    **Install:**
+
+    ```bash
+    npm install -g --ignore-scripts @earendil-works/pi-coding-agent   # recommended
+    # or: curl -fsSL https://pi.dev/install.sh | sh
+    ```
+
+    **Configure:**
+
+    Add the provider to `~/.pi/agent/models.json` (the file reloads when you run `/model`, so
+    no restart is needed):
+
+    ```json
+    {
+      "providers": {
+        "local": {
+          "baseUrl": "http://localhost:8080/v1",
+          "api": "openai-completions",
+          "apiKey": "local",
+          "models": [{ "id": "LFM2.5-2.6B" }]
+        }
+      }
+    }
+    ```
+
+    `apiKey` can be any placeholder for a keyless local server. If Pi flags unsupported
+    features, add a `compat` block, e.g. `"compat": { "supportsReasoningEffort": false }`.
+
+    **Run:**
+
+    ```bash
+    pi
+    ```
+    Then select the model with `/model`.
+  </Tab>
 </Tabs>
 
 Now, you have your agent harness running fully locally on your machine. 
@@ -332,6 +314,6 @@ Now, you have your agent harness running fully locally on your machine.
 - [llama.cpp deployment](/deployment/on-device/llama-cpp)
 - [vLLM deployment](/deployment/gpu-inference/vllm)
 - [SGLang deployment](/deployment/gpu-inference/sglang)
-- [Pi documentation](https://pi.dev/docs/)
 - [Hermes Agent documentation](https://hermes-agent.nousresearch.com/docs/)
 - [OpenClaw documentation](https://docs.openclaw.ai/)
+- [Pi documentation](https://pi.dev/docs/)
