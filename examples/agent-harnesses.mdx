@@ -212,6 +212,8 @@ port with the one your server prints. Only the exact commands differ per harness
     ```bash
     hermes
     ```
+  > [!Note]
+  > If `web_search` is missing from the model's available tools, it may be due to `search` or `browser` being listed in `agent.disabled_toolsets`. Remove both entries in `hermes config edit` and restart Hermes.
   </Tab>
   <Tab title="OpenClaw">
     Docs: [Getting started](https://docs.openclaw.ai/start/getting-started) and [Local models](https://docs.openclaw.ai/gateway/local-models).
