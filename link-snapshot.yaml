@@ -140,6 +140,7 @@ active:
   - /lfm/key-concepts/chat-template
   - /lfm/key-concepts/text-generation-and-prompting
   - /lfm/key-concepts/tool-use
+  - /lfm/key-concepts/vision-capabilities
   - /lfm/models/audio-models
   - /lfm/models/complete-library
   - /lfm/models/lfm2-1.2b
