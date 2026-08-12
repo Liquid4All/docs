@@ -1,4 +1,4 @@
-export const VlSglang = ({ modelId }) => (
+export const VlSglang = ({ modelId, samplingArgs = "temperature=0.0" }) => (
 <div>
 <p><strong>Install:</strong></p>
 <CodeBlock language="bash">
@@ -26,7 +26,7 @@ response = client.chat.completions.create(
             {"type": "text", "text": "Describe what you see in this image."},
         ],
     }],
-    temperature=0.0,
+    ${samplingArgs},
     max_tokens=256,
 )
 

@@ -179,6 +179,7 @@ active:
   - /lfm/models/lfm25-encoder-350m
   - /lfm/models/lfm25-vl-1.6b
   - /lfm/models/lfm25-vl-1.6b-extract
+  - /lfm/models/lfm25-vl-3b
   - /lfm/models/lfm25-vl-450m
   - /lfm/models/lfm25-vl-450m-extract
   - /lfm/models/liquid-nanos
