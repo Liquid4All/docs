@@ -1,7 +1,7 @@
 {
   "$schema": "https://mintlify.com/docs.json",
   "banner": {
-    "content": "🚀 New: LFM2.5-2.6B — our on-device agentic model is now available! [Learn more →](/lfm/models/lfm25-2.6b)",
+    "content": "🚀 New: LFM2.5-VL-3B — our most capable vision-language model is now available! [Learn more →](/lfm/models/lfm25-vl-3b)",
     "dismissible": true
   },
   "theme": "mint",
@@ -73,7 +73,8 @@
               },
               "lfm/key-concepts/chat-template",
               "lfm/key-concepts/text-generation-and-prompting",
-              "lfm/key-concepts/tool-use"
+              "lfm/key-concepts/tool-use",
+              "lfm/key-concepts/vision-capabilities"
             ]
           },
           {

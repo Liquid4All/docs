@@ -140,6 +140,7 @@ active:
   - /lfm/key-concepts/chat-template
   - /lfm/key-concepts/text-generation-and-prompting
   - /lfm/key-concepts/tool-use
+  - /lfm/key-concepts/vision-capabilities
   - /lfm/models/audio-models
   - /lfm/models/complete-library
   - /lfm/models/lfm2-1.2b
@@ -178,6 +179,7 @@ active:
   - /lfm/models/lfm25-encoder-350m
   - /lfm/models/lfm25-vl-1.6b
   - /lfm/models/lfm25-vl-1.6b-extract
+  - /lfm/models/lfm25-vl-3b
   - /lfm/models/lfm25-vl-450m
   - /lfm/models/lfm25-vl-450m-extract
   - /lfm/models/liquid-nanos
