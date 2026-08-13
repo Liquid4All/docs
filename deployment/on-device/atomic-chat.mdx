@@ -50,7 +50,33 @@ LFM2-VL and LFM2.5-VL GGUF models run in Atomic Chat on both desktop and mobile.
 
 ## Local API Server
 
-On macOS, Atomic Chat can expose the loaded model through a local OpenAI-compatible endpoint. Point Cline, Kilo Code, or any OpenAI client at the base URL shown in the app, with no API key required.
+On desktop, Atomic Chat can serve the currently loaded model through a local OpenAI-compatible endpoint:
+
+1. Load the model in a chat
+2. Open **Integrations**
+3. Click **Start Server**
+
+The server listens at `http://localhost:1337/v1` by default (the port, path prefix, and an optional API key are configurable in the server settings). Point Cline, Kilo Code, or any OpenAI client at it:
+
+```python
+from openai import OpenAI
+
+client = OpenAI(
+    base_url="http://localhost:1337/v1",
+    api_key="not-needed"
+)
+
+response = client.chat.completions.create(
+    model="lfm2.5-1.2b-instruct",  # the model name shown in the app
+    messages=[
+        {"role": "user", "content": "What is machine learning?"}
+    ],
+    temperature=0.1,
+    max_tokens=512,
+    extra_body={"top_k": 50, "repeat_penalty": 1.05},
+)
+print(response.choices[0].message.content)
+```
 
 ## Tips
 
