@@ -8,7 +8,7 @@ description: "Liquid Foundation Models (LFMs) are a new class of multimodal arch
 All of our models share the following capabilities:
 
 - 32K token context length for extended conversations and document processing (128K for LFM2.5-8B-A1B)
-- Designed for fast inference with [Transformers](/deployment/gpu-inference/transformers), [llama.cpp](/deployment/on-device/llama-cpp), [vLLM](/deployment/gpu-inference/vllm), [SGLang](/deployment/gpu-inference/sglang), [MLX](/deployment/on-device/mlx), [Ollama](/deployment/on-device/ollama), and [LEAP](/deployment/on-device/sdk/quick-start)
+- Designed for fast inference with [Transformers](/deployment/gpu-inference/transformers), [llama.cpp](/deployment/on-device/llama-cpp), [vLLM](/deployment/gpu-inference/vllm), [SGLang](/deployment/gpu-inference/sglang), [MLX](/deployment/on-device/mlx), [Ollama](/deployment/on-device/ollama), [Atomic&nbsp;Chat](/deployment/on-device/atomic-chat), and [LEAP](/deployment/on-device/sdk/quick-start)
 - Trainable via SFT, DPO, VLM, and GRPO workflows with [LEAP Finetune](/lfm/fine-tuning/leap-finetune), [TRL](/lfm/fine-tuning/trl), and [Unsloth](/lfm/fine-tuning/unsloth)
 
 </div>
@@ -53,7 +53,7 @@ Start with the model family that matches your input and output shape, then choos
 </Card>
 
 <Card title="Local and On-Device" icon="laptop" href="/deployment/on-device/llama-cpp">
-  Use [llama.cpp](/deployment/on-device/llama-cpp), [Ollama](/deployment/on-device/ollama), [MLX](/deployment/on-device/mlx), or the [LEAP SDK](/deployment/on-device/sdk/quick-start) depending on platform and packaging needs.
+  Use [llama.cpp](/deployment/on-device/llama-cpp), [Ollama](/deployment/on-device/ollama), [Atomic Chat](/deployment/on-device/atomic-chat), [MLX](/deployment/on-device/mlx), or the [LEAP SDK](/deployment/on-device/sdk/quick-start) depending on platform and packaging needs.
 </Card>
 
 <Card title="Fine-Tuning" icon="sliders" href="/lfm/fine-tuning/leap-finetune">
@@ -70,8 +70,8 @@ Start with the model family that matches your input and output shape, then choos
 
 Use the format that matches your runtime and deployment target:
 
-- **GGUF** — Best for local CPU/GPU inference on any platform. Use with [llama.cpp](/deployment/on-device/llama-cpp), [LM Studio](/deployment/on-device/lm-studio), or [Ollama](/deployment/on-device/ollama). Append `-GGUF` to any model name.
-- **MLX** — Best for Mac users with Apple Silicon. Leverages unified memory for fast inference via [MLX](/deployment/on-device/mlx). Browse at [mlx-community](https://huggingface.co/mlx-community/collections?search=LFM).
+- **GGUF** — Best for local CPU/GPU inference on any platform. Use with [llama.cpp](/deployment/on-device/llama-cpp), [LM Studio](/deployment/on-device/lm-studio), [Ollama](/deployment/on-device/ollama), or [Atomic Chat](/deployment/on-device/atomic-chat). Append `-GGUF` to any model name.
+- **MLX** — Best for Mac users with Apple Silicon. Leverages unified memory for fast inference via [MLX](/deployment/on-device/mlx) or [Atomic Chat](/deployment/on-device/atomic-chat). Browse at [mlx-community](https://huggingface.co/mlx-community/collections?search=LFM).
 - **ONNX** — Best for production deployments and edge devices. Cross-platform with ONNX Runtime across CPUs, GPUs, and accelerators. Append `-ONNX` to any model name.
 
 ### Quantization
