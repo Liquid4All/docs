@@ -1,0 +1,59 @@
+---
+title: "Atomic Chat"
+description: "Atomic Chat is a desktop and mobile app for running LLMs and agents locally with a friendly graphical user interface."
+---
+
+<Tip>
+  Use Atomic Chat for local inference with a graphical interface on desktop and mobile, one-click model downloads from Hugging Face, and no command-line setup.
+</Tip>
+
+Atomic Chat uses GGUF models on all platforms and MLX models on Apple Silicon.
+
+## Installation
+
+Download and install Atomic Chat from [atomic.chat](https://atomic.chat):
+
+* **macOS** (Apple Silicon): DMG installer
+* **Windows** (x64): EXE installer
+* **Linux** (x86_64): AppImage
+* **iPhone and iPad**: [App Store](https://apps.apple.com/us/app/atomic-chat-private-local-ai/id6761720226)
+* **Android**: [Google Play](https://play.google.com/store/apps/details?id=chat.atomic.app)
+
+## Downloading Models
+
+1. Open Atomic Chat and open the model library
+2. Search for "LiquidAI" or any other model
+3. Select a model and quantization level
+4. Click Download
+
+The model library searches Hugging Face directly, so all LiquidAI GGUF releases are available in the app from day zero.
+
+### Open from Hugging Face
+
+Atomic Chat is a Local Apps provider on Hugging Face, so models can be opened straight from the Hub:
+
+1. Open any GGUF or MLX model page, for example [LFM2.5-VL-3B-GGUF](https://huggingface.co/LiquidAI/LFM2.5-VL-3B-GGUF)
+2. Click **Use this model** and choose **Atomic Chat**
+3. The model opens in the app: download it and start chatting
+
+## Using the Chat Interface
+
+1. Start a new chat and select your downloaded model
+2. Adjust sampling parameters (`temperature`, `top_k`, `repeat_penalty`) in the model settings
+3. Start chatting
+
+Use the sampling parameters recommended on each model card. For example, `LFM2.5-1.2B-Instruct` works best with `temperature` 0.1, `top_k` 50, and `repeat_penalty` 1.05.
+
+## Vision Models
+
+LFM2-VL and LFM2.5-VL GGUF models run in Atomic Chat on both desktop and mobile. Download a vision model from the model library, then attach images to your messages to ask questions about them.
+
+## Local API Server
+
+On macOS, Atomic Chat can expose the loaded model through a local OpenAI-compatible endpoint. Point Cline, Kilo Code, or any OpenAI client at the base URL shown in the app, with no API key required.
+
+## Tips
+
+* **Quantization**: `Q4_K_M` offers the best balance of size and quality; step up to `Q6_K` or `Q8_0` if you have memory to spare
+* **Apple Silicon**: GGUF models run with Metal acceleration, and MLX builds of LFM models are supported natively
+* **Long conversations**: the TurboQuant engine compresses the KV cache to 3-4 bits, so long contexts fit in significantly less memory
