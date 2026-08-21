@@ -1,6 +1,6 @@
 ---
 title: "Atomic Chat"
-description: "Atomic Chat is a desktop and mobile app for running LLMs and agents locally with a friendly graphical user interface."
+description: "Atomic Chat is a desktop and mobile app for running LLMs locally with a graphical user interface."
 ---
 
 <Tip>
@@ -21,42 +21,50 @@ Download and install Atomic Chat from [atomic.chat](https://atomic.chat):
 
 ## Downloading Models
 
-1. Open Atomic Chat and open the model library
-2. Search for "LiquidAI" or any other model
-3. Select a model and quantization level
-4. Click Download
+1. Open Atomic Chat and open the model library via the **Models** tab
+2. Search for "LiquidAI"
+3. Select a model and quantization level (`Q4_K_M` recommended)
+4. Click **Download**
 
-The model library searches Hugging Face directly, so all LiquidAI GGUF releases are available in the app from day zero.
-
-### Open from Hugging Face
-
-Atomic Chat is a Local Apps provider on Hugging Face, so models can be opened straight from the Hub:
-
-1. Open any GGUF or MLX model page, for example [LFM2.5-VL-3B-GGUF](https://huggingface.co/LiquidAI/LFM2.5-VL-3B-GGUF)
-2. Click **Use this model** and choose **Atomic Chat**
-3. The model opens in the app: download it and start chatting
+See the [Models page](/lfm/models/complete-library) for all available GGUF models.
 
 ## Using the Chat Interface
 
-1. Start a new chat and select your downloaded model
-2. Adjust sampling parameters (`temperature`, `top_k`, `repeat_penalty`) in the model settings
-3. Start chatting
+1. Go to the **New Chat** tab 
+2. Select your model from the dropdown
+3. Adjust parameters (`temperature`, `top_k`, `repeat_penalty`) in the model settings
+4. Start chatting
 
-Use the sampling parameters recommended on each model card. For example, `LFM2.5-1.2B-Instruct` works best with `temperature` 0.1, `top_k` 50, and `repeat_penalty` 1.05.
+## Generation Parameters
 
-## Vision Models
+Control text generation behavior using the GUI sidebar or API parameters. Key parameters:
 
-LFM2-VL and LFM2.5-VL GGUF models run in Atomic Chat on both desktop and mobile. Download a vision model from the model library, then attach images to your messages to ask questions about them.
+* **`temperature`** (`float`, default 1.0): Controls randomness (0.0 = deterministic, higher = more random). Typical range: 0.1-2.0
+* **`top_p`** (`float`, default 1.0): Nucleus sampling - limits to tokens with cumulative probability ≤ top\_p. Typical range: 0.1-1.0
+* **`top_k`** (`int`, default 40): Limits to top-k most probable tokens. Typical range: 1-100
+* **`repeat_penalty`** (`float`, default 1.0): Penalty for repeating tokens (>1.0 = discourage repetition). Typical range: 1.0-1.5
 
-## Local API Server
+Via the OpenAI-compatible API:
 
-On desktop, Atomic Chat can serve the currently loaded model through a local OpenAI-compatible endpoint:
+```python
+response = client.chat.completions.create(
+    model="local-model",
+    messages=[{"role": "user", "content": "What is machine learning?"}],
+    temperature=0.1,
+    max_tokens=512,
+    extra_body={"top_k": 50, "repeat_penalty": 1.05},
+)
+```
+
+## Running the Server
+
+On desktop, Atomic Chat can serve the currently loaded model through a local OpenAI-compatible server for programmatic access:
 
 1. Load the model in a chat
-2. Open **Integrations**
-3. Click **Start Server**
+2. Open the **Integrations** tab
+3. Click **Start Server** (runs at `http://localhost:1337/`)
 
-The server listens at `http://localhost:1337/v1` by default (the port, path prefix, and an optional API key are configurable in the server settings). Point Cline, Kilo Code, or any OpenAI client at it:
+Use the OpenAI Python client:
 
 ```python
 from openai import OpenAI
@@ -67,7 +75,7 @@ client = OpenAI(
 )
 
 response = client.chat.completions.create(
-    model="lfm2.5-1.2b-instruct",  # the model name shown in the app
+    model="local-model",  # Any string works
     messages=[
         {"role": "user", "content": "What is machine learning?"}
     ],
@@ -77,6 +85,74 @@ response = client.chat.completions.create(
 )
 print(response.choices[0].message.content)
 ```
+
+### Streaming Responses
+
+```python
+stream = client.chat.completions.create(
+    model="local-model",
+    messages=[
+        {"role": "user", "content": "Tell me a story."}
+    ],
+    stream=True
+)
+
+for chunk in stream:
+    if chunk.choices[0].delta.content is not None:
+        print(chunk.choices[0].delta.content, end="")
+```
+
+You can also use curl to interact with the server:
+
+<Accordion title="Curl request example">
+  ```bash
+  curl http://localhost:1337/v1/chat/completions \
+    -H "Content-Type: application/json" \
+    -d '{
+      "model": "local-model",
+      "messages": [{"role": "user", "content": "Hello!"}],
+      "temperature": 0.1,
+      "top_k": 50,
+      "repeat_penalty": 1.05
+    }'
+  ```
+</Accordion>
+
+## Vision Models
+
+LFM2-VL and LFM2.5-VL GGUF models run in Atomic Chat on both desktop and mobile. 
+
+Download a vision model from the model library, then attach images to your messages to ask questions about them.
+
+<Accordion title="Using the API">
+  ```python
+  from openai import OpenAI
+  import base64
+
+  client = OpenAI(
+      base_url="http://localhost:1337/v1",
+      api_key="not-needed"
+  )
+
+  # Encode image to base64
+  with open("image.jpg", "rb") as image_file:
+      image_data = base64.b64encode(image_file.read()).decode("utf-8")
+
+  response = client.chat.completions.create(
+      model="local-model",
+      messages=[
+          {
+              "role": "user",
+              "content": [
+                  {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{image_data}"}},
+                  {"type": "text", "text": "What's in this image?"}
+              ]
+          }
+      ]
+  )
+  print(response.choices[0].message.content)
+  ```
+</Accordion>
 
 ## Tips
 
