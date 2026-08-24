@@ -6,7 +6,7 @@ export const TextLlamacpp = ({ ggufRepo, samplingFlags }) => (
 </CodeBlock>
 <p><strong>Run:</strong></p>
 <CodeBlock language="bash">
-{`llama-cli -hf ${ggufRepo} -c 4096 --color -i \\
+{`llama-cli -hf ${ggufRepo} --conversation \\
     ${samplingFlags}`}
 </CodeBlock>
 <p>The <code>-hf</code> flag downloads the model directly from Hugging Face. For other installation methods and advanced usage, see the <a href="/docs/inference/llama-cpp">llama.cpp guide</a>.</p>
