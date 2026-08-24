@@ -1,5 +1,5 @@
 ---
-title: "Text Generation and Prompting"
+title: "Prompting Guide"
 description: "This guide covers how to effectively use system prompts, user prompts, and assistant prompts with LFM2 models, along with an overview of sampling parameters and special prompting recipes for specific models."
 ---
 
@@ -68,14 +68,12 @@ Sampling parameters control text generation behavior and balance creativity, det
 
 Use the recommended values on each model page.
 
-| Parameter | What it controls | Notes |
-| --- | --- | --- |
-| `temperature` (0.0-2.0) | Randomness control. Lower (0.1-0.7) = deterministic; higher (0.8-1.5) = creative. |
-| `top_p` (0.0-1.0) | Nucleus sampling. Lower (0.1-0.5) = focused; higher (0.7-0.95) = diverse. |
-| `top_k` | Limits to top-k tokens. Lower (10-50) = high-probability; higher (50-100) = diverse. |
-| `min_p` (0.0-1.0) | Filters tokens below `min_p * max_probability`. Maintains quality with diversity. |
-| Repetition penalty  (1.0+) | Reduces repetition. `1.0` means no penalty. Values above `1.0` prevent repetition. |
-| Output length (`max_tokens` / `max_new_tokens`) | Maximum number of generated tokens |
+* **`temperature`** (0.0-2.0) - Randomness control. Lower (0.1-0.7) = deterministic; higher (0.8-1.5) = creative.
+* **`top_p`** (0.0-1.0) - Nucleus sampling. Lower (0.1-0.5) = focused; higher (0.7-0.95) = diverse.
+* **`top_k`** - Limits to top-k tokens. Lower (10-50) = high-probability; higher (50-100) = diverse.
+* **`min_p`** (0.0-1.0) - Filters tokens below `min_p * max_probability`. Maintains quality with diversity.
+* **`repetition_penalty`** (1.0+) - Reduces repetition. 1.0 = no penalty; >1.0 = prevents repetition.
+* **`max_tokens`** / **`max_new_tokens`** - Maximum tokens to generate.
 
 Parameter names and syntax vary by platform. See [Transformers](/deployment/gpu-inference/transformers), [vLLM](/deployment/gpu-inference/vllm), or [llama.cpp](/deployment/on-device/llama-cpp) for details.
 
@@ -109,6 +107,14 @@ min_image_tokens = 64
 max_image_tokens = 64
 min_image_tokens = 32
 ```
+
+### Recommended Settings Vision
+
+**For vision models:**
+
+* `min_image_tokens=64`
+* `max_image_tokens=256`
+* `do_image_splitting=True`
 
 <Note>
 **Liquid Nanos** (task-specific models like LFM2-Extract, LFM2-RAG, LFM2-Tool, etc.) may have special prompting requirements and different generation parameters. For the best usage guidelines, refer to the individual model cards on the [Liquid Nanos](/lfm/models/liquid-nanos) page.
