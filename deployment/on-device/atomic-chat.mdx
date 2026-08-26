@@ -26,6 +26,8 @@ Download and install Atomic Chat from [atomic.chat](https://atomic.chat):
 3. Select a model and quantization level (`Q4_K_M` recommended)
 4. Click **Download**
 
+Alternatively, enable [Hugging Face Local Apps](https://huggingface.co/docs/hub/local-apps), then choose **Use this model** > **Atomic Chat** from a compatible model page.
+
 See the [Models page](/lfm/models/complete-library) for all available GGUF models.
 
 ## Using the Chat Interface
@@ -48,7 +50,7 @@ Via the OpenAI-compatible API:
 
 ```python
 response = client.chat.completions.create(
-    model="local-model",
+    model="<model-id-from-v1-models>",
     messages=[{"role": "user", "content": "What is machine learning?"}],
     temperature=0.1,
     max_tokens=512,
@@ -62,7 +64,13 @@ On desktop, Atomic Chat can serve the currently loaded model through a local Ope
 
 1. Load the model in a chat
 2. Open the **Integrations** tab
-3. Click **Start Server** (runs at `http://localhost:1337/`)
+3. Click **Start Server**. The server defaults to `http://localhost:1337/`; use the port shown in the app if you changed it or if that port was unavailable.
+
+Get the loaded model's ID before sending requests:
+
+```bash
+curl http://localhost:1337/v1/models
+```
 
 Use the OpenAI Python client:
 
@@ -75,7 +83,7 @@ client = OpenAI(
 )
 
 response = client.chat.completions.create(
-    model="local-model",  # Any string works
+    model="<model-id-from-v1-models>",
     messages=[
         {"role": "user", "content": "What is machine learning?"}
     ],
@@ -90,7 +98,7 @@ print(response.choices[0].message.content)
 
 ```python
 stream = client.chat.completions.create(
-    model="local-model",
+    model="<model-id-from-v1-models>",
     messages=[
         {"role": "user", "content": "Tell me a story."}
     ],
@@ -109,7 +117,7 @@ You can also use curl to interact with the server:
   curl http://localhost:1337/v1/chat/completions \
     -H "Content-Type: application/json" \
     -d '{
-      "model": "local-model",
+      "model": "<model-id-from-v1-models>",
       "messages": [{"role": "user", "content": "Hello!"}],
       "temperature": 0.1,
       "top_k": 50,
@@ -120,7 +128,7 @@ You can also use curl to interact with the server:
 
 ## Vision Models
 
-LFM2-VL and LFM2.5-VL GGUF models run in Atomic Chat on both desktop and mobile. 
+Atomic Chat supports LFM2-VL and LFM2.5-VL GGUF models on desktop. Its mobile catalog is curated by platform; LFM2.5-VL-1.6B is available for mobile vision inference.
 
 Download a vision model from the model library, then attach images to your messages to ask questions about them.
 
@@ -139,7 +147,7 @@ Download a vision model from the model library, then attach images to your messa
       image_data = base64.b64encode(image_file.read()).decode("utf-8")
 
   response = client.chat.completions.create(
-      model="local-model",
+      model="<model-id-from-v1-models>",
       messages=[
           {
               "role": "user",
@@ -158,4 +166,4 @@ Download a vision model from the model library, then attach images to your messa
 
 * **Quantization**: `Q4_K_M` offers the best balance of size and quality; step up to `Q6_K` or `Q8_0` if you have memory to spare
 * **Apple Silicon**: GGUF models run with Metal acceleration, and MLX builds of LFM models are supported natively
-* **Long conversations**: the TurboQuant engine compresses the KV cache to 3-4 bits, so long contexts fit in significantly less memory
+* **Long conversations (desktop)**: TurboQuant can compress the KV cache to 3 or 4 bits, so long contexts fit in significantly less memory
