@@ -71,7 +71,7 @@ description: "Lightweight client for OpenAI-compatible chat completions APIs —
 <Tabs>
   <Tab title="Swift (iOS / macOS)">
     <Info>
-    **New in v0.10.8.** SKIE is now applied to `leap-sdk-openai-client`, matching `LeapSDK` / `LeapModelDownloader` / `LeapUI`. Swift consumers get a real `AsyncSequence`, exhaustive `onEnum(of:)` switching, nested Kotlin class names (`ChatCompletionEvent.Delta` instead of the previously flattened `ChatCompletionEventDelta`), and an `OpenAiClient(config:)` convenience init — no more `OpenAiClientKt.` prefix. If you need the pre-SKIE manual-collector surface frozen for some reason, pin to `0.10.7`; otherwise use the v0.10.8 surface below.
+    **New in v0.10.8.** SKIE is now applied to `leap-sdk-openai-client`, matching `LeapSDK` / `LeapModelDownloader` / `LeapUI`. Swift consumers get a real `AsyncSequence`, exhaustive `onEnum(of:)` switching, and the top-level `OpenAiClient(config:)` factory — no more `OpenAiClientKt.` prefix. Kotlin/Native still flattens concrete message types to names such as `ChatMessageUser`. If you need the pre-SKIE manual-collector surface frozen for some reason, pin to `0.10.7`; otherwise use the v0.10.8 surface below.
     </Info>
 
     ```swift
@@ -80,17 +80,34 @@ description: "Lightweight client for OpenAI-compatible chat completions APIs —
     let client = OpenAiClient(
         config: OpenAiClientConfig(
             apiKey: "sk-…",
-            baseUrl: "https://api.openai.com/v1"
+            baseUrl: "https://api.openai.com/v1",
+            chatCompletionsPath: "/chat/completions",
+            extraHeaders: [:]
         )
     )
 
     let request = ChatCompletionRequest(
         model: "gpt-4o-mini",
         messages: [
-            ChatMessage.System(content: "You are a helpful assistant."),
-            ChatMessage.User(content: "What is the capital of Japan?")
+            ChatMessageSystem(content: "You are a helpful assistant."),
+            ChatMessageUser(content: "What is the capital of Japan?")
         ],
-        temperature: 0.7
+        temperature: 0.7,
+        topP: nil,
+        maxCompletionTokens: nil,
+        maxTokens: nil,
+        frequencyPenalty: nil,
+        presencePenalty: nil,
+        stop: nil,
+        stream: true,
+        topK: nil,
+        repetitionPenalty: nil,
+        minP: nil,
+        topA: nil,
+        transforms: nil,
+        models: nil,
+        route: nil,
+        provider: nil
     )
 
     for try await event in client.streamChatCompletion(request: request) {
@@ -152,7 +169,7 @@ description: "Lightweight client for OpenAI-compatible chat completions APIs —
 
 ## Configuration
 
-`OpenAiClientConfig` is a Kotlin data class bridged identically on every platform.
+`OpenAiClientConfig` is a Kotlin data class. Kotlin callers can omit defaulted fields; Swift callers must pass all four constructor arguments, as shown above.
 
 ```kotlin
 data class OpenAiClientConfig(
@@ -179,6 +196,7 @@ data class OpenAiClientConfig(
         config: OpenAiClientConfig(
             apiKey: "sk-or-…",
             baseUrl: "https://openrouter.ai/api/v1",
+            chatCompletionsPath: "/chat/completions",
             extraHeaders: [
                 "HTTP-Referer": "https://yourapp.example.com",
                 "X-Title": "Your App"
@@ -211,7 +229,9 @@ data class OpenAiClientConfig(
     let client = OpenAiClient(
         config: OpenAiClientConfig(
             apiKey: "anything",  // Required by config but typically unused
-            baseUrl: "http://10.0.0.42:8000/v1"
+            baseUrl: "http://10.0.0.42:8000/v1",
+            chatCompletionsPath: "/chat/completions",
+            extraHeaders: [:]
         )
     )
     ```
@@ -256,7 +276,7 @@ data class ChatCompletionRequest(
 )
 ```
 
-`ChatMessage` (the OpenAI-client one, distinct from the on-device `ChatMessage` in `LeapSDK` / `LeapModelDownloader`) is a sealed type with three cases — `System`, `User`, `Assistant`.
+`ChatMessage` (the OpenAI-client one, distinct from the on-device `ChatMessage` in `LeapSDK` / `LeapModelDownloader`) is a sealed type with three cases — `System`, `User`, `Assistant`. Swift constructs them through the flattened names `ChatMessageSystem`, `ChatMessageUser`, and `ChatMessageAssistant`.
 
 ## Response shape
 
@@ -295,13 +315,27 @@ Route simple prompts to a small on-device LFM; escalate harder prompts to a clou
         func send(_ text: String, useCloud: Bool) async throws {
             if useCloud {
                 // Cloud path — same SKIE-bridged surface as on-device since v0.10.8.
-                // Both imported modules expose a `ChatMessage`, so qualify each by the
-                // module it comes from: `LeapOpenAIClient.ChatMessage` (cloud) and
-                // `LeapModelDownloader.ChatMessage` (on-device — LeapModelDownloader
-                // re-exports the LeapSDK types, so the type lives in that module here).
+                // Kotlin/Native exports the cloud message implementations with flattened
+                // names. The on-device ChatMessage remains in LeapModelDownloader.
                 let request = ChatCompletionRequest(
                     model: "gpt-4o-mini",
-                    messages: [LeapOpenAIClient.ChatMessage.User(content: text)]
+                    messages: [ChatMessageUser(content: text)],
+                    temperature: nil,
+                    topP: nil,
+                    maxCompletionTokens: nil,
+                    maxTokens: nil,
+                    frequencyPenalty: nil,
+                    presencePenalty: nil,
+                    stop: nil,
+                    stream: true,
+                    topK: nil,
+                    repetitionPenalty: nil,
+                    minP: nil,
+                    topA: nil,
+                    transforms: nil,
+                    models: nil,
+                    route: nil,
+                    provider: nil
                 )
                 for try await event in cloud.streamChatCompletion(request: request) {
                     if case let .delta(d) = onEnum(of: event) { appendChunk(d.content) }
@@ -399,7 +433,7 @@ See [Cloud AI Comparison](./cloud-ai-comparison) for a side-by-side feature brea
 
 ## Lifecycle
 
-The `OpenAiClient(config:)` factory (Kotlin `fun OpenAiClient(config:)` — exported as a SKIE-bundled Swift convenience init since v0.10.8) creates an `HttpClient` internally and ties it to the returned client — call `close()` when you're done.
+The `OpenAiClient(config:)` factory (Kotlin `fun OpenAiClient(config:)`, exposed directly to Swift since v0.10.8) creates an `HttpClient` internally and ties it to the returned client — call `close()` when you're done.
 
 <Tabs>
   <Tab title="Swift (iOS / macOS)">

@@ -260,7 +260,15 @@ The recommended path is **manifest-based** loading. On every platform, the platf
             return (caches as NSString).appendingPathComponent("leap_models")
         }()
         private lazy var downloader = ModelDownloader(
-            config: LeapDownloaderConfig.with(saveDir: modelsDir)
+            config: LeapDownloaderConfig(
+                saveDir: modelsDir,
+                validateSha256: true,
+                disableSslValidation: false,
+                baseUrl: nil,
+                connectTimeoutMillis: 30_000,
+                socketTimeoutMillis: 60_000,
+                requestTimeoutMillis: 600_000
+            )
             // For background transfers, pass:
             // sessionConfiguration: .background(withIdentifier: "com.myapp.leap.downloads")
         )

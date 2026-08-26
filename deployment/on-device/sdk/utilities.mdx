@@ -210,7 +210,16 @@ A minimal end-to-end snippet exercising load → conversation → tool registrat
     ```swift
     let caches = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first!.path
     let modelsDir = (caches as NSString).appendingPathComponent("leap_models")
-    let downloader = ModelDownloader(config: LeapDownloaderConfig.with(saveDir: modelsDir))
+    let config = LeapDownloaderConfig(
+      saveDir: modelsDir,
+      validateSha256: true,
+      disableSslValidation: false,
+      baseUrl: nil,
+      connectTimeoutMillis: 30_000,
+      socketTimeoutMillis: 60_000,
+      requestTimeoutMillis: 600_000
+    )
+    let downloader = ModelDownloader(config: config)
 
     let runner = try await downloader.loadModel(
       modelName: "LFM2.5-1.2B-Instruct",

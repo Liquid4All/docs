@@ -154,13 +154,20 @@ Fixes a Swift-only hang when constructing the model downloader on Apple targets.
 **`LeapDownloaderConfig` / `ModelDownloader` Swift construction no longer hangs** ([PR #262](https://github.com/Liquid4All/leap-android-sdk/pull/262)):
 
 - In v0.10.6–v0.10.8, constructing `LeapDownloaderConfig(...)`, `LeapDownloader(...)`, or `ModelDownloader()` from Swift spun the calling thread at 100% CPU **forever** and never returned — blocking the `loadSimpleModel(...)` sideload path. Every field of the Kotlin `LeapDownloaderConfig` `data class` bridges to a native Swift type (`String`, `Bool`, `String?`, `Int64`), so the v0.10.6 defaulted `convenience init` had the exact same Swift selector as the Kotlin/Native ObjC designated initializer it delegated to. A Swift convenience init shadows a same-selector imported designated init, so `self.init(...)` resolved back to itself — an infinite recursion that Release builds optimize into a busy loop.
-- The defaulted convenience init is replaced by a **`LeapDownloaderConfig.with(...)` static factory** carrying the same Kotlin defaults (`saveDir = "leap_models"`, `validateSha256 = true`, `disableSslValidation = false`, `baseUrl = nil`, `connectTimeoutMillis = 30_000`, `socketTimeoutMillis = 60_000`, `requestTimeoutMillis = 600_000`). A `static func` has no `self.init` relationship, so its body binds to the designated initializer with no recursion.
+- The defaulted convenience init is removed. Swift 6.2 exposes its replacement, **`LeapDownloaderConfig.with(...)`**, carrying the same Kotlin defaults (`saveDir = "leap_models"`, `validateSha256 = true`, `disableSslValidation = false`, `baseUrl = nil`, `connectTimeoutMillis = 30_000`, `socketTimeoutMillis = 60_000`, `requestTimeoutMillis = 600_000`). Swift 6.0/6.1 callers should use the full designated initializer shown in the SDK guides.
 
 **Swift call-site change:**
 
-```diff
-- let config = LeapDownloaderConfig(saveDir: modelsDir)
-+ let config = LeapDownloaderConfig.with(saveDir: modelsDir)
+```swift
+let config = LeapDownloaderConfig(
+  saveDir: modelsDir,
+  validateSha256: true,
+  disableSslValidation: false,
+  baseUrl: nil,
+  connectTimeoutMillis: 30_000,
+  socketTimeoutMillis: 60_000,
+  requestTimeoutMillis: 600_000
+)
 ```
 
 - `ModelDownloader()` / `ModelDownloader(sessionConfiguration:)` / `ModelDownloader(config:)` are unchanged at the call site — they build their default config through the factory internally.
@@ -177,8 +184,8 @@ SKIE finally lands on `leap-sdk-openai-client`, closing the last Apple-side gap 
 
 - `client.streamChatCompletion(request:)` is now a Swift `AsyncSequence` — collect with `for try await event in client.streamChatCompletion(...)` instead of the v0.10.6 / v0.10.7 manual `Flow.collect(collector: FlowCollector { ... })` shape.
 - `onEnum(of: event)` switches exhaustively over `ChatCompletionEvent` — the compiler errors on a missing case.
-- Nested Kotlin class names are preserved on the Swift side: `ChatCompletionEvent.Delta`, `ChatCompletionEvent.Done`, `ChatCompletionEvent.Error` (previously K/N flattened these to `ChatCompletionEventDelta`, etc.). `ChatMessage.System` / `ChatMessage.User` / `ChatMessage.Assistant` follow the same convention now.
-- The top-level Kotlin `fun OpenAiClient(config:)` factory exports as a real Swift convenience init — Swift call sites can drop the `OpenAiClientKt.` prefix and just write `OpenAiClient(config: ...)`.
+- `onEnum(of:)` presents the event variants as `.delta`, `.done`, and `.error`. Concrete Kotlin classes remain flattened by Kotlin/Native (for example, Swift constructs messages with `ChatMessageUser`, not `ChatMessage.User`).
+- The top-level Kotlin `fun OpenAiClient(config:)` factory is exposed directly to Swift — call sites can drop the `OpenAiClientKt.` prefix and write `OpenAiClient(config: ...)`.
 - `LeapOpenAIClient.xcframework` is now a distributable framework (`skie { build { produceDistributableFramework() } }`) that bundles the SKIE-generated Swift wrappers, so a plain `import LeapOpenAIClient` is enough — no companion SKIE setup in consumer projects.
 - The Kotlin / JVM / wasmJs / K/N surface is unchanged — same `OpenAiClient(config:)` constructor, same `Flow<ChatCompletionEvent>`, same `ChatCompletionEvent.Delta` / `.Done` / `.Error` cases, same `OpenAiClientConfig` shape and OpenRouter extra-headers support.
 
@@ -216,7 +223,7 @@ The `Flow` returned by `generateResponse` is now backed by an unlimited-capacity
 - Kotlin 2.3.20 → **2.3.21**.
 - SKIE 0.10.11 → **0.10.12**.
 
-iOS / macOS Swift consumers don't need to bump Xcode or Swift — the Xcode 16 / Swift 6 baseline from v0.10.0 still holds.
+iOS / macOS Swift consumers can stay on the Xcode 16 / Swift 6 baseline from v0.10.0. On Swift 6.0/6.1, use the full `LeapDownloaderConfig` designated initializer; its defaulted `.with(...)` factory is exposed only to Swift 6.2+ by the published framework.
 
 ### v0.10.7 — 2026-05-18
 
@@ -227,7 +234,7 @@ KMP target completion for `leap-openai-client` plus a repo-wide bytecode-hardeni
 - **`jvm`** (Ktor CIO engine) — Maven Central now publishes `ai.liquid.leap:leap-openai-client-jvm:0.10.7`. Pure-JVM desktop / server apps can route OpenAI-compatible chat completions without dragging in Android or KMP targets. (The 0.10.0 — 0.10.6 SPM cascade only shipped Android + Apple + Linux/MinGW K/N + wasmJs metadata; the JVM slice was absent.)
 - **`wasmJs`** (Ktor Js engine) — browser-side chat-completions client matching what `leap-sdk` already targets.
 
-The Apple slice (`LeapOpenAIClient.xcframework`) ships unchanged — same SSE-stream surface, same `OpenAiClientConfig`, same OpenRouter extra-headers support. SKIE is still not applied to this module in v0.10.7, so the Kotlin/Native exports remain the same as v0.10.6: `Flow<ChatCompletionEvent>` is not bridged to Swift `AsyncSequence`, and `onEnum(of:)` is not generated for `ChatCompletionEvent`. **[v0.10.8](#v0-10-8-2026-05-21) enables SKIE on `leap-sdk-openai-client`** — see that entry for the new Swift surface (`for try await` over the stream, exhaustive `onEnum(of:)` switching, SKIE-bundled `OpenAiClient(config:)` convenience init). Pin to v0.10.7 only if you need the pre-SKIE surface frozen.
+The Apple slice (`LeapOpenAIClient.xcframework`) ships unchanged — same SSE-stream surface, same `OpenAiClientConfig`, same OpenRouter extra-headers support. SKIE is still not applied to this module in v0.10.7, so the Kotlin/Native exports remain the same as v0.10.6: `Flow<ChatCompletionEvent>` is not bridged to Swift `AsyncSequence`, and `onEnum(of:)` is not generated for `ChatCompletionEvent`. **[v0.10.8](#v0-10-8-2026-05-21) enables SKIE on `leap-sdk-openai-client`** — see that entry for the new Swift surface (`for try await` over the stream, exhaustive `onEnum(of:)` switching, and direct access to the `OpenAiClient(config:)` factory). Pin to v0.10.7 only if you need the pre-SKIE surface frozen.
 
 **Bytecode hardening:**
 
