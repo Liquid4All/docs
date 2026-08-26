@@ -1,0 +1,147 @@
+---
+title: "LFM2.5-ColBERT-350M"
+description: "350M late-interaction ColBERT model for multilingual retrieval and reranking"
+---
+
+<a href="/lfm/models/liquid-nanos" className="back-button">← Back to Liquid Nanos</a>
+
+LFM2.5-ColBERT-350M is a late-interaction retrieval model. It creates 128-dimensional vectors per token and scores query/document matches with MaxSim, which improves retrieval quality and generalization at the cost of a larger index.
+
+<div style={{display: 'flex', gap: '0.5rem', margin: '0.5rem 0 1.5rem 0'}}>
+  <a href="https://huggingface.co/LiquidAI/LFM2.5-ColBERT-350M" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#fbbf24'}}><span style={{color: '#000'}}>HF</span></a>
+  <a href="https://huggingface.co/LiquidAI/LFM2.5-ColBERT-350M-GGUF" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#60a5fa'}}><span style={{color: '#000'}}>GGUF</span></a>
+</div>
+
+<Note>
+Use LFM2.5-ColBERT-350M when you want stronger retrieval or reranking quality and can afford a larger per-token index. Use [LFM2.5-Embedding-350M](/lfm/models/lfm25-embedding-350m) when you need the smallest, fastest dense-vector index.
+</Note>
+
+## Specifications
+
+| Property | Value |
+|----------|-------|
+| Parameters | ~353M |
+| Type | Late interaction |
+| Document Length | 512 tokens |
+| Query Length | 32 tokens |
+| Output | 128-dimensional vector per token |
+| Similarity | MaxSim |
+| Supported Languages | English, Spanish, German, French, Italian, Portuguese, Arabic, Swedish, Norwegian, Japanese, Korean |
+
+<div className="use-cases">
+<CardGroup cols={3}>
+
+<Card title="High-Quality Retrieval" icon="magnifying-glass">
+  Better matching from token-level interactions.
+</Card>
+
+<Card title="Reranking" icon="ranking-star">
+  Reorder candidates from a first-stage retriever.
+</Card>
+
+<Card title="Enterprise RAG" icon="diagram-project">
+  Strong multilingual document matching.
+</Card>
+
+</CardGroup>
+</div>
+
+## Quick Start
+
+<Warning>
+This model uses PyLate for indexing, retrieval, and reranking.
+</Warning>
+
+<Tabs>
+  <Tab title="PyLate">
+    **Install:**
+    ```bash
+    pip install -U pylate
+    ```
+
+    **Index and retrieve documents:**
+    ```python
+    from pylate import indexes, models, retrieve
+
+    model = models.ColBERT(
+        model_name_or_path="LiquidAI/LFM2.5-ColBERT-350M",
+        trust_remote_code=True,
+    )
+    model.tokenizer.pad_token = model.tokenizer.eos_token
+
+    index = indexes.PLAID(
+        index_folder="pylate-index",
+        index_name="index",
+        override=True,
+    )
+
+    documents_ids = ["1", "2", "3"]
+    documents = [
+        "Paris is the capital of France.",
+        "Tokyo is the capital of Japan.",
+        "Berlin is the capital of Germany.",
+    ]
+
+    document_embeddings = model.encode(
+        documents,
+        batch_size=32,
+        is_query=False,
+        show_progress_bar=True,
+    )
+    index.add_documents(
+        documents_ids=documents_ids,
+        documents_embeddings=document_embeddings,
+    )
+
+    query_embeddings = model.encode(
+        ["Which city is Japan's capital?"],
+        batch_size=32,
+        is_query=True,
+        show_progress_bar=True,
+    )
+
+    retriever = retrieve.ColBERT(index=index)
+    results = retriever.retrieve(query_embeddings=query_embeddings, k=10)
+    print(results)
+    ```
+  </Tab>
+
+  <Tab title="Reranking">
+    ```python
+    from pylate import models, rank
+
+    model = models.ColBERT(
+        model_name_or_path="LiquidAI/LFM2.5-ColBERT-350M",
+        trust_remote_code=True,
+    )
+
+    queries = ["Which city is Japan's capital?"]
+    documents = [[
+        "Paris is the capital of France.",
+        "Tokyo is the capital of Japan.",
+        "Berlin is the capital of Germany.",
+    ]]
+    document_ids = [["fr", "jp", "de"]]
+
+    query_embeddings = model.encode(queries, is_query=True)
+    document_embeddings = model.encode(documents, is_query=False)
+
+    reranked = rank.rerank(
+        documents_ids=document_ids,
+        queries_embeddings=query_embeddings,
+        documents_embeddings=document_embeddings,
+    )
+    print(reranked)
+    ```
+  </Tab>
+
+  <Tab title="GGUF">
+    **Download GGUF:**
+    ```bash
+    hf download LiquidAI/LFM2.5-ColBERT-350M-GGUF \
+      --local-dir ./LFM2.5-ColBERT-350M-GGUF
+    ```
+
+    Use the GGUF files with a llama.cpp build that supports LFM2.5 ColBERT models.
+  </Tab>
+</Tabs>

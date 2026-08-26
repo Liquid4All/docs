@@ -1,7 +1,7 @@
 {
   "$schema": "https://mintlify.com/docs.json",
   "banner": {
-    "content": "🚀 New: LFM2.5-VL-450M — our smallest vision model is now available! [Learn more →](/lfm/models/lfm25-vl-450m)",
+    "content": "🚀 New: LFM2.5-VL-3B — our most capable vision-language model is now available! [Learn more →](/lfm/models/lfm25-vl-3b)",
     "dismissible": true
   },
   "theme": "mint",
@@ -36,7 +36,7 @@
   "logo": {
     "light": "/logo/light.svg",
     "dark": "/logo/dark.svg",
-    "href": "/lfm/getting-started/welcome"
+    "href": "/lfm/models/complete-library"
   },
   "navbar": {
     "links": [
@@ -73,13 +73,16 @@
               },
               "lfm/key-concepts/chat-template",
               "lfm/key-concepts/text-generation-and-prompting",
-              "lfm/key-concepts/tool-use"
+              "lfm/key-concepts/tool-use",
+              "lfm/key-concepts/vision-capabilities"
             ]
           },
           {
             "group": "Fine-tuning",
             "icon": "sliders",
             "pages": [
+              "lfm/fine-tuning/overview",
+              "lfm/fine-tuning/leap-finetune",
               "lfm/fine-tuning/datasets",
               "lfm/fine-tuning/trl",
               "lfm/fine-tuning/unsloth"
@@ -89,11 +92,13 @@
             "group": "Edge Inference",
             "icon": "mobile",
             "pages": [
+              "deployment/on-device/sdk/overview",
               "deployment/on-device/llama-cpp",
               "deployment/on-device/lm-studio",
               "deployment/on-device/mlx",
               "deployment/on-device/onnx",
-              "deployment/on-device/ollama"
+              "deployment/on-device/ollama",
+              "deployment/on-device/atomic-chat"
             ]
           },
           {
@@ -101,8 +106,8 @@
             "icon": "microchip",
             "pages": [
               "deployment/gpu-inference/transformers",
-              "deployment/gpu-inference/vllm",
-              "deployment/gpu-inference/sglang"
+              "deployment/gpu-inference/sglang",
+              "deployment/gpu-inference/vllm"
             ]
           },
           {
@@ -115,11 +120,21 @@
             ]
           },
           {
+            "group": "Guides",
+            "icon": "book-open",
+            "pages": [
+              "guides/hardware-evaluation",
+              "guides/use-case-evaluation",
+              "guides/migration-guide"
+            ]
+          },
+          {
             "group": "Help",
             "icon": "book",
             "pages": [
               "lfm/help/faqs",
               "lfm/help/troubleshooting",
+              "lfm/help/deprecations",
               "lfm/help/contributing",
               "lfm/help/connect-ai-tools",
               "lfm/help/model-license"
@@ -176,7 +191,8 @@
             "icon": "rocket",
             "pages": [
               "examples/index",
-              "examples/connect-ai-tools"
+              "examples/connect-ai-tools",
+              "examples/agent-harnesses"
             ]
           },
           {
@@ -273,7 +289,7 @@
     },
     {
       "source": "/customization/finetuning-frameworks/leap-finetune",
-      "destination": "/lfm/fine-tuning/trl"
+      "destination": "/lfm/fine-tuning/leap-finetune"
     },
     {
       "source": "/customization/finetuning-frameworks/datasets",
@@ -298,6 +314,10 @@
     {
       "source": "/docs/fine-tuning/unsloth",
       "destination": "/lfm/fine-tuning/unsloth"
+    },
+    {
+      "source": "/docs/fine-tuning/leap-finetune",
+      "destination": "/lfm/fine-tuning/leap-finetune"
     },
     {
       "source": "/deployment/getting-started/welcome",
@@ -501,7 +521,7 @@
     },
     {
       "source": "/lfm/fine-tuning",
-      "destination": "/lfm/fine-tuning/trl"
+      "destination": "/lfm/fine-tuning/overview"
     }
   ],
   "ai": {

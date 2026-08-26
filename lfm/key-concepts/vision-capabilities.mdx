@@ -1,0 +1,556 @@
+---
+title: "Vision Capabilities"
+description: "Use LFM2.5-VL models for image understanding, multi-image prompting, OCR, layout annotations, grounding, and vision-guided tool calling."
+---
+
+
+LFM2.5-VL models' vision capabilities enable the model to analyze and understand images.
+These models support common vision-language tasks such as describing images, answering questions about visual content, comparing multiple images, reading text, and localizing objects. LFM2.5-VL also supports tool calling, including examples where an image helps determine the tool arguments.
+
+The examples below show how to send images to LFM2.5-VL models.
+
+Install PyTorch, Transformers, and the image-processing packages used by the examples. `torchvision` and `Pillow` are required by the LFM2.5-VL image processor, and `opencv-python` is used to draw grounding and layout boxes.
+
+```python
+# Install PyTorch and acceleration libraries
+%pip install -q torch torchvision accelerate
+
+# Install image helper libraries
+%pip install -q pillow opencv-python
+
+# Install Transformers
+%pip install -q "transformers>=5.10.1"
+```
+
+Load the model with `AutoProcessor` and `AutoModelForImageTextToText`, matching the standard LFM2.5-VL documentation examples. Start with `LiquidAI/LFM2.5-VL-450M` or `LiquidAI/LFM2.5-VL-1.6B` for fast iteration. Use LFM2.5-VL-3B for the strongest grounding, layout parsing, and tool-calling examples.
+
+```python
+from transformers import AutoProcessor, AutoModelForImageTextToText
+
+MODEL_ID = "LiquidAI/LFM2.5-VL-3B"  # "LiquidAI/LFM2.5-VL-450M", "LiquidAI/LFM2.5-VL-1.6B", "LiquidAI/LFM2.5-VL-3B"
+
+processor = AutoProcessor.from_pretrained(MODEL_ID)
+model = AutoModelForImageTextToText.from_pretrained(
+    MODEL_ID,
+    device_map="auto",
+    dtype="bfloat16",
+)
+```
+
+## Single-image prompt
+
+Provide one image and a text question in the same user message. This pattern is useful for captioning, visual question answering, and scene understanding.
+
+```python
+import torch
+from IPython.display import display
+from transformers.image_utils import load_image
+
+img_url = "https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/coco_sample.png"
+input_image = load_image(img_url)
+display(input_image)
+
+messages = [
+    {
+        "role": "user",
+        "content": [
+            {"type": "image", "image": input_image},
+            {"type": "text", "text": "Describe this image in two concise sentences."},
+        ],
+    }
+]
+
+inputs = processor.apply_chat_template(
+    messages,
+    add_generation_prompt=True,
+    tokenize=True,
+    return_dict=True,
+    return_tensors="pt",
+).to(model.device)
+
+with torch.inference_mode():
+    outputs = model.generate(
+        **inputs,
+        do_sample=True,
+        temperature=0.2,
+        top_k=50,
+        repetition_penalty=1.0,
+        max_new_tokens=256,
+    )
+
+output = processor.batch_decode(outputs[:, inputs["input_ids"].shape[1]:], skip_special_tokens=True)[0]
+print(output)
+```
+
+**Output**
+
+![Cell 7 output](https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/coco_sample.png)
+
+```text
+Two cats are sleeping on a pink couch with two remote controls.
+```
+
+## Multi-image prompt
+<Info>**Model support:** This capability is best supported by LFM2.5-VL-3B.</Info>
+
+You can include multiple images in a single prompt. Label each image in the prompt, such as `Media-1` and `Media-2`, to make cross-image references clearer.
+
+```python
+import torch
+from IPython.display import display
+from transformers.image_utils import load_image
+
+img_urls = [
+    "https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/p-blog/candy.JPG",
+    "https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/coco_sample.png",
+]
+input_images = [load_image(img_url) for img_url in img_urls]
+for input_image in input_images:
+    display(input_image)
+
+messages = [
+    {
+        "role": "user",
+        "content": [
+            {"type": "text", "text": "Media-1\n"},
+            {"type": "image", "image": input_images[0]},
+            {"type": "text", "text": "\nMedia-2\n"},
+            {"type": "image", "image": input_images[1]},
+            {"type": "text", "text": "\nCaption Media-1 and Media-2 separately. Keep each caption to one sentence."},
+        ],
+    }
+]
+
+inputs = processor.apply_chat_template(
+    messages,
+    add_generation_prompt=True,
+    tokenize=True,
+    return_dict=True,
+    return_tensors="pt",
+).to(model.device)
+
+with torch.inference_mode():
+    outputs = model.generate(
+        **inputs,
+        do_sample=True,
+        temperature=0.2,
+        top_k=50,
+        repetition_penalty=1.0,
+        max_new_tokens=256,
+    )
+
+output = processor.batch_decode(outputs[:, inputs["input_ids"].shape[1]:], skip_special_tokens=True)[0]
+print(output)
+```
+
+**Output**
+
+<div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: "12px", alignItems: "start" }}>
+  <img src="https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/p-blog/candy.JPG" alt="Media-1 input" style={{ width: "100%", borderRadius: "8px" }} />
+  <img src="https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/coco_sample.png" alt="Media-2 input" style={{ width: "100%", borderRadius: "8px" }} />
+</div>
+
+```text
+Media-1: A person is holding a collection of colorful M&M's with various designs on them.
+
+Media-2: Two cats are peacefully sleeping on a pink couch, each with a remote control nearby.
+```
+
+## OCR
+
+<Info>**Model support:** This capability is best supported by LFM2.5-VL-3B.</Info>
+
+LFM2.5-VL can read text in document images and, with LFM2.5-VL-3B, return structured layout annotations, which can be used to visualize the parsed layout regions.
+
+> **Image quality:** OCR and layout parsing work best when text is legible and the image is not blurry, rotated, or heavily compressed. For dense documents, crop to the relevant page or region when possible.
+
+```python
+import torch
+from IPython.display import display
+from transformers.image_utils import load_image
+
+img_url = "https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/enterprise/audit-logs.png"
+input_image = load_image(img_url)
+display(input_image)
+
+messages = [
+    {
+        "role": "user",
+        "content": [
+            {"type": "image", "image": input_image},
+            {
+                "type": "text",
+                "text": "Read this audit log screenshot. Identify the page heading, table columns, visible rows, users, actions, timestamps, and other structured fields. Transcribe the visible text in reading order.",
+            },
+        ],
+    }
+]
+
+inputs = processor.apply_chat_template(
+    messages,
+    add_generation_prompt=True,
+    tokenize=True,
+    return_dict=True,
+    return_tensors="pt",
+).to(model.device)
+
+with torch.inference_mode():
+    outputs = model.generate(
+        **inputs,
+        do_sample=True,
+        temperature=0.1,
+        top_k=50,
+        repetition_penalty=1.05,
+        max_new_tokens=512,
+    )
+
+generated_ids = outputs[:, inputs["input_ids"].shape[1] :]
+output = processor.batch_decode(generated_ids, skip_special_tokens=True)[0]
+print(output)
+```
+
+**Output**
+
+![Cell 11 output](https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/enterprise/audit-logs.png)
+
+```text
+Audit log
+
+| Events log |
+| --- |
+| clboetticher org.update_join_settings |
+| clboetticher enabled join requests with manual approval and set default role to write |
+| United States, Austin · 136.62.181.0 · On Oct 15 |
+| clboetticher repo.delete |
+| clboetticher deleted a model: enterprise-explorers/test_model |
+| United States, Austin · 136.62.181.0 · On Oct 10 |
+| clboetticher repo.create |
+| clboetticher created a public model: enterprise-explorers/test_model |
+| United States, Austin · 136.62.181.0 · On Oct 10 |
+| System billing.renew_subscription |
+| System Automatic subscription renewal for hf/enterprise-free |
+| Unknown Location · On Oct 7 |
+| derek-thomas resource_group.add_users |
+| derek-thomas added users to resource group Read access members: derek-thomas (read) |
+| United Arab Emirates, Abu Dhabi · 217.164.173.0 · On Sep 17 |
+| erikrigner resource_group.change_role |
+| erikrigner changed role for user erikrigner in resource group Read access members from write to admin |
+| Sweden, Norrköping · 2a02:1406:59:5d60:1dfd:0:0 · On Sep 16 |
+```
+
+## Document layout annotations
+
+For document understanding tasks, LFM2.5-VL-3B can return OCR with layout annotations. Each region contains a label, normalized bounding box, and content:
+
+```text
+image_index=<n> <label> [xmin, ymin, xmax, ymax]
+<content>
+```
+
+Coordinates are normalized integers in `[0, 1000]`, matching the grounding format. If you want to visualize these boxes, scale the coordinates back to pixels with the same `x / 1000 * width` and `y / 1000 * height` pattern used in the grounding example.
+
+```python
+import re
+import torch
+import cv2
+import numpy as np
+from IPython.display import display
+from PIL import Image
+from transformers.image_utils import load_image
+
+img_url = "https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/enterprise/audit-logs.png"
+input_image = load_image(img_url)
+display(input_image)
+
+layout_prompt = """Parse this document into its layout regions. The pages are provided as images in reading order. For every region, in reading order across all pages, output a header line immediately followed by the region's content:
+
+image_index=<n> <label> [xmin, ymin, xmax, ymax]
+<content>
+
+where:
+- image_index is the zero-based index of the page image the region appears on (0 for the first image, 1 for the second, and so on)
+- <label> is one of these layout labels: text, title, list, table, table_caption, table_footnote, image, image_block, image_caption, image_footnote, chart, equation, formula_number, code, code_caption, algorithm, aside_text, ref_text, phonetic, page_header, page_footer, page_number, page_footnote
+- [xmin, ymin, xmax, ymax] are normalized integer coordinates in [0, 1000]
+- <content> is the region's content: plain text for text regions, LaTeX for equations, OTSL for tables, and a short description for images and charts
+
+Separate each region block with one blank line. Return only the parsed regions.
+"""
+
+messages = [
+    {
+        "role": "user",
+        "content": [
+            {"type": "image", "image": input_image},
+            {"type": "text", "text": layout_prompt},
+        ],
+    }
+]
+
+inputs = processor.apply_chat_template(
+    messages,
+    add_generation_prompt=True,
+    tokenize=True,
+    return_dict=True,
+    return_tensors="pt",
+).to(model.device)
+
+with torch.inference_mode():
+    outputs = model.generate(
+        **inputs,
+        do_sample=True,
+        temperature=0.2,
+        top_k=50,
+        repetition_penalty=1.0,
+        max_new_tokens=1024,
+    )
+
+output = processor.batch_decode(
+    outputs[:, inputs["input_ids"].shape[1]:],
+    skip_special_tokens=True,
+)[0]
+print(output)
+
+pattern = re.compile(
+    r"image_index=0\s+([a-z_]+)\s+\[(\d+),\s*(\d+),\s*(\d+),\s*(\d+)\]"
+)
+
+image = np.array(input_image).copy()
+height, width = image.shape[:2]
+
+for label, xmin, ymin, xmax, ymax in pattern.findall(output):
+    xmin, ymin, xmax, ymax = map(int, [xmin, ymin, xmax, ymax])
+    pt1 = (round(xmin / 1000 * width), round(ymin / 1000 * height))
+    pt2 = (round(xmax / 1000 * width), round(ymax / 1000 * height))
+    cv2.rectangle(image, pt1, pt2, (255, 0, 0), 2)
+    cv2.putText(image, label, (pt1[0], max(20, pt1[1] - 6)), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 0, 0), 2)
+
+display(Image.fromarray(image))
+```
+
+**Output**
+
+```text
+image_index=0 label [76, 68, 144, 94]
+Acme Inc.
+
+image_index=0 text [78, 104, 104, 121]
+acme
+
+image_index=0 text [28, 176, 65, 197]
+Profile
+
+image_index=0 text [28, 230, 74, 252]
+Account
+
+image_index=0 text [28, 282, 80, 304]
+Members
+
+image_index=0 text [28, 334, 64, 355]
+Billing
+
+... (shortened for brevity)
+```
+
+![Cell 13 output](/images/lfm/key-concepts/vision-capabilities/cell-13-output-5.png)
+
+## Object detection and grounding
+
+<Info>**Model support:** This capability is best supported by LFM2.5-VL-3B.</Info>
+
+Grounding asks the model to localize visible objects and return normalized coordinates. This example uses a COCO sample image with cats and remote controls, then draws the returned boxes with OpenCV.
+
+> **Coordinate format:** The grounding examples use normalized `[0, 1000]` coordinates. Convert them back to pixels with `x / 1000 * width` and `y / 1000 * height`. Boxes are approximate, so visually inspect the result before using coordinates in downstream workflows.
+
+```python
+import json
+import cv2
+import numpy as np
+import torch
+from IPython.display import display
+from PIL import Image
+from transformers.image_utils import load_image
+
+img_url = "https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/coco_sample.png"
+input_image = load_image(img_url)
+
+system_prompt = """When asked for bounding boxes for objects, return a valid JSON array.
+Each array item must be an object with:
+- image_id: the 0-based index of the image
+- bbox_2d: [xmin, ymin, xmax, ymax] normalized integer coordinates in [0, 1000]
+- label: a concise label you choose for the predicted object or region
+
+Return one item per visible matching object or region. Return [] if none are visible."""
+
+messages = [
+    {"role": "system", "content": system_prompt},
+    {
+        "role": "user",
+        "content": [
+            {"type": "image", "image": input_image},
+            {"type": "text", "text": "Provide bounding boxes for the two cats and the two remote controls."},
+        ],
+    },
+]
+
+inputs = processor.apply_chat_template(
+    messages,
+    add_generation_prompt=True,
+    tokenize=True,
+    return_dict=True,
+    return_tensors="pt",
+).to(model.device)
+
+with torch.inference_mode():
+    outputs = model.generate(
+        **inputs,
+        do_sample=True,
+        temperature=0.2,
+        top_k=50,
+        repetition_penalty=1.0,
+        max_new_tokens=256,
+    )
+
+output = processor.batch_decode(
+    outputs[:, inputs["input_ids"].shape[1]:],
+    skip_special_tokens=True,
+)[0]
+print(output)
+
+objects = json.loads(output)
+print(objects)
+
+image = np.array(input_image).copy()
+height, width = image.shape[:2]
+
+for obj in objects:
+    xmin, ymin, xmax, ymax = obj["bbox_2d"]
+    pt1 = (round(xmin / 1000 * width), round(ymin / 1000 * height))
+    pt2 = (round(xmax / 1000 * width), round(ymax / 1000 * height))
+    cv2.rectangle(image, pt1, pt2, color=(255, 0, 0), thickness=3)
+    cv2.putText(image, obj["label"], (pt1[0], max(20, pt1[1] - 8)), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 0, 0), 2)
+
+display(Image.fromarray(image))
+```
+
+**Output**
+
+```text
+[{"image_id": 0, "bbox_2d": [540, 49, 1000, 774], "label": "cat on the right"}, {"image_id": 0, "bbox_2d": [10, 112, 497, 986], "label": "cat on the left"}, {"image_id": 0, "bbox_2d": [523, 158, 581, 398], "label": "remote on the right"}, {"image_id": 0, "bbox_2d": [63, 150, 276, 244], "label": "remote on the left"}]
+[{'image_id': 0, 'bbox_2d': [540, 49, 1000, 774], 'label': 'cat on the right'}, {'image_id': 0, 'bbox_2d': [10, 112, 497, 986], 'label': 'cat on the left'}, {'image_id': 0, 'bbox_2d': [523, 158, 581, 398], 'label': 'remote on the right'}, {'image_id': 0, 'bbox_2d': [63, 150, 276, 244], 'label': 'remote on the left'}]
+```
+
+![Cell 15 output](/images/lfm/key-concepts/vision-capabilities/cell-15-output-6.png)
+
+## Tool calling
+
+<Info>**Model support:** This capability is best supported by LFM2.5-VL-3B.</Info>
+
+In this example, the model sees an image and can route the request to the most relevant tool. The tool schemas are generic enough to adapt to real catalog, search, or workflow APIs.
+
+```python
+import torch
+from IPython.display import display
+from transformers.image_utils import load_image
+
+img_url = "https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/coco_sample.png"
+input_image = load_image(img_url)
+display(input_image)
+
+tools = [
+    {
+        "name": "search_pet_care",
+        "description": "Search for care guidance for an animal visible in an image.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "animal": {"type": "string", "description": "The animal visible in the image"},
+                "topic": {"type": "string", "description": "The care topic to search for"},
+            },
+            "required": ["animal", "topic"],
+        },
+    },
+    {
+        "name": "search_replacement_remote",
+        "description": "Search for replacement remote controls or remote-control accessories visible in an image.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "item": {"type": "string", "description": "The remote-control item to search for"},
+                "quantity": {"type": "integer", "description": "How many matching items are visible"},
+            },
+            "required": ["item"],
+        },
+    },
+]
+
+messages = [
+    {
+        "role": "user",
+        "content": [
+            {"type": "image", "image": input_image},
+            {"type": "text", "text": "Find a care guide for the animals in this image. Choose the best tool for this request."},
+        ],
+    }
+]
+
+inputs = processor.apply_chat_template(
+    messages,
+    tools=tools,
+    add_generation_prompt=True,
+    tokenize=True,
+    return_dict=True,
+    return_tensors="pt",
+).to(model.device)
+
+with torch.inference_mode():
+    outputs = model.generate(
+        **inputs,
+        do_sample=True,
+        temperature=0.2,
+        top_k=50,
+        repetition_penalty=1.0,
+        max_new_tokens=256,
+    )
+
+output = processor.tokenizer.decode(
+    outputs[0, inputs["input_ids"].shape[1]:],
+    skip_special_tokens=False,
+)
+print(output)
+```
+
+**Output**
+
+![Cell 17 output](https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/coco_sample.png)
+
+```text
+<|tool_call_start|>[search_pet_care(animal="cat", topic="sleeping")]<|tool_call_end|><|im_end|>
+```
+
+## FAQ
+
+**Which LFM2.5-VL model should I use?**
+
+Use `LFM2.5-VL-450M` or `LFM2.5-VL-1.6B` for fast image captioning and visual question answering. Use `LFM2.5-VL-3B` for the strongest support for multi-image prompts, grounding, document layout parsing, and tool calling.
+
+**What image formats are supported?**
+
+LFM2.5-VL works with common image formats supported by the image loading path you use, such as JPEG and PNG. In the examples above, images are loaded from Hugging Face URLs with `transformers.image_utils.load_image`.
+
+**Can LFM2.5-VL return bounding boxes?**
+
+Yes. For grounding tasks, prompt the model to return bounding boxes in a structured format such as JSON. Coordinates in these examples are normalized to `[0, 1000]`, so you can scale them back to the displayed image size.
+
+Note that bounding boxes are approximate and can vary with prompt wording, image resolution, and generation settings. For workflows that require precise localization, inspect the returned boxes and validate them against the original image.
+
+**Can LFM2.5-VL parse documents?**
+
+Yes. `LFM2.5-VL-3B` can read visible text and return document layout annotations, including region labels, bounding boxes, and extracted content. This is useful for tables, forms, screenshots, reports, and other structured document images.
+
+**Can LFM2.5-VL call tools based on an image?**
+
+Yes. You can provide tool schemas through the chat template and ask the model to choose the relevant tool based on the visual content. For example, an image can help determine the right tool arguments.
+
+**Can LFM2.5-VL generate or edit images?**
+
+No. LFM2.5-VL models are image understanding models. They can analyze images, answer questions, read text, localize objects, parse layouts, and route tool calls, but they do not generate or edit images.

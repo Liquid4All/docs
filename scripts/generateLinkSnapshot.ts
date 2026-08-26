@@ -32,7 +32,7 @@ const DELETED_EXAMPLE = `  deleted:
 
 // Directories whose .mdx/.md files map to docs URLs. snippets/ is excluded
 // because it holds reusable fragments, not pages.
-const PAGE_DIRS = ['lfm', 'leap', 'examples', 'deployment'];
+const PAGE_DIRS = ['lfm', 'guides', 'leap', 'examples', 'deployment'];
 
 interface DocsJson {
   navigation?: { tabs?: NavNode[] };

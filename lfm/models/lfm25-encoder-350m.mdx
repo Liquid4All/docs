@@ -1,0 +1,88 @@
+---
+title: "LFM2.5-Encoder-350M"
+description: "350M multilingual bidirectional encoder for fine-tuning into classification, token classification, and retrieval tasks"
+---
+
+<a href="/lfm/models/liquid-nanos" className="back-button">← Back to Liquid Nanos</a>
+
+LFM2.5-Encoder-350M is a multilingual bidirectional encoder built on the LFM2 architecture. At 350M parameters, it is the larger sibling in the encoder family, built for maximum downstream quality when fine-tuned into task-specific models (classification, token classification, retrieval, reranking, and semantic similarity) across 15 languages.
+
+<div style={{display: 'flex', gap: '0.5rem', margin: '0.5rem 0 1.5rem 0'}}>
+  <a href="https://huggingface.co/LiquidAI/LFM2.5-Encoder-350M" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#fbbf24'}}><span style={{color: '#000'}}>HF</span></a>
+</div>
+
+<Note>
+Use LFM2.5-Encoder-350M when downstream quality matters most.
+For tighter latency and memory budgets or higher throughput, use [LFM2.5-Encoder-230M](/lfm/models/lfm25-encoder-230m).
+</Note>
+
+## Specifications
+
+| Property | Value |
+|----------|-------|
+| Parameters | ~354M |
+| Type | Bidirectional encoder |
+| Hidden Size | 1024 |
+| Vocabulary Size | 65,536 |
+| Context Length | 8,192 tokens |
+| Supported Languages | English, German, Spanish, French, Italian, Dutch, Polish, Portuguese, Arabic, Hindi, Japanese, Russian, Turkish, Vietnamese, Chinese (15) |
+
+<div className="use-cases">
+<CardGroup cols={3}>
+
+<Card title="Text Classification" icon="tags">
+  Sentiment, topic, intent/routing, moderation, and business-text linting.
+</Card>
+
+<Card title="Token Classification" icon="brackets-curly">
+  Named-entity recognition, span extraction, and sequence labeling.
+</Card>
+
+<Card title="Fine-Tuning Backbone" icon="sliders">
+  A base for dense embedding or late-interaction retrievers, NLI, and semantic similarity.
+</Card>
+
+</CardGroup>
+</div>
+
+## Quick Start
+
+<Note>
+This is a base encoder that produces general-purpose representations.
+For task outputs, fine-tune it with a task head for your use case. See the [fine-tuning overview](/lfm/fine-tuning/overview) to get started.
+</Note>
+
+<Tabs>
+  <Tab title="Transformers">
+    **Install:**
+    ```bash
+    pip install -U transformers
+    ```
+
+    **Run masked-token prediction:**
+    ```python
+    from transformers import AutoModelForMaskedLM, AutoTokenizer
+    import torch
+
+    tok = AutoTokenizer.from_pretrained("LiquidAI/LFM2.5-Encoder-350M", trust_remote_code=True)
+    mlm = AutoModelForMaskedLM.from_pretrained("LiquidAI/LFM2.5-Encoder-350M", trust_remote_code=True)
+
+    text = f"The capital of France is {tok.mask_token}."
+    enc = tok(text, return_tensors="pt")
+    with torch.no_grad():
+        logits = mlm(**enc).logits
+    pos = (enc["input_ids"][0] == tok.mask_token_id).nonzero()[0].item()
+    print([tok.decode([t]).strip() for t in logits[0, pos].topk(5).indices.tolist()])
+    # -> ['Paris', 'Strasbourg', 'Paris', 'Lyon', 'Versailles']
+    ```
+
+    **Load the encoder body for downstream tasks:**
+
+    For classification, token classification, regression, or retrieval, load the encoder body and attach your own head:
+    ```python
+    from transformers import AutoModel
+
+    body = AutoModel.from_pretrained("LiquidAI/LFM2.5-Encoder-350M", trust_remote_code=True)
+    ```
+  </Tab>
+</Tabs>

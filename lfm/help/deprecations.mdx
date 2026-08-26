@@ -1,0 +1,144 @@
+---
+title: "Deprecations"
+description: "Deprecated Liquid Foundation Models and their recommended replacements. Deprecated models remain available for download but are no longer actively maintained or recommended for new projects."
+---
+
+<Note>
+Deprecated models remain available for download on Hugging Face, but they are no longer actively maintained and receive no further updates. We recommend migrating to the suggested replacement for new projects when one is listed. Each listed replacement is a newer checkpoint that matches or improves on the deprecated model's quality at the same (or smaller) deployment footprint.
+</Note>
+
+## Deprecated models
+
+<table>
+  <thead>
+    <tr>
+      <th>Deprecated model</th>
+      <th style={{minWidth: "240px"}}>Recommended replacement</th>
+      <th style={{minWidth: "60px"}}>HF</th>
+      <th style={{minWidth: "60px"}}>GGUF</th>
+      <th style={{minWidth: "60px"}}>MLX</th>
+      <th style={{minWidth: "60px"}}>ONNX</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td colSpan={6}><strong>Text-to-text Models</strong></td></tr>
+    <tr>
+      <td><a href="/lfm/models/lfm2-8b-a1b">LFM2-8B-A1B</a></td>
+      <td><a href="/lfm/models/lfm25-8b-a1b">LFM2.5-8B-A1B</a></td>
+      <td><a href="https://huggingface.co/LiquidAI/LFM2-8B-A1B">✓</a></td>
+      <td><a href="https://huggingface.co/LiquidAI/LFM2-8B-A1B-GGUF">✓</a></td>
+      <td><a href="https://huggingface.co/mlx-community/LFM2-8B-A1B-8bit">✓</a></td>
+      <td><a href="https://huggingface.co/onnx-community/LFM2-8B-A1B-ONNX">✓</a></td>
+    </tr>
+    <tr>
+      <td><a href="/lfm/models/lfm2-1.2b">LFM2-1.2B</a></td>
+      <td><a href="/lfm/models/lfm25-1.2b-instruct">LFM2.5-1.2B-Instruct</a></td>
+      <td><a href="https://huggingface.co/LiquidAI/LFM2-1.2B">✓</a></td>
+      <td><a href="https://huggingface.co/LiquidAI/LFM2-1.2B-GGUF">✓</a></td>
+      <td><a href="https://huggingface.co/mlx-community/LFM2-1.2B-8bit">✓</a></td>
+      <td><a href="https://huggingface.co/onnx-community/LFM2-1.2B-ONNX">✓</a></td>
+    </tr>
+    <tr>
+      <td>LFM2.5-1.2B-Base</td>
+      <td>No direct replacement</td>
+      <td><a href="https://huggingface.co/LiquidAI/LFM2.5-1.2B-Base">✓</a></td>
+      <td><a href="https://huggingface.co/LiquidAI/LFM2.5-1.2B-Base-GGUF">✓</a></td>
+      <td>✗</td>
+      <td><a href="https://huggingface.co/LiquidAI/LFM2.5-1.2B-Base-ONNX">✓</a></td>
+    </tr>
+    <tr>
+      <td><a href="/lfm/models/lfm2-2.6b">LFM2-2.6B</a></td>
+      <td><a href="/lfm/models/lfm25-2.6b">LFM2.5-2.6B</a></td>
+      <td><a href="https://huggingface.co/LiquidAI/LFM2-2.6B">✓</a></td>
+      <td><a href="https://huggingface.co/LiquidAI/LFM2-2.6B-GGUF">✓</a></td>
+      <td><a href="https://huggingface.co/mlx-community/LFM2-2.6B-8bit">✓</a></td>
+      <td><a href="https://huggingface.co/onnx-community/LFM2-2.6B-ONNX">✓</a></td>
+    </tr>
+    <tr>
+      <td><a href="/lfm/models/lfm2-2.6b-exp">LFM2-2.6B-Exp</a></td>
+      <td><a href="/lfm/models/lfm25-2.6b">LFM2.5-2.6B</a></td>
+      <td><a href="https://huggingface.co/LiquidAI/LFM2-2.6B-Exp">✓</a></td>
+      <td><a href="https://huggingface.co/LiquidAI/LFM2-2.6B-Exp-GGUF">✓</a></td>
+      <td>✗</td>
+      <td>✗</td>
+    </tr>
+    <tr>
+      <td><a href="/lfm/models/lfm2-350m">LFM2-350M</a></td>
+      <td><a href="/lfm/models/lfm25-350m">LFM2.5-350M</a></td>
+      <td><a href="https://huggingface.co/LiquidAI/LFM2-350M">✓</a></td>
+      <td><a href="https://huggingface.co/LiquidAI/LFM2-350M-GGUF">✓</a></td>
+      <td><a href="https://huggingface.co/mlx-community/LFM2-350M-8bit">✓</a></td>
+      <td><a href="https://huggingface.co/onnx-community/LFM2-350M-ONNX">✓</a></td>
+    </tr>
+    <tr><td colSpan={6}><strong>Vision Language Models</strong></td></tr>
+    <tr>
+      <td><a href="/lfm/models/lfm2-vl-3b">LFM2-VL-3B</a></td>
+      <td><a href="/lfm/models/lfm25-vl-3b">LFM2.5-VL-3B</a></td>
+      <td><a href="https://huggingface.co/LiquidAI/LFM2-VL-3B">✓</a></td>
+      <td><a href="https://huggingface.co/LiquidAI/LFM2-VL-3B-GGUF">✓</a></td>
+      <td><a href="https://huggingface.co/mlx-community/LFM2-VL-3B-8bit">✓</a></td>
+      <td><a href="https://huggingface.co/onnx-community/LFM2-VL-3B-ONNX">✓</a></td>
+    </tr>
+    <tr>
+      <td><a href="/lfm/models/lfm2-vl-1.6b">LFM2-VL-1.6B</a></td>
+      <td><a href="/lfm/models/lfm25-vl-1.6b">LFM2.5-VL-1.6B</a></td>
+      <td><a href="https://huggingface.co/LiquidAI/LFM2-VL-1.6B">✓</a></td>
+      <td><a href="https://huggingface.co/LiquidAI/LFM2-VL-1.6B-GGUF">✓</a></td>
+      <td><a href="https://huggingface.co/mlx-community/LFM2-VL-1.6B-8bit">✓</a></td>
+      <td><a href="https://huggingface.co/onnx-community/LFM2-VL-1.6B-ONNX">✓</a></td>
+    </tr>
+    <tr>
+      <td><a href="/lfm/models/lfm2-vl-450m">LFM2-VL-450M</a></td>
+      <td><a href="/lfm/models/lfm25-vl-450m">LFM2.5-VL-450M</a></td>
+      <td><a href="https://huggingface.co/LiquidAI/LFM2-VL-450M">✓</a></td>
+      <td><a href="https://huggingface.co/LiquidAI/LFM2-VL-450M-GGUF">✓</a></td>
+      <td><a href="https://huggingface.co/mlx-community/LFM2-VL-450M-8bit">✓</a></td>
+      <td><a href="https://huggingface.co/onnx-community/LFM2-VL-450M-ONNX">✓</a></td>
+    </tr>
+    <tr><td colSpan={6}><strong>Liquid Nanos</strong></td></tr>
+    <tr>
+      <td><a href="/lfm/models/lfm2-1.2b-extract">LFM2-1.2B-Extract</a></td>
+      <td><a href="/lfm/models/lfm25-1.2b-instruct">LFM2.5-1.2B-Instruct</a></td>
+      <td><a href="https://huggingface.co/LiquidAI/LFM2-1.2B-Extract">✓</a></td>
+      <td><a href="https://huggingface.co/LiquidAI/LFM2-1.2B-Extract-GGUF">✓</a></td>
+      <td>✗</td>
+      <td><a href="https://huggingface.co/onnx-community/LFM2-1.2B-Extract-ONNX">✓</a></td>
+    </tr>
+    <tr>
+      <td><a href="/lfm/models/lfm2-350m-extract">LFM2-350M-Extract</a></td>
+      <td><a href="/lfm/models/lfm25-350m">LFM2.5-350M</a></td>
+      <td><a href="https://huggingface.co/LiquidAI/LFM2-350M-Extract">✓</a></td>
+      <td><a href="https://huggingface.co/LiquidAI/LFM2-350M-Extract-GGUF">✓</a></td>
+      <td>✗</td>
+      <td><a href="https://huggingface.co/onnx-community/LFM2-350M-Extract-ONNX">✓</a></td>
+    </tr>
+    <tr>
+      <td><a href="/lfm/models/lfm2-1.2b-rag">LFM2-1.2B-RAG</a></td>
+      <td><a href="/lfm/models/lfm25-1.2b-instruct">LFM2.5-1.2B-Instruct</a></td>
+      <td><a href="https://huggingface.co/LiquidAI/LFM2-1.2B-RAG">✓</a></td>
+      <td><a href="https://huggingface.co/LiquidAI/LFM2-1.2B-RAG-GGUF">✓</a></td>
+      <td>✗</td>
+      <td><a href="https://huggingface.co/onnx-community/LFM2-1.2B-RAG-ONNX">✓</a></td>
+    </tr>
+    <tr>
+      <td><a href="/lfm/models/lfm2-colbert-350m">LFM2-ColBERT-350M</a></td>
+      <td><a href="/lfm/models/lfm25-colbert-350m">LFM2.5-ColBERT-350M</a></td>
+      <td><a href="https://huggingface.co/LiquidAI/LFM2-ColBERT-350M">✓</a></td>
+      <td>✗</td>
+      <td>✗</td>
+      <td>✗</td>
+    </tr>
+    <tr>
+      <td><a href="/lfm/models/lfm2-1.2b-tool">LFM2-1.2B-Tool</a></td>
+      <td><a href="/lfm/models/lfm25-1.2b-instruct">LFM2.5-1.2B-Instruct</a></td>
+      <td><a href="https://huggingface.co/LiquidAI/LFM2-1.2B-Tool">✓</a></td>
+      <td><a href="https://huggingface.co/LiquidAI/LFM2-1.2B-Tool-GGUF">✓</a></td>
+      <td>✗</td>
+      <td><a href="https://huggingface.co/onnx-community/LFM2-1.2B-Tool-ONNX">✓</a></td>
+    </tr>
+  </tbody>
+</table>
+
+<Note>
+Looking for a currently supported model? Browse the full [model library](/lfm/models/complete-library).
+</Note>

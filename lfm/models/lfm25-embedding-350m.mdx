@@ -1,0 +1,101 @@
+---
+title: "LFM2.5-Embedding-350M"
+description: "350M dense bi-encoder model for multilingual retrieval and semantic search"
+---
+
+<a href="/lfm/models/liquid-nanos" className="back-button">← Back to Liquid Nanos</a>
+
+LFM2.5-Embedding-350M is a dense bi-encoder retrieval model that produces one 1024-dimensional vector per query or document. It is built for fast, compact multilingual and cross-lingual semantic search across 11 languages.
+
+<div style={{display: 'flex', gap: '0.5rem', margin: '0.5rem 0 1.5rem 0'}}>
+  <a href="https://huggingface.co/LiquidAI/LFM2.5-Embedding-350M" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#fbbf24'}}><span style={{color: '#000'}}>HF</span></a>
+  <a href="https://huggingface.co/LiquidAI/LFM2.5-Embedding-350M-GGUF" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#60a5fa'}}><span style={{color: '#000'}}>GGUF</span></a>
+</div>
+
+<Note>
+Use LFM2.5-Embedding-350M when you need a small, fast vector index or compatibility with standard dense-vector search. Use [LFM2.5-ColBERT-350M](/lfm/models/lfm25-colbert-350m) when retrieval quality matters more than index size.
+</Note>
+
+## Specifications
+
+| Property | Value |
+|----------|-------|
+| Parameters | ~354M |
+| Type | Dense bi-encoder |
+| Document Length | 512 tokens |
+| Output | 1024-dimensional CLS vector |
+| Similarity | Cosine |
+| Supported Languages | English, Spanish, German, French, Italian, Portuguese, Arabic, Swedish, Norwegian, Japanese, Korean |
+
+<div className="use-cases">
+<CardGroup cols={3}>
+
+<Card title="Semantic Search" icon="magnifying-glass">
+  Fast dense retrieval for documents and products.
+</Card>
+
+<Card title="Vector Databases" icon="database">
+  One vector per item for compact indexing.
+</Card>
+
+<Card title="Cross-Lingual RAG" icon="languages">
+  Retrieve across 11 supported languages.
+</Card>
+
+</CardGroup>
+</div>
+
+## Quick Start
+
+<Tabs>
+  <Tab title="sentence-transformers">
+    **Install:**
+    ```bash
+    pip install -U sentence-transformers
+    ```
+
+    **Encode queries and documents:**
+    ```python
+    from sentence_transformers import SentenceTransformer
+
+    model = SentenceTransformer(
+        "LiquidAI/LFM2.5-Embedding-350M",
+        trust_remote_code=True,
+    )
+
+    queries = [
+        "What is the capital of France?",
+        "Which city is Japan's capital?",
+    ]
+    documents = [
+        "Paris is the capital and largest city of France.",
+        "Tokyo is the capital of Japan.",
+        "Berlin is the capital and largest city of Germany.",
+    ]
+
+    query_embeddings = model.encode(
+        queries,
+        prompt_name="query",
+        normalize_embeddings=True,
+    )
+    document_embeddings = model.encode(
+        documents,
+        prompt_name="document",
+        normalize_embeddings=True,
+    )
+
+    scores = query_embeddings @ document_embeddings.T
+    print(scores)
+    ```
+  </Tab>
+
+  <Tab title="GGUF">
+    **Download GGUF:**
+    ```bash
+    hf download LiquidAI/LFM2.5-Embedding-350M-GGUF \
+      --local-dir ./LFM2.5-Embedding-350M-GGUF
+    ```
+
+    Use the GGUF files with a llama.cpp build that supports LFM2.5 embedding models.
+  </Tab>
+</Tabs>

@@ -1,0 +1,107 @@
+---
+title: "Migration Guide"
+description: "Move from Qwen, Llama, or Gemma to LFMs while avoiding the common migration pitfalls."
+---
+
+import { ChatMLExample } from "/snippets/key-concepts/chatml-example.mdx";
+import { ToolCallTokenExample } from "/snippets/key-concepts/tool-call-token-example.mdx";
+
+This guide is for teams already running Qwen, Llama, or Gemma who want to evaluate Liquid Foundation Models (LFMs) as replacements. LFMs load and serve through the same frameworks you already use, so most migrations are a model ID and configuration change. The details that usually matter are:
+- deployment runtime choice (see [Deployment runtimes](#deployment-runtimes)),
+- chat templates (see [Chat Template](#chat-template)),
+- sampling configuration (see [Sampling Configuration](#sampling-configuration)),
+- tool-call parsing (see [Tool Use](#tool-use)), and
+- LoRA module names (see [Fine-tuning](#fine-tuning)).
+
+Use this alongside [Use Case Evaluation](/guides/use-case-evaluation) for model selection and benchmarking methodology.
+
+## Model mapping
+
+Pick the LFM in the same deployment class as your current model. Compare within class; benchmarking a 1.2B LFM against a 32B Qwen-family model does not tell you whether it fits your deployment.
+
+| If you run | Evaluate | Notes |
+| --- | --- | --- |
+| Small text models, `<1B` | [LFM2.5-230M](https://huggingface.co/LiquidAI/LFM2.5-230M) or [LFM2.5-350M](https://huggingface.co/LiquidAI/LFM2.5-350M) | Classification, extraction, routing, and tight memory budgets. |
+| Mid-size text models, `1B-4B` | [LFM2.5-1.2B-Instruct](https://huggingface.co/LiquidAI/LFM2.5-1.2B-Instruct) or [LFM2.5-1.2B-Thinking](https://huggingface.co/LiquidAI/LFM2.5-1.2B-Thinking) | Default migration range; choose the Thinking variant when reasoning quality is worth the added latency. |
+| Large text models, `4B-13B` | [LFM2.5-8B-A1B](https://huggingface.co/LiquidAI/LFM2.5-8B-A1B) | Best fit for stronger chat, tool use, and agentic workloads; 1.5B active parameters. |
+| Extra-large text models, `14B+` | [LFM2-24B-A2B](https://huggingface.co/LiquidAI/LFM2-24B-A2B) | Highest-capability LFM option for larger-model replacement evaluations. |
+| Vision-language models | [LFM2.5-VL-450M](https://huggingface.co/LiquidAI/LFM2.5-VL-450M) or [LFM2.5-VL-1.6B](https://huggingface.co/LiquidAI/LFM2.5-VL-1.6B) | Image understanding; use `-Extract` variants for image to strict JSON. |
+| Whisper plus separate TTS | [LFM2.5-Audio-1.5B](https://huggingface.co/LiquidAI/LFM2.5-Audio-1.5B) | ASR, TTS, and speech-to-speech in one model. |
+
+See the [Complete Model Library](/lfm/models/complete-library) for the full catalog.
+
+## Deployment runtimes
+
+Across runtimes, avoid carrying over hand-written Qwen, Llama, or Gemma prompt templates. Use the model-provided chat template, and configure the `lfm2` tool-call parser in vLLM or SGLang when tool use is in scope.
+
+For GPU inference, see [Transformers](/deployment/gpu-inference/transformers), [vLLM](/deployment/gpu-inference/vllm), or [SGLang](/deployment/gpu-inference/sglang).
+
+For edge and on-device inference, see [llama.cpp](/deployment/on-device/llama-cpp), [Ollama](/deployment/on-device/ollama), [Atomic Chat](/deployment/on-device/atomic-chat), [LM Studio](/deployment/on-device/lm-studio), [MLX](/deployment/on-device/mlx), [ONNX](/deployment/on-device/onnx), or the [LEAP SDK](/deployment/on-device/sdk/quick-start).
+
+## Chat Template
+
+LFMs use a ChatML-style format:
+
+<ChatMLExample />
+
+Roles are `system`, `user`, `assistant`, and `tool`. Vision-language models use an `<image>` sentinel.
+
+Migration notes:
+
+- **From Qwen:** ChatML is familiar, but token details differ. Use `apply_chat_template`; do not reuse literal Qwen strings.
+- **From Llama:** replace `<|begin_of_text|>` and `<|start_header_id|>` prompt builders.
+- **From Gemma:** replace `<start_of_turn>` builders. LFMs support a real `system` role.
+
+See [Chat Template](/lfm/key-concepts/chat-template) and Hugging Face's [`apply_chat_template` guide](https://huggingface.co/docs/transformers/main/en/chat_templating#using-applychattemplate) for the full formatting workflow.
+
+## Sampling Configuration
+
+Generation parameters are model-specific. Tune on your task instead of carrying over defaults from Qwen, Llama, or Gemma.
+
+See the [Prompting Guide](/lfm/key-concepts/text-generation-and-prompting) for recommended sampling configurations by model.
+
+## Tool Use
+
+LFMs natively emit a Pythonic tool-call list, not OpenAI-style JSON:
+
+<ToolCallTokenExample />
+
+If you swap an agent to an LFM and let a generic JSON parser run, tool calls can appear broken. The format is different.
+
+What to do:
+
+1. Pass tools through [`tokenizer.apply_chat_template(messages, tools=[...])`](https://huggingface.co/docs/transformers/main/en/chat_templating#using-applychattemplate) or the serving runtime's supported tool mechanism.
+2. Parse the Pythonic call list between `<|tool_call_start|>` and `<|tool_call_end|>`.
+3. On vLLM or SGLang, configure the `lfm2` tool-call parser instead of a generic JSON parser.
+4. Return results as `tool` role messages, with JSON content if useful.
+5. If you fine-tune for tool calling, train on the native Pythonic format and convert to any internal domain-specific language after parsing.
+
+See [Tool Use](/lfm/key-concepts/tool-use) for the full tool-calling workflow.
+
+## Fine-tuning
+
+LFMs are standard Hugging Face causal LMs, so TRL and Unsloth-style pipelines carry over with two LFM-specific corrections.
+
+First, update LoRA `target_modules`. LFM2 and LFM2.5 use a conv-attention hybrid with different module names than Llama-family models:
+
+```python
+# LFM2 / LFM2.5
+target_modules = ["w1", "w2", "w3", "q_proj", "k_proj", "v_proj", "out_proj", "in_proj"]
+
+# Llama/Qwen/Gemma configurations are wrong for LFMs:
+# o_proj/gate_proj/up_proj/down_proj do not exist.
+```
+
+Before a long run, call `model.print_trainable_parameters()`. You should see millions of trainable parameters, and the LoRA module count should be in the expected range for your model size. If it is near zero, the module names are wrong.
+
+Second, format training examples with the LFM chat template. Training data formatted with your previous model's template creates a silent distribution mismatch.
+
+Everything else transfers directly. Use [LEAP Finetune](/lfm/fine-tuning/leap-finetune), [TRL](/lfm/fine-tuning/trl), or [Unsloth](/lfm/fine-tuning/unsloth) depending on your existing workflow.
+
+See [Fine-tuning Overview](/lfm/fine-tuning/overview) for the main fine-tuning workflow.
+
+## Related docs
+
+- [Hardware Evaluation](/guides/hardware-evaluation)
+- [Use Case Evaluation](/guides/use-case-evaluation)
+- [Fine-tuning Overview](/lfm/fine-tuning/overview)

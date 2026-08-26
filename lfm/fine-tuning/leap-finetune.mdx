@@ -1,0 +1,197 @@
+---
+title: "LEAP Finetune"
+description: "Prepare data, train, evaluate, and export customized Liquid Foundation Models with LEAP Finetune."
+---
+
+[LEAP Finetune](https://github.com/Liquid4All/leap-finetune) (`leap-finetune`) is Liquid's repo for the full model customization loop: data preparation, training, evals, checkpointing, and export for Liquid Foundation Models (LFMs).
+
+Use it when you want a repo-driven workflow that Claude Code or Codex can operate end to end from intent to runnable configs, tests, launches, and follow-up evals.
+
+## What it includes
+
+| Area | Support |
+| --- | --- |
+| Training | SFT, DPO, GRPO, VLM SFT, VLM DPO, VLM GRPO, MoE SFT, MoE DPO, LoRA, and full fine-tuning |
+| Evals | Training-time benchmark suites, standalone evals, HF/vLLM backends, and async sidecar or reserved eval workers |
+| Data and rewards | Dataset loading, format validation, tool-calling data, VLM image roots, GRPO rewards, judge rewards, and OpenEnv-style RL environments |
+| Launch and export | Local Ray, SLURM, Modal, KubeRay, checkpoint resume, Hugging Face export, and GGUF export |
+
+## Agent quickstart
+
+Clone the repo and install the locked environment:
+
+```bash
+git clone https://github.com/Liquid4All/leap-finetune.git
+cd leap-finetune
+uv sync
+```
+
+For AMD/ROCm machines, sync the ROCm dependency group instead:
+
+```bash
+uv sync --no-group cuda --group rocm
+```
+
+Start Claude Code or Codex from the repo root:
+
+```bash
+claude
+# or
+codex
+```
+
+The repo includes `AGENTS.md`, `CLAUDE.md`, and mirrored skills under `.agents/skills/` and `.claude/skills/`. Those files help the agent choose the right workflow for data prep, training configs, eval suites, rewards, backend launch, checkpoint inspection, and export.
+
+Good starter prompts:
+
+- "Train `LFM2-1.2B` with SFT LoRA on the Hugging Face `HuggingFaceTB/smoltalk` dataset, sweep learning rate and LoRA rank, and tell me which run looks best."
+- "Fine-tune an LFM vision model on a chart question-answering dataset from Hugging Face, add a small eval suite, and show me the launch command."
+- "Evaluate my latest `support_sft` checkpoint with vLLM, compare it against the base model, and write the metrics to `results.json`."
+- "Set up a GRPO experiment that rewards valid JSON answers, run a small smoke test, and suggest the next config to try."
+
+## CLI usage
+
+Run from the repo environment when you are developing configs or changing LFT itself:
+
+```bash
+uv run leap-finetune job_configs/sft_example.yaml
+uv run leap-finetune run job_configs/sft_example.yaml
+uv run leap-finetune eval job_configs/eval_standalone_example.yaml --output results.json
+uv run leap-finetune slurm job_configs/sft_example_with_slurm.yaml --output-dir job_configs/slurms
+```
+
+For repeated use from any directory, install the CLI as a `uv` tool:
+
+```bash
+uv tool install git+https://github.com/Liquid4All/leap-finetune.git
+leap-finetune /absolute/path/to/config.yaml
+```
+
+To import `leap_finetune` from another `uv` project, add it as a dependency:
+
+```bash
+uv add git+https://github.com/Liquid4All/leap-finetune.git
+
+# While iterating on a local checkout:
+uv add --editable ../leap-finetune
+```
+
+## Python usage
+
+`run_config` accepts YAML paths or typed config objects. A config with `slurm`, `modal`, or `kuberay` submits to that backend; otherwise local training expects visible CUDA devices.
+
+```python
+from leap_finetune import run_config
+from leap_finetune.config import DatasetConfig, JobConfig, PeftConfig, TrainingConfig
+
+job = JobConfig(
+    project_name="support_sft",
+    model_name="LFM2-1.2B",
+    training_type="sft",
+    dataset=DatasetConfig(
+        path="HuggingFaceTB/smoltalk",
+        type="sft",
+        subset="all",
+        limit=1000,
+        test_size=0.2,
+    ),
+    training_config=TrainingConfig(
+        extends="DEFAULT_SFT",
+        num_train_epochs=3,
+        per_device_train_batch_size=2,
+        learning_rate=2e-5,
+    ),
+    peft_config=PeftConfig(extends="DEFAULT_LORA", use_peft=True),
+)
+
+run_config(job)
+```
+
+<Accordion title="Fine-tuning with evals">
+
+  ```python
+  from leap_finetune import run_config
+  from leap_finetune.config import (
+      DatasetConfig,
+      EvalConfig,
+      EvalSuiteConfig,
+      JobConfig,
+      PeftConfig,
+      TrainingConfig,
+  )
+
+  job = JobConfig(
+      project_name="support_sft_with_evals",
+      model_name="LFM2-1.2B",
+      training_type="sft",
+      dataset=DatasetConfig(
+          path="/data/support_train.jsonl",
+          type="sft",
+          test_size=0.1,
+      ),
+      training_config=TrainingConfig(
+          extends="DEFAULT_SFT",
+          num_train_epochs=3,
+          per_device_train_batch_size=2,
+          learning_rate=2e-5,
+          eval_strategy="steps",
+          eval_steps=200,
+      ),
+      peft_config=PeftConfig(extends="DEFAULT_LORA", use_peft=True),
+      evals=EvalSuiteConfig(
+          max_new_tokens=128,
+          benchmarks=[
+              EvalConfig(
+                  name="support_qa",
+                  path="/data/support_eval.jsonl",
+                  metric="short_answer",
+              ),
+          ],
+      ),
+  )
+
+  run_config(job)
+  ```
+
+</Accordion>
+
+<Accordion title="Standalone evals">
+
+  Eval-only runs use `EvalRunConfig`, not `JobConfig`, because they do not include a training dataset or training settings.
+
+  ```python
+  from leap_finetune import run_config
+  from leap_finetune.config import (
+      EvalBackendConfig,
+      EvalConfig,
+      EvalRunConfig,
+      EvalSuiteConfig,
+  )
+
+  eval_job = EvalRunConfig(
+      project_name="support_eval",
+      checkpoint="/models/support_sft/checkpoint-900",
+      evals=EvalSuiteConfig(
+          max_new_tokens=128,
+          benchmarks=[
+              EvalConfig(
+                  name="support_qa",
+                  path="/data/support_eval.jsonl",
+                  metric="short_answer",
+              ),
+          ],
+      ),
+      backend=EvalBackendConfig(
+          type="vllm",
+          tensor_parallel_size=1,
+          gpu_memory_utilization=0.9,
+      ),
+  )
+
+  metrics = run_config(eval_job, output_path="results.json")
+  print(metrics)
+  ```
+
+</Accordion>
+
+Evaluation data uses the same messages-style format as training data. For generation metrics such as `short_answer`, the final assistant turn is treated as the ground truth.

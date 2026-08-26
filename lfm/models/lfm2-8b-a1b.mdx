@@ -1,6 +1,6 @@
 ---
 title: "LFM2-8B-A1B"
-description: "8B parameter Mixture-of-Experts model with 1.5B active parameters for fast, high-quality inference"
+description: "8B parameter Mixture-of-Experts model with 1.5B active parameters (deprecated - use LFM2.5-8B-A1B instead)"
 ---
 
 import { TextTransformers } from "/snippets/quickstart/text-transformers.mdx";
@@ -9,6 +9,10 @@ import { TextSglang } from "/snippets/quickstart/text-sglang.mdx";
 import { TextLlamacpp } from "/snippets/quickstart/text-llamacpp.mdx";
 
 <a href="/lfm/models/text-models" className="back-button">← Back to Text Models</a>
+
+<Warning>
+This model is deprecated. Use [LFM2.5-8B-A1B](/lfm/models/lfm25-8b-a1b) for improved performance and a 128K context length.
+</Warning>
 
 LFM2-8B-A1B is Liquid AI's Mixture-of-Experts model, combining 8B total parameters with only 1.5B active parameters per forward pass. This delivers the quality of larger models with the speed and efficiency of smaller ones—ideal for on-device deployment.
 

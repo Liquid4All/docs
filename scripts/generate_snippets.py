@@ -11,18 +11,6 @@ REPO_ROOT = pathlib.Path(__file__).resolve().parent.parent
 NOTEBOOK_PATH = REPO_ROOT / "notebooks" / "quickstart_snippets.ipynb"
 SNIPPETS_DIR = REPO_ROOT / "snippets" / "quickstart"
 
-SHIKI_STYLE = (
-    'className="shiki shiki-themes github-light github-dark" '
-    "style={{backgroundColor: '#fff', '--shiki-dark-bg': '#24292e', "
-    "color: '#24292e', '--shiki-dark': '#e1e4e8'}}"
-)
-
-SHIKI_STYLE_WITH_MARGIN = (
-    'className="shiki shiki-themes github-light github-dark" '
-    "style={{backgroundColor: '#fff', '--shiki-dark-bg': '#24292e', "
-    "color: '#24292e', '--shiki-dark': '#e1e4e8', marginTop: '0.5rem'}}"
-)
-
 REPLACEMENTS = {
     "text": [
         ("LiquidAI/LFM2.5-1.2B-Instruct-GGUF", "${ggufRepo}"),
@@ -76,7 +64,7 @@ SNIPPET_CONFIG = {
     },
     "text-vllm": {
         "component_name": "TextVllm",
-        "props": "{ modelId, samplingParams }",
+        "props": "{ modelId, samplingParams, maxTokens }",
         "replacement_group": "text",
         "source": "config",
         "sections": [
@@ -90,7 +78,7 @@ SNIPPET_CONFIG = {
                  "\n"
                  'llm = LLM(model="${modelId}")\n'
                  "\n"
-                 "sampling_params = SamplingParams(${samplingParams}max_tokens=512)\n"
+                 "sampling_params = SamplingParams(${samplingParams}max_tokens=${maxTokens || 512})\n"
                  "\n"
                  'output = llm.chat("What is machine learning?", sampling_params)\n'
                  "print(output[0].outputs[0].text)"
@@ -108,9 +96,9 @@ SNIPPET_CONFIG = {
              "code": "brew install llama.cpp"},
             {"type": "label", "text": "Run:"},
             {"type": "code_block", "language": "bash",
-             "code": "llama-cli -hf ${ggufRepo} -c 4096 --color -i \\\n    ${samplingFlags}"},
+             "code": "llama-cli -hf ${ggufRepo} --conversation \\\n    ${samplingFlags}"},
             {"type": "raw_html",
-             "html": '<p>The <code>-hf</code> flag downloads the model directly from Hugging Face. For other installation methods and advanced usage, see the <a href="/docs/inference/llama-cpp">llama.cpp guide</a>.</p>'},
+             "html": '<p>The <code>-hf</code> flag downloads the model directly from Hugging Face. For other installation methods and advanced usage, see the <a href="/deployment/on-device/llama-cpp">llama.cpp guide</a>.</p>'},
         ],
     },
     "vl-transformers": {
@@ -160,7 +148,7 @@ SNIPPET_CONFIG = {
             {"type": "raw_html",
              "html": '<p>The <code>-hf</code> flag downloads the model directly from Hugging Face. Use <code>--image-max-tokens</code> to control image token budget.</p>'},
             {"type": "raw_html",
-             "html": '<p>For server deployment and advanced usage, see the <a href="/docs/inference/llama-cpp#vision-models">llama.cpp guide</a>.</p>'},
+             "html": '<p>For server deployment and advanced usage, see the <a href="/deployment/on-device/llama-cpp#vision-models">llama.cpp guide</a>.</p>'},
         ],
     },
 }
@@ -186,17 +174,13 @@ def apply_replacements(code, group):
     return code
 
 
-def render_code_block(code, language, style=None):
-    if style is None:
-        style = SHIKI_STYLE
+def render_code_block(code, language):
     # Backslashes must be escaped inside JS template literals
-    escaped_code = code.replace("\\", "\\\\")
+    escaped_code = code.replace("\\", "\\\\").replace("`", "\\`")
     lines = [
-        f'<pre {style} language="{language}">',
-        f'<code language="{language}">',
-        "{`" + escaped_code + "`.split('\\n').map((line, i) => <span key={i} className=\"line\">{line}{'\\n'}</span>)}",
-        "</code>",
-        "</pre>",
+        f'<CodeBlock language="{language}">',
+        "{`" + escaped_code + "`}",
+        "</CodeBlock>",
     ]
     return "\n".join(lines)
 
@@ -211,9 +195,7 @@ def render_section(section, notebook_code=None):
         return render_code_block(section["code"], section["language"])
 
     if section_type == "code_block_margin":
-        return render_code_block(
-            section["code"], section["language"], style=SHIKI_STYLE_WITH_MARGIN
-        )
+        return render_code_block(section["code"], section["language"])
 
     if section_type == "notebook_code":
         if notebook_code is None:

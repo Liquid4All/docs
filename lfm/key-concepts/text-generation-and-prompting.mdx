@@ -62,9 +62,11 @@ messages = [
 
 For structured generation with schema validation, see [Outlines](https://dottxt-ai.github.io/outlines).
 
-## Text Models
+## Sampling Parameters for Text Generation
 
-Control text generation behavior, balancing creativity, determinism, and quality:
+Sampling parameters control text generation behavior and balance creativity, determinism, and quality:
+
+Use the recommended values on each model page.
 
 * **`temperature`** (0.0-2.0) - Randomness control. Lower (0.1-0.7) = deterministic; higher (0.8-1.5) = creative.
 * **`top_p`** (0.0-1.0) - Nucleus sampling. Lower (0.1-0.5) = focused; higher (0.7-0.95) = diverse.
@@ -75,26 +77,6 @@ Control text generation behavior, balancing creativity, determinism, and quality
 
 Parameter names and syntax vary by platform. See [Transformers](/deployment/gpu-inference/transformers), [vLLM](/deployment/gpu-inference/vllm), or [llama.cpp](/deployment/on-device/llama-cpp) for details.
 
-### Recommended Settings Text
-
-**For LFM2.5-1.2B-Instruct:**
-
-* `temperature=0.1`
-* `top_k=50`
-* `repetition_penalty=1.05`
-
-**For LFM2.5-1.2B-Thinking:**
-
-* `temperature=0.1`
-* `top_k=50`
-* `top_p=0.1`
-* `repetition_penalty=1.05`
-
-**For LFM2 text models:**
-
-* `temperature=0.3`
-* `min_p=0.15`
-* `repetition_penalty=1.05`
 
 ## Vision Models
 
@@ -130,9 +112,6 @@ min_image_tokens = 32
 
 **For vision models:**
 
-* `temperature=0.1`
-* `min_p=0.15`
-* `repetition_penalty=1.05`
 * `min_image_tokens=64`
 * `max_image_tokens=256`
 * `do_image_splitting=True`
