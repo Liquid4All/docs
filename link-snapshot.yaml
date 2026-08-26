@@ -30,6 +30,7 @@ active:
   - /deployment/on-device/android/openai-client
   - /deployment/on-device/android/utilities
   - /deployment/on-device/android/voice-assistant
+  - /deployment/on-device/atomic-chat
   - /deployment/on-device/ios/advanced-features
   - /deployment/on-device/ios/ai-agent-usage-guide
   - /deployment/on-device/ios/cloud-ai-comparison

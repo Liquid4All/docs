@@ -16,7 +16,7 @@ local URL yours prints. You point your harness at that URL.
 
 <Note>
   Each backend uses its own default port, so your endpoint depends on which one you run.
-  llama.cpp and MLX use `8080`, vLLM uses `8000`, SGLang uses `30000`, and LM Studio uses `1234`.
+  llama.cpp and MLX use `8080`, vLLM uses `8000`, SGLang uses `30000`, LM Studio uses `1234`, and Atomic Chat uses `1337`.
   The examples in this guide use `http://localhost:8080/v1`. When you configure a harness,
   replace the port with your server's.
 </Note>
@@ -100,6 +100,21 @@ Install one backend and start it with tool calling enabled.
     2. Enable **tool use** in the model settings.
     3. Set the context length in the model settings.
     4. Click **Start Server**. It serves at `http://localhost:1234`.
+  </Tab>
+  <Tab title="Atomic Chat">
+    **Install:**
+
+    Download and install [Atomic Chat](https://atomic.chat), then search for **LFM2.5-2.6B** in
+    the model library and download the `Q4_K_M` GGUF. See the
+    [Atomic Chat guide](/deployment/on-device/atomic-chat).
+
+    **Run:**
+
+    1. Load **LFM2.5-2.6B** in a chat.
+    2. Open the **Integrations** tab.
+    3. Click **Start Server**. It serves the loaded model at `http://localhost:1337` by default; use the port shown in the app.
+
+    The same Integrations screen also includes one-click agent launchers, so you can run a harness right next to the server.
   </Tab>
   <Tab title="MLX">
     **Install** (Apple Silicon only):

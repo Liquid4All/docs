@@ -1,0 +1,169 @@
+---
+title: "Atomic Chat"
+description: "Atomic Chat is a desktop and mobile app for running LLMs locally with a graphical user interface."
+---
+
+<Tip>
+  Use Atomic Chat for local inference with a graphical interface on desktop and mobile, one-click model downloads from Hugging Face, and no command-line setup.
+</Tip>
+
+Atomic Chat uses GGUF models on all platforms and MLX models on Apple Silicon.
+
+## Installation
+
+Download and install Atomic Chat from [atomic.chat](https://atomic.chat):
+
+* **macOS** (Apple Silicon): DMG installer
+* **Windows** (x64): EXE installer
+* **Linux** (x86_64): AppImage
+* **iPhone and iPad**: [App Store](https://apps.apple.com/us/app/atomic-chat-private-local-ai/id6761720226)
+* **Android**: [Google Play](https://play.google.com/store/apps/details?id=chat.atomic.app)
+
+## Downloading Models
+
+1. Open Atomic Chat and open the model library via the **Models** tab
+2. Search for "LiquidAI"
+3. Select a model and quantization level (`Q4_K_M` recommended)
+4. Click **Download**
+
+Alternatively, enable [Hugging Face Local Apps](https://huggingface.co/docs/hub/local-apps), then choose **Use this model** > **Atomic Chat** from a compatible model page.
+
+See the [Models page](/lfm/models/complete-library) for all available GGUF models.
+
+## Using the Chat Interface
+
+1. Go to the **New Chat** tab
+2. Select your model from the dropdown
+3. Adjust parameters (`temperature`, `top_k`, `repeat_penalty`) in the model settings
+4. Start chatting
+
+## Generation Parameters
+
+Control text generation behavior using the GUI sidebar or API parameters. Key parameters:
+
+* **`temperature`** (`float`, default 1.0): Controls randomness (0.0 = deterministic, higher = more random). Typical range: 0.1-2.0
+* **`top_p`** (`float`, default 1.0): Nucleus sampling - limits to tokens with cumulative probability ≤ top\_p. Typical range: 0.1-1.0
+* **`top_k`** (`int`, default 40): Limits to top-k most probable tokens. Typical range: 1-100
+* **`repeat_penalty`** (`float`, default 1.0): Penalty for repeating tokens (>1.0 = discourage repetition). Typical range: 1.0-1.5
+
+Via the OpenAI-compatible API:
+
+```python
+response = client.chat.completions.create(
+    model="<model-id-from-v1-models>",
+    messages=[{"role": "user", "content": "What is machine learning?"}],
+    temperature=0.1,
+    max_tokens=512,
+    extra_body={"top_k": 50, "repeat_penalty": 1.05},
+)
+```
+
+## Running the Server
+
+On desktop, Atomic Chat can serve the currently loaded model through a local OpenAI-compatible server for programmatic access:
+
+1. Load the model in a chat
+2. Open the **Integrations** tab
+3. Click **Start Server**. The server defaults to `http://localhost:1337/`; use the port shown in the app if you changed it or if that port was unavailable.
+
+Get the loaded model's ID before sending requests:
+
+```bash
+curl http://localhost:1337/v1/models
+```
+
+Use the OpenAI Python client:
+
+```python
+from openai import OpenAI
+
+client = OpenAI(
+    base_url="http://localhost:1337/v1",
+    api_key="not-needed"
+)
+
+response = client.chat.completions.create(
+    model="<model-id-from-v1-models>",
+    messages=[
+        {"role": "user", "content": "What is machine learning?"}
+    ],
+    temperature=0.1,
+    max_tokens=512,
+    extra_body={"top_k": 50, "repeat_penalty": 1.05},
+)
+print(response.choices[0].message.content)
+```
+
+### Streaming Responses
+
+```python
+stream = client.chat.completions.create(
+    model="<model-id-from-v1-models>",
+    messages=[
+        {"role": "user", "content": "Tell me a story."}
+    ],
+    stream=True
+)
+
+for chunk in stream:
+    if chunk.choices[0].delta.content is not None:
+        print(chunk.choices[0].delta.content, end="")
+```
+
+You can also use curl to interact with the server:
+
+<Accordion title="Curl request example">
+  ```bash
+  curl http://localhost:1337/v1/chat/completions \
+    -H "Content-Type: application/json" \
+    -d '{
+      "model": "<model-id-from-v1-models>",
+      "messages": [{"role": "user", "content": "Hello!"}],
+      "temperature": 0.1,
+      "top_k": 50,
+      "repeat_penalty": 1.05
+    }'
+  ```
+</Accordion>
+
+## Vision Models
+
+Atomic Chat supports LFM2-VL and LFM2.5-VL GGUF models on desktop. Its mobile catalog is curated by platform; LFM2.5-VL-1.6B is available for mobile vision inference.
+
+Download a vision model from the model library, then attach images to your messages to ask questions about them.
+
+<Accordion title="Using the API">
+  ```python
+  from openai import OpenAI
+  import base64
+
+  client = OpenAI(
+      base_url="http://localhost:1337/v1",
+      api_key="not-needed"
+  )
+
+  # Encode image to base64
+  with open("image.jpg", "rb") as image_file:
+      image_data = base64.b64encode(image_file.read()).decode("utf-8")
+
+  response = client.chat.completions.create(
+      model="<model-id-from-v1-models>",
+      messages=[
+          {
+              "role": "user",
+              "content": [
+                  {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{image_data}"}},
+                  {"type": "text", "text": "What's in this image?"}
+              ]
+          }
+      ]
+  )
+  print(response.choices[0].message.content)
+  ```
+</Accordion>
+
+## Tips
+
+* **Quantization**: `Q4_K_M` offers the best balance of size and quality; step up to `Q6_K` or `Q8_0` if you have memory to spare
+* **Apple Silicon**: GGUF models run with Metal acceleration, and MLX builds of LFM models are supported natively
+* **Long conversations (desktop)**: TurboQuant can compress the KV cache to 3 or 4 bits, so long contexts fit in significantly less memory
