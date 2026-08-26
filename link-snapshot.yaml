@@ -194,4 +194,4 @@ active:
 #     reason: "Page retired in DOC-12; no substitute exists."
 deleted:
   - url: /lfm/models/lfm25-1.2b-base
-    reason: LFM2.5-1.2B-Base removed from documentation without deprecation listing.
+    reason: LFM2.5-1.2B-Base documentation retired; see the deprecations page.
