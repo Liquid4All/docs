@@ -96,9 +96,9 @@ SNIPPET_CONFIG = {
              "code": "brew install llama.cpp"},
             {"type": "label", "text": "Run:"},
             {"type": "code_block", "language": "bash",
-             "code": "llama-cli -hf ${ggufRepo} -c 4096 --color -i \\\n    ${samplingFlags}"},
+             "code": "llama-cli -hf ${ggufRepo} --conversation \\\n    ${samplingFlags}"},
             {"type": "raw_html",
-             "html": '<p>The <code>-hf</code> flag downloads the model directly from Hugging Face. For other installation methods and advanced usage, see the <a href="/docs/inference/llama-cpp">llama.cpp guide</a>.</p>'},
+             "html": '<p>The <code>-hf</code> flag downloads the model directly from Hugging Face. For other installation methods and advanced usage, see the <a href="/deployment/on-device/llama-cpp">llama.cpp guide</a>.</p>'},
         ],
     },
     "vl-transformers": {
@@ -148,7 +148,7 @@ SNIPPET_CONFIG = {
             {"type": "raw_html",
              "html": '<p>The <code>-hf</code> flag downloads the model directly from Hugging Face. Use <code>--image-max-tokens</code> to control image token budget.</p>'},
             {"type": "raw_html",
-             "html": '<p>For server deployment and advanced usage, see the <a href="/docs/inference/llama-cpp#vision-models">llama.cpp guide</a>.</p>'},
+             "html": '<p>For server deployment and advanced usage, see the <a href="/deployment/on-device/llama-cpp#vision-models">llama.cpp guide</a>.</p>'},
         ],
     },
 }

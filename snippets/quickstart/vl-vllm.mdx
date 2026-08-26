@@ -1,4 +1,4 @@
-export const VlVllm = ({ modelId, samplingArgs = "temperature=0.1, min_p=0.15, repetition_penalty=1.05" }) => (
+export const VlVllm = ({ modelId }) => (
 <div>
 <p><strong>Install:</strong></p>
 <CodeBlock language="bash">
@@ -18,7 +18,12 @@ llm = LLM(
     max_model_len=1024,
 )
 
-sampling_params = SamplingParams(${samplingArgs}, max_tokens=256)
+sampling_params = SamplingParams(
+    temperature=0.1,
+    min_p=0.15,
+    repetition_penalty=1.05,
+    max_tokens=256,
+)
 
 messages = [{
     "role": "user",

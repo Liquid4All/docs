@@ -1,4 +1,4 @@
-export const VlTransformers = ({ modelId, samplingArgs = "temperature=0.1, min_p=0.15, repetition_penalty=1.05" }) => (
+export const VlTransformers = ({ modelId }) => (
 <div>
 <p><strong>Install:</strong></p>
 <CodeBlock language="bash">
@@ -39,7 +39,7 @@ inputs = processor.apply_chat_template(
     tokenize=True,
 ).to(model.device)
 
-outputs = model.generate(**inputs, do_sample=True, ${samplingArgs}, max_new_tokens=256)
+outputs = model.generate(**inputs, do_sample=True, temperature=0.1, min_p=0.15, repetition_penalty=1.05, max_new_tokens=256)
 response = processor.batch_decode(outputs, skip_special_tokens=True)[0]
 print(response)`}
 </CodeBlock>
