@@ -1,7 +1,12 @@
 ---
 title: "Constrained Generation"
 description: "Generate structured JSON output with compile-time validation — same approach on every platform."
+noindex: true
 ---
+
+<Warning>
+The LEAP SDK is deprecated and this page is no longer maintained. Build on llama.cpp directly instead — see [Migrating from LEAP SDK](/deployment/on-device/llama-cpp/migrating-from-leap-sdk).
+</Warning>
 
 Constrained generation forces the model to emit JSON matching a schema. Use the language's native facility — Swift macros (`@Generatable` / `@Guide`) or Kotlin annotations (`@Generatable` / `@Guide`) — to define the structure, then set it on `GenerationOptions`. The schema is computed at compile time (Swift) or built from the `kotlinx.serialization` descriptor at runtime (Kotlin), and the model's output decodes directly into your type.
 

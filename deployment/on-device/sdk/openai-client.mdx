@@ -1,7 +1,12 @@
 ---
 title: "OpenAI-Compatible Client"
 description: "Lightweight client for OpenAI-compatible chat completions APIs — ideal for hybrid on-device + cloud routing."
+noindex: true
 ---
+
+<Warning>
+The LEAP SDK is deprecated and this page is no longer maintained. Build on llama.cpp directly instead — see [Migrating from LEAP SDK](/deployment/on-device/llama-cpp/migrating-from-leap-sdk).
+</Warning>
 
 `LeapOpenAIClient` / `leap-openai-client` (introduced in v0.10.0) is a small, dependency-light client for any OpenAI-compatible chat-completions endpoint — OpenAI itself, OpenRouter, vLLM, llama-server, or your own proxy. It ships in the same SDK release as `LeapSDK`, so you can route requests between an on-device LFM and a cloud model from a single app.
 

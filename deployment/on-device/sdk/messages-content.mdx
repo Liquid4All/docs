@@ -1,7 +1,12 @@
 ---
 title: "Messages & Content"
 description: "ChatMessage, ChatMessageContent, audio format requirements — same shape on every platform."
+noindex: true
 ---
+
+<Warning>
+The LEAP SDK is deprecated and this page is no longer maintained. Build on llama.cpp directly instead — see [Migrating from LEAP SDK](/deployment/on-device/llama-cpp/migrating-from-leap-sdk).
+</Warning>
 
 `ChatMessage` and `ChatMessageContent` mirror the OpenAI chat-completions message schema. Both are declared once in `commonMain` (`data class ChatMessage`, `sealed class ChatMessageContent`) and Kotlin/Native + SKIE bridge the Kotlin types into Swift — there are no separate "native" Swift declarations.
 

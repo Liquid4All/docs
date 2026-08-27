@@ -1,7 +1,12 @@
 ---
 title: "Cloud AI Comparison"
 description: "Mapping LEAP SDK concepts to cloud chat-completion APIs like OpenAI."
+noindex: true
 ---
+
+<Warning>
+The LEAP SDK is deprecated and this page is no longer maintained. Build on llama.cpp directly instead — see [Migrating from LEAP SDK](/deployment/on-device/llama-cpp/migrating-from-leap-sdk).
+</Warning>
 
 If you've used a cloud chat-completion API (OpenAI, Anthropic, etc.), most of LEAP's shape will be familiar — async streaming, role-tagged messages, JSON-serializable history. The biggest difference: you load the model explicitly, locally, before generation, instead of pointing a client at a remote endpoint.
 
