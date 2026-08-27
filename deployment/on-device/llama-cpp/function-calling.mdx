@@ -1,0 +1,141 @@
+---
+title: "Function Calling & Agents"
+description: "Tool use with LFM2.5 on llama.cpp: OpenAI-style tools through llama-server, the agent loop, and how LFM tool-call tokens are parsed."
+---
+
+LFM2 and LFM2.5 emit tool calls between `<|tool_call_start|>` and `<|tool_call_end|>` control tokens (see [Tool Use](/lfm/key-concepts/tool-use)). llama.cpp ships a dedicated parser for both formats: start `llama-server` with `--jinja`, pass `tools` in the request, and tool calls come back as structured `tool_calls` on the OpenAI-compatible response. There is nothing to parse on the client.
+
+## Start the server
+
+```bash
+llama-server -hf LiquidAI/LFM2.5-1.2B-Instruct-GGUF:Q4_K_M -c 8192 --port 8080 --jinja
+```
+
+`--jinja` is mandatory: it renders the tool definitions through the model's chat template and enables tool-call parsing. Use a recent llama.cpp release — LFM2/LFM2.5 template detection lives in `common/chat.cpp` and older builds fall back to a generic parser.
+
+## Define tools and make a call
+
+Tools use the OpenAI JSON schema format. Passing them in the `tools` field is all the model needs; do not also paste them into the system prompt.
+
+```python
+import json
+from openai import OpenAI
+
+client = OpenAI(base_url="http://localhost:8080/v1", api_key="not-needed")
+
+tools = [{
+    "type": "function",
+    "function": {
+        "name": "get_weather",
+        "description": "Get the current weather for a city.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "city": {"type": "string", "description": "City name, e.g. 'Paris'"},
+                "unit": {"type": "string", "enum": ["celsius", "fahrenheit"]},
+            },
+            "required": ["city"],
+        },
+    },
+}]
+
+messages = [{"role": "user", "content": "What's the weather like in Paris right now?"}]
+
+response = client.chat.completions.create(
+    model="lfm2.5-1.2b-instruct",
+    messages=messages,
+    tools=tools,
+    tool_choice="auto",
+    temperature=0.1,
+    max_tokens=512,
+    extra_body={"top_k": 50, "repeat_penalty": 1.05},
+)
+
+message = response.choices[0].message
+for call in message.tool_calls or []:
+    print(call.function.name, json.loads(call.function.arguments))
+# get_weather {'city': 'Paris'}
+```
+
+`finish_reason` is `"tool_calls"` when the model asked for a tool. `tool_choice` accepts `"auto"`, `"none"`, `"required"`, or a specific function.
+
+## The agent loop
+
+An agent is a loop: send the conversation, execute any tool calls, append the results as `tool` messages, and call the model again until it answers in plain text.
+
+```python
+def get_weather(city: str, unit: str = "celsius") -> dict:
+    # Replace with a real API call.
+    return {"city": city, "temperature": 21, "unit": unit, "condition": "sunny"}
+
+TOOL_IMPLS = {"get_weather": get_weather}
+
+def run_agent(user_text: str, max_steps: int = 5) -> str:
+    messages = [
+        {"role": "system", "content": "You are a helpful assistant. Use tools when they help."},
+        {"role": "user", "content": user_text},
+    ]
+    for _ in range(max_steps):
+        response = client.chat.completions.create(
+            model="lfm2.5-1.2b-instruct",
+            messages=messages,
+            tools=tools,
+            temperature=0.1,
+            max_tokens=512,
+            extra_body={"top_k": 50, "repeat_penalty": 1.05},
+        )
+        message = response.choices[0].message
+        messages.append(message)                      # keep the assistant turn (incl. tool_calls)
+
+        if not message.tool_calls:
+            return message.content                    # final answer
+
+        for call in message.tool_calls:               # LFM2.5 may request several calls at once
+            args = json.loads(call.function.arguments)
+            result = TOOL_IMPLS[call.function.name](**args)
+            messages.append({
+                "role": "tool",
+                "tool_call_id": call.id,
+                "content": json.dumps(result),
+            })
+    return "Stopped after too many tool calls."
+
+print(run_agent("What's the weather like in Paris right now?"))
+```
+
+Guidelines that matter on small on-device models:
+
+- **Keep the tool list short and the descriptions precise.** Every tool adds prompt tokens on every turn; 3–8 well-described tools work far better than 30 vague ones.
+- **Return compact results.** Serialize only the fields the model needs; large JSON blobs consume context and dilute attention.
+- **Cap the loop.** Always bound the number of steps and handle unknown tool names or malformed arguments by returning an error message in the `tool` result rather than crashing.
+- **Use the recommended sampling.** Tool arguments are structured text; `temperature 0.1` keeps them well-formed.
+- **Prompt caching does the heavy lifting.** The system prompt and tool definitions are identical every step, so `llama-server` prefills them once per conversation.
+
+## Streaming tool calls
+
+With `stream: true`, tool calls arrive incrementally in `choices[0].delta.tool_calls` (`index`, `id`, `function.name`, then chunks of `function.arguments`). Accumulate the argument fragments per `index` and parse the JSON once `finish_reason` is `"tool_calls"`.
+
+## Pythonic and JSON tool-call formats
+
+LFM2.5 natively writes Pythonic calls (`get_weather(city="Paris")`); LFM2 wraps definitions in `<|tool_list_start|>` / `<|tool_list_end|>`. With `--jinja`, `llama-server` detects the template and normalizes either format into OpenAI `tool_calls`, so you never see the raw tokens. If you disable tool parsing (`parse_tool_calls: false` in the request) the raw `<|tool_call_start|>…<|tool_call_end|>` text is returned in `content` instead.
+
+## In-process (no server)
+
+If you embed llama.cpp directly (for example on [iOS & Android](/deployment/on-device/llama-cpp/mobile)), link the `common` library and use the same machinery `llama-server` uses:
+
+- `common_chat_templates_init(model, "")` loads the GGUF's Jinja template.
+- `common_chat_templates_apply(tmpls, inputs)` renders messages **and** tool definitions to a prompt, and returns the grammar/trigger configuration for the format.
+- `common_chat_parse(text, is_partial, params)` turns the generated text into a `common_chat_msg` with `tool_calls`.
+
+See [`common/chat.h`](https://github.com/ggml-org/llama.cpp/blob/master/common/chat.h) for the full API. Alternatively, format the prompt yourself following [Tool Use](/lfm/key-concepts/tool-use) and split on the `<|tool_call_start|>` / `<|tool_call_end|>` tokens (`llama_token_to_piece` with `special = true` so the control tokens are not filtered out).
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Structured Output" icon="brackets-curly" href="/deployment/on-device/llama-cpp/structured-output">
+    Force valid JSON for tool arguments or final answers.
+  </Card>
+  <Card title="Tool Use concepts" icon="book" href="/lfm/key-concepts/tool-use">
+    How LFM2.5 represents tools and calls at the token level.
+  </Card>
+</CardGroup>

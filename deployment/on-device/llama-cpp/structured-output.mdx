@@ -1,0 +1,166 @@
+---
+title: "Structured Output"
+description: "Constrain LFM generation on llama.cpp to a JSON schema or GBNF grammar so output always parses."
+---
+
+llama.cpp enforces structure at decode time: tokens that would break the schema get zero probability, so the output is guaranteed to parse. You can supply a **JSON Schema** (converted to a grammar automatically) or a hand-written **GBNF grammar**. Both work in `llama-server`, the CLI tools, and the C API.
+
+## JSON schema with llama-server
+
+Pass an OpenAI-style `response_format`. `llama-server` converts the schema to a grammar for that request.
+
+```python
+import json
+from openai import OpenAI
+
+client = OpenAI(base_url="http://localhost:8080/v1", api_key="not-needed")
+
+recipe_schema = {
+    "type": "object",
+    "properties": {
+        "name": {"type": "string", "description": "Recipe title"},
+        "servings": {"type": "integer", "minimum": 1},
+        "ingredients": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "item": {"type": "string"},
+                    "quantity": {"type": "string"},
+                },
+                "required": ["item", "quantity"],
+            },
+        },
+        "steps": {"type": "array", "items": {"type": "string"}},
+    },
+    "required": ["name", "servings", "ingredients", "steps"],
+}
+
+response = client.chat.completions.create(
+    model="lfm2.5-1.2b-instruct",
+    messages=[
+        {"role": "system", "content": "You write recipes as JSON with fields name, servings, ingredients (item, quantity), and steps."},
+        {"role": "user", "content": "A quick weeknight pasta for two."},
+    ],
+    response_format={"type": "json_schema", "json_schema": {"name": "recipe", "schema": recipe_schema}},
+    temperature=0.1,
+    max_tokens=512,
+    extra_body={"top_k": 50, "repeat_penalty": 1.05},
+)
+
+recipe = json.loads(response.choices[0].message.content)
+print(recipe["name"], len(recipe["steps"]))
+```
+
+`{"type": "json_object"}` (any valid JSON) is also accepted, and the non-OpenAI `/completion` endpoint takes the schema directly in a `json_schema` field.
+
+<Note>
+The grammar constrains *which tokens can be produced*; it does not tell the model *what* to produce. Describe the fields in the system prompt (as above) so the model fills them meaningfully instead of emitting the shortest string that satisfies the schema.
+</Note>
+
+Supported schema features include `object` / `array` / `string` / `number` / `integer` / `boolean` / `null`, `enum`, `const`, `required`, `additionalProperties`, `minItems` / `maxItems`, `minLength` / `maxLength`, `pattern`, `anyOf` / `oneOf`, `$ref` and `$defs`. Unsupported keywords are ignored rather than rejected, so validate the parsed object in your code as well.
+
+## GBNF grammars
+
+For non-JSON formats (a fixed set of labels, a date, a command line), write a small grammar in llama.cpp's [GBNF](https://github.com/ggml-org/llama.cpp/blob/master/grammars/README.md) syntax:
+
+```
+root   ::= sentiment
+sentiment ::= "positive" | "neutral" | "negative"
+```
+
+Use it per request (`grammar` field on `/completion` or `/v1/chat/completions`) or globally with `--grammar-file` on `llama-server` / `llama-cli`:
+
+```bash
+curl http://localhost:8080/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -d '{
+    "messages": [{"role": "user", "content": "Classify: I love this phone."}],
+    "grammar": "root ::= \"positive\" | \"neutral\" | \"negative\"",
+    "temperature": 0.1, "top_k": 50, "repeat_penalty": 1.05
+  }'
+```
+
+To see the grammar llama.cpp generates for a schema, or to ship a pre-converted grammar with your app:
+
+```bash
+python llama.cpp/examples/json_schema_to_grammar.py schema.json > schema.gbnf
+```
+
+## In-process bindings
+
+<Tabs>
+  <Tab title="C API (mobile, embedded)">
+    Add a grammar sampler to the chain before the final `dist` sampler. Convert JSON schemas ahead of time with `json_schema_to_grammar.py`, or at runtime with `json_schema_to_grammar()` from the `common` library.
+
+    ```c
+    const char * gbnf = /* contents of schema.gbnf */;
+    llama_sampler_chain_add(smpl, llama_sampler_init_grammar(vocab, gbnf, "root"));
+    llama_sampler_chain_add(smpl, llama_sampler_init_top_k(50));
+    llama_sampler_chain_add(smpl, llama_sampler_init_penalties(llama_vocab_n_tokens(vocab), 64, 1.05f, 0.0f, 0.0f));
+    llama_sampler_chain_add(smpl, llama_sampler_init_temp(0.1f));
+    llama_sampler_chain_add(smpl, llama_sampler_init_dist(LLAMA_DEFAULT_SEED));
+    ```
+
+    The grammar sampler is stateful: call `llama_sampler_reset(smpl)` (or rebuild the chain) before each new generation.
+  </Tab>
+  <Tab title="Python (llama-cpp-python)">
+    ```python
+    from llama_cpp import Llama
+
+    llm = Llama.from_pretrained(
+        repo_id="LiquidAI/LFM2.5-1.2B-Instruct-GGUF",
+        filename="*Q4_K_M.gguf",
+        n_ctx=4096,
+    )
+
+    out = llm.create_chat_completion(
+        messages=[
+            {"role": "system", "content": "Extract the person's name and age as JSON."},
+            {"role": "user", "content": "Ada Lovelace was 36 when she died in 1852."},
+        ],
+        response_format={
+            "type": "json_object",
+            "schema": {
+                "type": "object",
+                "properties": {"name": {"type": "string"}, "age": {"type": "integer"}},
+                "required": ["name", "age"],
+            },
+        },
+        temperature=0.1, top_k=50, repeat_penalty=1.05, max_tokens=128,
+    )
+    print(out["choices"][0]["message"]["content"])   # {"name": "Ada Lovelace", "age": 36}
+    ```
+  </Tab>
+  <Tab title="Node.js (node-llama-cpp)">
+    ```typescript
+    import { getLlama, LlamaChatSession, resolveModelFile } from "node-llama-cpp";
+
+    const llama = await getLlama();
+    const modelPath = await resolveModelFile(
+      "hf:LiquidAI/LFM2.5-1.2B-Instruct-GGUF/LFM2.5-1.2B-Instruct-Q4_K_M.gguf", "./models");
+    const model = await llama.loadModel({ modelPath });
+    const context = await model.createContext();
+    const session = new LlamaChatSession({ contextSequence: context.getSequence() });
+
+    const grammar = await llama.createGrammarForJsonSchema({
+      type: "object",
+      properties: { name: { type: "string" }, age: { type: "integer" } },
+      required: ["name", "age"],
+    });
+
+    const text = await session.prompt("Ada Lovelace was 36 when she died in 1852. Extract name and age.", {
+      grammar, temperature: 0.1, topK: 50, repeatPenalty: { penalty: 1.05 },
+    });
+    const parsed = grammar.parse(text);   // typed object
+    ```
+  </Tab>
+</Tabs>
+
+## Best practices
+
+- **Keep schemas small.** Every optional field and nested object enlarges the grammar and the model's decision space. Split large extractions into several focused calls.
+- **Describe fields in the prompt.** The schema is invisible to the model; field names and a one-line description per field in the system prompt are what steer content.
+- **Use low temperature.** `0.1` (the LFM2.5 default) is right for structured output.
+- **Validate anyway.** Grammar guarantees syntax, not semantics — check ranges, enums, and referential consistency in application code and retry on failure.
+- **Avoid open-ended strings at the end.** A final unbounded `string` field can run until `max_tokens`; set `maxLength` or put bounded fields last.

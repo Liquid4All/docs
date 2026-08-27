@@ -1,0 +1,101 @@
+---
+title: "Vision & Audio"
+description: "Run LFM2.5-VL vision models and LFM2.5-Audio on llama.cpp: projector files, image and audio inputs, and the OpenAI-compatible multimodal API."
+---
+
+Multimodal LFMs run on llama.cpp through its `mtmd` library. A vision or audio GGUF comes in two parts: the language model (`LFM2.5-VL-1.6B-Q4_0.gguf`) and a projector / encoder file (`mmproj-*.gguf`). `llama-server`, `llama-cli`, and `llama-mtmd-cli` all load both; the same `mtmd` code is available in the iOS XCFramework and Android builds.
+
+## Vision (LFM2.5-VL)
+
+### Start the server
+
+```bash
+# -hf downloads the model and the matching mmproj automatically
+llama-server -hf LiquidAI/LFM2.5-VL-1.6B-GGUF:Q4_0 -c 4096 --port 8080 --jinja
+```
+
+Or with local files:
+
+```bash
+hf download LiquidAI/LFM2.5-VL-1.6B-GGUF LFM2.5-VL-1.6B-Q4_0.gguf mmproj-LFM2.5-VL-1.6b-Q8_0.gguf --local-dir .
+
+llama-server -m LFM2.5-VL-1.6B-Q4_0.gguf --mmproj mmproj-LFM2.5-VL-1.6b-Q8_0.gguf \
+  -c 4096 --port 8080 --jinja -ngl 99
+```
+
+Useful flags: `--image-max-tokens` caps the number of image tokens per picture (lower = faster, coarser); `--no-mmproj-offload` keeps the vision encoder on CPU when GPU memory is tight.
+
+### Send an image
+
+Images travel as standard OpenAI `image_url` content parts — a `data:` URI with base64 bytes or a public URL.
+
+```python
+import base64
+from openai import OpenAI
+
+client = OpenAI(base_url="http://localhost:8080/v1", api_key="not-needed")
+
+with open("photo.jpg", "rb") as f:
+    image_b64 = base64.b64encode(f.read()).decode()
+
+response = client.chat.completions.create(
+    model="lfm2.5-vl-1.6b",
+    messages=[{
+        "role": "user",
+        "content": [
+            {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{image_b64}"}},
+            {"type": "text", "text": "Describe this image in two sentences."},
+        ],
+    }],
+    temperature=0.1,
+    max_tokens=256,
+    extra_body={"min_p": 0.15, "repeat_penalty": 1.05},
+)
+print(response.choices[0].message.content)
+```
+
+Multiple images in one message are supported; put each `image_url` part before the text that refers to it. Multi-turn works as for text — send the full history, and the image tokens stay in the prompt cache.
+
+Vision models use `temperature 0.1`, `min_p 0.15`, `repeat_penalty 1.05`. See [Vision Capabilities](/lfm/key-concepts/vision-capabilities) for prompting guidance and [LFM2.5-VL-1.6B](/lfm/models/lfm25-vl-1.6b) / [LFM2.5-VL-3B](/lfm/models/lfm25-vl-3b) for model details.
+
+### Command line
+
+```bash
+llama-mtmd-cli -m LFM2.5-VL-1.6B-Q4_0.gguf --mmproj mmproj-LFM2.5-VL-1.6b-Q8_0.gguf \
+  --image photo.jpg -p "What is in this image?" \
+  --temp 0.1 --min-p 0.15 --repeat-penalty 1.05
+```
+
+### In-process (mobile and embedded)
+
+The `mtmd` C API sits next to `llama.h`: load the projector with `mtmd_init_from_file()`, tokenize a prompt that contains image markers plus the image bitmaps with `mtmd_tokenize()`, evaluate the chunks with `mtmd_helper_eval_chunks()`, then sample text with the usual `llama_sampler_sample()` loop. [`tools/mtmd/README-dev.md`](https://github.com/ggml-org/llama.cpp/blob/master/tools/mtmd/README-dev.md) documents the API and [`tools/mtmd/mtmd-cli.cpp`](https://github.com/ggml-org/llama.cpp/blob/master/tools/mtmd/mtmd-cli.cpp) is a compact reference. On Android build with `-DLLAMA_BUILD_MTMD=ON`; the iOS XCFramework already includes it.
+
+Downscale images before passing them to the model — LFM2.5-VL handles native resolution, but a 12-megapixel camera frame costs far more image tokens than a 1024-pixel resize with no accuracy benefit for most tasks.
+
+## Audio (LFM2.5-Audio)
+
+LFM2.5-Audio adds a custom audio detokenizer for speech output, so it runs on llama.cpp through Liquid's dedicated audio runners rather than the generic `mtmd` path. The GGUF repository ships four files per quantization: the language model, the `mmproj-*` audio encoder, the `vocoder-*` decoder, and the `tokenizer-*` speaker file.
+
+```bash
+hf download LiquidAI/LFM2.5-Audio-1.5B-GGUF --include "*Q4_0.gguf" --local-dir ./LFM2.5-Audio-1.5B-GGUF
+export CKPT=./LFM2.5-Audio-1.5B-GGUF
+
+# Speech-to-text (ASR)
+./llama-liquid-audio-cli -m $CKPT/LFM2.5-Audio-1.5B-Q4_0.gguf \
+  -mm $CKPT/mmproj-LFM2.5-Audio-1.5B-Q4_0.gguf \
+  -mv $CKPT/vocoder-LFM2.5-Audio-1.5B-Q4_0.gguf \
+  --tts-speaker-file $CKPT/tokenizer-LFM2.5-Audio-1.5B-Q4_0.gguf \
+  -sys "Perform ASR." --audio input.wav
+
+# Server mode (ASR, TTS, and interleaved speech-in / speech-out over HTTP)
+./llama-liquid-audio-server -m $CKPT/LFM2.5-Audio-1.5B-Q4_0.gguf \
+  -mm $CKPT/mmproj-LFM2.5-Audio-1.5B-Q4_0.gguf \
+  -mv $CKPT/vocoder-LFM2.5-Audio-1.5B-Q4_0.gguf \
+  --tts-speaker-file $CKPT/tokenizer-LFM2.5-Audio-1.5B-Q4_0.gguf
+```
+
+The [LFM2.5-Audio-1.5B model page](/lfm/models/lfm25-audio-1.5b) has the TTS and interleaved-mode commands and the list of platforms the runners are built for (macOS arm64, Ubuntu x64/arm64, Android arm64). The [real-time transcription example](/examples/laptop-examples/audio-to-text-in-real-time) is a complete Python CLI that downloads the runner and drives it; the [Hand & Voice Racer](/examples/web/hand-voice-racer) and [Audio Browser Demo](/examples/web/audio-webgpu-demo) show the same model in the browser.
+
+<Info>
+Audio input is 16 kHz mono WAV. Resample and downmix on the client (`AVAudioConverter` on iOS, `AudioRecord` at 16 kHz on Android, `ffmpeg -ar 16000 -ac 1` on desktop) before sending it to the model.
+</Info>

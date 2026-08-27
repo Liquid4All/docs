@@ -102,6 +102,18 @@
             ]
           },
           {
+            "group": "Build with llama.cpp",
+            "pages": [
+              "deployment/on-device/llama-cpp/mobile",
+              "deployment/on-device/llama-cpp/desktop",
+              "deployment/on-device/llama-cpp/chat",
+              "deployment/on-device/llama-cpp/function-calling",
+              "deployment/on-device/llama-cpp/structured-output",
+              "deployment/on-device/llama-cpp/multimodal",
+              "deployment/on-device/llama-cpp/migrating-from-leap-sdk"
+            ]
+          },
+          {
             "group": "GPU Inference",
             "icon": "microchip",
             "pages": [

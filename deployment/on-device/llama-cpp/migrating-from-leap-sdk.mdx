@@ -1,0 +1,52 @@
+---
+title: "Migrating from LEAP SDK"
+description: "The LEAP SDK is deprecated. This page maps each LEAP SDK concept to its native llama.cpp equivalent."
+---
+
+<Warning>
+The **LEAP SDK is deprecated** and no longer receives new releases. It was a Kotlin Multiplatform wrapper around llama.cpp; everything it did is available directly from llama.cpp, which supports LFM2 / LFM2.5 models, LFM2-VL projectors, and LFM2 tool-call parsing upstream. Existing LEAP SDK artifacts remain on Maven Central and GitHub, and the archived reference is at [LEAP SDK (archived)](/deployment/on-device/sdk/overview).
+</Warning>
+
+## Concept mapping
+
+| LEAP SDK | llama.cpp equivalent | Guide |
+|---|---|---|
+| `LeapModelDownloader.loadModel(modelName:, quantizationType:)`, LEAP Model Library bundles | Download the GGUF from Hugging Face (`LiquidAI/<model>-GGUF`) with your platform's downloader; `llama-server -hf <repo>:<quant>` on desktop | [iOS & Android](/deployment/on-device/llama-cpp/mobile#2-get-a-model-onto-the-device) |
+| `ModelRunner` | `llama_model` + `llama_context` (C API) or a running `llama-server` | [iOS & Android](/deployment/on-device/llama-cpp/mobile), [Desktop & Server Apps](/deployment/on-device/llama-cpp/desktop) |
+| `Conversation`, `ChatMessage` | An OpenAI-style `messages` array; the chat template is applied by `llama-server --jinja` or by your code | [Chat & Streaming](/deployment/on-device/llama-cpp/chat) |
+| `conversation.generateResponse(...)` streaming `MessageResponse.Chunk` | `stream: true` on `/v1/chat/completions`, or the `llama_decode` / `llama_sampler_sample` loop | [Chat & Streaming](/deployment/on-device/llama-cpp/chat) |
+| `GenerationOptions` (`temperature`, `topK`, `minP`, `repetitionPenalty`, `maxTokens`) | Request fields `temperature`, `top_k`, `min_p`, `repeat_penalty`, `max_tokens`; `llama_sampler_init_*` in the C API | [Sampling parameters](/deployment/on-device/llama-cpp/chat#sampling-parameters) |
+| Per-checkpoint sampler defaults from the bundle manifest | Values on each Hugging Face model card (summarized in the sampling table) | [Sampling parameters](/deployment/on-device/llama-cpp/chat#sampling-parameters) |
+| `LeapFunction`, `MessageResponse.FunctionCalls`, `LFMFunctionCallParser` / `HermesFunctionCallParser` | OpenAI `tools` / `tool_calls` with `llama-server --jinja` (LFM2 and LFM2.5 formats parsed natively); `common_chat_parse()` in-process | [Function Calling & Agents](/deployment/on-device/llama-cpp/function-calling) |
+| `@Generatable` / `@Guide` constrained generation, `jsonSchema` in `GenerationOptions` | `response_format: {"type": "json_schema", ...}` or a GBNF `grammar`; `llama_sampler_init_grammar()` in the C API | [Structured Output](/deployment/on-device/llama-cpp/structured-output) |
+| `ChatMessageContent.Image` (JPEG bytes) | `image_url` content part with a base64 `data:` URI; `mtmd` API in-process, with the model's `mmproj-*.gguf` | [Vision & Audio](/deployment/on-device/llama-cpp/multimodal) |
+| `ChatMessageContent.Audio` (WAV) and `MessageResponse.AudioSample` | Liquid's `llama-liquid-audio-cli` / `llama-liquid-audio-server` runners for LFM2.5-Audio | [Vision & Audio](/deployment/on-device/llama-cpp/multimodal#audio-lfm25-audio) |
+| `CacheOptions` / KV cache reuse | `cache_prompt` (default on) and `--cache-reuse` in `llama-server`; keep the context alive between turns in the C API | [Multi-turn conversations](/deployment/on-device/llama-cpp/chat#multi-turn-conversations) |
+| `ModelLoadingOptions` (`nCtx`, `nThreads`, `nGpuLayers`, `useMmap`) | `llama_context_params.n_ctx` / `n_threads`, `llama_model_params.n_gpu_layers` / `use_mmap`; `-c`, `-t`, `-ngl` flags | [Tune for mobile](/deployment/on-device/llama-cpp/mobile#4-tune-for-mobile) |
+| `leap-openai-client` (hybrid on-device + cloud) | Any OpenAI client pointed at `llama-server` locally and a hosted endpoint remotely | [Hybrid routing](/deployment/on-device/llama-cpp/desktop#hybrid-on-device--cloud-routing) |
+| `leap-ui` voice assistant widget | No drop-in replacement. Pair the audio runner with your platform's recording/playback APIs. | [Vision & Audio](/deployment/on-device/llama-cpp/multimodal#audio-lfm25-audio) |
+| Desktop targets (JVM, Kotlin/Native, Windows, Linux) | `llama-server` sidecar or a binding for your language (Python, Node.js, .NET, Rust, Go, Java) | [Desktop & Server Apps](/deployment/on-device/llama-cpp/desktop) |
+
+## Platform notes
+
+<Tabs>
+  <Tab title="iOS / macOS">
+    Replace the `LeapSDK` Swift package with `llama.xcframework` from a [llama.cpp release](https://github.com/ggml-org/llama.cpp/releases) and call the C API directly (`import llama`). Metal is enabled in the prebuilt framework. The minimum deployment target drops to iOS 16.4 / macOS 13.3. See [iOS & Android](/deployment/on-device/llama-cpp/mobile).
+  </Tab>
+  <Tab title="Android">
+    Replace the `ai.liquid.leap:*` Maven dependencies with llama.cpp built through the NDK — either the upstream [`examples/llama.android`](https://github.com/ggml-org/llama.cpp/tree/master/examples/llama.android) library module or your own CMake/JNI wrapper. Model downloads move to `WorkManager` / `DownloadManager`. See [iOS & Android](/deployment/on-device/llama-cpp/mobile).
+  </Tab>
+  <Tab title="Desktop / server">
+    Launch `llama-server` as a sidecar process or use an in-process binding. The OpenAI-compatible API gives you chat, streaming, tools, and JSON schema without any native code. See [Desktop & Server Apps](/deployment/on-device/llama-cpp/desktop).
+  </Tab>
+</Tabs>
+
+## Models and bundles
+
+LEAP SDK loaded "bundles" (a GGUF plus a manifest with companion files) from the LEAP Model Library. The same weights are published as plain GGUF on Hugging Face under [LiquidAI](https://huggingface.co/LiquidAI): the language model file, plus `mmproj-*` for vision models and the encoder / vocoder / tokenizer files for audio models. If you already have downloaded bundles, the `.gguf` files inside them load directly in llama.cpp.
+
+Fine-tuned models continue to work: convert them with `convert_hf_to_gguf.py` as described in [Converting Custom Models](/deployment/on-device/llama-cpp#converting-custom-models).
+
+## Archived reference
+
+The LEAP SDK pages remain online for teams still shipping the SDK but are no longer maintained: [Overview](/deployment/on-device/sdk/overview), [Quick Start](/deployment/on-device/sdk/quick-start), [Changelog](/deployment/on-device/leap-sdk-changelog). The Android example apps under [Examples](/examples/index#android) were built with the LEAP SDK and are kept as architectural references.

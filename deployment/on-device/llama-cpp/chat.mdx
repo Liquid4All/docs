@@ -1,0 +1,210 @@
+---
+title: "Chat & Streaming"
+description: "Multi-turn conversations on llama.cpp with streaming, the correct sampling parameters for each LFM family, and prompt caching."
+---
+
+The quickest way to build a chat experience on llama.cpp is `llama-server`. It applies the model's chat template, exposes an OpenAI-compatible `/v1/chat/completions` endpoint, streams tokens over server-sent events, and reuses the KV cache across turns. Any OpenAI client library becomes your app-side API. For in-process use (mobile, or a desktop app that must not spawn a helper process) the same loop is a few dozen lines of the C API — see [Native C API](#native-c-api).
+
+## Start the server
+
+```bash
+llama-server -hf LiquidAI/LFM2.5-1.2B-Instruct-GGUF:Q4_K_M -c 4096 --port 8080 --jinja
+```
+
+- `-hf` downloads the GGUF from Hugging Face on first run; `:Q4_K_M` selects the quantization. Use `-m path/to/model.gguf` for a local file.
+- `-c` is the context length. Larger contexts cost memory linearly; check the model page for the supported maximum.
+- `--jinja` uses the chat template embedded in the GGUF. It is required for [tool calling](/deployment/on-device/llama-cpp/function-calling) and recommended for everything else.
+- `-ngl 99` offloads all layers to the GPU (Metal, CUDA, Vulkan) when one is available.
+- `-np 4` serves up to four requests concurrently; each slot gets `-c / 4` tokens of context.
+
+`GET /health` returns `{"status":"ok"}` once the model is loaded.
+
+## Sampling parameters
+
+Every LFM checkpoint has validated sampling defaults. Use them; placeholder values such as `temperature=0.7` degrade output quality.
+
+| Model family | `temperature` | `top_k` | `top_p` | `min_p` | `repeat_penalty` |
+|---|---|---|---|---|---|
+| LFM2.5-1.2B-Instruct | 0.1 | 50 | — | — | 1.05 |
+| LFM2.5-1.2B-Thinking | 0.1 | 50 | 0.1 | — | 1.05 |
+| LFM2.5-8B-A1B | 0.2 | 80 | — | — | 1.05 |
+| LFM2-24B-A2B | 0.1 | 50 | — | — | 1.05 |
+| LFM2 text, LFM2.5-JP | 0.3 | — | — | 0.15 | 1.05 |
+| LFM2-VL, LFM2.5-VL | 0.1 | — | — | 0.15 | 1.05 |
+
+<Note>
+`llama-server` reads the penalty as **`repeat_penalty`** in the request body (matching the `--repeat-penalty` CLI flag). `top_k`, `min_p`, and `repeat_penalty` are not part of the OpenAI schema, so pass them through `extra_body` in the OpenAI Python client. The exact values for any checkpoint are on its Hugging Face model card.
+</Note>
+
+## Send a message
+
+<Tabs>
+  <Tab title="Python (OpenAI client)">
+    ```python
+    from openai import OpenAI
+
+    client = OpenAI(base_url="http://localhost:8080/v1", api_key="not-needed")
+
+    response = client.chat.completions.create(
+        model="lfm2.5-1.2b-instruct",   # any string; llama-server serves one model
+        messages=[
+            {"role": "system", "content": "You are a helpful assistant."},
+            {"role": "user", "content": "What is machine learning?"},
+        ],
+        temperature=0.1,
+        max_tokens=512,
+        extra_body={"top_k": 50, "repeat_penalty": 1.05},
+    )
+    print(response.choices[0].message.content)
+    ```
+  </Tab>
+  <Tab title="curl">
+    ```bash
+    curl http://localhost:8080/v1/chat/completions \
+      -H "Content-Type: application/json" \
+      -d '{
+        "messages": [
+          {"role": "system", "content": "You are a helpful assistant."},
+          {"role": "user", "content": "What is machine learning?"}
+        ],
+        "temperature": 0.1,
+        "top_k": 50,
+        "repeat_penalty": 1.05,
+        "max_tokens": 512
+      }'
+    ```
+  </Tab>
+  <Tab title="JavaScript (fetch)">
+    ```javascript
+    const res = await fetch("http://localhost:8080/v1/chat/completions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        messages: [
+          { role: "system", content: "You are a helpful assistant." },
+          { role: "user", content: "What is machine learning?" },
+        ],
+        temperature: 0.1,
+        top_k: 50,
+        repeat_penalty: 1.05,
+        max_tokens: 512,
+      }),
+    });
+    const data = await res.json();
+    console.log(data.choices[0].message.content);
+    ```
+  </Tab>
+</Tabs>
+
+## Stream tokens
+
+Set `stream: true` and consume the `delta.content` chunks as they arrive.
+
+<Tabs>
+  <Tab title="Python (OpenAI client)">
+    ```python
+    stream = client.chat.completions.create(
+        model="lfm2.5-1.2b-instruct",
+        messages=[{"role": "user", "content": "Write a haiku about the ocean."}],
+        temperature=0.1,
+        max_tokens=256,
+        extra_body={"top_k": 50, "repeat_penalty": 1.05},
+        stream=True,
+    )
+    for chunk in stream:
+        delta = chunk.choices[0].delta.content
+        if delta:
+            print(delta, end="", flush=True)
+    ```
+  </Tab>
+  <Tab title="JavaScript (fetch + SSE)">
+    ```javascript
+    const res = await fetch("http://localhost:8080/v1/chat/completions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        messages: [{ role: "user", content: "Write a haiku about the ocean." }],
+        temperature: 0.1, top_k: 50, repeat_penalty: 1.05, max_tokens: 256,
+        stream: true,
+      }),
+    });
+
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split("\n");
+      buffer = lines.pop();
+      for (const line of lines) {
+        if (!line.startsWith("data: ") || line === "data: [DONE]") continue;
+        const delta = JSON.parse(line.slice(6)).choices[0].delta.content;
+        if (delta) process.stdout.write(delta);
+      }
+    }
+    ```
+  </Tab>
+</Tabs>
+
+## Multi-turn conversations
+
+The API is stateless: send the whole `messages` history on every request and append the assistant's reply before the next turn.
+
+```python
+messages = [{"role": "system", "content": "You are a helpful assistant."}]
+
+def ask(user_text: str) -> str:
+    messages.append({"role": "user", "content": user_text})
+    response = client.chat.completions.create(
+        model="lfm2.5-1.2b-instruct",
+        messages=messages,
+        temperature=0.1,
+        max_tokens=512,
+        extra_body={"top_k": 50, "repeat_penalty": 1.05},
+    )
+    reply = response.choices[0].message.content
+    messages.append({"role": "assistant", "content": reply})
+    return reply
+
+print(ask("My name is Ada."))
+print(ask("What is my name?"))
+```
+
+Re-sending the history is cheap: `llama-server` keeps the KV cache of the previous request in its slot and only prefills the new suffix (`cache_prompt` defaults to `true`). Two flags make this more effective:
+
+- `--cache-reuse 256` — reuse cached chunks even when an earlier part of the prompt changed (for example, a trimmed history), by shifting KV entries instead of recomputing them.
+- `-np N` with `--slot-prompt-similarity` — with multiple slots, route each request to the slot whose cached prompt matches best; useful when several users share one server.
+
+To trim history, drop the oldest user/assistant pairs but keep the system message first. Long system prompts and RAG preambles are exactly what the prompt cache is for — keep them byte-identical across requests so the prefix stays cached.
+
+## Generation controls
+
+| Setting | Request field | CLI flag | Notes |
+|---|---|---|---|
+| Max new tokens | `max_tokens` | `-n` | Also `n_predict` on `/completion`. `-1` = until end-of-generation. |
+| Stop strings | `stop` | `-r` | Array of strings that end generation. |
+| Deterministic runs | `seed` | `-s` | Fixed seed + `temperature: 0` gives reproducible output on the same build/hardware. |
+| Per-request cache | `cache_prompt` | `--cache-prompt` | Default `true`. |
+| Timing info | `timings_per_token` | — | Adds prompt/decode timings to streamed chunks. |
+
+## Native C API
+
+In-process, the conversation loop is the same as in [iOS & Android](/deployment/on-device/llama-cpp/mobile#3-load-the-model-and-stream-a-response), with three additions:
+
+1. **Format only the new suffix.** Keep the message history and the formatted prompt string. For each turn, format the full history with the [LFM2 chat template](/lfm/key-concepts/chat-template) and tokenize only the part that was not already decoded. The KV cache still holds the earlier tokens, so prefill cost is proportional to the new turn.
+2. **Close the assistant turn.** The loop stops when `llama_vocab_is_eog()` fires, *before* the end token is decoded. Feed the tokens for `<|im_end|>\n` (with `parse_special = true`) after each reply so the cache matches what the template produces on the next turn.
+3. **Reset with `llama_memory_clear(llama_get_memory(ctx), true)`** to start a new conversation without reloading the model.
+
+```cpp
+// Per turn, after appending the user message to `history`:
+std::string suffix = format_lfm2(history) /* full template */ .substr(n_chars_already_decoded);
+std::vector<llama_token> toks = tokenize(vocab, suffix, /*add_special=*/false, /*parse_special=*/true);
+llama_decode(ctx, llama_batch_get_one(toks.data(), toks.size()));
+// ... sample until llama_vocab_is_eog(vocab, tok), streaming pieces ...
+std::vector<llama_token> close = tokenize(vocab, "<|im_end|>\n", false, true);
+llama_decode(ctx, llama_batch_get_one(close.data(), close.size()));
+```
+
+[`examples/simple-chat/simple-chat.cpp`](https://github.com/ggml-org/llama.cpp/blob/master/examples/simple-chat/simple-chat.cpp) is the reference implementation of this pattern. If you need the full Jinja template (for example, tool definitions), link the `common` library and use `common_chat_templates_init()` / `common_chat_templates_apply()` from [`common/chat.h`](https://github.com/ggml-org/llama.cpp/blob/master/common/chat.h) instead of formatting by hand.

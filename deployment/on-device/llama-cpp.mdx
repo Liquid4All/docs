@@ -367,6 +367,31 @@ python convert_hf_to_gguf.py /path/to/your/model --outfile model.gguf --outtype 
 
 Use `--outtype` to specify the quantization level (e.g., `q4_0`, `q4_k_m`, `q5_k_m`, `q6_k`, `q8_0`, `f16`).
 
+## Building Applications
+
+The guides below cover embedding llama.cpp in your own software — from a mobile app calling the C API to a desktop app driving `llama-server`:
+
+<CardGroup cols={2}>
+  <Card title="iOS & Android" icon="mobile" href="/deployment/on-device/llama-cpp/mobile">
+    Link the XCFramework or NDK build and run LFM GGUFs in-process.
+  </Card>
+  <Card title="Desktop & Server Apps" icon="desktop" href="/deployment/on-device/llama-cpp/desktop">
+    llama-server as a sidecar, or Python / Node.js / .NET bindings.
+  </Card>
+  <Card title="Chat & Streaming" icon="comments" href="/deployment/on-device/llama-cpp/chat">
+    Multi-turn conversations, sampling parameters, prompt caching.
+  </Card>
+  <Card title="Function Calling & Agents" icon="wrench" href="/deployment/on-device/llama-cpp/function-calling">
+    OpenAI-style tools with native LFM2.5 tool-call parsing.
+  </Card>
+  <Card title="Structured Output" icon="brackets-curly" href="/deployment/on-device/llama-cpp/structured-output">
+    JSON schema and GBNF grammar constrained generation.
+  </Card>
+  <Card title="Vision & Audio" icon="image" href="/deployment/on-device/llama-cpp/multimodal">
+    LFM2.5-VL and LFM2.5-Audio on llama.cpp.
+  </Card>
+</CardGroup>
+
 ## Example Applications
 
 For more comprehensive example applications using llama.cpp with LFM models, check out these repositories:
