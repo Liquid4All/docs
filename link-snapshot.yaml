@@ -164,6 +164,7 @@ active:
   - /lfm/models/lfm2-vl-1.6b
   - /lfm/models/lfm2-vl-3b
   - /lfm/models/lfm2-vl-450m
+  - /lfm/models/lfm25-1.2b-base
   - /lfm/models/lfm25-1.2b-instruct
   - /lfm/models/lfm25-1.2b-jp
   - /lfm/models/lfm25-1.2b-thinking
@@ -193,6 +194,4 @@ active:
 #   # Or, if you want the reason inline:
 #   - url: /lfm/another-old-thing
 #     reason: "Page retired in DOC-12; no substitute exists."
-deleted:
-  - url: /lfm/models/lfm25-1.2b-base
-    reason: Base models are not included in the documentation.
+deleted: []
