@@ -89,21 +89,6 @@
             ]
           },
           {
-            "group": "Model Bundling",
-            "icon": "box",
-            "pages": [
-              "deployment/tools/model-bundling/quick-start",
-              "deployment/tools/model-bundling/authentication",
-              "deployment/tools/model-bundling/configuration",
-              "deployment/tools/model-bundling/bundle-creation",
-              "deployment/tools/model-bundling/bundle-management",
-              "deployment/tools/model-bundling/download",
-              "deployment/tools/model-bundling/reference",
-              "deployment/tools/model-bundling/data-privacy",
-              "deployment/tools/model-bundling/changelog"
-            ]
-          },
-          {
             "group": "Edge Inference",
             "icon": "mobile",
             "pages": [
@@ -113,18 +98,6 @@
               "deployment/on-device/onnx",
               "deployment/on-device/ollama",
               "deployment/on-device/atomic-chat"
-            ]
-          },
-          {
-            "group": "Build with llama.cpp",
-            "pages": [
-              "deployment/on-device/llama-cpp/mobile",
-              "deployment/on-device/llama-cpp/desktop",
-              "deployment/on-device/llama-cpp/chat",
-              "deployment/on-device/llama-cpp/function-calling",
-              "deployment/on-device/llama-cpp/structured-output",
-              "deployment/on-device/llama-cpp/multimodal",
-              "deployment/on-device/llama-cpp/migrating-from-leap-sdk"
             ]
           },
           {

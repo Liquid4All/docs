@@ -6,8 +6,7 @@
   />
   <div style="display: flex; justify-content: center; gap: 0.5em;">
     <a href="https://playground.liquid.ai/"><strong>Try LFM</strong></a> •
-    <a href="https://docs.liquid.ai/lfm"><strong>Documentation</strong></a> •
-    <a href="https://leap.liquid.ai/"><strong>LEAP</strong></a>
+    <a href="https://docs.liquid.ai/lfm"><strong>Documentation</strong></a>
   </div>
   <br/>
   <a href="https://discord.com/invite/liquid-ai"><img src="https://img.shields.io/discord/1385439864920739850?style=for-the-badge&logo=discord&logoColor=white&label=Discord&color=5865F2" alt="Join Discord"></a>
