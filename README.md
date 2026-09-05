@@ -6,15 +6,14 @@
   />
   <div style="display: flex; justify-content: center; gap: 0.5em;">
     <a href="https://playground.liquid.ai/"><strong>Try LFM</strong></a> •
-    <a href="https://docs.liquid.ai/lfm"><strong>Documentation</strong></a> •
-    <a href="https://leap.liquid.ai/"><strong>LEAP</strong></a>
+    <a href="https://docs.liquid.ai/lfm"><strong>Documentation</strong></a>
   </div>
   <br/>
   <a href="https://discord.com/invite/liquid-ai"><img src="https://img.shields.io/discord/1385439864920739850?style=for-the-badge&logo=discord&logoColor=white&label=Discord&color=5865F2" alt="Join Discord"></a>
 </div>
 </br>
 
-This is the **official documentation repository** for Liquid AI. It contains comprehensive guides, API references, and tutorials for building with our open-weight [LFMs](https://huggingface.co/LiquidAI) and the [LEAP SDK](https://leap.liquid.ai/) on laptops, mobile, and edge devices. The documentation is hosted at [docs.liquid.ai](https://docs.liquid.ai).
+This is the **official documentation repository** for Liquid AI. It contains comprehensive guides, API references, and tutorials for building with our open-weight [LFMs](https://huggingface.co/LiquidAI) on laptops, mobile, and edge devices. The documentation is hosted at [docs.liquid.ai](https://docs.liquid.ai).
 
 ## Table of Contents
 
@@ -73,7 +72,7 @@ You should see `liquid-docs` in the list of MCP servers.
 Then, in a Claude Code session, ask a question about Liquid AI:
 
 ```
-How do I deploy an LFM model to Android using the LEAP SDK?
+How do I run an LFM model on Android with llama.cpp?
 ```
 
 Claude Code will query your MCP server and return an answer grounded in Liquid docs.

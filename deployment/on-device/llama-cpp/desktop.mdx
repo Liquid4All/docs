@@ -1,0 +1,244 @@
+---
+title: "Desktop & Server Apps"
+description: "Ship LFM models inside desktop applications and services with llama.cpp: llama-server as a sidecar, in-process bindings for Python, Node.js, and .NET, and hybrid local + cloud routing."
+---
+
+On laptops, desktops, and servers there are two ways to embed llama.cpp. Pick one per application:
+
+| Pattern | How it works | Choose it when |
+|---|---|---|
+| **Sidecar `llama-server`** | Your app launches the `llama-server` binary and talks to it over HTTP on localhost. | You want the full feature set (chat templates, tool calling, JSON schema, multimodal, prompt cache) with zero native build work, or your app is Electron, Tauri, .NET, Java, or Python. |
+| **In-process binding** | A language binding loads `libllama` into your process. | You cannot spawn a helper process, need the tightest latency, or want a single binary. |
+
+Both consume the same GGUF files from [Hugging Face](/lfm/models/complete-library), so you can switch later.
+
+## Sidecar: llama-server
+
+1. **Bundle the binary.** Download the prebuilt archive for each platform you ship from [llama.cpp releases](https://github.com/ggml-org/llama.cpp/releases) (`macos-arm64`, `win-cpu-x64` / `win-cuda-*`, `ubuntu-x64`, `ubuntu-vulkan-x64`, …) and place `llama-server` plus its shared libraries in your app's resources. See the [install guide](/deployment/on-device/llama-cpp#installation) for the binary matrix.
+2. **Launch it on startup** with a free port and the model path, and wait for `GET /health` to return `{"status":"ok"}`.
+3. **Call `/v1/chat/completions`** with any OpenAI client. Everything in [Chat & Streaming](/deployment/on-device/llama-cpp/chat), [Function Calling](/deployment/on-device/llama-cpp/function-calling), [Structured Output](/deployment/on-device/llama-cpp/structured-output), and [Vision & Audio](/deployment/on-device/llama-cpp/multimodal) applies unchanged.
+4. **Kill the child process** when your app exits.
+
+<Tabs>
+  <Tab title="Node.js / Electron">
+    ```javascript
+    import { spawn } from "node:child_process";
+    import path from "node:path";
+
+    const PORT = 8080;
+    const server = spawn(
+      path.join(process.resourcesPath, "bin", "llama-server"),
+      ["-m", modelPath, "-c", "4096", "--port", String(PORT), "--jinja", "-ngl", "99"],
+      { stdio: "ignore" }
+    );
+    process.on("exit", () => server.kill());
+
+    async function waitForServer() {
+      for (let i = 0; i < 300; i++) {
+        try {
+          const r = await fetch(`http://127.0.0.1:${PORT}/health`);
+          if (r.ok) return;
+        } catch {}
+        await new Promise((res) => setTimeout(res, 200));
+      }
+      throw new Error("llama-server did not start");
+    }
+    await waitForServer();
+
+    const res = await fetch(`http://127.0.0.1:${PORT}/v1/chat/completions`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        messages: [{ role: "user", content: "Summarize the benefits of on-device AI." }],
+        temperature: 0.1, top_k: 50, repeat_penalty: 1.05, max_tokens: 512,
+      }),
+    });
+    console.log((await res.json()).choices[0].message.content);
+    ```
+  </Tab>
+  <Tab title="Python">
+    ```python
+    import subprocess, time, requests
+    from openai import OpenAI
+
+    PORT = 8080
+    server = subprocess.Popen(
+        ["llama-server", "-m", model_path, "-c", "4096", "--port", str(PORT), "--jinja", "-ngl", "99"],
+        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+    )
+    for _ in range(300):
+        try:
+            if requests.get(f"http://127.0.0.1:{PORT}/health", timeout=1).ok:
+                break
+        except requests.RequestException:
+            time.sleep(0.2)
+
+    client = OpenAI(base_url=f"http://127.0.0.1:{PORT}/v1", api_key="not-needed")
+    response = client.chat.completions.create(
+        model="lfm2.5-1.2b-instruct",
+        messages=[{"role": "user", "content": "Summarize the benefits of on-device AI."}],
+        temperature=0.1, max_tokens=512,
+        extra_body={"top_k": 50, "repeat_penalty": 1.05},
+    )
+    print(response.choices[0].message.content)
+    server.terminate()
+    ```
+  </Tab>
+  <Tab title="C# / .NET">
+    ```csharp
+    using System.Diagnostics;
+    using System.Net.Http.Json;
+    using System.Text.Json;
+
+    var server = Process.Start(new ProcessStartInfo("llama-server",
+        $"-m \"{modelPath}\" -c 4096 --port 8080 --jinja -ngl 99")
+        { UseShellExecute = false, CreateNoWindow = true });
+    AppDomain.CurrentDomain.ProcessExit += (_, _) => server?.Kill();
+
+    var http = new HttpClient { BaseAddress = new Uri("http://127.0.0.1:8080") };
+    while (!(await http.GetAsync("/health")).IsSuccessStatusCode) await Task.Delay(200);
+
+    var response = await http.PostAsJsonAsync("/v1/chat/completions", new
+    {
+        messages = new[] { new { role = "user", content = "Summarize the benefits of on-device AI." } },
+        temperature = 0.1,
+        top_k = 50,
+        repeat_penalty = 1.05,
+        max_tokens = 512,
+    });
+    using var json = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+    Console.WriteLine(json.RootElement.GetProperty("choices")[0]
+        .GetProperty("message").GetProperty("content").GetString());
+    ```
+
+    The official OpenAI .NET client also works against `llama-server`; use raw `HttpClient` (as above) when you need llama.cpp-only fields such as `top_k` and `repeat_penalty`.
+  </Tab>
+</Tabs>
+
+Complete sample applications built this way:
+
+- [Electron / Node.js example](https://github.com/Liquid4All/leap-llamacpp-electron-example)
+- [Python example](https://github.com/Liquid4All/leap-llamacpp-python-example)
+- [C# example](https://github.com/Liquid4All/leap-llamacpp-csharp-example)
+
+## In-process bindings
+
+<Tabs>
+  <Tab title="Python (llama-cpp-python)">
+    ```bash
+    pip install llama-cpp-python          # add CMAKE_ARGS="-DGGML_METAL=on" / "-DGGML_CUDA=on" for GPU builds
+    ```
+
+    ```python
+    from llama_cpp import Llama
+
+    llm = Llama.from_pretrained(
+        repo_id="LiquidAI/LFM2.5-1.2B-Instruct-GGUF",
+        filename="*Q4_K_M.gguf",
+        n_ctx=4096,
+        n_gpu_layers=-1,
+    )
+
+    for chunk in llm.create_chat_completion(
+        messages=[{"role": "user", "content": "What is machine learning?"}],
+        temperature=0.1, top_k=50, repeat_penalty=1.05, max_tokens=512,
+        stream=True,
+    ):
+        delta = chunk["choices"][0]["delta"].get("content")
+        if delta:
+            print(delta, end="", flush=True)
+    ```
+
+    `create_chat_completion` mirrors the OpenAI request shape (`messages`, `tools`, `response_format`, `stream`). The package bundles its own llama.cpp build, so upgrade it to pick up new architectures.
+  </Tab>
+  <Tab title="Node.js (node-llama-cpp)">
+    ```bash
+    npm install node-llama-cpp            # prebuilt binaries for macOS, Linux, Windows; Metal/CUDA/Vulkan auto-detected
+    ```
+
+    ```typescript
+    import { getLlama, LlamaChatSession, resolveModelFile } from "node-llama-cpp";
+
+    const llama = await getLlama();
+    const modelPath = await resolveModelFile(
+      "hf:LiquidAI/LFM2.5-1.2B-Instruct-GGUF/LFM2.5-1.2B-Instruct-Q4_K_M.gguf", "./models");
+    const model = await llama.loadModel({ modelPath });
+    const context = await model.createContext({ contextSize: 4096 });
+    const session = new LlamaChatSession({ contextSequence: context.getSequence() });
+
+    await session.prompt("What is machine learning?", {
+      temperature: 0.1,
+      topK: 50,
+      repeatPenalty: { penalty: 1.05 },
+      onTextChunk: (text) => process.stdout.write(text),
+    });
+    ```
+
+    `LlamaChatSession` keeps the conversation and KV cache between `prompt()` calls. Function calling (`functions:` with `defineChatSessionFunction`) and JSON-schema grammars (`llama.createGrammarForJsonSchema`) are built in.
+  </Tab>
+  <Tab title="C# (LLamaSharp)">
+    ```bash
+    dotnet add package LLamaSharp
+    dotnet add package LLamaSharp.Backend.Cpu   # or .Cuda12 / .Vulkan / .Metal
+    ```
+
+    ```csharp
+    using LLama;
+    using LLama.Common;
+    using LLama.Sampling;
+
+    var parameters = new ModelParams(modelPath) { ContextSize = 4096, GpuLayerCount = 99 };
+    using var model = LLamaWeights.LoadFromFile(parameters);
+    using var context = model.CreateContext(parameters);
+    var executor = new InteractiveExecutor(context);
+    var session = new ChatSession(executor);
+
+    var inference = new InferenceParams
+    {
+        MaxTokens = 512,
+        SamplingPipeline = new DefaultSamplingPipeline { Temperature = 0.1f, TopK = 50, RepeatPenalty = 1.05f },
+    };
+    await foreach (var text in session.ChatAsync(
+        new ChatHistory.Message(AuthorRole.User, "What is machine learning?"), inference))
+    {
+        Console.Write(text);
+    }
+    ```
+  </Tab>
+</Tabs>
+
+Other maintained bindings — Rust (`llama-cpp-2`), Go (`go-llama.cpp`), Java (`java-llama.cpp`), Dart/Flutter, and more — are listed in the [llama.cpp README](https://github.com/ggml-org/llama.cpp?tab=readme-ov-file#description).
+
+## Hybrid on-device + cloud routing
+
+Because `llama-server` speaks the OpenAI protocol, one client can target a local model and a cloud model interchangeably: route short, latency-sensitive, or private prompts to the local endpoint and fall back to a hosted deployment (for example [vLLM](/deployment/gpu-inference/vllm) or a [cloud provider](/deployment/gpu-inference/modal)) for the rest.
+
+```python
+import os
+from openai import OpenAI
+
+local = OpenAI(base_url="http://127.0.0.1:8080/v1", api_key="not-needed")
+cloud = OpenAI(base_url="https://your-vllm-host/v1", api_key=os.environ["CLOUD_API_KEY"])
+
+def complete(messages, prefer_local=True):
+    if prefer_local:
+        client, model = local, "lfm2.5-1.2b-instruct"
+        extra = {"top_k": 50, "repeat_penalty": 1.05}          # llama.cpp field name
+    else:
+        client, model = cloud, "LiquidAI/LFM2.5-8B-A1B"
+        extra = {"top_k": 80, "repetition_penalty": 1.05}      # vLLM / SGLang field name
+    return client.chat.completions.create(
+        model=model, messages=messages, temperature=0.1 if prefer_local else 0.2,
+        max_tokens=512, extra_body=extra,
+    )
+```
+
+The `messages` format, tool definitions, and streaming code are identical on both sides — only the base URL and the penalty field name (`repeat_penalty` for llama.cpp, `repetition_penalty` for vLLM/SGLang) differ.
+
+## Packaging checklist
+
+- **Model download on first launch**, not at install time: GGUF files are hundreds of MB to several GB. Show progress, verify the file size, and store it in the user data directory.
+- **Use `-hf` only in development.** In production pin the exact file (`-m`) so a model-card update cannot change behavior under your users.
+- **Choose the binary per machine.** CPU builds run everywhere; ship GPU variants (Metal is built into the macOS binary; CUDA / Vulkan on Windows and Linux) when you have tested them.
+- **Memory-map, don't read.** llama.cpp uses `mmap` by default; keep the model on local disk (not a network share) for fast cold starts.
+- **Benchmark with `llama-bench`** on representative hardware before deciding on quantization and context size. See [Hardware Evaluation](/guides/hardware-evaluation).

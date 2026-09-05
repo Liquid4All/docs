@@ -45,6 +45,13 @@ active:
   - /deployment/on-device/ios/voice-assistant
   - /deployment/on-device/leap-sdk-changelog
   - /deployment/on-device/llama-cpp
+  - /deployment/on-device/llama-cpp/chat
+  - /deployment/on-device/llama-cpp/desktop
+  - /deployment/on-device/llama-cpp/function-calling
+  - /deployment/on-device/llama-cpp/migrating-from-leap-sdk
+  - /deployment/on-device/llama-cpp/mobile
+  - /deployment/on-device/llama-cpp/multimodal
+  - /deployment/on-device/llama-cpp/structured-output
   - /deployment/on-device/lm-studio
   - /deployment/on-device/mlx
   - /deployment/on-device/ollama

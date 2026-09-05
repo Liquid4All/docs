@@ -1,0 +1,264 @@
+---
+title: "iOS & Android"
+description: "Embed llama.cpp directly in an iOS or Android app and run LFM GGUF models on-device through the native C API."
+---
+
+llama.cpp is a dependency-free C/C++ library, so it links straight into a mobile app. Every LFM checkpoint ships as GGUF on Hugging Face ([LiquidAI](https://huggingface.co/LiquidAI)), and upstream llama.cpp supports the LFM2 architecture, LFM2-VL projectors, and LFM2/LFM2.5 tool-call parsing. No wrapper SDK is required.
+
+<Tip>
+On a phone, run the library **in-process** through the C API as shown here. `llama-server` is the right tool on laptops, desktops, and servers — see [Desktop & Server Apps](/deployment/on-device/llama-cpp/desktop).
+</Tip>
+
+## 1. Add llama.cpp to your project
+
+<Tabs>
+  <Tab title="iOS / macOS (XCFramework)">
+    Every llama.cpp release publishes a prebuilt `llama.xcframework` with slices for iOS (device and simulator), macOS, visionOS, and tvOS. It is built with Metal enabled and includes the `mtmd` multimodal library.
+
+    1. Download `llama-<build>-xcframework.zip` from [llama.cpp releases](https://github.com/ggml-org/llama.cpp/releases) and unzip it.
+    2. In Xcode, drag `llama.xcframework` into your target's **Frameworks, Libraries, and Embedded Content**.
+    3. `import llama` in Swift. The C API is exposed directly; no bridging header is needed.
+
+    The prebuilt framework targets iOS 16.4+ and macOS 13.3+. To build it yourself (for example, to change the minimum OS version or drop slices):
+
+    ```bash
+    git clone https://github.com/ggml-org/llama.cpp
+    cd llama.cpp
+    ./build-xcframework.sh   # output: build-apple/llama.xcframework
+    ```
+
+    The upstream [`llama.swiftui`](https://github.com/ggml-org/llama.cpp/tree/master/examples/llama.swiftui) example is a complete SwiftUI chat app built this way.
+  </Tab>
+  <Tab title="Android (Gradle + NDK)">
+    llama.cpp ships an Android Studio project at [`examples/llama.android`](https://github.com/ggml-org/llama.cpp/tree/master/examples/llama.android). Its `lib` module compiles llama.cpp with CMake through the NDK, includes CPU kernels up to Arm SME2 with runtime feature detection, and exposes a small Kotlin API (`AiChat` / `InferenceEngine`). Import the directory into Android Studio, run a Gradle sync, and depend on the `lib` module from your app (or copy it into your project).
+
+    If you prefer to own the JNI layer, add llama.cpp as a CMake subdirectory of your native module:
+
+    ```cmake
+    # app/src/main/cpp/CMakeLists.txt
+    cmake_minimum_required(VERSION 3.22)
+    project(myapp)
+
+    set(LLAMA_BUILD_COMMON OFF)
+    set(LLAMA_BUILD_TESTS OFF)
+    set(LLAMA_BUILD_EXAMPLES OFF)
+    set(LLAMA_BUILD_TOOLS OFF)
+    set(LLAMA_BUILD_SERVER OFF)
+    add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/llama.cpp build-llama)
+
+    add_library(myapp SHARED myapp.cpp)
+    target_link_libraries(myapp llama android log)
+    ```
+
+    ```kotlin
+    // app/build.gradle.kts
+    android {
+        defaultConfig {
+            ndk { abiFilters += listOf("arm64-v8a") }
+        }
+        externalNativeBuild {
+            cmake { path = file("src/main/cpp/CMakeLists.txt") }
+        }
+    }
+    ```
+
+    Prebuilt `llama-<build>-bin-android-arm64.tar.gz` archives on the [releases page](https://github.com/ggml-org/llama.cpp/releases) contain `llama-cli`, `llama-server`, and `llama-bench` for quick testing on a device over `adb` or in Termux. See [docs/android.md](https://github.com/ggml-org/llama.cpp/blob/master/docs/android.md) for the Termux and NDK cross-compile recipes.
+  </Tab>
+</Tabs>
+
+## 2. Get a model onto the device
+
+Download a GGUF from Hugging Face at first launch and keep it in app-private storage. llama.cpp memory-maps the file, so it must be a real file on disk — not a compressed asset.
+
+```
+https://huggingface.co/LiquidAI/LFM2.5-1.2B-Instruct-GGUF/resolve/main/LFM2.5-1.2B-Instruct-Q4_0.gguf
+```
+
+- Use `URLSessionConfiguration.background(withIdentifier:)` on iOS and `WorkManager` (or `DownloadManager`) on Android so downloads survive backgrounding.
+- **`Q4_0`** is the best default on phones: it is the smallest quantization and llama.cpp repacks it into Arm-optimized kernels at load time. Use `Q4_K_M` when you want slightly better quality on capable devices. See [Model Library](/lfm/models/complete-library) for every GGUF repository.
+- For vision models also download the matching `mmproj-*.gguf` from the same repository (see [Vision & Audio](/deployment/on-device/llama-cpp/multimodal)).
+
+For development you can push a file directly:
+
+```bash
+uv pip install huggingface-hub
+hf download LiquidAI/LFM2.5-1.2B-Instruct-GGUF LFM2.5-1.2B-Instruct-Q4_0.gguf --local-dir .
+adb push LFM2.5-1.2B-Instruct-Q4_0.gguf /data/local/tmp/   # Android
+```
+
+## 3. Load the model and stream a response
+
+The generation loop is the same on every platform: load the model, create a context, build a sampler chain with the model's [sampling parameters](/deployment/on-device/llama-cpp/chat#sampling-parameters), format the prompt with the [chat template](/lfm/key-concepts/chat-template), then decode and sample one token at a time.
+
+<Tabs>
+  <Tab title="Swift (iOS / macOS)">
+    ```swift
+    import Foundation
+    import llama
+
+    enum RunnerError: Error { case modelLoadFailed, contextInitFailed }
+
+    /// Minimal llama.cpp runner for LFM2.5-1.2B-Instruct.
+    final class LFMRunner {
+        private let model: OpaquePointer
+        private let ctx: OpaquePointer
+        private let vocab: OpaquePointer
+        private let sampler: OpaquePointer
+
+        init(modelPath: String, contextLength: UInt32 = 4096) throws {
+            llama_backend_init()
+
+            var modelParams = llama_model_default_params()
+            modelParams.n_gpu_layers = 99   // offload to Metal; set 0 for CPU-only
+            guard let model = llama_model_load_from_file(modelPath, modelParams) else {
+                throw RunnerError.modelLoadFailed
+            }
+            self.model = model
+            self.vocab = llama_model_get_vocab(model)
+
+            var ctxParams = llama_context_default_params()
+            ctxParams.n_ctx = contextLength
+            ctxParams.n_batch = 512
+            ctxParams.n_threads = Int32(max(1, ProcessInfo.processInfo.activeProcessorCount - 2))
+            ctxParams.n_threads_batch = ctxParams.n_threads
+            guard let ctx = llama_init_from_model(model, ctxParams) else {
+                throw RunnerError.contextInitFailed
+            }
+            self.ctx = ctx
+
+            // LFM2.5-1.2B-Instruct: temperature 0.1, top_k 50, repetition penalty 1.05
+            let sampler = llama_sampler_chain_init(llama_sampler_chain_default_params())
+            llama_sampler_chain_add(sampler, llama_sampler_init_top_k(50))
+            llama_sampler_chain_add(sampler, llama_sampler_init_penalties(
+                llama_vocab_n_tokens(vocab), 64, 1.05, 0.0, 0.0))
+            llama_sampler_chain_add(sampler, llama_sampler_init_temp(0.1))
+            llama_sampler_chain_add(sampler, llama_sampler_init_dist(UInt32.max)) // random seed
+            self.sampler = sampler!
+        }
+
+        deinit {
+            llama_sampler_free(sampler)
+            llama_free(ctx)
+            llama_model_free(model)
+            llama_backend_free()
+        }
+
+        /// Formats one user turn with the LFM2 chat template and streams the reply.
+        func generate(system: String = "You are a helpful assistant.",
+                      user: String,
+                      maxTokens: Int = 512,
+                      onText: (String) -> Void) {
+            llama_memory_clear(llama_get_memory(ctx), true)   // start a fresh conversation
+
+            let prompt = """
+            <|im_start|>system
+            \(system)<|im_end|>
+            <|im_start|>user
+            \(user)<|im_end|>
+            <|im_start|>assistant
+
+            """
+            var tokens = tokenize(prompt, addBOS: true)       // addBOS prepends <|startoftext|>
+            var pending: [UInt8] = []
+
+            var rc = tokens.withUnsafeMutableBufferPointer { buf in
+                llama_decode(ctx, llama_batch_get_one(buf.baseAddress, Int32(buf.count)))
+            }
+            for _ in 0..<maxTokens {
+                guard rc == 0 else { break }
+                var next = llama_sampler_sample(sampler, ctx, -1)
+                if llama_vocab_is_eog(vocab, next) { break }      // <|im_end|>
+
+                pending += piece(next)
+                if let text = String(bytes: pending, encoding: .utf8) {  // wait for complete UTF-8 sequences
+                    onText(text)
+                    pending.removeAll()
+                }
+                rc = withUnsafeMutablePointer(to: &next) { p in
+                    llama_decode(ctx, llama_batch_get_one(p, 1))
+                }
+            }
+        }
+
+        private func tokenize(_ text: String, addBOS: Bool) -> [llama_token] {
+            let byteCount = Int32(text.utf8.count)
+            var tokens = [llama_token](repeating: 0, count: Int(byteCount) + 2)
+            let n = llama_tokenize(vocab, text, byteCount, &tokens, Int32(tokens.count), addBOS, true)
+            return n < 0 ? [] : Array(tokens.prefix(Int(n)))
+        }
+
+        /// Raw UTF-8 bytes for a token; special/control tokens are filtered out (`special: false`).
+        private func piece(_ token: llama_token) -> [UInt8] {
+            var buf = [CChar](repeating: 0, count: 256)
+            let n = llama_token_to_piece(vocab, token, &buf, Int32(buf.count), 0, false)
+            return n <= 0 ? [] : buf.prefix(Int(n)).map { UInt8(bitPattern: $0) }
+        }
+    }
+    ```
+
+    Usage from a view model:
+
+    ```swift
+    let runner = try LFMRunner(modelPath: modelURL.path)
+    Task.detached {
+        runner.generate(user: "What is machine learning?") { text in
+            Task { @MainActor in self.output += text }
+        }
+    }
+    ```
+  </Tab>
+  <Tab title="Kotlin (Android)">
+    With the upstream `examples/llama.android` `lib` module:
+
+    ```kotlin
+    import com.arm.aichat.AiChat
+    import java.io.File
+
+    val engine = AiChat.getInferenceEngine(applicationContext)
+
+    lifecycleScope.launch {
+        engine.loadModel(File(filesDir, "LFM2.5-1.2B-Instruct-Q4_0.gguf").absolutePath)
+        engine.setSystemPrompt("You are a helpful assistant.")
+
+        engine.sendUserPrompt("What is machine learning?", predictLength = 512)
+            .collect { piece -> appendToUi(piece) }   // Flow<String> of generated text
+    }
+    ```
+
+    `InferenceEngine` applies the model's chat template, manages the KV cache across turns, and exposes a `state: StateFlow<State>` you can bind to your UI (`LoadingModel`, `ModelReady`, `Generating`, …). Call `engine.cleanUp()` to reset the conversation and `engine.destroy()` when you are done.
+
+    <Note>
+    The binding's sampler is configured in `lib/src/main/cpp/ai_chat.cpp` (`new_sampler`, default temperature 0.3). Set it to the values for your model — for LFM2.5-1.2B-Instruct: `temp = 0.1`, `top_k = 50`, `penalty_repeat = 1.05` — or expose those fields through the JNI layer.
+    </Note>
+
+    If you write your own JNI wrapper, the C++ side is the same sequence as the Swift example: `llama_model_load_from_file` → `llama_init_from_model` → sampler chain → `llama_tokenize` → `llama_decode` / `llama_sampler_sample` loop. [`examples/simple/simple.cpp`](https://github.com/ggml-org/llama.cpp/blob/master/examples/simple/simple.cpp) and [`examples/simple-chat/simple-chat.cpp`](https://github.com/ggml-org/llama.cpp/blob/master/examples/simple-chat/simple-chat.cpp) are the canonical reference implementations.
+  </Tab>
+</Tabs>
+
+For multi-turn conversations, prompt-cache reuse, and how to keep the KV cache aligned with the chat template, see [Chat & Streaming](/deployment/on-device/llama-cpp/chat#native-c-api).
+
+## 4. Tune for mobile
+
+- **Memory.** Weights are memory-mapped by default (`use_mmap = true`), so they count as file-backed pages rather than app RSS — iOS jetsam and Android LMK treat them far more leniently. Keep `n_ctx` as small as the use case allows; the KV cache scales linearly with it.
+- **Threads.** Use the performance cores only: `n_threads = activeProcessorCount - 2` is a good starting point. More threads than physical big cores usually slows decoding.
+- **GPU.** On Apple devices set `n_gpu_layers = 99` to run on Metal. On Android, CPU is the safe default; Vulkan and OpenCL (Adreno) backends exist but need device-specific testing.
+- **Quantization.** `Q4_0` for the smallest footprint and fastest Arm kernels; `Q4_K_M` when quality matters more than a few hundred MB.
+- **Vision and audio.** The XCFramework includes `mtmd`; on Android enable `LLAMA_BUILD_MTMD`. See [Vision & Audio](/deployment/on-device/llama-cpp/multimodal).
+- **Benchmark on hardware.** `llama-bench -m model.gguf -p 512 -n 128` from the prebuilt Android or macOS binaries gives prefill/decode tokens-per-second before you write any app code. See [Hardware Evaluation](/guides/hardware-evaluation).
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Chat & Streaming" icon="comments" href="/deployment/on-device/llama-cpp/chat">
+    Multi-turn conversations, sampling parameters, prompt caching.
+  </Card>
+  <Card title="Structured Output" icon="brackets-curly" href="/deployment/on-device/llama-cpp/structured-output">
+    Constrain generation to a JSON schema or GBNF grammar.
+  </Card>
+  <Card title="Function Calling & Agents" icon="wrench" href="/deployment/on-device/llama-cpp/function-calling">
+    Tool use with LFM2.5's native tool-call parser.
+  </Card>
+  <Card title="Vision & Audio" icon="image" href="/deployment/on-device/llama-cpp/multimodal">
+    Run LFM2.5-VL and LFM2.5-Audio on llama.cpp.
+  </Card>
+</CardGroup>

@@ -1,7 +1,12 @@
 ---
 title: "Function Calling"
 description: "Tool use with LeapFunction — same API on every platform, with Hermes and Pythonic parsers."
+noindex: true
 ---
+
+<Warning>
+The LEAP SDK is deprecated and this page is no longer maintained. Build on llama.cpp directly instead — see [Migrating from LEAP SDK](/deployment/on-device/llama-cpp/migrating-from-leap-sdk).
+</Warning>
 
 Function calling lets the model invoke predefined functions provided by your app — query an API, run a calculation, fetch external state. Register `LeapFunction` definitions on the `Conversation`, run generation as usual, and the model's tool-call tokens come back as `MessageResponse.functionCalls`.
 

@@ -5,8 +5,8 @@
 - Laptop with Ollama
 - Laptop with llama.cpp
 - Macbook with MLX
-- iOS with LEAP SDK
-- Android with LEAP SDK
+- iOS with llama.cpp
+- Android with llama.cpp
 - Cloud with vLLM
 - Browser with Transformers.js
 

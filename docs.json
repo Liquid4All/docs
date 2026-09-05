@@ -92,8 +92,8 @@
             "group": "Edge Inference",
             "icon": "mobile",
             "pages": [
-              "deployment/on-device/sdk/overview",
               "deployment/on-device/llama-cpp",
+              "deployment/on-device/llama-cpp/mobile",
               "deployment/on-device/lm-studio",
               "deployment/on-device/mlx",
               "deployment/on-device/onnx",
@@ -138,47 +138,6 @@
               "lfm/help/contributing",
               "lfm/help/connect-ai-tools",
               "lfm/help/model-license"
-            ]
-          }
-        ]
-      },
-      {
-        "tab": "Leap SDK",
-        "groups": [
-          {
-            "group": "Leap SDK",
-            "icon": "rocket",
-            "pages": [
-              "deployment/on-device/sdk/overview",
-              "deployment/on-device/sdk/quick-start",
-              "deployment/on-device/sdk/ai-agent-usage-guide",
-              "deployment/on-device/sdk/model-loading",
-              "deployment/on-device/sdk/conversation-generation",
-              "deployment/on-device/sdk/messages-content",
-              "deployment/on-device/sdk/function-calling",
-              "deployment/on-device/sdk/constrained-generation",
-              "deployment/on-device/sdk/advanced-features",
-              "deployment/on-device/sdk/utilities",
-              "deployment/on-device/sdk/voice-assistant",
-              "deployment/on-device/sdk/openai-client",
-              "deployment/on-device/sdk/cloud-ai-comparison",
-              "deployment/on-device/sdk/desktop-platforms",
-              "deployment/on-device/leap-sdk-changelog"
-            ]
-          },
-          {
-            "group": "Model Bundling Services",
-            "icon": "box",
-            "pages": [
-              "deployment/tools/model-bundling/quick-start",
-              "deployment/tools/model-bundling/authentication",
-              "deployment/tools/model-bundling/configuration",
-              "deployment/tools/model-bundling/bundle-creation",
-              "deployment/tools/model-bundling/bundle-management",
-              "deployment/tools/model-bundling/download",
-              "deployment/tools/model-bundling/reference",
-              "deployment/tools/model-bundling/data-privacy",
-              "deployment/tools/model-bundling/changelog"
             ]
           }
         ]
