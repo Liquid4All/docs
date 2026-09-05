@@ -93,6 +93,7 @@
             "icon": "mobile",
             "pages": [
               "deployment/on-device/llama-cpp",
+              "deployment/on-device/llama-cpp/mobile",
               "deployment/on-device/lm-studio",
               "deployment/on-device/mlx",
               "deployment/on-device/onnx",
