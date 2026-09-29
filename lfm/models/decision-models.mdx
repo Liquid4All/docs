@@ -30,7 +30,7 @@ Pick the type that matches the shape of the answer your code needs.
 
 ## Setup
 
-1. Go to [console.liquid.ai](https://console.liquid.ai).
+1. Go to [console.liquid.ai](https://console.liquid.ai). If you don't have an account yet, register and join an organization.
 2. Navigate to **Dashboard > API Keys**.
 3. Create a new key and copy it. Keys are prefixed with `liquid_`.
 
@@ -51,7 +51,7 @@ A single API call contains three things:
 <Tabs>
   <Tab title="cURL">
     ```bash
-    curl -s https://api.liquid.ai/v1/systemone \
+    curl -s https://api.liquid.ai/decisions/v1/systemone \
       -H "Authorization: Bearer $LIQUID_API_KEY" \
       -H "Content-Type: application/json" \
       -d '{
@@ -155,7 +155,7 @@ A Noul question returns a single probability between 0 and 1. Your code receives
 <Tabs>
   <Tab title="cURL">
     ```bash
-    curl -s https://api.liquid.ai/v1/systemone \
+    curl -s https://api.liquid.ai/decisions/v1/systemone \
       -H "Authorization: Bearer $LIQUID_API_KEY" \
       -H "Content-Type: application/json" \
       -d '{
@@ -232,7 +232,7 @@ A Choice question returns the selected option, a probability distribution over a
 <Tabs>
   <Tab title="cURL">
     ```bash
-    curl -s https://api.liquid.ai/v1/systemone \
+    curl -s https://api.liquid.ai/decisions/v1/systemone \
       -H "Authorization: Bearer $LIQUID_API_KEY" \
       -H "Content-Type: application/json" \
       -d '{
@@ -344,7 +344,7 @@ A Score question returns a continuous value across an ordered rubric you define,
 <Tabs>
   <Tab title="cURL">
     ```bash
-    curl -s https://api.liquid.ai/v1/systemone \
+    curl -s https://api.liquid.ai/decisions/v1/systemone \
       -H "Authorization: Bearer $LIQUID_API_KEY" \
       -H "Content-Type: application/json" \
       -d '{
@@ -452,7 +452,7 @@ You can ask multiple questions of different types in the same call. The model ev
 <Tabs>
   <Tab title="cURL">
     ```bash
-    curl -s https://api.liquid.ai/v1/systemone \
+    curl -s https://api.liquid.ai/decisions/v1/systemone \
       -H "Authorization: Bearer $LIQUID_API_KEY" \
       -H "Content-Type: application/json" \
       -d '{

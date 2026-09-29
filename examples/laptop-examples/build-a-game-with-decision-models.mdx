@@ -31,6 +31,12 @@ Create a `.env` file from the template:
 cp .env.example .env
 ```
 
+Obtain a LIQUID_API_KEY:
+
+1. Go to [console.liquid.ai](https://console.liquid.ai). If you don't have an account yet, register and join an organization.
+2. Navigate to **Dashboard > API Keys**.
+3. Create a new key and copy it. Keys are prefixed with `liquid_`.
+
 Add your Liquid API key:
 
 ```sh
@@ -38,7 +44,7 @@ LIQUID_API_KEY=your-liquid-api-key
 ```
 
 <Note>
-  Jev vs d1 mode is optional. To enable it, add an OpenRouter key as `JEV_API_KEY`.
+  Jev vs d1 mode is optional. To enable it, add an OpenRouter key as `OPENROUTER_API_KEY`.
 </Note>
 
 ### 3. Install dependencies and start the demo
@@ -183,9 +189,9 @@ By default, d1 runs through Liquid's API and Jev runs through OpenRouter:
 | `LIQUID_API_KEY` | | API key for d1. Required. |
 | `LIQUID_MODEL_NAME` | `d1:free` | d1 model name. |
 | `LIQUID_BASE_URL` | `https://api.liquid.ai` | API host for d1. |
-| `JEV_API_KEY` | | OpenRouter API key. Required for Jev vs d1 mode. |
-| `JEV_MODEL_NAME` | `typesafe/jev-1.13` | Jev model name. |
-| `JEV_BASE_URL` | `https://openrouter.ai` | API host for Jev. |
+| `OPENROUTER_API_KEY` | | OpenRouter API key. Required for Jev vs d1 mode. |
+| `OPENROUTER_MODEL_NAME` | `typesafe/jev-1.13` | Jev model name. |
+| `OPENROUTER_BASE_URL` | `https://openrouter.ai` | API host for Jev. |
 
 To run d1 through OpenRouter instead of Liquid's API:
 
