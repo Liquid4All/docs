@@ -112,6 +112,7 @@ active:
   - /examples/laptop-examples/audio-car-cockpit
   - /examples/laptop-examples/audio-to-text-in-real-time
   - /examples/laptop-examples/browser-control
+  - /examples/laptop-examples/build-a-game-with-decision-models
   - /examples/laptop-examples/flight-search-assistant
   - /examples/laptop-examples/invoice-extractor-tool-with-liquid-nanos
   - /examples/laptop-examples/lfm2-english-to-korean
@@ -119,6 +120,7 @@ active:
   - /examples/web/audio-webgpu-demo
   - /examples/web/hand-voice-racer
   - /examples/web/vl-webgpu-demo
+  - /guides/decision-model-guide
   - /guides/hardware-evaluation
   - /guides/migration-guide
   - /guides/use-case-evaluation
@@ -151,6 +153,7 @@ active:
   - /lfm/key-concepts/vision-capabilities
   - /lfm/models/audio-models
   - /lfm/models/complete-library
+  - /lfm/models/decision-models
   - /lfm/models/lfm2-1.2b
   - /lfm/models/lfm2-1.2b-extract
   - /lfm/models/lfm2-1.2b-rag

@@ -1,0 +1,649 @@
+---
+title: "Decision Models"
+description: "Purpose-built models for structured decisions: classification, routing, and scoring in a single call with zero generated tokens"
+icon: "scale-balanced"
+---
+
+Decision models are a new class of AI model purpose-built for structured decisions. Instead of generating text token by token, a decision model evaluates a situation and returns calibrated probabilities across a fixed set of outcomes in a single call with zero generated tokens.
+
+## Primitives
+
+Every question you ask a decision model uses one of three types:
+
+- **Noul**: A yes/no question that returns a probability between 0 and 1. Think of it as a boolean on a sliding scale. "Is this message spam?" might return `0.92`, meaning a 0.92 probability that the answer is yes.
+
+- **Choice**: A pick-one-from-many question that returns a probability distribution over named options. "Which department should handle this?" might return `{"billing": 0.65, "technical": 0.30, "account": 0.05}`.
+
+- **Score**: A rate-on-a-scale question that returns a probability-weighted position on an ordered rubric. "How urgent is this?" with three levels might return a score of `1.85` (between "Medium" and "High"), with a probability distribution over each level.
+
+Pick the type that matches the shape of the answer your code needs.
+
+| If the answer is... | Use | Example |
+|---|---|---|
+| Pick one from a set of unordered categories | **Choice** | Which department handles this ticket? |
+| Rate something along an ordered scale with defined levels | **Score** | How severe is this bug? |
+| Yes or no, where the probability itself is useful | **Noul** | Does this message contain personal data? |
+
+**Noul vs Score**: A Noul at 0.5 means maximum uncertainty between yes and no. It says nothing about degree or intensity. If you want to measure degree (skill level, frustration, severity), use a Score with defined levels. If you need a yes/no gate, use a Noul.
+
+**When the answer could fit more than one type**, think about what your code does next. If it branches on a category, use a Choice. If it compares against a threshold on a continuum, use a Score. If it gates on a boolean, use a Noul.
+
+## Setup
+
+1. Go to [console.liquid.ai](https://console.liquid.ai). If you don't have an account yet, register and join an organization.
+2. Navigate to **Dashboard > API Keys**.
+3. Create a new key and copy it. Keys are prefixed with `liquid_`.
+
+Set the key as an environment variable:
+
+```bash
+export LIQUID_API_KEY="liquid_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+```
+
+## Your First Call
+
+A single API call contains three things:
+
+1. **Model**: which decision model to use.
+2. **State**: the context the model should evaluate. This can be plain text (a customer message, an email, a log entry) or a JSON object with structured fields.
+3. **Questions**: one or more typed questions, each with a name, a type, and instructions. Choice and Score questions also take criteria that define the options or levels. You can ask multiple questions in the same call, and the model evaluates them all at once.
+
+<Tabs>
+  <Tab title="cURL">
+    ```bash
+    curl -s https://api.liquid.ai/decisions/v1/systemone \
+      -H "Authorization: Bearer $LIQUID_API_KEY" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "model": "d1:free",
+        "state": "I have been waiting over three weeks for my order and nobody has responded to my emails. This is completely unacceptable.",
+        "questions": {
+          "is_complaint": {
+            "type": "noul",
+            "instructions": "Is this message a complaint from the customer?"
+          }
+        }
+      }'
+    ```
+  </Tab>
+  <Tab title="Python">
+    ```bash
+    pip install typesafe-sdk
+    ```
+
+    ```python
+    import os
+    from typesafe_sdk import TypeSafeClient, Noul
+
+    client = TypeSafeClient(
+        api_key=os.environ["LIQUID_API_KEY"],
+        base_url="https://api.liquid.ai",
+    )
+
+    result = client.system_one(
+        model="d1:free",
+        state="I have been waiting over three weeks for my order and nobody has responded to my emails. This is completely unacceptable.",
+        questions={
+            "is_complaint": Noul(
+                instructions="Is this message a complaint from the customer?",
+            ),
+        },
+    )
+    print(result.answers["is_complaint"].noul)  # 0.999
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```bash
+    npm install @typesafe-ai/sdk
+    ```
+
+    ```typescript
+    import { TypeSafeClient } from "@typesafe-ai/sdk";
+
+    const client = new TypeSafeClient({
+      apiKey: process.env.LIQUID_API_KEY!,
+      baseURL: "https://api.liquid.ai",
+    });
+
+    const result = await client.systemOne({
+      model: "d1:free",
+      state: "I have been waiting over three weeks for my order and nobody has responded to my emails. This is completely unacceptable.",
+      questions: {
+        is_complaint: {
+          type: "noul",
+          instructions: "Is this message a complaint from the customer?",
+        },
+      },
+    });
+    console.log(result.answers.is_complaint.noul); // 0.999
+    ```
+  </Tab>
+</Tabs>
+
+**Response:**
+
+```json
+{
+  "model": "d1:free",
+  "answers": {
+    "is_complaint": {
+      "type": "noul",
+      "noul": 0.999
+    }
+  },
+  "usage": {
+    "input_tokens": 84,
+    "output_tokens": 0
+  }
+}
+```
+
+**Reading the response:**
+
+- **`answers.is_complaint.noul`**: The probability that the answer is "yes." Here, `0.999` means a 0.999 probability that this is a complaint.
+- **`usage.output_tokens`**: Always `0`. Decision models do not generate tokens.
+- **`usage.input_tokens`**: The total tokens consumed to evaluate the state and questions.
+
+The response contains one answer per question, keyed by the question name. A Noul answer is a single probability. Choice and Score answers also include a full probability distribution and a `confidence` value.
+
+## Usage Examples
+
+### Noul
+
+A Noul question returns a single probability between 0 and 1. Your code receives a float that you can threshold to make a binary decision, use as a weight, or pass directly to downstream logic. Values near 0 or 1 express a clear answer; values near 0.5 express genuine uncertainty.
+
+<Tabs>
+  <Tab title="cURL">
+    ```bash
+    curl -s https://api.liquid.ai/decisions/v1/systemone \
+      -H "Authorization: Bearer $LIQUID_API_KEY" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "model": "d1:free",
+        "state": "You'\''re an absolute idiot and I hope your company goes bankrupt. I'\''m going to find out where you work.",
+        "questions": {
+          "is_harmful": {
+            "type": "noul",
+            "instructions": "Does this user message contain harmful, threatening, or abusive content?"
+          }
+        }
+      }'
+    ```
+  </Tab>
+  <Tab title="Python">
+    ```python
+    from typesafe_sdk import Noul
+
+    result = client.system_one(
+        model="d1:free",
+        state="You're an absolute idiot and I hope your company goes bankrupt. I'm going to find out where you work.",
+        questions={
+            "is_harmful": Noul(
+                instructions="Does this user message contain harmful, threatening, or abusive content?",
+            ),
+        },
+    )
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    const result = await client.systemOne({
+      model: "d1:free",
+      state: "You're an absolute idiot and I hope your company goes bankrupt. I'm going to find out where you work.",
+      questions: {
+        is_harmful: {
+          type: "noul",
+          instructions: "Does this user message contain harmful, threatening, or abusive content?",
+        },
+      },
+    });
+    ```
+  </Tab>
+</Tabs>
+
+**Response** (`answers` field):
+
+```json
+{
+  "is_harmful": {
+    "type": "noul",
+    "noul": 0.99
+  }
+}
+```
+
+**Using the result:**
+
+```python
+p = result.answers["is_harmful"].noul
+
+if p > 0.8:
+    action = "block"
+elif p < 0.2:
+    action = "allow"
+else:
+    action = "human_review"
+```
+
+### Choice
+
+A Choice question returns the selected option, a probability distribution over all options, and a `confidence` value. `confidence` summarizes how clear-cut the answer is: high when one option clearly wins, lower when the probability is spread across several options. The distribution tells you not just the top pick but how much probability mass sits on the runner-up, which is useful for flagging ambiguous cases or routing to a fallback.
+
+<Tabs>
+  <Tab title="cURL">
+    ```bash
+    curl -s https://api.liquid.ai/decisions/v1/systemone \
+      -H "Authorization: Bearer $LIQUID_API_KEY" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "model": "d1:free",
+        "state": "Hi, I was charged twice for my subscription last month. The amounts are $29.99 on March 3rd and again on March 5th. Can you refund the duplicate charge?",
+        "questions": {
+          "intent": {
+            "type": "choice",
+            "instructions": "What is the primary topic of this customer inquiry?",
+            "criteria": {
+              "billing": "Questions about charges, invoices, refunds, or payment methods",
+              "technical": "Bug reports, feature requests, or how-to questions about the product",
+              "shipping": "Order status, delivery tracking, or shipping address changes",
+              "returns": "Return requests, exchanges, or product condition issues",
+              "account": "Login issues, profile updates, or subscription management"
+            }
+          }
+        }
+      }'
+    ```
+  </Tab>
+  <Tab title="Python">
+    ```python
+    from typesafe_sdk import Choice
+
+    result = client.system_one(
+        model="d1:free",
+        state="Hi, I was charged twice for my subscription last month. The amounts are $29.99 on March 3rd and again on March 5th. Can you refund the duplicate charge?",
+        questions={
+            "intent": Choice(
+                instructions="What is the primary topic of this customer inquiry?",
+                criteria={
+                    "billing": "Questions about charges, invoices, refunds, or payment methods",
+                    "technical": "Bug reports, feature requests, or how-to questions about the product",
+                    "shipping": "Order status, delivery tracking, or shipping address changes",
+                    "returns": "Return requests, exchanges, or product condition issues",
+                    "account": "Login issues, profile updates, or subscription management",
+                },
+            ),
+        },
+    )
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    const result = await client.systemOne({
+      model: "d1:free",
+      state: "Hi, I was charged twice for my subscription last month. The amounts are $29.99 on March 3rd and again on March 5th. Can you refund the duplicate charge?",
+      questions: {
+        intent: {
+          type: "choice",
+          instructions: "What is the primary topic of this customer inquiry?",
+          criteria: {
+            billing: "Questions about charges, invoices, refunds, or payment methods",
+            technical: "Bug reports, feature requests, or how-to questions about the product",
+            shipping: "Order status, delivery tracking, or shipping address changes",
+            returns: "Return requests, exchanges, or product condition issues",
+            account: "Login issues, profile updates, or subscription management",
+          },
+        },
+      },
+    });
+    ```
+  </Tab>
+</Tabs>
+
+**Response** (`answers` field):
+
+```json
+{
+  "intent": {
+    "type": "choice",
+    "choice": "billing",
+    "probabilities": {
+      "billing": 0.9997,
+      "account": 0.0002,
+      "returns": 0.00005,
+      "shipping": 0.00003,
+      "technical": 0.00002
+    },
+    "confidence": 0.9996
+  }
+}
+```
+
+**Using the result:**
+
+```python
+intent = result.answers["intent"].choice
+confidence = result.answers["intent"].confidence
+
+queue_map = {
+    "billing": "billing-team",
+    "technical": "engineering-support",
+    "shipping": "logistics",
+    "returns": "returns-desk",
+    "account": "account-management",
+}
+
+target_queue = queue_map[intent]
+print(f"Route to: {target_queue} (confidence: {confidence:.2f})")
+# Route to: billing-team (confidence: 1.00)
+```
+
+### Score
+
+A Score question returns a continuous value across an ordered rubric you define, plus the probability distribution over each level. The value is the probability-weighted position on the scale: if you define four levels (0 through 3), a score of `2.9995` means the model places nearly all weight on the top level.
+
+<Tabs>
+  <Tab title="cURL">
+    ```bash
+    curl -s https://api.liquid.ai/decisions/v1/systemone \
+      -H "Authorization: Bearer $LIQUID_API_KEY" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "model": "d1:free",
+        "state": "Our production API is returning 500 errors on every request. All customers are affected. Revenue impact is approximately $12,000 per hour. Started 15 minutes ago.",
+        "questions": {
+          "urgency": {
+            "type": "score",
+            "instructions": "How urgent is this support request?",
+            "criteria": [
+              "Can wait: no immediate business impact, can be addressed in normal queue",
+              "Should handle today: minor inconvenience or non-blocking issue",
+              "Time-sensitive: noticeable customer impact, needs attention within hours",
+              "Blocking revenue: critical system failure affecting customers or revenue"
+            ]
+          }
+        }
+      }'
+    ```
+  </Tab>
+  <Tab title="Python">
+    ```python
+    from typesafe_sdk import Score
+
+    result = client.system_one(
+        model="d1:free",
+        state="Our production API is returning 500 errors on every request. All customers are affected. Revenue impact is approximately $12,000 per hour. Started 15 minutes ago.",
+        questions={
+            "urgency": Score(
+                instructions="How urgent is this support request?",
+                criteria=[
+                    "Can wait: no immediate business impact, can be addressed in normal queue",
+                    "Should handle today: minor inconvenience or non-blocking issue",
+                    "Time-sensitive: noticeable customer impact, needs attention within hours",
+                    "Blocking revenue: critical system failure affecting customers or revenue",
+                ],
+            ),
+        },
+    )
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    const result = await client.systemOne({
+      model: "d1:free",
+      state: "Our production API is returning 500 errors on every request. All customers are affected. Revenue impact is approximately $12,000 per hour. Started 15 minutes ago.",
+      questions: {
+        urgency: {
+          type: "score",
+          instructions: "How urgent is this support request?",
+          criteria: [
+            "Can wait: no immediate business impact, can be addressed in normal queue",
+            "Should handle today: minor inconvenience or non-blocking issue",
+            "Time-sensitive: noticeable customer impact, needs attention within hours",
+            "Blocking revenue: critical system failure affecting customers or revenue",
+          ],
+        },
+      },
+    });
+    ```
+  </Tab>
+</Tabs>
+
+**Response** (`answers` field):
+
+```json
+{
+  "urgency": {
+    "type": "score",
+    "score": 2.9995,
+    "confidence": 0.9995,
+    "probabilities": {
+      "0": 0.00001,
+      "1": 0.00002,
+      "2": 0.0004,
+      "3": 0.9996
+    },
+    "legend": {
+      "0": "Can wait: no immediate business impact, can be addressed in normal queue",
+      "1": "Should handle today: minor inconvenience or non-blocking issue",
+      "2": "Time-sensitive: noticeable customer impact, needs attention within hours",
+      "3": "Blocking revenue: critical system failure affecting customers or revenue"
+    }
+  }
+}
+```
+
+**Using the result:**
+
+```python
+score = result.answers["urgency"].score
+
+if score >= 2.5:
+    print("ACTION: Page on-call engineer immediately")
+elif score >= 1.5:
+    print("ACTION: Escalate to senior support")
+else:
+    print("ACTION: Add to standard queue")
+```
+
+### Combining All Three Primitives
+
+You can ask multiple questions of different types in the same call. The model evaluates all of them at once against the same state, so you get a complete decision in one round trip. This is useful when a single piece of input needs to be classified, routed, and prioritized together.
+
+<Tabs>
+  <Tab title="cURL">
+    ```bash
+    curl -s https://api.liquid.ai/decisions/v1/systemone \
+      -H "Authorization: Bearer $LIQUID_API_KEY" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "model": "d1:free",
+        "state": "{\"message\": \"The checkout page crashes with a white screen whenever I try to apply a promo code. I'\''ve tried three different browsers. This is blocking a $4,200 order for our team and we need to place it before our procurement window closes on Friday.\", \"account\": {\"plan\": \"enterprise\", \"arr\": 52000, \"customer_since\": \"2022-03-15\"}}",
+        "questions": {
+          "is_bug": {
+            "type": "noul",
+            "instructions": "Is the customer reporting a software bug (as opposed to a usage question, feature request, or account issue)?"
+          },
+          "team": {
+            "type": "choice",
+            "instructions": "Which team should handle this ticket?",
+            "criteria": {
+              "billing": "Billing, invoicing, charges, and payment method issues",
+              "engineering": "Software bugs, crashes, and technical malfunctions",
+              "frontend": "UI/UX issues, display problems, and browser-specific bugs",
+              "account": "Account setup, permissions, plan changes, and access issues"
+            }
+          },
+          "urgency": {
+            "type": "score",
+            "instructions": "How urgent is this ticket? Consider business impact, time sensitivity, and customer tier.",
+            "criteria": [
+              "Low: no immediate impact, standard queue",
+              "Medium: some business impact, handle within 24 hours",
+              "High: significant business impact or time-sensitive, handle within 4 hours"
+            ]
+          }
+        }
+      }'
+    ```
+  </Tab>
+  <Tab title="Python">
+    ```python
+    import json
+    from typesafe_sdk import Choice, Noul, Score
+
+    ticket = {
+        "message": "The checkout page crashes with a white screen whenever I try to apply a promo code. I've tried three different browsers. This is blocking a $4,200 order for our team and we need to place it before our procurement window closes on Friday.",
+        "account": {
+            "plan": "enterprise",
+            "arr": 52000,
+            "customer_since": "2022-03-15",
+        },
+    }
+
+    result = client.system_one(
+        model="d1:free",
+        state=json.dumps(ticket),
+        questions={
+            "is_bug": Noul(
+                instructions="Is the customer reporting a software bug (as opposed to a usage question, feature request, or account issue)?",
+            ),
+            "team": Choice(
+                instructions="Which team should handle this ticket?",
+                criteria={
+                    "billing": "Billing, invoicing, charges, and payment method issues",
+                    "engineering": "Software bugs, crashes, and technical malfunctions",
+                    "frontend": "UI/UX issues, display problems, and browser-specific bugs",
+                    "account": "Account setup, permissions, plan changes, and access issues",
+                },
+            ),
+            "urgency": Score(
+                instructions="How urgent is this ticket? Consider business impact, time sensitivity, and customer tier.",
+                criteria=[
+                    "Low: no immediate impact, standard queue",
+                    "Medium: some business impact, handle within 24 hours",
+                    "High: significant business impact or time-sensitive, handle within 4 hours",
+                ],
+            ),
+        },
+    )
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    const ticket = {
+      message: "The checkout page crashes with a white screen whenever I try to apply a promo code. I've tried three different browsers. This is blocking a $4,200 order for our team and we need to place it before our procurement window closes on Friday.",
+      account: {
+        plan: "enterprise",
+        arr: 52000,
+        customer_since: "2022-03-15",
+      },
+    };
+
+    const result = await client.systemOne({
+      model: "d1:free",
+      state: JSON.stringify(ticket),
+      questions: {
+        is_bug: {
+          type: "noul",
+          instructions: "Is the customer reporting a software bug (as opposed to a usage question, feature request, or account issue)?",
+        },
+        team: {
+          type: "choice",
+          instructions: "Which team should handle this ticket?",
+          criteria: {
+            billing: "Billing, invoicing, charges, and payment method issues",
+            engineering: "Software bugs, crashes, and technical malfunctions",
+            frontend: "UI/UX issues, display problems, and browser-specific bugs",
+            account: "Account setup, permissions, plan changes, and access issues",
+          },
+        },
+        urgency: {
+          type: "score",
+          instructions: "How urgent is this ticket? Consider business impact, time sensitivity, and customer tier.",
+          criteria: [
+            "Low: no immediate impact, standard queue",
+            "Medium: some business impact, handle within 24 hours",
+            "High: significant business impact or time-sensitive, handle within 4 hours",
+          ],
+        },
+      },
+    });
+    ```
+  </Tab>
+</Tabs>
+
+**Response** (`answers` field):
+
+```json
+{
+  "is_bug": {
+    "type": "noul",
+    "noul": 0.9998
+  },
+  "team": {
+    "type": "choice",
+    "choice": "engineering",
+    "probabilities": {
+      "engineering": 0.80,
+      "frontend": 0.18,
+      "billing": 0.02,
+      "account": 0.0005
+    },
+    "confidence": 0.74
+  },
+  "urgency": {
+    "type": "score",
+    "score": 1.996,
+    "confidence": 0.995,
+    "probabilities": {
+      "0": 0.0002,
+      "1": 0.004,
+      "2": 0.996
+    },
+    "legend": {
+      "0": "Low: no immediate impact, standard queue",
+      "1": "Medium: some business impact, handle within 24 hours",
+      "2": "High: significant business impact or time-sensitive, handle within 4 hours"
+    }
+  }
+}
+```
+
+**Using the result:**
+
+```python
+answers = result.answers
+
+is_bug = answers["is_bug"].noul > 0.7
+team = answers["team"].choice
+team_confidence = answers["team"].confidence
+urgency = answers["urgency"].score
+
+if is_bug and urgency > 1.5:
+    print(f"ESCALATE to {team} on-call (SLA: 4h)")
+elif urgency > 1.0:
+    print(f"PRIORITIZE in {team} queue (SLA: 24h)")
+else:
+    print(f"QUEUE in {team} standard backlog")
+
+if team_confidence < 0.5:
+    probs = answers["team"].probabilities
+    runner_up = sorted(probs.items(), key=lambda x: x[1], reverse=True)[1]
+    print(f"NOTE: Routing uncertain. Runner-up: {runner_up[0]} ({runner_up[1]:.0%})")
+
+# ESCALATE to engineering on-call (SLA: 4h)
+# The NOTE line only prints when team confidence is below 0.5.
+```
+
+## When to Use Decision Models
+
+Decision models are a good fit when the answer is a structured decision: classification, categorization, routing (tickets, emails, requests), scoring, triage, content moderation, guardrails and safety checks, LLM-as-judge replacement, agent tool-call approval, and model routing or cascades.
+
+Use a language model instead for free-form text generation, creative writing, multi-turn conversation, complex multi-step reasoning, open-ended Q&A, summarization, and code generation.
+
+To move existing LLM calls to d1, see the [Decision Model Guide](/guides/decision-model-guide).
+
+## Next Steps
+
+- [Decision Model Guide](/guides/decision-model-guide) for migrating LLM classification, routing, and scoring calls to d1
+- [Model Library](/lfm/models/complete-library) for all available Liquid AI models

@@ -1,0 +1,557 @@
+---
+title: "Decision Model Guide"
+description: "Replace LLM classification, routing, and scoring calls with decision models for faster, cheaper, and more consistent structured decisions."
+---
+
+If you use an LLM to classify text, route requests, score content, or make yes/no decisions, you are paying for text generation to get a structured answer. Decision models return typed decisions directly without generating tokens, parsing JSON, or validating schemas.
+
+This guide shows when and how to migrate these calls from LLMs to the [d1 decision model](/lfm/models/decision-models).
+
+## When to Migrate
+
+Migrate when the LLM's output is a **bounded decision**, meaning the set of possible answers is known before the call.
+
+| Task | LLM pattern | Primitive |
+|---|---|---|
+| [Classification](#classification) | Structured output with enum or JSON schema | [Choice](/lfm/models/decision-models#choice) |
+| [Routing](#routing) | Prompt that picks from a list | [Choice](/lfm/models/decision-models#choice) |
+| [Binary decision](#binary-decision) | Prompt that returns true/false | [Noul](/lfm/models/decision-models#noul) |
+| [Scoring](#scoring) | Prompt that returns a number or rating | [Score](/lfm/models/decision-models#score) |
+| [Reranking](#reranking) | LLM scores or filters search results | [Noul](/lfm/models/decision-models#noul) or [Score](/lfm/models/decision-models#score) |
+| [Multiple decisions](#multi-question) | Several classification calls on the same input | Any combination, in one call |
+
+Keep your LLM when the task requires **generating new content**:
+
+- **Text generation**: drafting emails, summaries, reports, code
+- **Open-ended Q&A**: answering user questions in natural language
+- **Multi-turn conversation**: chatbots and copilots
+- **Complex reasoning**: multi-step logic, math, planning
+
+If the answer is one of N known options, use a decision model. If the answer is a new string the model must compose, use an LLM.
+
+| | LLM | Decision model (d1) |
+|---|---|---|
+| **Output** | Generated tokens parsed into a label | Typed decision with probabilities |
+| **Latency** | Grows with output length and reasoning | Low and predictable. No tokens to generate. |
+| **Output tokens** | Billed (even for a one-word answer) | Zero. No tokens generated. |
+| **Uncertainty** | Not available, or an unreliable self-reported number | Calibrated probabilities for every answer |
+| **Schema errors** | Possible (malformed JSON, out-of-schema values) | None. Answers always match the question type. |
+| **Multiple decisions** | Sequential calls or complex prompt | One call, all evaluated in parallel |
+
+## Setup
+
+Install the relevant SDK and configure your client. The LLM examples use the OpenAI SDK, which works with any OpenAI-compatible endpoint. The decision model examples use the [TypeSafe SDK](https://pypi.org/project/typesafe-sdk/) to call the [d1 decision model](/lfm/models/decision-models) through the Liquid AI API.  To get an API key, see [Decision Models: Setup](/lfm/models/decision-models#setup).
+
+<Tabs>
+  <Tab title="LLM">
+    ```bash
+    pip install openai pydantic
+    ```
+
+    ```python
+    import os
+    from openai import OpenAI
+
+    client = OpenAI(
+        base_url=os.environ["LLM_BASE_URL"],
+        api_key=os.environ["LLM_API_KEY"],
+    )
+    ```
+  </Tab>
+  <Tab title="Decision Model">
+    ```bash
+    pip install typesafe-sdk
+    ```
+
+    ```python
+    import os
+    from typesafe_sdk import TypeSafeClient
+
+    client = TypeSafeClient(
+        api_key=os.environ["LIQUID_API_KEY"],
+        base_url="https://api.liquid.ai",
+    )
+    ```
+  </Tab>
+</Tabs>
+
+## Migration Examples
+
+Each example shows the same task solved with an LLM and with a decision model.
+
+### Classification
+
+The standard LLM pattern for classification uses a JSON schema or enum constraint. The model generates tokens that conform to the schema, which you then parse.
+
+<Tabs>
+  <Tab title="LLM">
+    ```python
+    from pydantic import BaseModel
+    from typing import Literal
+
+    class Classification(BaseModel):
+        department: Literal["billing", "technical", "shipping", "returns", "account"]
+
+    inquiry = "I was charged twice for my subscription last month."
+
+    completion = client.chat.completions.parse(
+        model="your-model",
+        messages=[
+            {
+                "role": "system",
+                "content": "Classify this customer inquiry into a department.",
+            },
+            {"role": "user", "content": inquiry},
+        ],
+        response_format=Classification,
+    )
+
+    department = completion.choices[0].message.parsed.department  # "billing"
+    ```
+  </Tab>
+  <Tab title="Decision Model">
+    ```python
+    from typesafe_sdk import Choice
+
+    inquiry = "I was charged twice for my subscription last month."
+
+    result = client.system_one(
+        model="d1:free",
+        state=inquiry,
+        questions={
+            "department": Choice(
+                instructions="Which department should handle this customer inquiry?",
+                criteria={
+                    "billing": "Charges, invoices, refunds, or payment methods",
+                    "technical": "Bug reports, feature requests, or how-to questions",
+                    "shipping": "Order status, delivery tracking, or address changes",
+                    "returns": "Return requests, exchanges, or product condition",
+                    "account": "Login issues, profile updates, or subscription management",
+                },
+            ),
+        },
+    )
+
+    department = result.answers["department"].choice       # "billing"
+    confidence = result.answers["department"].confidence    # 0.99
+    runner_up = sorted(
+        result.answers["department"].probabilities.items(),
+        key=lambda x: x[1], reverse=True,
+    )[1]  # ("account", 0.0006)
+    ```
+  </Tab>
+</Tabs>
+
+**What changes:**
+- Options are defined inline with descriptions. No Pydantic model or JSON schema needed.
+- You get a probability distribution over all options alongside the top pick, plus a `confidence` value that summarizes how clear-cut the answer is.
+- Zero output tokens generated. The model evaluates all options in a single call.
+- Each option's description lives next to its label in `criteria` instead of in a separate prompt.
+
+### Routing
+
+A common pattern uses a small, cheap LLM to classify the complexity of an incoming request and route it to the appropriate model.
+
+<Tabs>
+  <Tab title="LLM">
+    ```python
+    from pydantic import BaseModel
+    from typing import Literal
+
+    class Route(BaseModel):
+        tier: Literal["fast", "standard", "powerful"]
+
+    user_message = "What's the weather like today?"
+
+    completion = client.chat.completions.parse(
+        model="your-model",
+        messages=[
+            {
+                "role": "system",
+                "content": "Which model tier should handle this request?\n"
+                "fast: greetings, factual lookups, short answers, simple formatting\n"
+                "standard: moderate analysis, summarization, structured output\n"
+                "powerful: multi-step reasoning, code generation, complex analysis",
+            },
+            {"role": "user", "content": user_message},
+        ],
+        response_format=Route,
+    )
+
+    selected = completion.choices[0].message.parsed.tier  # "fast"
+    ```
+  </Tab>
+  <Tab title="Decision Model">
+    ```python
+    from typesafe_sdk import Choice
+
+    user_message = "What's the weather like today?"
+
+    result = client.system_one(
+        model="d1:free",
+        state=user_message,
+        questions={
+            "route": Choice(
+                instructions="Which model tier should handle this request?",
+                criteria={
+                    "fast": "Greetings, factual lookups, short answers, simple formatting",
+                    "standard": "Moderate analysis, summarization, structured output",
+                    "powerful": "Multi-step reasoning, code generation, complex analysis",
+                },
+            ),
+        },
+    )
+
+    route = result.answers["route"]
+    selected = route.choice        # "fast"
+    confidence = route.confidence  # 0.98
+
+    # If the router is uncertain, fall back to the most capable tier
+    if confidence < 0.5:
+        selected = "powerful"
+    ```
+  </Tab>
+</Tabs>
+
+**What changes:**
+- The router call is typically faster and cheaper than an LLM-based router.
+- You get a `confidence` value, so you can fall back to a stronger model when the router is uncertain instead of trusting a binary label.
+- Adding or removing a tier is a change to `criteria`, not a prompt rewrite.
+
+### Binary Decision
+
+The typical LLM approach asks whether content is safe, either with structured output or by parsing a yes/no from the response.
+
+<Tabs>
+  <Tab title="LLM">
+    ```python
+    from pydantic import BaseModel
+
+    class ModerationResult(BaseModel):
+        is_harmful: bool
+
+    user_message = "You're an absolute idiot and I hope your company goes bankrupt."
+
+    completion = client.chat.completions.parse(
+        model="your-model",
+        messages=[
+            {
+                "role": "system",
+                "content": "Determine if this message contains harmful, threatening, or abusive content.",
+            },
+            {"role": "user", "content": user_message},
+        ],
+        response_format=ModerationResult,
+    )
+
+    is_harmful = completion.choices[0].message.parsed.is_harmful  # True
+    ```
+  </Tab>
+  <Tab title="Decision Model">
+    ```python
+    from typesafe_sdk import Noul
+
+    user_message = "You're an absolute idiot and I hope your company goes bankrupt."
+
+    result = client.system_one(
+        model="d1:free",
+        state=user_message,
+        questions={
+            "is_harmful": Noul(
+                instructions="Does this message contain harmful, threatening, or abusive content?",
+            ),
+        },
+    )
+
+    p = result.answers["is_harmful"].noul  # 0.98
+
+    if p > 0.8:
+        action = "block"
+    elif p < 0.2:
+        action = "allow"
+    else:
+        action = "human_review"
+    ```
+  </Tab>
+</Tabs>
+
+**What changes:**
+- The probability (0.0 to 1.0) lets you set thresholds for different actions instead of committing to a binary label.
+- The result is always a float. No string parsing or schema validation needed.
+- Decision models produce more consistent results on repeated evaluations of the same input, reducing verdict flips.
+
+### Scoring
+
+The LLM approach for scoring asks the model to rate something on a scale, typically by generating a number or picking from a rubric with structured output.
+
+<Tabs>
+  <Tab title="LLM">
+    ```python
+    from pydantic import BaseModel, Field
+    from typing import Literal
+
+    class UrgencyRating(BaseModel):
+        urgency: Literal[1, 2, 3, 4] = Field(
+            description="1=Can wait, 2=Handle today, 3=Within hours, 4=Critical"
+        )
+
+    ticket_text = (
+        "Our production API is returning 500 errors on every request. "
+        "All customers are affected. Revenue impact is approximately $12,000 per hour. "
+        "Started 15 minutes ago."
+    )
+
+    completion = client.chat.completions.parse(
+        model="your-model",
+        messages=[
+            {
+                "role": "system",
+                "content": "Rate the urgency of this support request on a scale of 1-4:\n"
+                "1 = Can wait, no immediate impact\n"
+                "2 = Should handle today\n"
+                "3 = Time-sensitive, needs attention within hours\n"
+                "4 = Critical system failure",
+            },
+            {"role": "user", "content": ticket_text},
+        ],
+        response_format=UrgencyRating,
+    )
+
+    urgency = completion.choices[0].message.parsed.urgency  # 4
+    ```
+  </Tab>
+  <Tab title="Decision Model">
+    ```python
+    from typesafe_sdk import Score
+
+    ticket_text = (
+        "Our production API is returning 500 errors on every request. "
+        "All customers are affected. Revenue impact is approximately $12,000 per hour. "
+        "Started 15 minutes ago."
+    )
+
+    result = client.system_one(
+        model="d1:free",
+        state=ticket_text,
+        questions={
+            "urgency": Score(
+                instructions="How urgent is this support request?",
+                criteria=[
+                    "Can wait: no immediate business impact",
+                    "Should handle today: minor inconvenience",
+                    "Time-sensitive: noticeable customer impact, needs attention within hours",
+                    "Critical: system failure affecting customers or revenue",
+                ],
+            ),
+        },
+    )
+
+    score = result.answers["urgency"].score          # 2.999 (continuous)
+    confidence = result.answers["urgency"].confidence  # 0.998
+    distribution = result.answers["urgency"].probabilities
+    # {0: 0.0, 1: 0.0, 2: 0.001, 3: 0.999}
+    ```
+  </Tab>
+</Tabs>
+
+**What changes:**
+- Levels are indexed from 0 in the order you list them, so a 4-level rubric scores from 0 to 3. A score of 2.999 means nearly all weight is on the top level (Critical).
+- The score is continuous, not a forced integer. It captures how strongly the model leans toward a level.
+- You get the full probability distribution across all levels, so you can detect ambiguous cases.
+- No JSON parsing, no schema validation, no retries on malformed output.
+
+### Reranking
+
+In retrieval-augmented generation (RAG) pipelines, a common pattern uses an LLM to score the relevance of each retrieved chunk before passing results to the generation step.
+
+<Tabs>
+  <Tab title="LLM">
+    ```python
+    from pydantic import BaseModel, Field
+    from typing import Literal
+
+    class RelevanceScore(BaseModel):
+        score: Literal[1, 2, 3, 4, 5] = Field(
+            description="1=Not relevant, 5=Highly relevant"
+        )
+
+    query = "How do I reset my API key?"
+    chunks = [
+        "To reset your API key, go to Dashboard > API Keys and click 'Regenerate'.",
+        "Our pricing plans start at $29/month for the Starter tier.",
+        "API keys are scoped to a single project. Each project can have up to 5 active keys.",
+    ]
+
+    scored_chunks = []
+    for chunk in chunks:
+        completion = client.chat.completions.parse(
+            model="your-model",
+            messages=[
+                {
+                    "role": "system",
+                    "content": f"Rate how relevant this passage is to the query: '{query}'\n"
+                    "1 = not relevant, 5 = highly relevant.",
+                },
+                {"role": "user", "content": chunk},
+            ],
+            response_format=RelevanceScore,
+        )
+        scored_chunks.append({
+            "chunk": chunk,
+            "score": completion.choices[0].message.parsed.score,
+        })
+
+    top_chunks = sorted(scored_chunks, key=lambda x: x["score"], reverse=True)
+    ```
+  </Tab>
+  <Tab title="Decision Model">
+    ```python
+    from typesafe_sdk import Noul
+
+    query = "How do I reset my API key?"
+    chunks = [
+        "To reset your API key, go to Dashboard > API Keys and click 'Regenerate'.",
+        "Our pricing plans start at $29/month for the Starter tier.",
+        "API keys are scoped to a single project. Each project can have up to 5 active keys.",
+    ]
+
+    scored_chunks = []
+    for chunk in chunks:
+        result = client.system_one(
+            model="d1:free",
+            state=f"Query: {query}\n\nPassage: {chunk}",
+            questions={
+                "relevant": Noul(
+                    instructions="Is this passage relevant to answering the query?",
+                ),
+            },
+        )
+        scored_chunks.append({
+            "chunk": chunk,
+            "score": result.answers["relevant"].noul,
+        })
+
+    top_chunks = sorted(scored_chunks, key=lambda x: x["score"], reverse=True)
+    # Each score is a calibrated probability (0.0 to 1.0).
+    # Set a threshold to filter: [c for c in scored_chunks if c["score"] > 0.5]
+    ```
+  </Tab>
+</Tabs>
+
+**What changes:**
+- Each relevance score is a calibrated probability, not an arbitrary integer on a 1-5 scale.
+- You can threshold directly (keep everything above 0.5) instead of guessing where to draw the line on integer scores.
+- Each call is faster and cheaper, which compounds across large result sets.
+- If you need graded relevance instead of relevant/not relevant, use a [Score](/lfm/models/decision-models#score) with defined relevance levels.
+
+### Multi-Question
+
+LLM pipelines often chain multiple classification calls sequentially, one per decision. Decision models evaluate all questions against the same state in a single call.
+
+<Tabs>
+  <Tab title="LLM">
+    ```python
+    from pydantic import BaseModel
+    from typing import Literal
+
+    message = (
+        "The checkout page crashes with a white screen whenever I try to apply a promo code. "
+        "I've tried three different browsers."
+    )
+
+    # Call 1: Classify intent
+    class IntentResult(BaseModel):
+        intent: Literal["billing", "technical", "shipping", "account"]
+
+    intent_completion = client.chat.completions.parse(
+        model="your-model",
+        messages=[
+            {"role": "system", "content": "Classify the primary intent of this message."},
+            {"role": "user", "content": message},
+        ],
+        response_format=IntentResult,
+    )
+    intent = intent_completion.choices[0].message.parsed.intent
+
+    # Call 2: Score urgency
+    class UrgencyResult(BaseModel):
+        urgency: Literal[1, 2, 3]
+
+    urgency_completion = client.chat.completions.parse(
+        model="your-model",
+        messages=[
+            {"role": "system", "content": "Rate the urgency of this message from 1 to 3."},
+            {"role": "user", "content": message},
+        ],
+        response_format=UrgencyResult,
+    )
+    urgency = urgency_completion.choices[0].message.parsed.urgency
+
+    # Call 3: Check if it's a bug
+    class BugCheck(BaseModel):
+        is_bug: bool
+
+    bug_completion = client.chat.completions.parse(
+        model="your-model",
+        messages=[
+            {"role": "system", "content": "Determine if this message is a bug report."},
+            {"role": "user", "content": message},
+        ],
+        response_format=BugCheck,
+    )
+    is_bug = bug_completion.choices[0].message.parsed.is_bug
+    ```
+  </Tab>
+  <Tab title="Decision Model">
+    ```python
+    from typesafe_sdk import Choice, Noul, Score
+
+    message = (
+        "The checkout page crashes with a white screen whenever I try to apply a promo code. "
+        "I've tried three different browsers."
+    )
+
+    result = client.system_one(
+        model="d1:free",
+        state=message,
+        questions={
+            "intent": Choice(
+                instructions="What is the primary topic of this inquiry?",
+                criteria={
+                    "billing": "Charges, invoices, refunds, or payment methods",
+                    "technical": "Bug reports, feature requests, or product questions",
+                    "shipping": "Order status, delivery, or address changes",
+                    "account": "Login, profile, or subscription management",
+                },
+            ),
+            "urgency": Score(
+                instructions="How urgent is this request?",
+                criteria=[
+                    "Can wait: no immediate impact",
+                    "Should handle today: minor inconvenience",
+                    "Time-sensitive: significant business impact",
+                ],
+            ),
+            "is_bug": Noul(
+                instructions="Is the customer reporting a software bug?",
+            ),
+        },
+    )
+
+    intent = result.answers["intent"].choice
+    urgency = result.answers["urgency"].score
+    is_bug = result.answers["is_bug"].noul > 0.7
+    ```
+  </Tab>
+</Tabs>
+
+**What changes:**
+- Three network round-trips become one.
+- All three decisions are evaluated against the exact same snapshot of state.
+- Each question keeps its own type and probabilities. With an LLM you could merge the three schemas into one call, but you would still get only labels, with no probabilities.
+- Questions are evaluated in parallel, so adding a question adds little latency compared to adding another LLM call.
+
+## Next Steps
+
+- [Decision Models](/lfm/models/decision-models) for the API reference, primitives, and full code examples
+- [Model Library](/lfm/models/complete-library) for all available Liquid AI models
