@@ -55,7 +55,7 @@ A single API call contains three things:
       -H "Authorization: Bearer $LIQUID_API_KEY" \
       -H "Content-Type: application/json" \
       -d '{
-        "model": "LiquidAI/d1",
+        "model": "d1:free",
         "state": "I have been waiting over three weeks for my order and nobody has responded to my emails. This is completely unacceptable.",
         "questions": {
           "is_complaint": {
@@ -81,7 +81,7 @@ A single API call contains three things:
     )
 
     result = client.system_one(
-        model="LiquidAI/d1",
+        model="d1:free",
         state="I have been waiting over three weeks for my order and nobody has responded to my emails. This is completely unacceptable.",
         questions={
             "is_complaint": Noul(
@@ -89,7 +89,7 @@ A single API call contains three things:
             ),
         },
     )
-    print(result.answers["is_complaint"].noul)  # 0.97
+    print(result.answers["is_complaint"].noul)  # 0.999
     ```
   </Tab>
   <Tab title="TypeScript">
@@ -106,7 +106,7 @@ A single API call contains three things:
     });
 
     const result = await client.systemOne({
-      model: "LiquidAI/d1",
+      model: "d1:free",
       state: "I have been waiting over three weeks for my order and nobody has responded to my emails. This is completely unacceptable.",
       questions: {
         is_complaint: {
@@ -115,7 +115,7 @@ A single API call contains three things:
         },
       },
     });
-    console.log(result.answers.is_complaint.noul); // 0.97
+    console.log(result.answers.is_complaint.noul); // 0.999
     ```
   </Tab>
 </Tabs>
@@ -124,15 +124,15 @@ A single API call contains three things:
 
 ```json
 {
-  "model": "LiquidAI/d1",
+  "model": "d1:free",
   "answers": {
     "is_complaint": {
       "type": "noul",
-      "noul": 0.97
+      "noul": 0.999
     }
   },
   "usage": {
-    "input_tokens": 142,
+    "input_tokens": 84,
     "output_tokens": 0
   }
 }
@@ -140,7 +140,7 @@ A single API call contains three things:
 
 **Reading the response:**
 
-- **`answers.is_complaint.noul`**: The probability that the answer is "yes." Here, `0.97` means a 0.97 probability that this is a complaint.
+- **`answers.is_complaint.noul`**: The probability that the answer is "yes." Here, `0.999` means a 0.999 probability that this is a complaint.
 - **`usage.output_tokens`**: Always `0`. Decision models do not generate tokens.
 - **`usage.input_tokens`**: The total tokens consumed to evaluate the state and questions.
 
@@ -159,7 +159,7 @@ A Noul question returns a single probability between 0 and 1. Your code receives
       -H "Authorization: Bearer $LIQUID_API_KEY" \
       -H "Content-Type: application/json" \
       -d '{
-        "model": "LiquidAI/d1",
+        "model": "d1:free",
         "state": "You'\''re an absolute idiot and I hope your company goes bankrupt. I'\''m going to find out where you work.",
         "questions": {
           "is_harmful": {
@@ -175,7 +175,7 @@ A Noul question returns a single probability between 0 and 1. Your code receives
     from typesafe_sdk import Noul
 
     result = client.system_one(
-        model="LiquidAI/d1",
+        model="d1:free",
         state="You're an absolute idiot and I hope your company goes bankrupt. I'm going to find out where you work.",
         questions={
             "is_harmful": Noul(
@@ -188,7 +188,7 @@ A Noul question returns a single probability between 0 and 1. Your code receives
   <Tab title="TypeScript">
     ```typescript
     const result = await client.systemOne({
-      model: "LiquidAI/d1",
+      model: "d1:free",
       state: "You're an absolute idiot and I hope your company goes bankrupt. I'm going to find out where you work.",
       questions: {
         is_harmful: {
@@ -207,7 +207,7 @@ A Noul question returns a single probability between 0 and 1. Your code receives
 {
   "is_harmful": {
     "type": "noul",
-    "noul": 0.94
+    "noul": 0.99
   }
 }
 ```
@@ -236,7 +236,7 @@ A Choice question returns the selected option, a probability distribution over a
       -H "Authorization: Bearer $LIQUID_API_KEY" \
       -H "Content-Type: application/json" \
       -d '{
-        "model": "LiquidAI/d1",
+        "model": "d1:free",
         "state": "Hi, I was charged twice for my subscription last month. The amounts are $29.99 on March 3rd and again on March 5th. Can you refund the duplicate charge?",
         "questions": {
           "intent": {
@@ -259,7 +259,7 @@ A Choice question returns the selected option, a probability distribution over a
     from typesafe_sdk import Choice
 
     result = client.system_one(
-        model="LiquidAI/d1",
+        model="d1:free",
         state="Hi, I was charged twice for my subscription last month. The amounts are $29.99 on March 3rd and again on March 5th. Can you refund the duplicate charge?",
         questions={
             "intent": Choice(
@@ -279,7 +279,7 @@ A Choice question returns the selected option, a probability distribution over a
   <Tab title="TypeScript">
     ```typescript
     const result = await client.systemOne({
-      model: "LiquidAI/d1",
+      model: "d1:free",
       state: "Hi, I was charged twice for my subscription last month. The amounts are $29.99 on March 3rd and again on March 5th. Can you refund the duplicate charge?",
       questions: {
         intent: {
@@ -307,13 +307,13 @@ A Choice question returns the selected option, a probability distribution over a
     "type": "choice",
     "choice": "billing",
     "probabilities": {
-      "billing": 0.89,
-      "account": 0.07,
-      "technical": 0.02,
-      "returns": 0.01,
-      "shipping": 0.01
+      "billing": 0.9997,
+      "account": 0.0002,
+      "returns": 0.00005,
+      "shipping": 0.00003,
+      "technical": 0.00002
     },
-    "confidence": 0.82
+    "confidence": 0.9996
   }
 }
 ```
@@ -334,12 +334,12 @@ queue_map = {
 
 target_queue = queue_map[intent]
 print(f"Route to: {target_queue} (confidence: {confidence:.2f})")
-# Route to: billing-team (confidence: 0.82)
+# Route to: billing-team (confidence: 1.00)
 ```
 
 ### Score
 
-A Score question returns a continuous value across an ordered rubric you define, plus the probability distribution over each level. The value is the probability-weighted position on the scale: if you define four levels (0 through 3), a score of `2.96` means the model places nearly all weight on the top level.
+A Score question returns a continuous value across an ordered rubric you define, plus the probability distribution over each level. The value is the probability-weighted position on the scale: if you define four levels (0 through 3), a score of `2.9995` means the model places nearly all weight on the top level.
 
 <Tabs>
   <Tab title="cURL">
@@ -348,7 +348,7 @@ A Score question returns a continuous value across an ordered rubric you define,
       -H "Authorization: Bearer $LIQUID_API_KEY" \
       -H "Content-Type: application/json" \
       -d '{
-        "model": "LiquidAI/d1",
+        "model": "d1:free",
         "state": "Our production API is returning 500 errors on every request. All customers are affected. Revenue impact is approximately $12,000 per hour. Started 15 minutes ago.",
         "questions": {
           "urgency": {
@@ -370,7 +370,7 @@ A Score question returns a continuous value across an ordered rubric you define,
     from typesafe_sdk import Score
 
     result = client.system_one(
-        model="LiquidAI/d1",
+        model="d1:free",
         state="Our production API is returning 500 errors on every request. All customers are affected. Revenue impact is approximately $12,000 per hour. Started 15 minutes ago.",
         questions={
             "urgency": Score(
@@ -389,7 +389,7 @@ A Score question returns a continuous value across an ordered rubric you define,
   <Tab title="TypeScript">
     ```typescript
     const result = await client.systemOne({
-      model: "LiquidAI/d1",
+      model: "d1:free",
       state: "Our production API is returning 500 errors on every request. All customers are affected. Revenue impact is approximately $12,000 per hour. Started 15 minutes ago.",
       questions: {
         urgency: {
@@ -414,13 +414,13 @@ A Score question returns a continuous value across an ordered rubric you define,
 {
   "urgency": {
     "type": "score",
-    "score": 2.96,
-    "confidence": 0.96,
+    "score": 2.9995,
+    "confidence": 0.9995,
     "probabilities": {
-      "0": 0.0,
-      "1": 0.0,
-      "2": 0.04,
-      "3": 0.96
+      "0": 0.00001,
+      "1": 0.00002,
+      "2": 0.0004,
+      "3": 0.9996
     },
     "legend": {
       "0": "Can wait: no immediate business impact, can be addressed in normal queue",
@@ -456,7 +456,7 @@ You can ask multiple questions of different types in the same call. The model ev
       -H "Authorization: Bearer $LIQUID_API_KEY" \
       -H "Content-Type: application/json" \
       -d '{
-        "model": "LiquidAI/d1",
+        "model": "d1:free",
         "state": "{\"message\": \"The checkout page crashes with a white screen whenever I try to apply a promo code. I'\''ve tried three different browsers. This is blocking a $4,200 order for our team and we need to place it before our procurement window closes on Friday.\", \"account\": {\"plan\": \"enterprise\", \"arr\": 52000, \"customer_since\": \"2022-03-15\"}}",
         "questions": {
           "is_bug": {
@@ -501,7 +501,7 @@ You can ask multiple questions of different types in the same call. The model ev
     }
 
     result = client.system_one(
-        model="LiquidAI/d1",
+        model="d1:free",
         state=json.dumps(ticket),
         questions={
             "is_bug": Noul(
@@ -540,7 +540,7 @@ You can ask multiple questions of different types in the same call. The model ev
     };
 
     const result = await client.systemOne({
-      model: "LiquidAI/d1",
+      model: "d1:free",
       state: JSON.stringify(ticket),
       questions: {
         is_bug: {
@@ -578,27 +578,27 @@ You can ask multiple questions of different types in the same call. The model ev
 {
   "is_bug": {
     "type": "noul",
-    "noul": 0.95
+    "noul": 0.9998
   },
   "team": {
     "type": "choice",
-    "choice": "frontend",
+    "choice": "engineering",
     "probabilities": {
-      "frontend": 0.62,
-      "engineering": 0.33,
-      "billing": 0.04,
-      "account": 0.01
+      "engineering": 0.80,
+      "frontend": 0.18,
+      "billing": 0.02,
+      "account": 0.0005
     },
-    "confidence": 0.38
+    "confidence": 0.74
   },
   "urgency": {
     "type": "score",
-    "score": 1.88,
-    "confidence": 0.87,
+    "score": 1.996,
+    "confidence": 0.995,
     "probabilities": {
-      "0": 0.01,
-      "1": 0.11,
-      "2": 0.88
+      "0": 0.0002,
+      "1": 0.004,
+      "2": 0.996
     },
     "legend": {
       "0": "Low: no immediate impact, standard queue",
@@ -631,8 +631,8 @@ if team_confidence < 0.5:
     runner_up = sorted(probs.items(), key=lambda x: x[1], reverse=True)[1]
     print(f"NOTE: Routing uncertain. Runner-up: {runner_up[0]} ({runner_up[1]:.0%})")
 
-# ESCALATE to frontend on-call (SLA: 4h)
-# NOTE: Routing uncertain. Runner-up: engineering (33%)
+# ESCALATE to engineering on-call (SLA: 4h)
+# The NOTE line only prints when team confidence is below 0.5.
 ```
 
 ## When to Use Decision Models

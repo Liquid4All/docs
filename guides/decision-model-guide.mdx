@@ -116,7 +116,7 @@ The standard LLM pattern for classification uses a JSON schema or enum constrain
     inquiry = "I was charged twice for my subscription last month."
 
     result = client.system_one(
-        model="LiquidAI/d1",
+        model="d1:free",
         state=inquiry,
         questions={
             "department": Choice(
@@ -133,11 +133,11 @@ The standard LLM pattern for classification uses a JSON schema or enum constrain
     )
 
     department = result.answers["department"].choice       # "billing"
-    confidence = result.answers["department"].confidence    # 0.82
+    confidence = result.answers["department"].confidence    # 0.99
     runner_up = sorted(
         result.answers["department"].probabilities.items(),
         key=lambda x: x[1], reverse=True,
-    )[1]  # ("account", 0.07)
+    )[1]  # ("account", 0.0006)
     ```
   </Tab>
 </Tabs>
@@ -188,7 +188,7 @@ A common pattern uses a small, cheap LLM to classify the complexity of an incomi
     user_message = "What's the weather like today?"
 
     result = client.system_one(
-        model="LiquidAI/d1",
+        model="d1:free",
         state=user_message,
         questions={
             "route": Choice(
@@ -204,7 +204,7 @@ A common pattern uses a small, cheap LLM to classify the complexity of an incomi
 
     route = result.answers["route"]
     selected = route.choice        # "fast"
-    confidence = route.confidence  # 0.91
+    confidence = route.confidence  # 0.98
 
     # If the router is uncertain, fall back to the most capable tier
     if confidence < 0.5:
@@ -254,7 +254,7 @@ The typical LLM approach asks whether content is safe, either with structured ou
     user_message = "You're an absolute idiot and I hope your company goes bankrupt."
 
     result = client.system_one(
-        model="LiquidAI/d1",
+        model="d1:free",
         state=user_message,
         questions={
             "is_harmful": Noul(
@@ -263,7 +263,7 @@ The typical LLM approach asks whether content is safe, either with structured ou
         },
     )
 
-    p = result.answers["is_harmful"].noul  # 0.94
+    p = result.answers["is_harmful"].noul  # 0.98
 
     if p > 0.8:
         action = "block"
@@ -331,7 +331,7 @@ The LLM approach for scoring asks the model to rate something on a scale, typica
     )
 
     result = client.system_one(
-        model="LiquidAI/d1",
+        model="d1:free",
         state=ticket_text,
         questions={
             "urgency": Score(
@@ -346,16 +346,16 @@ The LLM approach for scoring asks the model to rate something on a scale, typica
         },
     )
 
-    score = result.answers["urgency"].score          # 2.96 (continuous)
-    confidence = result.answers["urgency"].confidence  # 0.96
+    score = result.answers["urgency"].score          # 2.999 (continuous)
+    confidence = result.answers["urgency"].confidence  # 0.998
     distribution = result.answers["urgency"].probabilities
-    # {"0": 0.0, "1": 0.0, "2": 0.04, "3": 0.96}
+    # {0: 0.0, 1: 0.0, 2: 0.001, 3: 0.999}
     ```
   </Tab>
 </Tabs>
 
 **What changes:**
-- Levels are indexed from 0 in the order you list them, so a 4-level rubric scores from 0 to 3. A score of 2.96 means nearly all weight is on the top level (Critical).
+- Levels are indexed from 0 in the order you list them, so a 4-level rubric scores from 0 to 3. A score of 2.999 means nearly all weight is on the top level (Critical).
 - The score is continuous, not a forced integer. It captures how strongly the model leans toward a level.
 - You get the full probability distribution across all levels, so you can detect ambiguous cases.
 - No JSON parsing, no schema validation, no retries on malformed output.
@@ -418,7 +418,7 @@ In retrieval-augmented generation (RAG) pipelines, a common pattern uses an LLM 
     scored_chunks = []
     for chunk in chunks:
         result = client.system_one(
-            model="LiquidAI/d1",
+            model="d1:free",
             state=f"Query: {query}\n\nPassage: {chunk}",
             questions={
                 "relevant": Noul(
@@ -512,7 +512,7 @@ LLM pipelines often chain multiple classification calls sequentially, one per de
     )
 
     result = client.system_one(
-        model="LiquidAI/d1",
+        model="d1:free",
         state=message,
         questions={
             "intent": Choice(
