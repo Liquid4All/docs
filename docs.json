@@ -161,6 +161,7 @@
             "icon": "laptop",
             "pages": [
               "examples/laptop-examples/invoice-extractor-tool-with-liquid-nanos",
+              "examples/laptop-examples/build-a-game-with-decision-models",
               "examples/laptop-examples/audio-to-text-in-real-time",
               "examples/laptop-examples/lfm2-english-to-korean",
               "examples/laptop-examples/flight-search-assistant",
