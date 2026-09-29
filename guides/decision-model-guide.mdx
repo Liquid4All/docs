@@ -7,7 +7,7 @@ If you use an LLM to classify text, route requests, score content, or make yes/n
 
 This guide shows when and how to migrate these calls from LLMs to the [d1 decision model](/lfm/models/decision-models).
 
-## When and When Not to Migrate
+## When to Migrate
 
 Migrate when the LLM's output is a **bounded decision**, meaning the set of possible answers is known before the call.
 
@@ -18,12 +18,12 @@ Migrate when the LLM's output is a **bounded decision**, meaning the set of poss
 | [Binary decision](#binary-decision) | Prompt that returns true/false | [Noul](/lfm/models/decision-models#noul) |
 | [Scoring](#scoring) | Prompt that returns a number or rating | [Score](/lfm/models/decision-models#score) |
 | [Reranking](#reranking) | LLM scores or filters search results | [Noul](/lfm/models/decision-models#noul) or [Score](/lfm/models/decision-models#score) |
+| [Multiple decisions](#multi-question) | Several classification calls on the same input | Any combination, in one call |
 
 Keep your LLM when the task requires **generating new content**:
 
 - **Text generation**: drafting emails, summaries, reports, code
 - **Open-ended Q&A**: answering user questions in natural language
-- **Extraction of arbitrary values**: pulling names, dates, or amounts from text where the values are not known in advance
 - **Multi-turn conversation**: chatbots and copilots
 - **Complex reasoning**: multi-step logic, math, planning
 
@@ -32,15 +32,15 @@ If the answer is one of N known options, use a decision model. If the answer is 
 | | LLM | Decision model (d1) |
 |---|---|---|
 | **Output** | Generated tokens parsed into a label | Typed decision with probabilities |
-| **Latency** | 200ms to 2s per call | Around 100 to 200ms per call |
+| **Latency** | Grows with output length and reasoning | Low and predictable. No tokens to generate. |
 | **Output tokens** | Billed (even for a one-word answer) | Zero. No tokens generated. |
-| **Confidence** | Not available, or an unreliable self-reported number | Calibrated probability distribution |
-| **Schema errors** | Possible (malformed JSON, out-of-schema values) | Guaranteed by type system |
+| **Uncertainty** | Not available, or an unreliable self-reported number | Calibrated probabilities for every answer |
+| **Schema errors** | Possible (malformed JSON, out-of-schema values) | None. Answers always match the question type. |
 | **Multiple decisions** | Sequential calls or complex prompt | One call, all evaluated in parallel |
 
 ## Setup
 
-Install the relevant SDK and configure your client. The LLM examples use the OpenAI SDK, which works with any OpenAI-compatible endpoint. The decision model examples use the [TypeSafe SDK](https://pypi.org/project/typesafe-sdk/) to call the [d1 decision model](/lfm/models/decision-models) through the Liquid AI API.
+Install the relevant SDK and configure your client. The LLM examples use the OpenAI SDK, which works with any OpenAI-compatible endpoint. The decision model examples use the [TypeSafe SDK](https://pypi.org/project/typesafe-sdk/) to call the [d1 decision model](/lfm/models/decision-models) through the Liquid AI API.  To get an API key, see [Decision Models: Setup](/lfm/models/decision-models#setup).
 
 <Tabs>
   <Tab title="LLM">
@@ -77,7 +77,7 @@ Install the relevant SDK and configure your client. The LLM examples use the Ope
 
 ## Migration Examples
 
-Each example below shows how to migrate the same task solved with an LLM to solving it with a decision model. 
+Each example shows the same task solved with an LLM and with a decision model.
 
 ### Classification
 
@@ -94,7 +94,7 @@ The standard LLM pattern for classification uses a JSON schema or enum constrain
 
     inquiry = "I was charged twice for my subscription last month."
 
-    completion = client.beta.chat.completions.parse(
+    completion = client.chat.completions.parse(
         model="your-model",
         messages=[
             {
@@ -144,9 +144,9 @@ The standard LLM pattern for classification uses a JSON schema or enum constrain
 
 **What changes:**
 - Options are defined inline with descriptions. No Pydantic model or JSON schema needed.
-- You get a probability distribution over all options and a confidence score alongside the top pick.
-- Zero output tokens generated. The model evaluates all options in a single forward pass.
-- Descriptions in `criteria` tell the model what each option means, while the LLM's enum only provides label names.
+- You get a probability distribution over all options alongside the top pick, plus a `confidence` value that summarizes how clear-cut the answer is.
+- Zero output tokens generated. The model evaluates all options in a single call.
+- Each option's description lives next to its label in `criteria` instead of in a separate prompt.
 
 ### Routing
 
@@ -159,25 +159,26 @@ A common pattern uses a small, cheap LLM to classify the complexity of an incomi
     from typing import Literal
 
     class Route(BaseModel):
-        complexity: Literal["simple", "complex"]
+        tier: Literal["fast", "standard", "powerful"]
 
     user_message = "What's the weather like today?"
 
-    completion = client.beta.chat.completions.parse(
+    completion = client.chat.completions.parse(
         model="your-model",
         messages=[
             {
                 "role": "system",
-                "content": "Classify this request as simple or complex. "
-                "Simple: greetings, factual lookups, short answers. "
-                "Complex: analysis, multi-step reasoning, code generation.",
+                "content": "Which model tier should handle this request?\n"
+                "fast: greetings, factual lookups, short answers, simple formatting\n"
+                "standard: moderate analysis, summarization, structured output\n"
+                "powerful: multi-step reasoning, code generation, complex analysis",
             },
             {"role": "user", "content": user_message},
         ],
         response_format=Route,
     )
 
-    selected = completion.choices[0].message.parsed.complexity  # "simple"
+    selected = completion.choices[0].message.parsed.tier  # "fast"
     ```
   </Tab>
   <Tab title="Decision Model">
@@ -204,16 +205,18 @@ A common pattern uses a small, cheap LLM to classify the complexity of an incomi
     route = result.answers["route"]
     selected = route.choice        # "fast"
     confidence = route.confidence  # 0.91
-    # If confidence is low, fall back to the most capable model
+
+    # If the router is uncertain, fall back to the most capable tier
+    if confidence < 0.5:
+        selected = "powerful"
     ```
   </Tab>
 </Tabs>
 
 **What changes:**
-- The router call is faster and cheaper than even the smallest LLM.
-- You get confidence, so you can fall back to a stronger model when the router is uncertain instead of trusting a binary label.
-- Adding a third tier (or more) is a criteria change, not a prompt rewrite.
-- In production benchmarks, decision model routers have been measured at 8x faster while maintaining higher accuracy than LLM-based routers.
+- The router call is typically faster and cheaper than an LLM-based router.
+- You get a `confidence` value, so you can fall back to a stronger model when the router is uncertain instead of trusting a binary label.
+- Adding or removing a tier is a change to `criteria`, not a prompt rewrite.
 
 ### Binary Decision
 
@@ -229,7 +232,7 @@ The typical LLM approach asks whether content is safe, either with structured ou
 
     user_message = "You're an absolute idiot and I hope your company goes bankrupt."
 
-    completion = client.beta.chat.completions.parse(
+    completion = client.chat.completions.parse(
         model="your-model",
         messages=[
             {
@@ -260,13 +263,14 @@ The typical LLM approach asks whether content is safe, either with structured ou
         },
     )
 
-    p = result.answers["is_harmful"].noul
+    p = result.answers["is_harmful"].noul  # 0.94
+
     if p > 0.8:
         action = "block"
-    elif p > 0.3:
-        action = "human_review"
-    else:
+    elif p < 0.2:
         action = "allow"
+    else:
+        action = "human_review"
     ```
   </Tab>
 </Tabs>
@@ -297,7 +301,7 @@ The LLM approach for scoring asks the model to rate something on a scale, typica
         "Started 15 minutes ago."
     )
 
-    completion = client.beta.chat.completions.parse(
+    completion = client.chat.completions.parse(
         model="your-model",
         messages=[
             {
@@ -351,7 +355,8 @@ The LLM approach for scoring asks the model to rate something on a scale, typica
 </Tabs>
 
 **What changes:**
-- The score is continuous (2.96), not a forced integer. It captures how strongly the model leans toward a level.
+- Levels are indexed from 0 in the order you list them, so a 4-level rubric scores from 0 to 3. A score of 2.96 means nearly all weight is on the top level (Critical).
+- The score is continuous, not a forced integer. It captures how strongly the model leans toward a level.
 - You get the full probability distribution across all levels, so you can detect ambiguous cases.
 - No JSON parsing, no schema validation, no retries on malformed output.
 
@@ -379,7 +384,7 @@ In retrieval-augmented generation (RAG) pipelines, a common pattern uses an LLM 
 
     scored_chunks = []
     for chunk in chunks:
-        completion = client.beta.chat.completions.parse(
+        completion = client.chat.completions.parse(
             model="your-model",
             messages=[
                 {
@@ -437,10 +442,11 @@ In retrieval-augmented generation (RAG) pipelines, a common pattern uses an LLM 
 - Each relevance score is a calibrated probability, not an arbitrary integer on a 1-5 scale.
 - You can threshold directly (keep everything above 0.5) instead of guessing where to draw the line on integer scores.
 - Each call is faster and cheaper, which compounds across large result sets.
+- If you need graded relevance instead of relevant/not relevant, use a [Score](/lfm/models/decision-models#score) with defined relevance levels.
 
 ### Multi-Question
 
-LLM pipelines often chain multiple classification calls sequentially. Decision models evaluate all questions against the same state in a single call.
+LLM pipelines often chain multiple classification calls sequentially, one per decision. Decision models evaluate all questions against the same state in a single call.
 
 <Tabs>
   <Tab title="LLM">
@@ -457,7 +463,7 @@ LLM pipelines often chain multiple classification calls sequentially. Decision m
     class IntentResult(BaseModel):
         intent: Literal["billing", "technical", "shipping", "account"]
 
-    intent_completion = client.beta.chat.completions.parse(
+    intent_completion = client.chat.completions.parse(
         model="your-model",
         messages=[
             {"role": "system", "content": "Classify the primary intent of this message."},
@@ -471,7 +477,7 @@ LLM pipelines often chain multiple classification calls sequentially. Decision m
     class UrgencyResult(BaseModel):
         urgency: Literal[1, 2, 3]
 
-    urgency_completion = client.beta.chat.completions.parse(
+    urgency_completion = client.chat.completions.parse(
         model="your-model",
         messages=[
             {"role": "system", "content": "Rate the urgency of this message from 1 to 3."},
@@ -485,7 +491,7 @@ LLM pipelines often chain multiple classification calls sequentially. Decision m
     class BugCheck(BaseModel):
         is_bug: bool
 
-    bug_completion = client.beta.chat.completions.parse(
+    bug_completion = client.chat.completions.parse(
         model="your-model",
         messages=[
             {"role": "system", "content": "Determine if this message is a bug report."},
@@ -542,7 +548,8 @@ LLM pipelines often chain multiple classification calls sequentially. Decision m
 **What changes:**
 - Three network round-trips become one.
 - All three decisions are evaluated against the exact same snapshot of state.
-- Total latency is roughly the same as a single decision, not 3x.
+- Each question keeps its own type and probabilities. With an LLM you could merge the three schemas into one call, but you would still get only labels, with no probabilities.
+- Questions are evaluated in parallel, so adding a question adds little latency compared to adding another LLM call.
 
 ## Next Steps
 
