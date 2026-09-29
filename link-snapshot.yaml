@@ -119,6 +119,7 @@ active:
   - /examples/web/audio-webgpu-demo
   - /examples/web/hand-voice-racer
   - /examples/web/vl-webgpu-demo
+  - /guides/decision-model-guide
   - /guides/hardware-evaluation
   - /guides/migration-guide
   - /guides/use-case-evaluation
@@ -151,6 +152,7 @@ active:
   - /lfm/key-concepts/vision-capabilities
   - /lfm/models/audio-models
   - /lfm/models/complete-library
+  - /lfm/models/decision-models
   - /lfm/models/lfm2-1.2b
   - /lfm/models/lfm2-1.2b-extract
   - /lfm/models/lfm2-1.2b-rag
