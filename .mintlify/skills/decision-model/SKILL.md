@@ -1,45 +1,85 @@
 ---
 name: decision-model
-description: Use Liquid AI's d1 decision model for classification, routing, scoring, yes/no decisions, guardrails, reranking, and agent workflow decisions.
-license: MIT
-compatibility: Requires a Liquid AI API key and HTTPS access to https://api.liquid.ai.
+description: Integrate Liquid AI's d1 decision model or review existing LLM calls for migration to bounded classification, routing, scoring, reranking, and yes/no decisions. Use when the output is a decision over defined outcomes rather than generated text.
 metadata:
   author: Liquid AI
   version: "1.0"
   documentation: https://docs.liquid.ai/lfm/models/decision-models
 ---
 
-# Liquid d1 Decision Model for Agents
+# Liquid AI Decision Model Skill
 
-Send context and typed questions to `POST https://api.liquid.ai/decisions/v1/systemone`. Receive structured decisions in `answers`, keyed by your question names. This is a decision model, not a chat endpoint: it evaluates a fixed set of outcomes instead of generating text.
+Use Liquid AI's d1 decision model when the output should be a structured decision rather than generated text. Good fits include classification, routing, binary gates, scoring, reranking, triage, moderation, guardrails, LLM-as-judge replacement, agent tool-call approval, and model routing or cascades.
 
-Use it for classification, routing, content moderation, scoring, triage, reranking, guardrails, and selecting an agent's next action. Start with the example below, verify the returned fields, then substitute the user's context and criteria.
+Use an LLM instead when the task requires free-form text generation, creative writing, multi-turn conversation, complex multi-step reasoning, open-ended Q&A, summarization, or code generation.
 
-## Authentication
+## Setup
 
-Get an API key from [console.liquid.ai](https://console.liquid.ai) (Dashboard > API Keys). Keys are prefixed with `liquid_`.
+Get an API key from [console.liquid.ai](https://console.liquid.ai):
+
+1. Register or sign in and join an organization.
+2. Go to **Dashboard > API Keys**.
+3. Create a key and store it server-side, outside client bundles and logs. Keys are prefixed with `liquid_`.
+
+Set the key as an environment variable:
 
 ```bash
 export LIQUID_API_KEY="liquid_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
 ```
 
-Keep the key server-side, outside client bundles and logs.
+Requests require a Liquid AI API key and HTTPS access to this decision endpoint:
 
-## Three primitives
+```text
+POST https://console.liquid.ai/decisions/v1/systemone
+```
+
+## Request Shape
+
+A decision model call contains:
+
+- `model`: the decision model to use, such as `d1:free`.
+- `state`: the context to evaluate, supplied as plain text or a JSON object.
+- `questions`: one or more typed questions, each with a name, a `type`, and `instructions`.
+
+Choice questions include `criteria` as an object mapping option names to descriptions. Score questions include `criteria` as an ordered array of rubric descriptions. Noul questions have no criteria. Multiple independent questions can be evaluated in one call against the same state. Use the decision request schema below; this is not a chat-completions endpoint.
+
+## Primitives
 
 Every question uses one of three types:
 
-| If the answer is... | Use | Returns |
+| If the answer is... | Use | Return shape |
 |---|---|---|
-| Yes or no, where the probability is useful | **noul** | Float 0-1: probability the answer is yes |
-| Pick one from unordered categories | **choice** | Selected option + probability distribution + confidence |
-| Rate on an ordered scale | **score** | Continuous score + probability distribution + confidence |
+| Yes or no, where the probability itself is useful | `noul` | A probability between 0 and 1 |
+| One option from an unordered set | `choice` | A selected option, probability distribution, and confidence |
+| A rating along an ordered rubric | `score` | A continuous score, probability distribution, legend, and confidence |
 
-Pick the type that matches what your code does next. If it branches on a category, use **choice**. If it gates on a boolean, use **noul**. If it needs a position on a rubric, use **score**.
+Pick the primitive based on what your code does next. Use Choice when code branches on a category. Use Score when code compares against an ordered threshold. Use Noul when code gates on a boolean probability.
 
-**Noul vs Score**: A Noul at 0.5 means maximum uncertainty between yes and no. It says nothing about degree. If you want to measure degree (severity, skill level, frustration), use a Score with defined levels. If you need a yes/no gate, use a Noul.
+Noul and Score are different. A Noul value near `0.5` means uncertainty between yes and no; it does not measure degree or intensity. Use Score for degree, severity, skill level, urgency, or similar ordered concepts.
 
-## First request
+Score levels are zero-based: an array of four levels produces a continuous score from `0` to `3`, computed as the probability-weighted position on the rubric. Preserve this meaning when replacing a one-based or integer LLM rating; update downstream thresholds or explicitly map the scale.
+
+## Review and Migration
+
+When asked to audit a project, trace candidate model calls through their prompts, schemas or parsers, and downstream consumers. Look for enums, booleans, numeric ratings, routing branches, and loops that score retrieved passages. For each candidate, identify the call site, the current output contract, the proposed primitive and criteria, and any required changes to thresholds or fallback behavior. A recommendation request should produce recommendations; implement replacements when the user requests code changes.
+
+- Classification or routing to one category: use Choice with the labels the caller expects and descriptions that distinguish the options.
+- Yes/no checks: use Noul and convert its probability to an action using explicit thresholds. Do not cast a nonzero probability directly to a boolean.
+- Ordered severity, priority, quality, or urgency ratings: use Score with clearly defined levels.
+- Reranking: evaluate each query/passage pair with Noul for binary relevance or Score for graded relevance, then sort descending. A Choice selects one option; it does not return a ranked list.
+- Multiple independent decisions over the same input: combine them into named questions in one request. Keep separate calls when later questions depend on earlier results.
+
+Keep generation calls for prose, code, summaries, or open-ended answers. In a mixed pipeline, replace only the bounded decision stage. Preserve the application's expected labels and error handling, and compare representative inputs with the existing behavior before switching callers.
+
+## Reading Decisions
+
+Read each result from `answers[question_name]`: `.noul` for yes probability, `.choice` for the selected label, or `.score` for the continuous rating. Choice and Score also expose `.probabilities` and `.confidence`; Score includes `.legend` mapping positions to rubric descriptions.
+
+Treat HTTP or SDK errors as failures, not decisions; preserve the project's bounded retry policy and fallback behavior.
+
+Use probabilities and confidence to handle ambiguous cases through an application-appropriate fallback. Set thresholds using representative data and the cost of incorrect decisions; example thresholds in the docs are illustrative. A model's tool-call approval verdict is an input to the application's policy, not permission to bypass existing authorization checks.
+
+## cURL Example
 
 ```bash
 curl -s https://api.liquid.ai/decisions/v1/systemone \
@@ -75,9 +115,7 @@ curl -s https://api.liquid.ai/decisions/v1/systemone \
   }'
 ```
 
-## Read the result
-
-A successful response contains `model`, `answers`, and token `usage`:
+Example response:
 
 ```json
 {
@@ -120,70 +158,9 @@ A successful response contains `model`, `answers`, and token `usage`:
 }
 ```
 
-| Question | Key fields | Interpretation |
-|---|---|---|
-| `route` (choice) | `.choice`, `.confidence`, `.probabilities` | Selected option, how clear-cut, distribution over all options |
-| `urgency` (score) | `.score`, `.confidence`, `.probabilities`, `.legend` | Zero-based continuous position on the rubric. 3 levels -> value from 0 to 2 |
-| `wants_refund` (noul) | `.noul` | Probability the answer is yes (0.0 to 1.0) |
+Decision models do not generate output tokens, so `usage.output_tokens` is `0`.
 
-`usage.output_tokens` is always 0. Decision models do not generate tokens.
-
-## Request rules
-
-- Required fields: `model`, `questions`, and exactly one of `state` or `messages`.
-- `state` is the context to evaluate: plain text, a JSON object, or an array. A URL in text is not fetched.
-- For conversations, use `messages` (e.g., `[{"role": "user", "content": "..."}]`) instead of `state`.
-- Each question needs a unique key, a `type`, and `instructions`.
-- `choice` requires `criteria` as an object with 2+ named options. Descriptions can be null.
-- `score` requires `criteria` as an ordered array of 2+ rubric levels. Levels are indexed from 0.
-- `noul` takes no criteria.
-- Multiple questions share the same context in one call and are evaluated in parallel. Adding a question adds little latency compared to adding another API call.
-- Responses are non-streaming JSON. Do not send chat settings like `temperature`, `max_tokens`, or `stream`.
-
-## Using confidence and probabilities
-
-Decision models return calibrated probabilities, not just labels. Use them to set thresholds and handle uncertainty:
-
-**Route with fallback when uncertain:**
-```bash
-# If confidence is low, fall back to the most capable handler
-if confidence < 0.5:
-    route to most capable handler
-```
-
-**Noul with three-way threshold:**
-```bash
-if noul > 0.8: block
-elif noul < 0.2: allow
-else: human_review
-```
-
-**Score as continuous value:**
-```bash
-if score >= 2.5: page on-call engineer
-elif score >= 1.5: escalate to senior support
-else: add to standard queue
-```
-
-## When to use d1 vs. an LLM
-
-Use d1 when the answer is one of N known options:
-- Classification and categorization
-- Routing (tickets, emails, requests)
-- Scoring, triage, and prioritization
-- Content moderation and guardrails
-- Binary decisions (yes/no gates)
-- Reranking search results
-- LLM-as-judge replacement
-- Agent tool-call approval
-
-Use an LLM when the answer is new text the model must compose:
-- Text generation (emails, summaries, reports, code)
-- Open-ended Q&A
-- Multi-turn conversation
-- Complex multi-step reasoning
-
-## Python SDK
+## Python Example
 
 ```bash
 pip install typesafe-sdk
@@ -279,8 +256,7 @@ console.log(result.answers.wants_refund.noul);    // 0.99
 console.log(result.answers.urgency.score);        // 1.2
 ```
 
-## Reference
+## References
 
-- [Decision Models](https://docs.liquid.ai/lfm/models/decision-models): API reference, all three primitives, setup
-- [Decision Model Guide](https://docs.liquid.ai/guides/decision-model-guide): Migration examples from LLM calls to d1
-- [Model Library](https://docs.liquid.ai/lfm/models/complete-library): All available Liquid AI models
+- [Decision Models](https://docs.liquid.ai/lfm/models/decision-models): primitives, setup, API examples, and response fields
+- [Decision Model Guide](https://docs.liquid.ai/guides/decision-model-guide): migration examples from LLM calls to d1
