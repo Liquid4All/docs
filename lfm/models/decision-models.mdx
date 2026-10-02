@@ -40,11 +40,41 @@ Set the key as an environment variable:
 export LIQUID_API_KEY="liquid_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
 ```
 
-You can also use the following prompt to give your agent to enable it to use Liquid AI's decision models.
+## Agent Skill
+
+The [Liquid d1 agent skill](https://github.com/Liquid4All/liquid-d1-skills) helps coding agents find opportunities for d1 and integrate it into an application. It can inspect an existing codebase, recommend structured replacements for prompt-and-parse LLM calls, and help design effective Choice, Score, and Noul questions.
+
+Install the skill for the coding agent you use:
+
+<Tabs>
+  <Tab title="Claude Code">
+    ```bash
+    claude plugin marketplace add Liquid4All/liquid-d1-skills
+    claude plugin install liquid-d1@liquid-ai
+    ```
+  </Tab>
+  <Tab title="Codex">
+    ```bash
+    codex plugin marketplace add Liquid4All/liquid-d1-skills
+    codex plugin add liquid-d1@liquid-ai
+    ```
+  </Tab>
+  <Tab title="Other agents">
+    ```bash
+    npx skills add Liquid4All/liquid-d1-skills --skill liquid-d1
+    ```
+
+    Choose your agent when prompted.
+  </Tab>
+</Tabs>
+
+After installation, start a new agent session and try:
 
 ```text
-Load https://docs.liquid.ai/.well-known/skills/decision-model/skill.md, then inspect this project for generated-text calls that are really bounded decisions. Recommend d1 replacements for classification, routing, scoring, reranking, and yes/no gates.
+Use the Liquid d1 skill to inspect this project for generated-text calls that are really bounded decisions. Recommend d1 replacements for classification, routing, scoring, reranking, and yes/no gates.
 ```
+
+The skill includes API and SDK references, guidance for Liquid, Vercel AI Gateway, and OpenRouter, and a dependency-free script for testing requests. Keep `LIQUID_API_KEY` in your environment instead of including it in a prompt.
 
 ## Your First Call
 
@@ -61,7 +91,7 @@ A single API call contains three things:
       -H "Authorization: Bearer $LIQUID_API_KEY" \
       -H "Content-Type: application/json" \
       -d '{
-        "model": "d1:free",
+        "model": "d1",
         "state": "I have been waiting over three weeks for my order and nobody has responded to my emails. This is completely unacceptable.",
         "questions": {
           "is_complaint": {
@@ -87,7 +117,7 @@ A single API call contains three things:
     )
 
     result = client.system_one(
-        model="d1:free",
+        model="d1",
         state="I have been waiting over three weeks for my order and nobody has responded to my emails. This is completely unacceptable.",
         questions={
             "is_complaint": Noul(
@@ -112,7 +142,7 @@ A single API call contains three things:
     });
 
     const result = await client.systemOne({
-      model: "d1:free",
+      model: "d1",
       state: "I have been waiting over three weeks for my order and nobody has responded to my emails. This is completely unacceptable.",
       questions: {
         is_complaint: {
@@ -130,7 +160,7 @@ A single API call contains three things:
 
 ```json
 {
-  "model": "d1:free",
+  "model": "d1",
   "answers": {
     "is_complaint": {
       "type": "noul",
@@ -165,7 +195,7 @@ A Noul question returns a single probability between 0 and 1. Your code receives
       -H "Authorization: Bearer $LIQUID_API_KEY" \
       -H "Content-Type: application/json" \
       -d '{
-        "model": "d1:free",
+        "model": "d1",
         "state": "You'\''re an absolute idiot and I hope your company goes bankrupt. I'\''m going to find out where you work.",
         "questions": {
           "is_harmful": {
@@ -181,7 +211,7 @@ A Noul question returns a single probability between 0 and 1. Your code receives
     from typesafe_sdk import Noul
 
     result = client.system_one(
-        model="d1:free",
+        model="d1",
         state="You're an absolute idiot and I hope your company goes bankrupt. I'm going to find out where you work.",
         questions={
             "is_harmful": Noul(
@@ -194,7 +224,7 @@ A Noul question returns a single probability between 0 and 1. Your code receives
   <Tab title="TypeScript">
     ```typescript
     const result = await client.systemOne({
-      model: "d1:free",
+      model: "d1",
       state: "You're an absolute idiot and I hope your company goes bankrupt. I'm going to find out where you work.",
       questions: {
         is_harmful: {
@@ -242,7 +272,7 @@ A Choice question returns the selected option, a probability distribution over a
       -H "Authorization: Bearer $LIQUID_API_KEY" \
       -H "Content-Type: application/json" \
       -d '{
-        "model": "d1:free",
+        "model": "d1",
         "state": "Hi, I was charged twice for my subscription last month. The amounts are $29.99 on March 3rd and again on March 5th. Can you refund the duplicate charge?",
         "questions": {
           "intent": {
@@ -265,7 +295,7 @@ A Choice question returns the selected option, a probability distribution over a
     from typesafe_sdk import Choice
 
     result = client.system_one(
-        model="d1:free",
+        model="d1",
         state="Hi, I was charged twice for my subscription last month. The amounts are $29.99 on March 3rd and again on March 5th. Can you refund the duplicate charge?",
         questions={
             "intent": Choice(
@@ -285,7 +315,7 @@ A Choice question returns the selected option, a probability distribution over a
   <Tab title="TypeScript">
     ```typescript
     const result = await client.systemOne({
-      model: "d1:free",
+      model: "d1",
       state: "Hi, I was charged twice for my subscription last month. The amounts are $29.99 on March 3rd and again on March 5th. Can you refund the duplicate charge?",
       questions: {
         intent: {
@@ -354,7 +384,7 @@ A Score question returns a continuous value across an ordered rubric you define,
       -H "Authorization: Bearer $LIQUID_API_KEY" \
       -H "Content-Type: application/json" \
       -d '{
-        "model": "d1:free",
+        "model": "d1",
         "state": "Our production API is returning 500 errors on every request. All customers are affected. Revenue impact is approximately $12,000 per hour. Started 15 minutes ago.",
         "questions": {
           "urgency": {
@@ -376,7 +406,7 @@ A Score question returns a continuous value across an ordered rubric you define,
     from typesafe_sdk import Score
 
     result = client.system_one(
-        model="d1:free",
+        model="d1",
         state="Our production API is returning 500 errors on every request. All customers are affected. Revenue impact is approximately $12,000 per hour. Started 15 minutes ago.",
         questions={
             "urgency": Score(
@@ -395,7 +425,7 @@ A Score question returns a continuous value across an ordered rubric you define,
   <Tab title="TypeScript">
     ```typescript
     const result = await client.systemOne({
-      model: "d1:free",
+      model: "d1",
       state: "Our production API is returning 500 errors on every request. All customers are affected. Revenue impact is approximately $12,000 per hour. Started 15 minutes ago.",
       questions: {
         urgency: {
@@ -462,7 +492,7 @@ You can ask multiple questions of different types in the same call. The model ev
       -H "Authorization: Bearer $LIQUID_API_KEY" \
       -H "Content-Type: application/json" \
       -d '{
-        "model": "d1:free",
+        "model": "d1",
         "state": "{\"message\": \"The checkout page crashes with a white screen whenever I try to apply a promo code. I'\''ve tried three different browsers. This is blocking a $4,200 order for our team and we need to place it before our procurement window closes on Friday.\", \"account\": {\"plan\": \"enterprise\", \"arr\": 52000, \"customer_since\": \"2022-03-15\"}}",
         "questions": {
           "is_bug": {
@@ -507,7 +537,7 @@ You can ask multiple questions of different types in the same call. The model ev
     }
 
     result = client.system_one(
-        model="d1:free",
+        model="d1",
         state=json.dumps(ticket),
         questions={
             "is_bug": Noul(
@@ -546,7 +576,7 @@ You can ask multiple questions of different types in the same call. The model ev
     };
 
     const result = await client.systemOne({
-      model: "d1:free",
+      model: "d1",
       state: JSON.stringify(ticket),
       questions: {
         is_bug: {
