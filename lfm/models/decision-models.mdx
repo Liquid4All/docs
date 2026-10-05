@@ -6,7 +6,7 @@ icon: "scale-balanced"
 
 Decision models are a new class of AI model purpose-built for structured decisions. Instead of generating text token by token, a decision model evaluates a situation and returns calibrated probabilities across a fixed set of outcomes in a single call with zero generated tokens.
 
-The `d1` model evaluates text, images, or both. Use the same Noul, Choice, and Score questions to classify an image, inspect a part for defects, or make a decision from a screenshot.
+Liquid's decision model evaluates text, images, or both. Use the same Noul, Choice, and Score questions to classify an image, inspect a part for defects, or make a decision from a screenshot.
 
 ## Primitives
 
@@ -42,7 +42,53 @@ Set the key as an environment variable:
 export LIQUID_API_KEY="liquid_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
 ```
 
-You can also use the following prompt to give your agent to enable it to use Liquid AI's decision models.
+Install the SDK and create a client:
+
+<Tabs>
+  <Tab title="Python">
+    For text-only inputs:
+
+    ```bash
+    pip install typesafe-sdk
+    ```
+
+    ```python
+    import os
+    from typesafe_sdk import TypeSafeClient
+
+    client = TypeSafeClient(
+        api_key=os.environ["LIQUID_API_KEY"],
+        base_url="https://api.liquid.ai",
+    )
+    ```
+
+    For [image inputs](#image-inputs), the SDK does not support images yet, so the image examples use [`requests`](https://pypi.org/project/requests/):
+
+    ```bash
+    pip install requests
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    For text-only inputs:
+
+    ```bash
+    npm install @typesafe-ai/sdk
+    ```
+
+    ```typescript
+    import { TypeSafeClient } from "@typesafe-ai/sdk";
+
+    const client = new TypeSafeClient({
+      apiKey: process.env.LIQUID_API_KEY!,
+      baseURL: "https://api.liquid.ai",
+    });
+    ```
+
+    For [image inputs](#image-inputs), the SDK does not support images yet, so the image examples use `fetch` instead.
+  </Tab>
+</Tabs>
+
+You can also give your agent the following prompt to enable it to use Liquid AI's decision models.
 
 ```text
 Load https://docs.liquid.ai/.well-known/skills/decision-model/skill.md, then inspect this project for generated-text calls that are really bounded decisions. Recommend d1 replacements for classification, routing, scoring, reranking, and yes/no gates.
@@ -64,7 +110,7 @@ A single API call contains the following fields:
       -H "Authorization: Bearer $LIQUID_API_KEY" \
       -H "Content-Type: application/json" \
       -d '{
-        "model": "d1:free",
+        "model": "d1",
         "state": "I have been waiting over three weeks for my order and nobody has responded to my emails. This is completely unacceptable.",
         "questions": {
           "is_complaint": {
@@ -76,21 +122,11 @@ A single API call contains the following fields:
     ```
   </Tab>
   <Tab title="Python">
-    ```bash
-    pip install typesafe-sdk
-    ```
-
     ```python
-    import os
-    from typesafe_sdk import TypeSafeClient, Noul
-
-    client = TypeSafeClient(
-        api_key=os.environ["LIQUID_API_KEY"],
-        base_url="https://api.liquid.ai",
-    )
-
+    from typesafe_sdk import Noul
+    
     result = client.system_one(
-        model="d1:free",
+        model="d1",
         state="I have been waiting over three weeks for my order and nobody has responded to my emails. This is completely unacceptable.",
         questions={
             "is_complaint": Noul(
@@ -102,20 +138,9 @@ A single API call contains the following fields:
     ```
   </Tab>
   <Tab title="TypeScript">
-    ```bash
-    npm install @typesafe-ai/sdk
-    ```
-
     ```typescript
-    import { TypeSafeClient } from "@typesafe-ai/sdk";
-
-    const client = new TypeSafeClient({
-      apiKey: process.env.LIQUID_API_KEY!,
-      baseURL: "https://api.liquid.ai",
-    });
-
     const result = await client.systemOne({
-      model: "d1:free",
+      model: "d1",
       state: "I have been waiting over three weeks for my order and nobody has responded to my emails. This is completely unacceptable.",
       questions: {
         is_complaint: {
@@ -133,7 +158,7 @@ A single API call contains the following fields:
 
 ```json
 {
-  "model": "d1:free",
+  "model": "d1",
   "answers": {
     "is_complaint": {
       "type": "noul",
@@ -155,178 +180,6 @@ A single API call contains the following fields:
 
 The response contains one answer per question, keyed by the question name. A Noul answer is a single probability. Choice and Score answers also include a full probability distribution and a `confidence` value.
 
-## Image Inputs
-
-Send images to `d1` through the same `/decisions/v1/systemone` endpoint used for text decisions. Add an `images` array alongside `model`, `state`, and `questions`. The question types and response format stay the same.
-
-<Note>
-Vision is available through the Liquid API with the paid `d1` model. `d1:free` is text-only.
-</Note>
-
-Each image can be a Base64 data URL, such as `data:image/jpeg;base64,...`, or an object with `content_type` and `base64` fields. Remote image URLs are not accepted. If an image is hosted online, download it and encode its contents before sending the request.
-
-### Inspecting an Image
-
-Save a JPEG image of a circuit board as `board.jpg` in your working directory and set `LIQUID_API_KEY` as described in [Setup](#setup). The following examples ask whether the board has a visible defect. They use HTTP requests directly.
-
-<Tabs>
-  <Tab title="cURL">
-    ```bash
-    IMAGE_BASE64=$(base64 < board.jpg | tr -d '\r\n')
-
-    curl --fail-with-body -sS https://api.liquid.ai/decisions/v1/systemone \
-      -H "Authorization: Bearer $LIQUID_API_KEY" \
-      -H "Content-Type: application/json" \
-      --data-binary @- <<JSON
-    {
-      "model": "d1",
-      "state": "Camera image of a circuit board on the production line.",
-      "images": ["data:image/jpeg;base64,$IMAGE_BASE64"],
-      "questions": {
-        "defect": {
-          "type": "noul",
-          "instructions": "Does this circuit board have a visible defect?"
-        }
-      }
-    }
-    JSON
-    ```
-  </Tab>
-  <Tab title="Python">
-    ```bash
-    python -m pip install requests
-    ```
-
-    ```python
-    import base64
-    import os
-    from pathlib import Path
-
-    import requests
-
-    image = base64.b64encode(Path("board.jpg").read_bytes()).decode("ascii")
-
-    response = requests.post(
-        "https://api.liquid.ai/decisions/v1/systemone",
-        headers={"Authorization": f"Bearer {os.environ['LIQUID_API_KEY']}"},
-        json={
-            "model": "d1",
-            "state": "Camera image of a circuit board on the production line.",
-            "images": [f"data:image/jpeg;base64,{image}"],
-            "questions": {
-                "defect": {
-                    "type": "noul",
-                    "instructions": "Does this circuit board have a visible defect?",
-                }
-            },
-        },
-        timeout=60,
-    )
-    response.raise_for_status()
-    result = response.json()
-    print(result["answers"]["defect"]["noul"])
-    ```
-  </Tab>
-  <Tab title="TypeScript">
-    This example uses Node.js with built-in `fetch` support.
-
-    ```typescript
-    import { readFileSync } from "node:fs";
-
-    const image = readFileSync("board.jpg").toString("base64");
-
-    const response = await fetch("https://api.liquid.ai/decisions/v1/systemone", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${process.env.LIQUID_API_KEY!}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "d1",
-        state: "Camera image of a circuit board on the production line.",
-        images: [`data:image/jpeg;base64,${image}`],
-        questions: {
-          defect: {
-            type: "noul",
-            instructions: "Does this circuit board have a visible defect?",
-          },
-        },
-      }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Request failed (${response.status}): ${await response.text()}`);
-    }
-
-    const result = await response.json();
-    console.log(result.answers.defect.noul);
-    ```
-  </Tab>
-</Tabs>
-
-`answers.defect.noul` is the probability that the answer is "yes," between 0 and 1. Choose a threshold based on your application, or send uncertain cases for human review. To classify the image into categories or rate it on a scale, use a Choice or Score question with the same `images` array.
-
-The object form is equivalent to a data URL. Replace the placeholder below with the Base64-encoded file contents, without the `data:` prefix:
-
-```json
-{
-  "images": [
-    {
-      "content_type": "image/jpeg",
-      "base64": "<BASE64_ENCODED_IMAGE>"
-    }
-  ]
-}
-```
-
-### Using Multiple Images
-
-All questions in a request receive all images. Put the images in the order you want to refer to them, and explain their roles in the state or question instructions. For example, compare a reference part with a part being inspected using the following request. Replace both image placeholders with Base64-encoded file contents.
-
-```json
-{
-  "model": "d1",
-  "state": "The first image shows a reference circuit board with no defects. The second image shows the board being inspected.",
-  "images": [
-    "data:image/jpeg;base64,<REFERENCE_IMAGE>",
-    "data:image/jpeg;base64,<INSPECTION_IMAGE>"
-  ],
-  "questions": {
-    "defect": {
-      "type": "noul",
-      "instructions": "Does the board in the second image have a visible defect compared with the reference board in the first image?"
-    }
-  }
-}
-```
-
-### Image Requirements
-
-| Requirement | Limit |
-|---|---|
-| Formats | JPEG (`image/jpeg`), PNG (`image/png`), WebP (`image/webp`), GIF (`image/gif`) |
-| Images per request | Up to 8 |
-| Request size | Keep the entire JSON body under 4.5 MB, including Base64 image data, state, and questions |
-| Total image patches | Up to 10,000 patches of 32 × 32 pixels across all images in a request |
-| Aspect ratio | The longer side of each image can be at most 100 times the shorter side |
-
-Base64 encoding increases the request size compared with the original files. Resize or compress images before encoding them if the request is too large, and use the media type that matches each file.
-
-If a request returns ``The model `d1:free` does not accept images.``, use `d1`. If the same error names `d1`, image input is not available for that model on the endpoint you called.
-
-### Image Token Usage
-
-Each image is billed at 1.5 input tokens per 32 × 32 pixel patch, rounded up per image:
-
-```text
-patches = ceil(width / 32) × ceil(height / 32)
-image_tokens = ceil(patches × 1.5)
-```
-
-For example, a 1024 × 1024 image covers 1,024 patches and contributes 1,536 input tokens per question. Two questions about that image contribute 3,072 image tokens, plus the text tokens for each question.
-
-Every question is charged for its text and all the images again. These tokens are included in `usage.input_tokens` and charged at the model's input token rate. Image tokens also count toward each question's input token limit. `usage.output_tokens` remains `0`.
-
 ## Usage Examples
 
 ### Noul
@@ -340,7 +193,7 @@ A Noul question returns a single probability between 0 and 1. Your code receives
       -H "Authorization: Bearer $LIQUID_API_KEY" \
       -H "Content-Type: application/json" \
       -d '{
-        "model": "d1:free",
+        "model": "d1",
         "state": "You'\''re an absolute idiot and I hope your company goes bankrupt. I'\''m going to find out where you work.",
         "questions": {
           "is_harmful": {
@@ -356,7 +209,7 @@ A Noul question returns a single probability between 0 and 1. Your code receives
     from typesafe_sdk import Noul
 
     result = client.system_one(
-        model="d1:free",
+        model="d1",
         state="You're an absolute idiot and I hope your company goes bankrupt. I'm going to find out where you work.",
         questions={
             "is_harmful": Noul(
@@ -369,7 +222,7 @@ A Noul question returns a single probability between 0 and 1. Your code receives
   <Tab title="TypeScript">
     ```typescript
     const result = await client.systemOne({
-      model: "d1:free",
+      model: "d1",
       state: "You're an absolute idiot and I hope your company goes bankrupt. I'm going to find out where you work.",
       questions: {
         is_harmful: {
@@ -417,7 +270,7 @@ A Choice question returns the selected option, a probability distribution over a
       -H "Authorization: Bearer $LIQUID_API_KEY" \
       -H "Content-Type: application/json" \
       -d '{
-        "model": "d1:free",
+        "model": "d1",
         "state": "Hi, I was charged twice for my subscription last month. The amounts are $29.99 on March 3rd and again on March 5th. Can you refund the duplicate charge?",
         "questions": {
           "intent": {
@@ -440,7 +293,7 @@ A Choice question returns the selected option, a probability distribution over a
     from typesafe_sdk import Choice
 
     result = client.system_one(
-        model="d1:free",
+        model="d1",
         state="Hi, I was charged twice for my subscription last month. The amounts are $29.99 on March 3rd and again on March 5th. Can you refund the duplicate charge?",
         questions={
             "intent": Choice(
@@ -460,7 +313,7 @@ A Choice question returns the selected option, a probability distribution over a
   <Tab title="TypeScript">
     ```typescript
     const result = await client.systemOne({
-      model: "d1:free",
+      model: "d1",
       state: "Hi, I was charged twice for my subscription last month. The amounts are $29.99 on March 3rd and again on March 5th. Can you refund the duplicate charge?",
       questions: {
         intent: {
@@ -529,7 +382,7 @@ A Score question returns a continuous value across an ordered rubric you define,
       -H "Authorization: Bearer $LIQUID_API_KEY" \
       -H "Content-Type: application/json" \
       -d '{
-        "model": "d1:free",
+        "model": "d1",
         "state": "Our production API is returning 500 errors on every request. All customers are affected. Revenue impact is approximately $12,000 per hour. Started 15 minutes ago.",
         "questions": {
           "urgency": {
@@ -551,7 +404,7 @@ A Score question returns a continuous value across an ordered rubric you define,
     from typesafe_sdk import Score
 
     result = client.system_one(
-        model="d1:free",
+        model="d1",
         state="Our production API is returning 500 errors on every request. All customers are affected. Revenue impact is approximately $12,000 per hour. Started 15 minutes ago.",
         questions={
             "urgency": Score(
@@ -570,7 +423,7 @@ A Score question returns a continuous value across an ordered rubric you define,
   <Tab title="TypeScript">
     ```typescript
     const result = await client.systemOne({
-      model: "d1:free",
+      model: "d1",
       state: "Our production API is returning 500 errors on every request. All customers are affected. Revenue impact is approximately $12,000 per hour. Started 15 minutes ago.",
       questions: {
         urgency: {
@@ -637,7 +490,7 @@ You can ask multiple questions of different types in the same call. The model ev
       -H "Authorization: Bearer $LIQUID_API_KEY" \
       -H "Content-Type: application/json" \
       -d '{
-        "model": "d1:free",
+        "model": "d1",
         "state": "{\"message\": \"The checkout page crashes with a white screen whenever I try to apply a promo code. I'\''ve tried three different browsers. This is blocking a $4,200 order for our team and we need to place it before our procurement window closes on Friday.\", \"account\": {\"plan\": \"enterprise\", \"arr\": 52000, \"customer_since\": \"2022-03-15\"}}",
         "questions": {
           "is_bug": {
@@ -682,7 +535,7 @@ You can ask multiple questions of different types in the same call. The model ev
     }
 
     result = client.system_one(
-        model="d1:free",
+        model="d1",
         state=json.dumps(ticket),
         questions={
             "is_bug": Noul(
@@ -721,7 +574,7 @@ You can ask multiple questions of different types in the same call. The model ev
     };
 
     const result = await client.systemOne({
-      model: "d1:free",
+      model: "d1",
       state: JSON.stringify(ticket),
       questions: {
         is_bug: {
@@ -816,6 +669,260 @@ if team_confidence < 0.5:
 # The NOTE line only prints when team confidence is below 0.5.
 ```
 
+## Image Inputs
+
+Send images to the decision model through the same `/decisions/v1/systemone` endpoint used for text decisions. Add an `images` array alongside `model`, `state`, and `questions`. The question types and response format stay the same.
+
+<Note>
+Vision is available through the Liquid API with the paid `d1` model. `d1:free` is text-only.
+</Note>
+
+Each image can be a Base64 data URL or an object with `content_type` and `base64` fields. Remote image URLs are not accepted. If an image is hosted online, download it and encode its contents before sending the request.
+
+### Single Image Input
+
+Pass a single image as a Base64 data URL in the `images` array. The model evaluates it alongside the text state.
+
+<Tabs>
+  <Tab title="cURL">
+    ```bash
+    IMAGE_BASE64=$(base64 < image.jpg | tr -d '\r\n')
+
+    curl -s https://api.liquid.ai/decisions/v1/systemone \
+      -H "Authorization: Bearer $LIQUID_API_KEY" \
+      -H "Content-Type: application/json" \
+      --data-binary @- <<JSON
+    {
+      "model": "d1",
+      "state": "Camera image of a circuit board on the production line.",
+      "images": ["data:image/jpeg;base64,$IMAGE_BASE64"],
+      "questions": {
+        "defect": {
+          "type": "noul",
+          "instructions": "Does this circuit board have a visible defect?"
+        }
+      }
+    }
+    JSON
+    ```
+  </Tab>
+  <Tab title="Python">
+    ```python
+    import base64
+    import os
+    from pathlib import Path
+
+    import requests
+
+    image = base64.b64encode(Path("image.jpg").read_bytes()).decode("ascii")
+
+    response = requests.post(
+        "https://api.liquid.ai/decisions/v1/systemone",
+        headers={"Authorization": f"Bearer {os.environ['LIQUID_API_KEY']}"},
+        json={
+            "model": "d1",
+            "state": "Camera image of a circuit board on the production line.",
+            "images": [f"data:image/jpeg;base64,{image}"],
+            "questions": {
+                "defect": {
+                    "type": "noul",
+                    "instructions": "Does this circuit board have a visible defect?",
+                }
+            },
+        },
+    )
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    import { readFileSync } from "node:fs";
+
+    const image = readFileSync("image.jpg").toString("base64");
+
+    const response = await fetch("https://api.liquid.ai/decisions/v1/systemone", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${process.env.LIQUID_API_KEY!}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "d1",
+        state: "Camera image of a circuit board on the production line.",
+        images: [`data:image/jpeg;base64,${image}`],
+        questions: {
+          defect: {
+            type: "noul",
+            instructions: "Does this circuit board have a visible defect?",
+          },
+        },
+      }),
+    });
+
+    ```
+  </Tab>
+</Tabs>
+
+**Response** (`answers` field):
+
+```json
+{
+  "defect": {
+    "type": "noul",
+    "noul": 0.85
+  }
+}
+```
+
+**Using the result:**
+
+```python
+p = result["answers"]["defect"]["noul"]
+
+if p > 0.8:
+    action = "reject"
+elif p < 0.2:
+    action = "pass"
+else:
+    action = "manual_review"
+```
+
+The object form is equivalent to a data URL and accepts `content_type` and `base64` fields without the `data:` prefix:
+
+```json
+{
+  "images": [
+    {
+      "content_type": "image/jpeg",
+      "base64": "<BASE64_ENCODED_IMAGE>"
+    }
+  ]
+}
+```
+
+### Multi-Image Input
+
+All questions in a request receive all images. The order of the images matters. Refer to images by position in the state or question instructions.
+
+<Tabs>
+  <Tab title="cURL">
+    ```bash
+    REF_BASE64=$(base64 < image1.jpg | tr -d '\r\n')
+    INSPECT_BASE64=$(base64 < image2.jpg | tr -d '\r\n')
+
+    curl -s https://api.liquid.ai/decisions/v1/systemone \
+      -H "Authorization: Bearer $LIQUID_API_KEY" \
+      -H "Content-Type: application/json" \
+      --data-binary @- <<JSON
+    {
+      "model": "d1",
+      "state": "The first image shows a reference circuit board with no defects. The second image shows the board being inspected.",
+      "images": ["data:image/jpeg;base64,$REF_BASE64", "data:image/jpeg;base64,$INSPECT_BASE64"],
+      "questions": {
+        "defect": {
+          "type": "noul",
+          "instructions": "Does the board in the second image have a visible defect compared with the reference board in the first image?"
+        }
+      }
+    }
+    JSON
+    ```
+  </Tab>
+  <Tab title="Python">
+    ```python
+    image1 = base64.b64encode(Path("image1.jpg").read_bytes()).decode("ascii")
+    image2 = base64.b64encode(Path("image2.jpg").read_bytes()).decode("ascii")
+
+    response = requests.post(
+        "https://api.liquid.ai/decisions/v1/systemone",
+        headers={"Authorization": f"Bearer {os.environ['LIQUID_API_KEY']}"},
+        json={
+            "model": "d1",
+            "state": "The first image shows a reference circuit board with no defects. The second image shows the board being inspected.",
+            "images": [
+                f"data:image/jpeg;base64,{image1}",
+                f"data:image/jpeg;base64,{image2}",
+            ],
+            "questions": {
+                "defect": {
+                    "type": "noul",
+                    "instructions": "Does the board in the second image have a visible defect compared with the reference board in the first image?",
+                }
+            },
+        },
+    )
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    const image1 = readFileSync("image1.jpg").toString("base64");
+    const image2 = readFileSync("image2.jpg").toString("base64");
+
+    const response = await fetch("https://api.liquid.ai/decisions/v1/systemone", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${process.env.LIQUID_API_KEY!}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "d1",
+        state: "The first image shows a reference circuit board with no defects. The second image shows the board being inspected.",
+        images: [
+          `data:image/jpeg;base64,${image1}`,
+          `data:image/jpeg;base64,${image2}`,
+        ],
+        questions: {
+          defect: {
+            type: "noul",
+            instructions: "Does the board in the second image have a visible defect compared with the reference board in the first image?",
+          },
+        },
+      }),
+    });
+
+    ```
+  </Tab>
+</Tabs>
+
+**Response** (`answers` field):
+
+```json
+{
+  "defect": {
+    "type": "noul",
+    "noul": 0.92
+  }
+}
+```
+
+### Image Requirements
+
+| Requirement | Limit |
+|---|---|
+| Formats | JPEG (`image/jpeg`), PNG (`image/png`), WebP (`image/webp`), GIF (`image/gif`) |
+| Images per request | Up to 8 |
+| Request size | Keep the entire JSON body under 4.5 MB, including Base64 image data, state, and questions |
+| Total image patches | Up to 10,000 patches of 32 × 32 pixels across all images in a request |
+| Aspect ratio | The longer side of each image can be at most 100 times the shorter side |
+
+Base64 encoding increases the request size compared with the original files. Resize or compress images before encoding them if the request is too large, and use the media type that matches each file.
+
+<Note>
+If a request returns ``The model `d1:free` does not accept images.``, use `d1`. If the same error names `d1`, image input is not available for that model on the endpoint you called.
+</Note>
+
+### Image Token Usage
+
+Each image is billed at 1.5 input tokens per 32 × 32 pixel patch, rounded up per image:
+
+```text
+patches = ceil(width / 32) × ceil(height / 32)
+image_tokens = ceil(patches × 1.5)
+```
+
+For example, a 1024 × 1024 image covers 1,024 patches and contributes 1,536 input tokens per question. Two questions about that image contribute 3,072 image tokens, plus the text tokens for each question.
+
+Every question is charged for its text and all the images again. These tokens are included in `usage.input_tokens` and charged at the model's input token rate. Image tokens also count toward each question's input token limit. `usage.output_tokens` remains `0`.
+
 ## When to Use Decision Models
 
 Decision models are a good fit when the answer is a structured decision: classification, categorization, routing (tickets, emails, requests), scoring, triage, content moderation, guardrails and safety checks, LLM-as-judge replacement, agent tool-call approval, and model routing or cascades.
@@ -824,7 +931,7 @@ With image input, the same primitives support visual inspection, image classific
 
 Use a language model instead for free-form text generation, creative writing, multi-turn conversation, complex multi-step reasoning, open-ended Q&A, summarization, and code generation.
 
-To move existing LLM calls to d1, see the [Decision Model Guide](/guides/decision-model-guide).
+To move existing LLM calls to a decision model, see the [Decision Model Guide](/guides/decision-model-guide).
 
 ## Next Steps
 
