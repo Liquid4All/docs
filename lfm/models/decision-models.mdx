@@ -88,7 +88,7 @@ Install the SDK and create a client:
   </Tab>
 </Tabs>
 
-You can also give your agent the following prompt to enable it to use Liquid AI's decision models.
+You can also use the following prompt to give your agent to enable it to use Liquid AI's decision models.
 
 ```text
 Load https://docs.liquid.ai/.well-known/skills/decision-model/skill.md, then inspect this project for generated-text calls that are really bounded decisions. Recommend d1 replacements for classification, routing, scoring, reranking, and yes/no gates.
@@ -829,6 +829,12 @@ All questions in a request receive all images. The order of the images matters. 
   </Tab>
   <Tab title="Python">
     ```python
+    import base64
+    import os
+    from pathlib import Path
+
+    import requests
+
     image1 = base64.b64encode(Path("image1.jpg").read_bytes()).decode("ascii")
     image2 = base64.b64encode(Path("image2.jpg").read_bytes()).decode("ascii")
 
@@ -854,6 +860,8 @@ All questions in a request receive all images. The order of the images matters. 
   </Tab>
   <Tab title="TypeScript">
     ```typescript
+    import { readFileSync } from "node:fs";
+
     const image1 = readFileSync("image1.jpg").toString("base64");
     const image2 = readFileSync("image2.jpg").toString("base64");
 
