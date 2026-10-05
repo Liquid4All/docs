@@ -6,6 +6,8 @@ icon: "scale-balanced"
 
 Decision models are a new class of AI model purpose-built for structured decisions. Instead of generating text token by token, a decision model evaluates a situation and returns calibrated probabilities across a fixed set of outcomes in a single call with zero generated tokens.
 
+The `d1` model evaluates text, images, or both. Use the same Noul, Choice, and Score questions to classify an image, inspect a part for defects, or make a decision from a screenshot.
+
 ## Primitives
 
 Every question you ask a decision model uses one of three types:
@@ -48,11 +50,12 @@ Load https://docs.liquid.ai/.well-known/skills/decision-model/skill.md, then ins
 
 ## Your First Call
 
-A single API call contains three things:
+A single API call contains the following fields:
 
 1. **Model**: which decision model to use.
 2. **State**: the context the model should evaluate. This can be plain text (a customer message, an email, a log entry) or a JSON object with structured fields.
 3. **Questions**: one or more typed questions, each with a name, a type, and instructions. Choice and Score questions also take criteria that define the options or levels. You can ask multiple questions in the same call, and the model evaluates them all at once.
+4. **Images** (optional): images to evaluate alongside the state. Pass them in the top-level `images` array. See [Image Inputs](#image-inputs) for the request format and examples.
 
 <Tabs>
   <Tab title="cURL">
@@ -148,9 +151,181 @@ A single API call contains three things:
 
 - **`answers.is_complaint.noul`**: The probability that the answer is "yes." Here, `0.999` means a 0.999 probability that this is a complaint.
 - **`usage.output_tokens`**: Always `0`. Decision models do not generate tokens.
-- **`usage.input_tokens`**: The total tokens consumed to evaluate the state and questions.
+- **`usage.input_tokens`**: The total input tokens across all questions, including image tokens when images are provided. Each question is charged for its text and all supplied images.
 
 The response contains one answer per question, keyed by the question name. A Noul answer is a single probability. Choice and Score answers also include a full probability distribution and a `confidence` value.
+
+## Image Inputs
+
+Send images to `d1` through the same `/decisions/v1/systemone` endpoint used for text decisions. Add an `images` array alongside `model`, `state`, and `questions`. The question types and response format stay the same.
+
+<Note>
+Vision is available through the Liquid API with the paid `d1` model. `d1:free` is text-only.
+</Note>
+
+Each image can be a Base64 data URL, such as `data:image/jpeg;base64,...`, or an object with `content_type` and `base64` fields. Remote image URLs are not accepted. If an image is hosted online, download it and encode its contents before sending the request.
+
+### Inspecting an Image
+
+Save a JPEG image of a circuit board as `board.jpg` in your working directory and set `LIQUID_API_KEY` as described in [Setup](#setup). The following examples ask whether the board has a visible defect. They use HTTP requests directly.
+
+<Tabs>
+  <Tab title="cURL">
+    ```bash
+    IMAGE_BASE64=$(base64 < board.jpg | tr -d '\r\n')
+
+    curl --fail-with-body -sS https://api.liquid.ai/decisions/v1/systemone \
+      -H "Authorization: Bearer $LIQUID_API_KEY" \
+      -H "Content-Type: application/json" \
+      --data-binary @- <<JSON
+    {
+      "model": "d1",
+      "state": "Camera image of a circuit board on the production line.",
+      "images": ["data:image/jpeg;base64,$IMAGE_BASE64"],
+      "questions": {
+        "defect": {
+          "type": "noul",
+          "instructions": "Does this circuit board have a visible defect?"
+        }
+      }
+    }
+    JSON
+    ```
+  </Tab>
+  <Tab title="Python">
+    ```bash
+    python -m pip install requests
+    ```
+
+    ```python
+    import base64
+    import os
+    from pathlib import Path
+
+    import requests
+
+    image = base64.b64encode(Path("board.jpg").read_bytes()).decode("ascii")
+
+    response = requests.post(
+        "https://api.liquid.ai/decisions/v1/systemone",
+        headers={"Authorization": f"Bearer {os.environ['LIQUID_API_KEY']}"},
+        json={
+            "model": "d1",
+            "state": "Camera image of a circuit board on the production line.",
+            "images": [f"data:image/jpeg;base64,{image}"],
+            "questions": {
+                "defect": {
+                    "type": "noul",
+                    "instructions": "Does this circuit board have a visible defect?",
+                }
+            },
+        },
+        timeout=60,
+    )
+    response.raise_for_status()
+    result = response.json()
+    print(result["answers"]["defect"]["noul"])
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    This example uses Node.js with built-in `fetch` support.
+
+    ```typescript
+    import { readFileSync } from "node:fs";
+
+    const image = readFileSync("board.jpg").toString("base64");
+
+    const response = await fetch("https://api.liquid.ai/decisions/v1/systemone", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${process.env.LIQUID_API_KEY!}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "d1",
+        state: "Camera image of a circuit board on the production line.",
+        images: [`data:image/jpeg;base64,${image}`],
+        questions: {
+          defect: {
+            type: "noul",
+            instructions: "Does this circuit board have a visible defect?",
+          },
+        },
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Request failed (${response.status}): ${await response.text()}`);
+    }
+
+    const result = await response.json();
+    console.log(result.answers.defect.noul);
+    ```
+  </Tab>
+</Tabs>
+
+`answers.defect.noul` is the probability that the answer is "yes," between 0 and 1. Choose a threshold based on your application, or send uncertain cases for human review. To classify the image into categories or rate it on a scale, use a Choice or Score question with the same `images` array.
+
+The object form is equivalent to a data URL. Replace the placeholder below with the Base64-encoded file contents, without the `data:` prefix:
+
+```json
+{
+  "images": [
+    {
+      "content_type": "image/jpeg",
+      "base64": "<BASE64_ENCODED_IMAGE>"
+    }
+  ]
+}
+```
+
+### Using Multiple Images
+
+All questions in a request receive all images. Put the images in the order you want to refer to them, and explain their roles in the state or question instructions. For example, compare a reference part with a part being inspected using the following request. Replace both image placeholders with Base64-encoded file contents.
+
+```json
+{
+  "model": "d1",
+  "state": "The first image shows a reference circuit board with no defects. The second image shows the board being inspected.",
+  "images": [
+    "data:image/jpeg;base64,<REFERENCE_IMAGE>",
+    "data:image/jpeg;base64,<INSPECTION_IMAGE>"
+  ],
+  "questions": {
+    "defect": {
+      "type": "noul",
+      "instructions": "Does the board in the second image have a visible defect compared with the reference board in the first image?"
+    }
+  }
+}
+```
+
+### Image Requirements
+
+| Requirement | Limit |
+|---|---|
+| Formats | JPEG (`image/jpeg`), PNG (`image/png`), WebP (`image/webp`), GIF (`image/gif`) |
+| Images per request | Up to 8 |
+| Request size | Keep the entire JSON body under 4.5 MB, including Base64 image data, state, and questions |
+| Total image patches | Up to 10,000 patches of 32 × 32 pixels across all images in a request |
+| Aspect ratio | The longer side of each image can be at most 100 times the shorter side |
+
+Base64 encoding increases the request size compared with the original files. Resize or compress images before encoding them if the request is too large, and use the media type that matches each file.
+
+If a request returns ``The model `d1:free` does not accept images.``, use `d1`. If the same error names `d1`, image input is not available for that model on the endpoint you called.
+
+### Image Token Usage
+
+Each image is billed at 1.5 input tokens per 32 × 32 pixel patch, rounded up per image:
+
+```text
+patches = ceil(width / 32) × ceil(height / 32)
+image_tokens = ceil(patches × 1.5)
+```
+
+For example, a 1024 × 1024 image covers 1,024 patches and contributes 1,536 input tokens per question. Two questions about that image contribute 3,072 image tokens, plus the text tokens for each question.
+
+Every question is charged for its text and all the images again. These tokens are included in `usage.input_tokens` and charged at the model's input token rate. Image tokens also count toward each question's input token limit. `usage.output_tokens` remains `0`.
 
 ## Usage Examples
 
@@ -644,6 +819,8 @@ if team_confidence < 0.5:
 ## When to Use Decision Models
 
 Decision models are a good fit when the answer is a structured decision: classification, categorization, routing (tickets, emails, requests), scoring, triage, content moderation, guardrails and safety checks, LLM-as-judge replacement, agent tool-call approval, and model routing or cascades.
+
+With image input, the same primitives support visual inspection, image classification, and decisions based on screenshots.
 
 Use a language model instead for free-form text generation, creative writing, multi-turn conversation, complex multi-step reasoning, open-ended Q&A, summarization, and code generation.
 
