@@ -1,7 +1,7 @@
 {
   "$schema": "https://mintlify.com/docs.json",
   "banner": {
-    "content": "🚀 New: d1 — our first decision model is now available! [Learn more →](/lfm/models/decision-models)",
+    "content": "🚀 New: Open d1 — run decision models locally with d1-3B and d1-omni-600M! [Learn more →](/lfm/models/decision-models)",
     "dismissible": true
   },
   "theme": "mint",
