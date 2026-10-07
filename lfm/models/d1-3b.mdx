@@ -9,6 +9,7 @@ d1-3B is a 3.1B parameter decision model built on [LFM2.5-VL-3B](/lfm/models/lfm
 
 <div style={{display: 'flex', gap: '0.5rem', margin: '0.5rem 0 1.5rem 0'}}>
   <a href="https://huggingface.co/LiquidAI/d1-3B" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#fbbf24'}}><span style={{color: '#000'}}>HF</span></a>
+  <a href="https://huggingface.co/LiquidAI/d1-3B-GGUF" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#60a5fa'}}><span style={{color: '#000'}}>GGUF</span></a>
 </div>
 
 ## Specifications
@@ -87,6 +88,45 @@ d1-3B is a 3.1B parameter decision model built on [LFM2.5-VL-3B](/lfm/models/lfm
                           "criteria": {"one": "One", "two": "Two", "more": "Three or more"}}}
     output = model.system_one(None, questions, images=[photo])
     print(output)
+    ```
+  </Tab>
+  <Tab title="llama.cpp">
+    **Start the server:**
+
+    ```bash
+    llama-server -hf LiquidAI/d1-3B-GGUF:Q8_0
+    ```
+
+    **Text input:**
+
+    ```bash
+    curl http://127.0.0.1:8080/v1/systemone -H "Content-Type: application/json" -d '{
+      "state": "I was charged twice this month, please refund one of them.",
+      "questions": {
+        "refund":  {"type": "noul", "instructions": "Is the customer asking for a refund?"},
+        "team":    {"type": "choice", "instructions": "Which team should handle this?",
+                    "criteria": {"billing": "Charges, refunds, invoices", "technical": "App or site faults",
+                                 "fraud": "Suspected unauthorised use"}},
+        "urgency": {"type": "score", "instructions": "How urgent is this?",
+                    "criteria": ["Can wait", "Today", "Blocking the customer now"]}
+      }
+    }'
+    ```
+
+    **Image input:**
+
+    ```bash
+    curl -sL -o cats.jpg http://images.cocodataset.org/val2017/000000039769.jpg
+
+    curl http://127.0.0.1:8080/v1/systemone -H "Content-Type: application/json" -d @- <<JSON
+    {
+      "images": ["data:image/jpeg;base64,$(base64 < cats.jpg | tr -d '\n')"],
+      "questions": {
+        "cats": {"type": "choice", "instructions": "How many cats are there?",
+                 "criteria": {"one": "One", "two": "Two", "more": "Three or more"}}
+      }
+    }
+    JSON
     ```
   </Tab>
 </Tabs>
