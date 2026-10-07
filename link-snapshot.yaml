@@ -153,6 +153,9 @@ active:
   - /lfm/key-concepts/vision-capabilities
   - /lfm/models/audio-models
   - /lfm/models/complete-library
+  - /lfm/models/d1
+  - /lfm/models/d1-3b
+  - /lfm/models/d1-omni-600m
   - /lfm/models/decision-models
   - /lfm/models/lfm2-1.2b
   - /lfm/models/lfm2-1.2b-extract

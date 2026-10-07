@@ -1,0 +1,168 @@
+---
+title: "d1-omni-600M"
+description: "587M parameter multimodal decision model for text, images, and audio, built on LFM2.5-Encoder-350M"
+---
+
+<a href="/lfm/models/decision-models" className="back-button">← Back to Decision Models</a>
+
+d1-omni-600M is a 587M parameter decision model built on [LFM2.5-Encoder-350M](/lfm/models/lfm25-encoder-350m) with a SigLIP2-based vision encoder and audio encoder jointly fine-tuned for single-pass decisions. It evaluates text with images or text with audio and returns typed answers with zero output tokens.
+
+<div style={{display: 'flex', gap: '0.5rem', margin: '0.5rem 0 1.5rem 0'}}>
+  <a href="https://huggingface.co/LiquidAI/d1-omni-600M" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#fbbf24'}}><span style={{color: '#000'}}>HF</span></a>
+  <a href="https://huggingface.co/LiquidAI/d1-omni-600M-GGUF" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#60a5fa'}}><span style={{color: '#000'}}>GGUF</span></a>
+</div>
+
+## Specifications
+
+| Property | Value |
+|----------|-------|
+| Parameters | 587M (381M shared trunk + 94M vision encoder + 112M audio encoder) |
+| Context Length | 16K tokens |
+| Architecture | LFM2.5-Encoder (Bidirectional) — 350M backbone + SigLIP2 vision + FastConformer audio |
+
+<div className="use-cases">
+<CardGroup cols={3}>
+
+<Card title="Multimodal" icon="layer-group">
+  Text + images or text + audio (up to 30 s)
+</Card>
+
+<Card title="Zero Output Tokens" icon="gauge-high">
+  Answers read from the distribution, no generation
+</Card>
+
+<Card title="Edge-Sized" icon="microchip">
+  587M parameters for on-device deployment
+</Card>
+
+</CardGroup>
+</div>
+
+## Quick Start
+
+<Tabs>
+  <Tab title="Transformers">
+    **Install:**
+
+    ```bash
+    pip install "transformers>=5.15" torch torchvision pillow soundfile
+    ```
+
+    **Text input:**
+
+    ```python
+    from transformers import AutoModel
+
+    model_id = "LiquidAI/d1-omni-600M"
+    model = AutoModel.from_pretrained(model_id, trust_remote_code=True, dtype="float16", device_map="auto")
+
+    state = "I was charged twice this month, please refund one of them."
+    questions = {
+        "refund": {"type": "noul", "instructions": "Is the customer asking for a refund?"},
+        "team": {"type": "choice", "instructions": "Which team should handle this?",
+                 "criteria": {"billing": "Charges, refunds, invoices", "technical": "App or site faults",
+                              "fraud": "Suspected unauthorised use"}},
+        "urgency": {"type": "score", "instructions": "How urgent is this?",
+                    "criteria": ["Can wait", "Today", "Blocking the customer now"]},
+    }
+    output = model.system_one(state, questions)
+    print(output)
+    ```
+
+    **Image input:**
+
+    ```python
+    import io
+    import urllib.request
+
+    from PIL import Image
+    from transformers import AutoModel
+
+    model_id = "LiquidAI/d1-omni-600M"
+    model = AutoModel.from_pretrained(model_id, trust_remote_code=True, dtype="float16", device_map="auto")
+
+    url = "http://images.cocodataset.org/val2017/000000039769.jpg"
+    photo = Image.open(io.BytesIO(urllib.request.urlopen(url).read()))
+
+    questions = {"cats": {"type": "choice", "instructions": "How many cats are there?",
+                          "criteria": {"one": "One", "two": "Two", "more": "Three or more"}}}
+    output = model.system_one(None, questions, images=[photo])
+    print(output)
+    ```
+
+    **Audio input** (16 kHz mono, 0.5–30 s):
+
+    ```python
+    import soundfile as sf
+    from transformers import AutoModel
+
+    model_id = "LiquidAI/d1-omni-600M"
+    model = AutoModel.from_pretrained(model_id, trust_remote_code=True, dtype="float16", device_map="auto")
+
+    wave, rate = sf.read("command.wav", dtype="int16")
+    assert rate == 16000
+
+    questions = {"kind": {"type": "choice", "instructions": "What kind of utterance is this?",
+                          "criteria": {"request": "A request to do something",
+                                       "question": "A question asking for information",
+                                       "conversation": "Small talk or a greeting"}}}
+    output = model.system_one(None, questions, audio=wave)
+    print(output)
+    ```
+  </Tab>
+  <Tab title="llama.cpp">
+    **Start the server:**
+
+    ```bash
+    llama-server -hf LiquidAI/d1-omni-600M-GGUF:Q8_0 -b 4096 -ub 4096
+    ```
+
+    **Text input:**
+
+    ```bash
+    curl http://127.0.0.1:8080/v1/systemone -H "Content-Type: application/json" -d '{
+      "state": "I was charged twice this month, please refund one of them.",
+      "questions": {
+        "refund":  {"type": "noul", "instructions": "Is the customer asking for a refund?"},
+        "team":    {"type": "choice", "instructions": "Which team should handle this?",
+                    "criteria": {"billing": "Charges, refunds, invoices", "technical": "App or site faults",
+                                 "fraud": "Suspected unauthorised use"}},
+        "urgency": {"type": "score", "instructions": "How urgent is this?",
+                    "criteria": ["Can wait", "Today", "Blocking the customer now"]}
+      }
+    }'
+    ```
+
+    **Image input:**
+
+    ```bash
+    curl -sL -o cats.jpg http://images.cocodataset.org/val2017/000000039769.jpg
+
+    curl http://127.0.0.1:8080/v1/systemone -H "Content-Type: application/json" -d @- <<JSON
+    {
+      "images": ["data:image/jpeg;base64,$(base64 < cats.jpg | tr -d '\n')"],
+      "questions": {
+        "cats": {"type": "choice", "instructions": "How many cats are there?",
+                 "criteria": {"one": "One", "two": "Two", "more": "Three or more"}}
+      }
+    }
+    JSON
+    ```
+
+    **Audio input:**
+
+    ```bash
+    curl http://127.0.0.1:8080/v1/systemone -H "Content-Type: application/json" -d @- <<JSON
+    {
+      "audio": "data:audio/wav;base64,$(base64 < command.wav | tr -d '\n')",
+      "questions": {
+        "kind": {"type": "choice", "instructions": "What kind of utterance is this?",
+                 "criteria": {"request": "A request to do something",
+                              "question": "A question asking for information",
+                              "conversation": "Small talk or a greeting"}}
+      }
+    }
+    JSON
+    ```
+  </Tab>
+</Tabs>
