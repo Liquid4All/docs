@@ -32,6 +32,10 @@
       "vscode"
     ]
   },
+  "metadata": {
+    "og:site_name": "Liquid AI Docs",
+    "twitter:card": "summary"
+  },
   "favicon": "/favicon.svg",
   "logo": {
     "light": "/logo/light.svg",
