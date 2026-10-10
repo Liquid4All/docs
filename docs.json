@@ -90,7 +90,8 @@
               "lfm/fine-tuning/leap-finetune",
               "lfm/fine-tuning/datasets",
               "lfm/fine-tuning/trl",
-              "lfm/fine-tuning/unsloth"
+              "lfm/fine-tuning/unsloth",
+              "lfm/fine-tuning/halo"
             ]
           },
           {
