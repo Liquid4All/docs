@@ -1,6 +1,6 @@
 ---
 title: "Text Models"
-description: "Liquid's LFM text models range from 350M to 8B parameters, delivering ultra-low-latency generation while matching the performance of much larger models. They come in both dense and MoE variants to deploy flexibly across different devices."
+description: "Liquid's LFM text models range from 230M to 24B parameters, delivering ultra-low-latency generation while matching the performance of much larger models. They come in both dense and MoE variants to deploy flexibly across different devices."
 icon: "comment"
 ---
 
@@ -56,6 +56,12 @@ icon: "comment"
   Dense model trained for agentic workloads, with 128K context and native tool calling for on-device agents.
 </Card>
 
+<Card title="LFM2.5-24B-A2B" href="/lfm/models/lfm25-24b-a2b">
+  24B · 2B active · <Badge shape="pill" color="blue">MoE</Badge>
+
+  Our largest reasoning model, with 131K context, built for fast, private agents on-device.
+</Card>
+
 <Card title="LFM2.5-8B-A1B" href="/lfm/models/lfm25-8b-a1b">
   8B · 1.5B active · <Badge shape="pill" color="blue">MoE</Badge>
 
@@ -78,13 +84,7 @@ icon: "comment"
 
 ## LFM2 Models
 
-<CardGroup cols={3}>
-
-<Card title="LFM2-24B-A2B" href="/lfm/models/lfm2-24b-a2b">
-  24B · 2B active · <Badge shape="pill" color="blue">MoE</Badge>
-
-  Our largest model for laptops and single-GPU applications.
-</Card>
+<CardGroup cols={2}>
 
 <Card title="LFM2-700M" href="/lfm/models/lfm2-700m">
   700M

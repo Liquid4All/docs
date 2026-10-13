@@ -182,6 +182,7 @@ active:
   - /lfm/models/lfm25-1.2b-thinking
   - /lfm/models/lfm25-2.6b
   - /lfm/models/lfm25-230m
+  - /lfm/models/lfm25-24b-a2b
   - /lfm/models/lfm25-350m
   - /lfm/models/lfm25-8b-a1b
   - /lfm/models/lfm25-audio-1.5b
