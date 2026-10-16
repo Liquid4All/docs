@@ -148,7 +148,11 @@ Every inference example must use the correct sampling params from the upstream H
 | LFM2.5-2.6B | 0.1 | 50 | — | — | 1.1 |
 | LFM2.5-8B-A1B | 0.2 | 80 | — | — | 1.05 |
 | LFM2.5-24B-A2B, LFM2-24B-A2B | 0.1 | 50 | — | — | 1.05 |
-| LFM2 text + LFM2.5-1.2B-JP (deprecated) | 0.3 | — | — | 0.15 | 1.05 |
+| General-purpose LFM2 text + LFM2.5-1.2B-JP (deprecated) | 0.3 | — | — | 0.15 | 1.05 |
+| LFM2-350M-ENJP-MT | 0.5 | — | 1.0 | 0.1 | 1.05 |
+| LFM2-350M-Math | 0.6 | — | 0.95 | 0.1 | 1.05 |
+| LFM2 Extract, RAG, and PII Extract models | 0 (greedy) | — | — | — | — |
+| LFM2-2.6B-Transcript | 0.3 | — | — | — | — |
 | LFM2.5-VL-3B | 0.2 | 50 | — | — | 1.0 |
 | Other VL models (LFM2.5-VL-1.6B, LFM2.5-VL-450M, LFM2-VL) | 0.1 | — | — | 0.15 | 1.05 |
 

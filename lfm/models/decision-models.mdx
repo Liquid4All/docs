@@ -69,14 +69,9 @@ Decision models are a new class of AI model purpose-built for structured decisio
 
 ## Pricing
 
-The hosted models are billed on input tokens only. Output is free because decision models do not generate tokens.
+The hosted models are billed on input tokens only. Output is free because decision models do not generate tokens. Each question is billed as its own prompt, including its text and all images. See [Image Token Usage](/lfm/models/d1#image-token-usage) for how images are counted.
 
-| Model | Input | Output |
-|---|---|---|
-| `d1-ultra` | \$0.042 / 1M tokens | \$0 |
-| `d1` | \$0.02 / 1M tokens | \$0 |
-
-The price is the same on the [Liquid Console](https://console.liquid.ai), [OpenRouter](https://openrouter.ai/liquid/d1), and [Vercel AI Gateway](https://vercel.com/ai-gateway/models/d1). Each question is billed as its own prompt, including its text and all images. New organizations on the Liquid Console get $2 in free credit. See [Image Token Usage](/lfm/models/d1#image-token-usage) for how images are counted and the [Liquid AI pricing page](https://www.liquid.ai/pricing) for current prices.
+The models are available through the [Liquid Console](https://console.liquid.ai), [OpenRouter](https://openrouter.ai/liquid/d1), and [Vercel AI Gateway](https://vercel.com/ai-gateway/models/d1). See the [Liquid AI pricing page](https://www.liquid.ai/pricing) for current prices and available credits.
 
 d1-3B and d1-omni-600M are open-weight models under the [LFM Open License](/lfm/help/model-license) and free to run on your own hardware.
 

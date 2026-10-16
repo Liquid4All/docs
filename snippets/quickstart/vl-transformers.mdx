@@ -40,7 +40,8 @@ inputs = processor.apply_chat_template(
 ).to(model.device)
 
 outputs = model.generate(**inputs, do_sample=True, ${samplingArgs}, max_new_tokens=256)
-response = processor.batch_decode(outputs, skip_special_tokens=True)[0]
+input_length = inputs["input_ids"].shape[1]
+response = processor.batch_decode(outputs[:, input_length:], skip_special_tokens=True)[0]
 print(response)`}
 </CodeBlock>
 </div>
