@@ -356,6 +356,19 @@ hf download LiquidAI/LFM2-VL-1.6B-GGUF mmproj-LFM2-VL-1.6B-Q8_0.gguf --local-dir
 For a complete working example with step-by-step instructions, see the [llama.cpp Vision Model Colab notebook](https://colab.research.google.com/drive/1q2PjE6O_AahakRlkTNJGYL32MsdUcj7b?usp=sharing).
 </Info>
 
+## Speculative Decoding
+
+Some LFM2.5 models have DSpark draft models that make generation faster without changing the output. In llama.cpp, the drafter is a GGUF sidecar that you load next to the target with `-hfd` (or `-md` for a local file):
+
+```bash
+llama-server -hf LiquidAI/LFM2.5-1.2B-Instruct-GGUF:F16 \
+  -hfd LiquidAI/LFM2.5-1.2B-Instruct-DSpark-GGUF:F16 \
+  --spec-type draft-dspark --spec-draft-n-max 10 --spec-draft-n-min 0 \
+  -ngl 99 -ngld 99 -fa on --port 8080
+```
+
+The sidecar cannot run on its own. Speedups are largest with a 16-bit target. Each response's `timings` report `draft_n` and `draft_n_accepted`. See [Speculative Decoding](/lfm/key-concepts/speculative-decoding) for which models have drafters.
+
 ## Converting Custom Models
 
 If you have a finetuned model or need to create a GGUF from a Hugging Face model:

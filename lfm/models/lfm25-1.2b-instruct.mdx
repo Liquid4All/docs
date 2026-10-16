@@ -7,6 +7,8 @@ import { TextTransformers } from "/snippets/quickstart/text-transformers.mdx";
 import { TextVllm } from "/snippets/quickstart/text-vllm.mdx";
 import { TextSglang } from "/snippets/quickstart/text-sglang.mdx";
 import { TextLlamacpp } from "/snippets/quickstart/text-llamacpp.mdx";
+import { DsparkSglang } from "/snippets/quickstart/dspark-sglang.mdx";
+import { DsparkLlamacpp } from "/snippets/quickstart/dspark-llamacpp.mdx";
 
 <a href="/lfm/models/text-models" className="back-button">← Back to Text Models</a>
 
@@ -65,4 +67,11 @@ LFM2.5-1.2B-Instruct is Liquid AI's general-purpose instruction-tuned model for 
 
 ## Speculative Decoding
 
-[LFM2.5-1.2B-Instruct-DSpark](https://huggingface.co/LiquidAI/LFM2.5-1.2B-Instruct-DSpark) is a 296M draft model for speculative decoding with LFM2.5-1.2B-Instruct. The target model verifies every drafted token, so outputs are identical to running LFM2.5-1.2B-Instruct alone. Decoding runs about 2.1x faster in SGLang and about 2.5x faster on Apple silicon. Use it with SGLang (requires DSpark support for LFM2 targets, [PR #31041](https://github.com/sgl-project/sglang/pull/31041)) or with llama.cpp through [LFM2.5-1.2B-Instruct-DSpark-GGUF](https://huggingface.co/LiquidAI/LFM2.5-1.2B-Instruct-DSpark-GGUF), a draft sidecar that must be paired with an [LFM2.5-1.2B-Instruct-GGUF](https://huggingface.co/LiquidAI/LFM2.5-1.2B-Instruct-GGUF) target. See the model cards for launch commands.
+<Tabs>
+  <Tab title="SGLang">
+    <DsparkSglang modelId="LiquidAI/LFM2.5-1.2B-Instruct" draftModelId="LiquidAI/LFM2.5-1.2B-Instruct-DSpark" samplingParams={'temperature=0.1,\n    extra_body={"top_k": 50, "repetition_penalty": 1.05},'}></DsparkSglang>
+  </Tab>
+  <Tab title="llama.cpp">
+    <DsparkLlamacpp ggufRepo="LiquidAI/LFM2.5-1.2B-Instruct-GGUF" draftRepo="LiquidAI/LFM2.5-1.2B-Instruct-DSpark-GGUF" samplingFlags="--temp 0.1 --top-k 50 --repeat-penalty 1.05"></DsparkLlamacpp>
+  </Tab>
+</Tabs>

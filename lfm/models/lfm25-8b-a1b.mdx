@@ -7,6 +7,8 @@ import { TextTransformers } from "/snippets/quickstart/text-transformers.mdx";
 import { TextVllm } from "/snippets/quickstart/text-vllm.mdx";
 import { TextSglang } from "/snippets/quickstart/text-sglang.mdx";
 import { TextLlamacpp } from "/snippets/quickstart/text-llamacpp.mdx";
+import { DsparkSglang } from "/snippets/quickstart/dspark-sglang.mdx";
+import { DsparkLlamacpp } from "/snippets/quickstart/dspark-llamacpp.mdx";
 
 <a href="/lfm/models/text-models" className="back-button">← Back to Text Models</a>
 
@@ -104,4 +106,11 @@ LFM2.5-8B-A1B is Liquid AI's Mixture-of-Experts reasoning model, combining 8B to
 
 ## Speculative Decoding
 
-[LFM2.5-8B-A1B-DSpark](https://huggingface.co/LiquidAI/LFM2.5-8B-A1B-DSpark) is a 328M draft model for speculative decoding with LFM2.5-8B-A1B. The target model verifies every drafted token, so outputs are identical to running LFM2.5-8B-A1B alone, and decoding runs about 2.5x faster in SGLang. Use it with SGLang (requires DSpark support for LFM2-MoE targets, [PR #31041](https://github.com/sgl-project/sglang/pull/31041)) or with llama.cpp through [LFM2.5-8B-A1B-DSpark-GGUF](https://huggingface.co/LiquidAI/LFM2.5-8B-A1B-DSpark-GGUF), a draft sidecar that must be paired with an [LFM2.5-8B-A1B-GGUF](https://huggingface.co/LiquidAI/LFM2.5-8B-A1B-GGUF) target. See the model cards for launch commands.
+<Tabs>
+  <Tab title="SGLang">
+    <DsparkSglang modelId="LiquidAI/LFM2.5-8B-A1B" draftModelId="LiquidAI/LFM2.5-8B-A1B-DSpark" samplingParams={'temperature=0.2,\n    extra_body={"top_k": 80, "repetition_penalty": 1.05},'}></DsparkSglang>
+  </Tab>
+  <Tab title="llama.cpp">
+    <DsparkLlamacpp ggufRepo="LiquidAI/LFM2.5-8B-A1B-GGUF" draftRepo="LiquidAI/LFM2.5-8B-A1B-DSpark-GGUF" samplingFlags="--temp 0.2 --top-k 80 --repeat-penalty 1.05"></DsparkLlamacpp>
+  </Tab>
+</Tabs>
