@@ -277,7 +277,7 @@ Generate 500 examples distributed across the benchmark taxonomy (requires `OPENA
 uv run python benchmark/datasets/generate.py --count 500 --output benchmark/datasets/sft_data.jsonl
 ```
 
-Then convert the dataset to the LFM2 text format and push it to HuggingFace so Modal can pull it during training:
+Then convert the dataset to the LFM2 text format and push it to Hugging Face so Modal can pull it during training:
 
 ```bash
 uv run --group finetune python finetune/prepare_data.py \
@@ -295,7 +295,7 @@ sequenceDiagram
     participant Local as Local machine
     participant Modal as Modal (H100)
     participant Volume as Modal Volume
-    participant HF as HuggingFace Hub
+    participant HF as Hugging Face Hub
 
     Local->>Modal: submit training job (liquid-finetune config.yaml)
     Modal->>Modal: SFT + LoRA on H100
@@ -309,7 +309,7 @@ sequenceDiagram
 
 ### Steps
 
-**1. One-time setup.** Clone and install `liquid-finetune`, then authenticate with HuggingFace and Modal.
+**1. One-time setup.** Clone and install `liquid-finetune`, then authenticate with Hugging Face and Modal.
 
 ```bash
 git clone https://github.com/Liquid4All/liquid-finetune
@@ -332,7 +332,7 @@ cd liquid-finetune
 uv run modal volume get liquid-finetune /outputs/home-assistant-350M ../finetune/output/350M-lora
 ```
 
-**4. Export.** Merges the LoRA adapter into the base model, converts to GGUF, and pushes to HuggingFace.
+**4. Export.** Merges the LoRA adapter into the base model, converts to GGUF, and pushes to Hugging Face.
 
 ```bash
 uv run --group export python finetune/export.py \
@@ -387,7 +387,7 @@ uv run uvicorn app.server:app --port 5173 --reload
 open http://localhost:5173
 ```
 
-**3.** Select **LFM2-350M fine-tuned Q8_0** from the model dropdown. The app downloads the model from HuggingFace and starts `llama-server` automatically.
+**3.** Select **LFM2-350M fine-tuned Q8_0** from the model dropdown. The app downloads the model from Hugging Face and starts `llama-server` automatically.
 
 If you pushed your own fine-tuned model in Step 4, register it by adding an entry to `LOCAL_MODELS` in `app/server.py`:
 
