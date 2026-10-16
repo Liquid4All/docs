@@ -10,6 +10,7 @@ LFM2.5-Embedding-350M is a dense bi-encoder retrieval model that produces one 10
 <div style={{display: 'flex', gap: '0.5rem', margin: '0.5rem 0 1.5rem 0'}}>
   <a href="https://huggingface.co/LiquidAI/LFM2.5-Embedding-350M" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#fbbf24'}}><span style={{color: '#000'}}>HF</span></a>
   <a href="https://huggingface.co/LiquidAI/LFM2.5-Embedding-350M-GGUF" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#60a5fa'}}><span style={{color: '#000'}}>GGUF</span></a>
+  <a href="https://huggingface.co/mlx-community/LFM2.5-Embedding-350M-8bit" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#c4b5fd'}}><span style={{color: '#000'}}>MLX</span></a>
 </div>
 
 <Note>
@@ -47,11 +48,15 @@ Use LFM2.5-Embedding-350M when you need a small, fast vector index or compatibil
 
 ## Quick Start
 
+<Warning>
+The model was trained with asymmetric prefixes: `query: ` for queries and `document: ` for passages. In sentence-transformers, pass `prompt_name="query"` or `prompt_name="document"`. With other runtimes, add the prefix to the text yourself. Omitting them degrades retrieval quality.
+</Warning>
+
 <Tabs>
   <Tab title="sentence-transformers">
     **Install:**
     ```bash
-    pip install -U sentence-transformers
+    pip install -U sentence-transformers "transformers<5.12"
     ```
 
     **Encode queries and documents:**
@@ -90,12 +95,40 @@ Use LFM2.5-Embedding-350M when you need a small, fast vector index or compatibil
   </Tab>
 
   <Tab title="GGUF">
-    **Download GGUF:**
+    **Start llama-server:**
     ```bash
-    hf download LiquidAI/LFM2.5-Embedding-350M-GGUF \
-      --local-dir ./LFM2.5-Embedding-350M-GGUF
+    llama-server -hf LiquidAI/LFM2.5-Embedding-350M-GGUF --embeddings
     ```
 
-    Use the GGUF files with a llama.cpp build that supports LFM2.5 embedding models.
+    **Embed and rank** (in a separate shell, with the server running):
+    ```bash
+    pip install numpy requests
+    ```
+
+    ```python
+    import numpy as np, requests
+
+    QUERY_PREFIX, DOC_PREFIX = "query: ", "document: "
+
+    def embed(text: str) -> np.ndarray:
+        r = requests.post(
+            "http://localhost:8080/v1/embeddings",
+            json={"input": text},
+        )
+        v = np.array(r.json()["data"][0]["embedding"])
+        return v / np.linalg.norm(v)
+
+    docs = [
+        "hi",
+        "it is a bear",
+        "The giant panda (Ailuropoda melanoleuca), sometimes called a panda bear or simply panda, is a bear species endemic to China.",
+    ]
+    query = "What is panda?"
+
+    q = embed(QUERY_PREFIX + query)
+    for doc in docs:
+        d = embed(DOC_PREFIX + doc)
+        print(f"Score: {float(q @ d):.4f} | Q: {query} | D: {doc}")
+    ```
   </Tab>
 </Tabs>
