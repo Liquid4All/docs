@@ -13,11 +13,11 @@ Migrate when the LLM's output is a **bounded decision**, meaning the set of poss
 
 | Task | LLM pattern | Primitive |
 |---|---|---|
-| [Classification](#classification) | Structured output with enum or JSON schema | [Choice](/lfm/models/decision-models#choice) |
-| [Routing](#routing) | Prompt that picks from a list | [Choice](/lfm/models/decision-models#choice) |
-| [Binary decision](#binary-decision) | Prompt that returns true/false | [Noul](/lfm/models/decision-models#noul) |
-| [Scoring](#scoring) | Prompt that returns a number or rating | [Score](/lfm/models/decision-models#score) |
-| [Reranking](#reranking) | LLM scores or filters search results | [Noul](/lfm/models/decision-models#noul) or [Score](/lfm/models/decision-models#score) |
+| [Classification](#classification) | Structured output with enum or JSON schema | [Choice](/lfm/models/d1#choice) |
+| [Routing](#routing) | Prompt that picks from a list | [Choice](/lfm/models/d1#choice) |
+| [Binary decision](#binary-decision) | Prompt that returns true/false | [Noul](/lfm/models/d1#noul) |
+| [Scoring](#scoring) | Prompt that returns a number or rating | [Score](/lfm/models/d1#score) |
+| [Reranking](#reranking) | LLM scores or filters search results | [Noul](/lfm/models/d1#noul) or [Score](/lfm/models/d1#score) |
 | [Multiple decisions](#multi-question) | Several classification calls on the same input | Any combination, in one call |
 
 Keep your LLM when the task requires **generating new content**:
@@ -40,7 +40,7 @@ If the answer is one of N known options, use a decision model. If the answer is 
 
 ## Setup
 
-Install the relevant SDK and configure your client. The LLM examples use the OpenAI SDK, which works with any OpenAI-compatible endpoint. The decision model examples use the [TypeSafe SDK](https://pypi.org/project/typesafe-sdk/) to call the [d1 decision model](/lfm/models/decision-models) through the Liquid AI API.  To get an API key, see [Decision Models: Setup](/lfm/models/decision-models#setup).
+Install the relevant SDK and configure your client. The LLM examples use the OpenAI SDK, which works with any OpenAI-compatible endpoint. The decision model examples use the [TypeSafe SDK](https://pypi.org/project/typesafe-sdk/) to call the [d1 decision model](/lfm/models/decision-models) through the Liquid AI API.  To get an API key, see [d1: Setup](/lfm/models/d1#setup).
 
 For larger migrations, you can hand your coding agent Liquid's decision-model skill before it audits the codebase:
 
@@ -448,7 +448,7 @@ In retrieval-augmented generation (RAG) pipelines, a common pattern uses an LLM 
 - Each relevance score is a calibrated probability, not an arbitrary integer on a 1-5 scale.
 - You can threshold directly (keep everything above 0.5) instead of guessing where to draw the line on integer scores.
 - Each call is faster and cheaper, which compounds across large result sets.
-- If you need graded relevance instead of relevant/not relevant, use a [Score](/lfm/models/decision-models#score) with defined relevance levels.
+- If you need graded relevance instead of relevant/not relevant, use a [Score](/lfm/models/d1#score) with defined relevance levels.
 
 ### Multi-Question
 
@@ -559,5 +559,5 @@ LLM pipelines often chain multiple classification calls sequentially, one per de
 
 ## Next Steps
 
-- [Decision Models](/lfm/models/decision-models) for the API reference, primitives, and full code examples
+- [d1](/lfm/models/d1) for the API reference, primitives, and full code examples
 - [Model Library](/lfm/models/complete-library) for all available Liquid AI models

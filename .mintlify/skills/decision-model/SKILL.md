@@ -30,14 +30,14 @@ export LIQUID_API_KEY="liquid_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
 Requests require a Liquid AI API key and HTTPS access to this decision endpoint:
 
 ```text
-POST https://console.liquid.ai/decisions/v1/systemone
+POST https://api.liquid.ai/decisions/v1/systemone
 ```
 
 ## Request Shape
 
 A decision model call contains:
 
-- `model`: the decision model to use, such as `d1`.
+- `model`: the decision model to use: `d1` (default, lower cost) or `d1-ultra` (most capable, for harder decisions). Both accept text and images and use the same request and response format.
 - `state`: the context to evaluate, supplied as plain text or a JSON object.
 - `questions`: one or more typed questions, each with a name, a `type`, and `instructions`.
 
@@ -219,6 +219,7 @@ import { TypeSafeClient } from "@typesafe-ai/sdk";
 const client = new TypeSafeClient({
   apiKey: process.env.LIQUID_API_KEY!,
   baseURL: "https://api.liquid.ai",
+  compression: false, // the API doesn't accept zstd-compressed request bodies
 });
 
 const result = await client.systemOne({
@@ -258,5 +259,6 @@ console.log(result.answers.urgency.score);        // 1.2
 
 ## References
 
-- [Decision Models](https://docs.liquid.ai/lfm/models/decision-models): primitives, setup, API examples, and response fields
+- [Decision Models](https://docs.liquid.ai/lfm/models/decision-models): overview, model comparison, primitives, and pricing
+- [d1](https://docs.liquid.ai/lfm/models/d1): setup, API examples, image inputs, and response fields
 - [Decision Model Guide](https://docs.liquid.ai/guides/decision-model-guide): migration examples from LLM calls to d1

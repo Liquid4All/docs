@@ -58,6 +58,28 @@ Decision models are a new class of AI model purpose-built for structured decisio
 
 </CardGroup>
 
+## Which d1 Should I Use?
+
+| Model | Access | Inputs | Use it when |
+|---|---|---|---|
+| [d1-ultra](/lfm/models/d1#models) | Liquid API, OpenRouter, Vercel AI Gateway | Text, images | You need the most capable decision model, for harder decisions. |
+| [d1](/lfm/models/d1) | Liquid API, OpenRouter, Vercel AI Gateway | Text, images | You want a hosted model at a lower price than d1-ultra. |
+| [d1-3B](/lfm/models/d1-3b) | Open weights (3.1B) | Text, images | You want to run locally or on your own hardware, or fine-tune the model. |
+| [d1-omni-600M](/lfm/models/d1-omni-600m) | Open weights (587M) | Text with images or audio | You need the smallest model, or audio input (up to 30 s of speech). |
+
+## Pricing
+
+The hosted models are billed on input tokens only. Output is free because decision models do not generate tokens.
+
+| Model | Input | Output |
+|---|---|---|
+| `d1-ultra` | \$0.042 / 1M tokens | \$0 |
+| `d1` | \$0.02 / 1M tokens | \$0 |
+
+The price is the same on the [Liquid Console](https://console.liquid.ai), [OpenRouter](https://openrouter.ai/liquid/d1), and [Vercel AI Gateway](https://vercel.com/ai-gateway/models/d1). Each question is billed as its own prompt, including its text and all images. New organizations on the Liquid Console get $2 in free credit. See [Image Token Usage](/lfm/models/d1#image-token-usage) for how images are counted and the [Liquid AI pricing page](https://www.liquid.ai/pricing) for current prices.
+
+d1-3B and d1-omni-600M are open-weight models under the [LFM Open License](/lfm/help/model-license) and free to run on your own hardware.
+
 ## Primitives
 
 Every question you ask a decision model uses one of three types:
@@ -96,6 +118,7 @@ To move existing LLM calls to a decision model, see the [Decision Model Guide](/
 
 <Panel>
   - [Liquid Console](https://console.liquid.ai)
-  - [OpenRouter API](https://openrouter.ai/liquid)
-  - [Vercel AI Gateway](https://vercel.com/ai-gateway/models/d1)
+  - [Pricing](https://www.liquid.ai/pricing)
+  - OpenRouter: [d1](https://openrouter.ai/liquid/d1), [d1-ultra](https://openrouter.ai/liquid/d1-ultra)
+  - Vercel AI Gateway: [d1](https://vercel.com/ai-gateway/models/d1), [d1-ultra](https://vercel.com/ai-gateway/models/d1-ultra)
 </Panel>
