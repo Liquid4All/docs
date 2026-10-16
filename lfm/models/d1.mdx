@@ -9,6 +9,17 @@ The d1 cloud API provides hosted access to the d1 decision model through the Liq
 
 For an overview of decision model primitives and when to use them, see [Decision Models](/lfm/models/decision-models).
 
+## Models
+
+Pick the hosted model with the `model` field. Every model uses the same endpoint, question types, and response format.
+
+| Model | Inputs | Description |
+| ----- | ----- | ----- |
+| `d1-ultra` | Text, images | Most capable decision model, built on a larger open-weight model with Liquid-specific customizations. |
+| `d1` | Text, images | Default hosted decision model. |
+
+The examples below use `d1`. Replace it with `d1-ultra` for harder decisions.
+
 ## Setup
 
 1. Go to [console.liquid.ai](https://console.liquid.ai). If you don't have an account yet, register and join an organization.
@@ -653,7 +664,7 @@ if team_confidence < 0.5:
 Send images to the decision model through the same `/decisions/v1/systemone` endpoint used for text decisions. Add an `images` array alongside `model`, `state`, and `questions`. The question types and response format stay the same.
 
 <Note>
-Vision is available through the Liquid API with the paid `d1` model. `d1:free` is text-only.
+Vision is available through the Liquid API with the `d1` and `d1-ultra` models.
 </Note>
 
 Each image can be a Base64 data URL or an object with `content_type` and `base64` fields. Remote image URLs are not accepted. If an image is hosted online, download it and encode its contents before sending the request.
@@ -894,7 +905,7 @@ All questions in a request receive all images. The order of the images matters. 
 Base64 encoding increases the request size compared with the original files. Resize or compress images before encoding them if the request is too large, and use the media type that matches each file.
 
 <Note>
-If a request returns ``The model `d1:free` does not accept images.``, use `d1`. If the same error names `d1`, image input is not available for that model on the endpoint you called.
+If a request returns an error saying the model does not accept images, image input is not available for that model on the endpoint you called. Use `d1` or `d1-ultra`.
 </Note>
 
 ### Image Token Usage

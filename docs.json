@@ -87,7 +87,7 @@
             "icon": "sliders",
             "pages": [
               "lfm/fine-tuning/overview",
-              "lfm/fine-tuning/leap-finetune",
+              "lfm/fine-tuning/liquid-finetune",
               "lfm/fine-tuning/datasets",
               "lfm/fine-tuning/trl",
               "lfm/fine-tuning/unsloth"
@@ -255,7 +255,7 @@
     },
     {
       "source": "/customization/finetuning-frameworks/leap-finetune",
-      "destination": "/lfm/fine-tuning/leap-finetune"
+      "destination": "/lfm/fine-tuning/liquid-finetune"
     },
     {
       "source": "/customization/finetuning-frameworks/datasets",
@@ -283,7 +283,11 @@
     },
     {
       "source": "/docs/fine-tuning/leap-finetune",
-      "destination": "/lfm/fine-tuning/leap-finetune"
+      "destination": "/lfm/fine-tuning/liquid-finetune"
+    },
+    {
+      "source": "/lfm/fine-tuning/leap-finetune",
+      "destination": "/lfm/fine-tuning/liquid-finetune"
     },
     {
       "source": "/deployment/getting-started/welcome",

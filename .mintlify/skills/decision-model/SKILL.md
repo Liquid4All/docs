@@ -37,7 +37,7 @@ POST https://console.liquid.ai/decisions/v1/systemone
 
 A decision model call contains:
 
-- `model`: the decision model to use, such as `d1:free`.
+- `model`: the decision model to use, such as `d1`.
 - `state`: the context to evaluate, supplied as plain text or a JSON object.
 - `questions`: one or more typed questions, each with a name, a `type`, and `instructions`.
 
@@ -86,7 +86,7 @@ curl -s https://api.liquid.ai/decisions/v1/systemone \
   -H "Authorization: Bearer $LIQUID_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
-    "model": "d1:free",
+    "model": "d1",
     "state": "I was charged twice for my subscription last month. Please refund the duplicate charge today.",
     "questions": {
       "route": {
@@ -119,7 +119,7 @@ Example response:
 
 ```json
 {
-  "model": "d1:free",
+  "model": "d1",
   "answers": {
     "route": {
       "type": "choice",
@@ -176,7 +176,7 @@ client = TypeSafeClient(
 )
 
 result = client.system_one(
-    model="d1:free",
+    model="d1",
     state="I was charged twice for my subscription last month.",
     questions={
         "route": Choice(
@@ -222,7 +222,7 @@ const client = new TypeSafeClient({
 });
 
 const result = await client.systemOne({
-  model: "d1:free",
+  model: "d1",
   state: "I was charged twice for my subscription last month.",
   questions: {
     route: {
