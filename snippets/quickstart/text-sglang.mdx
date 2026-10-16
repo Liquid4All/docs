@@ -1,4 +1,4 @@
-export const TextSglang = ({ modelId, toolCallParser, samplingParams }) => (
+export const TextSglang = ({ modelId, toolCallParser, reasoningParser, samplingParams }) => (
 <div>
 <p><strong>Install:</strong></p>
 <CodeBlock language="bash">
@@ -6,16 +6,10 @@ export const TextSglang = ({ modelId, toolCallParser, samplingParams }) => (
 </CodeBlock>
 <p><strong>Launch server:</strong></p>
 <CodeBlock language="bash">
-{toolCallParser
-  ? `sglang serve \\
+{`sglang serve \\
     --model-path ${modelId} \\
     --host 0.0.0.0 \\
-    --port 30000 \\
-    --tool-call-parser ${toolCallParser}`
-  : `sglang serve \\
-    --model-path ${modelId} \\
-    --host 0.0.0.0 \\
-    --port 30000`}
+    --port 30000${reasoningParser ? ` \\\n    --reasoning-parser ${reasoningParser}` : ""}${toolCallParser ? ` \\\n    --tool-call-parser ${toolCallParser}` : ""}`}
 </CodeBlock>
 <p><strong>Query (OpenAI-compatible):</strong></p>
 <CodeBlock language="python">
