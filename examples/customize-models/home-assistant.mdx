@@ -329,7 +329,7 @@ uv run liquid-finetune ../finetune/configs/LFM2-350M.yaml
 
 ```bash
 cd liquid-finetune
-uv run modal volume get leap-finetune /outputs/home-assistant-350M ../finetune/output/350M-lora
+uv run modal volume get liquid-finetune /outputs/home-assistant-350M ../finetune/output/350M-lora
 ```
 
 **4. Export.** Merges the LoRA adapter into the base model, converts to GGUF, and pushes to HuggingFace.
