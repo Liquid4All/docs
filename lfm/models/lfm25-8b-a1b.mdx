@@ -10,13 +10,14 @@ import { TextLlamacpp } from "/snippets/quickstart/text-llamacpp.mdx";
 
 <a href="/lfm/models/text-models" className="back-button">← Back to Text Models</a>
 
-LFM2.5-8B-A1B is Liquid AI's Mixture-of-Experts model, combining 8B total parameters with only 1.5B active parameters per forward pass with a 128K context window and chain of thought reasoning. This model delivers exceptional performance in tool calling and agentic tasks while running on-device.
+LFM2.5-8B-A1B is Liquid AI's Mixture-of-Experts reasoning model, combining 8B total parameters with only 1.5B active parameters per forward pass and a 128K context window. Assistant turns contain an explicit chain of thought before the final answer. It is designed for tool calling, instruction following, and agentic tasks on-device.
 
 <div style={{display: 'flex', gap: '0.5rem', margin: '0.5rem 0 1.5rem 0'}}>
   <a href="https://huggingface.co/LiquidAI/LFM2.5-8B-A1B" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#fbbf24'}}><span style={{color: '#000'}}>HF</span></a>
   <a href="https://huggingface.co/LiquidAI/LFM2.5-8B-A1B-GGUF" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#60a5fa'}}><span style={{color: '#000'}}>GGUF</span></a>
   <a href="https://huggingface.co/LiquidAI/LFM2.5-8B-A1B-MLX-8bit" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#c4b5fd'}}><span style={{color: '#000'}}>MLX</span></a>
   <a href="https://huggingface.co/LiquidAI/LFM2.5-8B-A1B-ONNX" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#86efac'}}><span style={{color: '#000'}}>ONNX</span></a>
+  <a href="https://huggingface.co/LiquidAI/LFM2.5-8B-A1B-DSpark" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#f9a8d4'}}><span style={{color: '#000'}}>DSpark</span></a>
 </div>
 
 ## Specifications
@@ -49,7 +50,13 @@ LFM2.5-8B-A1B is Liquid AI's Mixture-of-Experts model, combining 8B total parame
 
 <Tabs>
   <Tab title="Transformers">
-    Quick start with Transformers (compatible with `transformers>=5.0.0`):
+    Install:
+
+    ```bash
+    pip install "transformers>=5.0.0" torch accelerate
+    ```
+
+    Run:
 
     ```python
     from transformers import AutoModelForCausalLM, AutoTokenizer, TextStreamer
@@ -71,7 +78,7 @@ LFM2.5-8B-A1B is Liquid AI's Mixture-of-Experts model, combining 8B total parame
         add_generation_prompt=True,
         return_tensors="pt",
         tokenize=True,
-    ).to(model.device)
+    )["input_ids"].to(model.device)
 
     output = model.generate(
         input_ids,
@@ -91,6 +98,10 @@ LFM2.5-8B-A1B is Liquid AI's Mixture-of-Experts model, combining 8B total parame
     <TextVllm modelId="LiquidAI/LFM2.5-8B-A1B" samplingParams="temperature=0.2, top_k=80, repetition_penalty=1.05, " maxTokens="8192"></TextVllm>
   </Tab>
   <Tab title="SGLang">
-    <TextSglang modelId="LiquidAI/LFM2.5-8B-A1B" toolCallParser="lfm2" samplingParams={'temperature=0.2,\n    extra_body={"top_k": 80, "repetition_penalty": 1.05},'}></TextSglang>
+    <TextSglang modelId="LiquidAI/LFM2.5-8B-A1B" reasoningParser="qwen3" toolCallParser="lfm2" samplingParams={'temperature=0.2,\n    extra_body={"top_k": 80, "repetition_penalty": 1.05},'}></TextSglang>
   </Tab>
 </Tabs>
+
+## Speculative Decoding
+
+[LFM2.5-8B-A1B-DSpark](https://huggingface.co/LiquidAI/LFM2.5-8B-A1B-DSpark) is a 328M draft model for speculative decoding with LFM2.5-8B-A1B. The target model verifies every drafted token, so outputs are identical to running LFM2.5-8B-A1B alone, and decoding runs about 2.5x faster in SGLang. Use it with SGLang (requires DSpark support for LFM2-MoE targets, [PR #31041](https://github.com/sgl-project/sglang/pull/31041)) or with llama.cpp through [LFM2.5-8B-A1B-DSpark-GGUF](https://huggingface.co/LiquidAI/LFM2.5-8B-A1B-DSpark-GGUF), a draft sidecar that must be paired with an [LFM2.5-8B-A1B-GGUF](https://huggingface.co/LiquidAI/LFM2.5-8B-A1B-GGUF) target. See the model cards for launch commands.

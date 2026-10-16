@@ -58,6 +58,6 @@ LFM2.5-230M is Liquid AI's smallest LFM2.5 text model, designed for edge devices
     <TextVllm modelId="LiquidAI/LFM2.5-230M" samplingParams="temperature=0.1, top_k=50, repetition_penalty=1.05, "></TextVllm>
   </Tab>
   <Tab title="SGLang">
-    <TextSglang modelId="LiquidAI/LFM2.5-230M" toolCallParser="lfm2"></TextSglang>
+    <TextSglang modelId="LiquidAI/LFM2.5-230M" toolCallParser="lfm2" samplingParams={'temperature=0.1,\n    extra_body={"top_k": 50, "repetition_penalty": 1.05},'}></TextSglang>
   </Tab>
 </Tabs>

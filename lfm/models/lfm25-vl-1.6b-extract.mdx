@@ -43,15 +43,33 @@ LFM2.5-VL-1.6B-Extract extracts user-defined fields from images and returns stru
 ## Prompting Recipe
 
 <Warning>
-Use greedy decoding for best results. This model is intended for single-image, single-turn extraction.
+Use greedy decoding (`temperature=0`) for best results. This model is intended for single-image, single-turn extraction.
 </Warning>
 
-Describe the fields to extract as YAML in the system prompt, then provide the image as the user message.
+Describe the fields to extract as a YAML field list in the system prompt, then provide the image as the user message. The model returns a flat JSON object with those fields.
 
 ```yaml
 wood_color: The overall coloration of the wood surface
 wood_texture: The tactile quality of the wood surface
 wood_pattern: The pattern types visible on the wood surface
+```
+
+The model card's Transformers example wraps the field list in this system prompt:
+
+```
+Extract the following from the image:
+
+{fields_yaml}
+
+Respond with only a JSON object. Do not include any text outside the JSON.
+```
+
+**Enum fields:** list the allowed values in the field description, and the model returns one of them.
+
+```yaml
+wood_color: The overall coloration of the wood surface, such as blue, red, or light tan
+wood_texture: The tactile quality of the wood surface, select from smooth, rough, or grainy
+wood_pattern: The pattern types visible on the wood surface, e.g., straight, wavy, or curly
 ```
 
 ## Quick Start
@@ -60,7 +78,7 @@ wood_pattern: The pattern types visible on the wood surface
   <Tab title="Transformers">
     **Install:**
     ```bash
-    pip install "transformers>=5.1.0" pillow torch accelerate
+    pip install "transformers>=5.7.0" pillow torch torchvision accelerate
     ```
 
     **Run:**
@@ -111,13 +129,19 @@ wood_pattern: The pattern types visible on the wood surface
   </Tab>
 
   <Tab title="llama.cpp">
-    **Run GGUF:**
+    **Run with llama-cli** (fields go in the prompt, as shown on the GGUF model card):
     ```bash
-    llama-server -hf LiquidAI/LFM2.5-VL-1.6B-Extract-GGUF:Q4_K_M
+    curl -L -o image.png \
+      https://huggingface.co/LiquidAI/LFM2.5-VL-1.6B-Extract/resolve/main/sample_image.png
 
     llama-cli -hf LiquidAI/LFM2.5-VL-1.6B-Extract-GGUF:F16 \
-      -p "wood_color: The overall coloration of the wood surface" \
-      --image ./image.jpg
+      -p $'wood_color: The overall coloration of the wood surface\nwood_texture: The tactile quality of the wood surface\nwood_pattern: The pattern types visible on the wood surface' \
+      --image ./image.png
+    ```
+
+    **Serve with llama-server:**
+    ```bash
+    llama-server -hf LiquidAI/LFM2.5-VL-1.6B-Extract-GGUF:Q4_0
     ```
   </Tab>
 </Tabs>

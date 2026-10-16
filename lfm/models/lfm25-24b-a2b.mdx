@@ -9,7 +9,7 @@ import { TextSglang } from "/snippets/quickstart/text-sglang.mdx";
 
 <a href="/lfm/models/text-models" className="back-button">← Back to Text Models</a>
 
-LFM2.5-24B-A2B is Liquid AI's largest Mixture-of-Experts model, combining 24B total parameters with only 2B active parameters per token and a 131K context window. It is a reasoning model that always thinks before it answers, post-trained for tool calling and multi-step agentic tasks on-device.
+LFM2.5-24B-A2B is the largest LFM2.5 model, a Mixture-of-Experts model combining 24B total parameters with only 2B active parameters per token and a 131K context window. It is a reasoning model that always thinks before it answers, post-trained for tool calling and multi-step agentic tasks on-device.
 
 <div style={{display: 'flex', gap: '0.5rem', margin: '0.5rem 0 1.5rem 0'}}>
   <a href="https://huggingface.co/LiquidAI/LFM2.5-24B-A2B" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#fbbf24'}}><span style={{color: '#000'}}>HF</span></a>
@@ -17,6 +17,7 @@ LFM2.5-24B-A2B is Liquid AI's largest Mixture-of-Experts model, combining 24B to
   <a href="https://huggingface.co/LiquidAI/LFM2.5-24B-A2B-GGUF" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#60a5fa'}}><span style={{color: '#000'}}>GGUF</span></a>
   <a href="https://huggingface.co/LiquidAI/LFM2.5-24B-A2B-MLX-8bit" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#c4b5fd'}}><span style={{color: '#000'}}>MLX</span></a>
   <a href="https://huggingface.co/LiquidAI/LFM2.5-24B-A2B-ONNX" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#86efac'}}><span style={{color: '#000'}}>ONNX</span></a>
+  <a href="https://huggingface.co/LiquidAI/LFM2.5-24B-A2B-FP8" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#fca5a5'}}><span style={{color: '#000'}}>FP8</span></a>
 </div>
 
 ## Specifications
@@ -52,7 +53,13 @@ LFM2.5-24B-A2B is Liquid AI's largest Mixture-of-Experts model, combining 24B to
 
 <Tabs>
   <Tab title="Transformers">
-    Quick start with Transformers (compatible with `transformers>=5.0.0`):
+    Install:
+
+    ```bash
+    pip install "transformers>=5.0.0" torch accelerate
+    ```
+
+    Run:
 
     ```python
     from transformers import AutoModelForCausalLM, AutoTokenizer, TextStreamer
@@ -82,7 +89,7 @@ LFM2.5-24B-A2B is Liquid AI's largest Mixture-of-Experts model, combining 24B to
         temperature=0.1,
         top_k=50,
         repetition_penalty=1.05,
-        max_new_tokens=512,
+        max_new_tokens=4096,
         streamer=streamer,
     )
     ```
@@ -129,10 +136,14 @@ LFM2.5-24B-A2B is Liquid AI's largest Mixture-of-Experts model, combining 24B to
     <TextVllm modelId="LiquidAI/LFM2.5-24B-A2B" samplingParams="temperature=0.1, top_k=50, repetition_penalty=1.05, " maxTokens="4096"></TextVllm>
   </Tab>
   <Tab title="SGLang">
-    <TextSglang modelId="LiquidAI/LFM2.5-24B-A2B" toolCallParser="lfm2" samplingParams={'temperature=0.1,\n    extra_body={"top_k": 50, "repetition_penalty": 1.05},'}></TextSglang>
+    <TextSglang modelId="LiquidAI/LFM2.5-24B-A2B" reasoningParser="qwen3-thinking" toolCallParser="lfm2" samplingParams={'temperature=0.1,\n    extra_body={"top_k": 50, "repetition_penalty": 1.05},'}></TextSglang>
   </Tab>
 </Tabs>
 
 ## Reasoning
 
 Unlike LFM2-24B-A2B, LFM2.5-24B-A2B always thinks before it answers. The chat template opens every assistant turn with a `<think>` tag, so responses contain an explicit chain of thought before the final answer. Leave enough room in your max token budget for the reasoning trace. See [Chat Template](/lfm/key-concepts/chat-template) and [Tool Use](/lfm/key-concepts/tool-use) for the message format.
+
+## FP8 Checkpoint
+
+[LFM2.5-24B-A2B-FP8](https://huggingface.co/LiquidAI/LFM2.5-24B-A2B-FP8) is an FP8 version of LFM2.5-24B-A2B for high-throughput GPU serving with vLLM and SGLang at lower memory usage. Linear weights are quantized to FP8 with 128×128 blocks and dynamic activation quantization; the embedding, MoE routing gates, and convolution weights stay in their original precision. To use it, replace the model ID in the vLLM or SGLang examples above with `LiquidAI/LFM2.5-24B-A2B-FP8`.

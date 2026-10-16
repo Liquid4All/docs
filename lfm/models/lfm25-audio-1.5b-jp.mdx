@@ -16,10 +16,11 @@ LFM2.5-Audio-1.5B-JP is the Japanese-focused variant of LFM2.5-Audio-1.5B. It us
 
 | Property | Value |
 |----------|-------|
-| Parameters | 1.5B (1.2B LM + 115M audio encoder) |
+| Parameters | 1.5B (1.2B LM + 115M audio encoder + 185M RQ-transformer for audio output) |
 | Context Length | 32K tokens |
 | Audio Output | 24kHz |
 | Supported Language | Japanese |
+| License | [LFM Open License v1.0](/lfm/help/model-license) |
 
 <div className="use-cases">
 <CardGroup cols={3}>
@@ -45,10 +46,12 @@ LFM2.5-Audio-1.5B-JP is the Japanese-focused variant of LFM2.5-Audio-1.5B. It us
   <Tab title="liquid-audio">
     **Install:**
     ```bash
-    pip install liquid-audio
+    pip install liquid-audio torchcodec
     pip install "liquid-audio[demo]"  # optional, for demo dependencies
     pip install flash-attn --no-build-isolation  # optional, for flash attention 2
     ```
+
+    `torchaudio` loads audio files through `torchcodec`, which needs FFmpeg installed on the system (for example `brew install ffmpeg` or `apt install ffmpeg`).
 
     **Multi-Turn Chat:**
     ```python

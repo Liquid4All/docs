@@ -1,0 +1,65 @@
+---
+title: "LFM2.5-1.2B-JP-202606"
+description: "1.2B parameter Japanese chat model for Japanese and English assistants, tool use, and structured outputs"
+---
+
+import { TextTransformers } from "/snippets/quickstart/text-transformers.mdx";
+import { TextVllm } from "/snippets/quickstart/text-vllm.mdx";
+import { TextSglang } from "/snippets/quickstart/text-sglang.mdx";
+import { TextLlamacpp } from "/snippets/quickstart/text-llamacpp.mdx";
+
+<a href="/lfm/models/text-models" className="back-button">← Back to Text Models</a>
+
+LFM2.5-1.2B-JP-202606 is Liquid AI's general-purpose Japanese chat model. It improves on [LFM2.5-1.2B-JP](/lfm/models/lfm25-1.2b-jp) in knowledge, instruction following, math, code, and tool use. It is recommended for agentic workflows, tool use, structured outputs, bilingual English-Japanese assistants, and on-device personal assistants. It is not recommended for knowledge-intensive tasks, and it works best with clear, explicit instructions that define the task, expected behavior, and output format.
+
+<div style={{display: 'flex', gap: '0.5rem', margin: '0.5rem 0 1.5rem 0'}}>
+  <a href="https://huggingface.co/LiquidAI/LFM2.5-1.2B-JP-202606" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#fbbf24'}}><span style={{color: '#000'}}>HF</span></a>
+  <a href="https://huggingface.co/LiquidAI/LFM2.5-1.2B-JP-202606-GGUF" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#60a5fa'}}><span style={{color: '#000'}}>GGUF</span></a>
+  <a href="https://huggingface.co/LiquidAI/LFM2.5-1.2B-JP-202606-MLX-8bit" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#c4b5fd'}}><span style={{color: '#000'}}>MLX</span></a>
+  <a href="https://huggingface.co/LiquidAI/LFM2.5-1.2B-JP-202606-ONNX" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#86efac'}}><span style={{color: '#000'}}>ONNX</span></a>
+</div>
+
+## Specifications
+
+| Property | Value |
+|----------|-------|
+| Parameters | 1.2B |
+| Context Length | 32K tokens |
+| Architecture | LFM2.5 (Dense) |
+| Languages | Japanese, English |
+| Generation Parameters | `temperature=0.1`, `top_k=50`, `repetition_penalty=1.05` |
+
+<div className="use-cases">
+<CardGroup cols={3}>
+
+<Card title="Japanese Chat" icon="language">
+  Japanese and English assistants
+</Card>
+
+<Card title="Tool Calling" icon="wrench">
+  Native function calling support
+</Card>
+
+<Card title="Fine-tunable" icon="sliders">
+  TRL compatible (SFT, DPO, GRPO)
+</Card>
+
+</CardGroup>
+</div>
+
+## Quick Start
+
+<Tabs>
+  <Tab title="Transformers">
+    <TextTransformers modelId="LiquidAI/LFM2.5-1.2B-JP-202606" samplingParams="do_sample=True, temperature=0.1, top_k=50, repetition_penalty=1.05, "></TextTransformers>
+  </Tab>
+  <Tab title="llama.cpp">
+    <TextLlamacpp ggufRepo="LiquidAI/LFM2.5-1.2B-JP-202606-GGUF" samplingFlags="--temp 0.1 --top-k 50 --repeat-penalty 1.05"></TextLlamacpp>
+  </Tab>
+  <Tab title="vLLM">
+    <TextVllm modelId="LiquidAI/LFM2.5-1.2B-JP-202606" samplingParams="temperature=0.1, top_k=50, repetition_penalty=1.05, "></TextVllm>
+  </Tab>
+  <Tab title="SGLang">
+    <TextSglang modelId="LiquidAI/LFM2.5-1.2B-JP-202606" toolCallParser="lfm2" samplingParams={'temperature=0.1,\n    extra_body={"top_k": 50, "repetition_penalty": 1.05},'}></TextSglang>
+  </Tab>
+</Tabs>

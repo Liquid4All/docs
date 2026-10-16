@@ -180,6 +180,7 @@ active:
   - /lfm/models/lfm2-vl-450m
   - /lfm/models/lfm25-1.2b-instruct
   - /lfm/models/lfm25-1.2b-jp
+  - /lfm/models/lfm25-1.2b-jp-202606
   - /lfm/models/lfm25-1.2b-thinking
   - /lfm/models/lfm25-2.6b
   - /lfm/models/lfm25-230m
