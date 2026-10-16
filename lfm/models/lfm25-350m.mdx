@@ -10,7 +10,7 @@ import { TextLlamacpp } from "/snippets/quickstart/text-llamacpp.mdx";
 
 <a href="/lfm/models/text-models" className="back-button">← Back to Text Models</a>
 
-LFM2.5-350M is Liquid AI's smallest LFM2.5 text model, designed for edge devices with strict memory and compute constraints. Built on the LFM2.5 architecture with extended pre-training and reinforcement learning, it delivers improved chat, instruction-following, and tool-calling performance over LFM2-350M while keeping the same compact footprint.
+LFM2.5-350M is a compact LFM2.5 text model designed for edge devices with strict memory and compute constraints. It runs in under 1 GB of memory. Built on the LFM2.5 architecture with extended pre-training and reinforcement learning, it delivers improved chat, instruction-following, and tool-calling performance over LFM2-350M while keeping the same compact footprint. For the smallest footprint, see [LFM2.5-230M](/lfm/models/lfm25-230m).
 
 <div style={{display: 'flex', gap: '0.5rem', margin: '0.5rem 0 1.5rem 0'}}>
   <a href="https://huggingface.co/LiquidAI/LFM2.5-350M" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#fbbf24'}}><span style={{color: '#000'}}>HF</span></a>
@@ -58,6 +58,6 @@ LFM2.5-350M is Liquid AI's smallest LFM2.5 text model, designed for edge devices
     <TextVllm modelId="LiquidAI/LFM2.5-350M" samplingParams="temperature=0.1, top_k=50, repetition_penalty=1.05, "></TextVllm>
   </Tab>
   <Tab title="SGLang">
-    <TextSglang modelId="LiquidAI/LFM2.5-350M" toolCallParser="lfm2"></TextSglang>
+    <TextSglang modelId="LiquidAI/LFM2.5-350M" toolCallParser="lfm2" samplingParams={'temperature=0.1,\n    extra_body={"top_k": 50, "repetition_penalty": 1.05},'}></TextSglang>
   </Tab>
 </Tabs>
