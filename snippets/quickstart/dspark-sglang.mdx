@@ -1,0 +1,53 @@
+export const DsparkSglang = ({ modelId, draftModelId, vision = false, samplingParams }) => (
+<div>
+<p><strong>Install:</strong></p>
+{vision ? (
+<p>Requires <a href="https://github.com/sgl-project/sglang/releases/tag/v0.5.19">SGLang v0.5.19</a> or newer.</p>
+) : (
+<p>Requires a build of SGLang with DSpark support for LFM2 and LFM2-MoE targets (<a href="https://github.com/sgl-project/sglang/pull/31041">PR #31041</a>).</p>
+)}
+<p><strong>Launch server with the drafter attached:</strong></p>
+<CodeBlock language="bash">
+{`python -m sglang.launch_server \\
+    --model-path ${modelId} \\
+    --speculative-algorithm DSPARK \\
+    --speculative-draft-model-path ${draftModelId} \\
+    --speculative-draft-attention-backend flashinfer \\${vision ? `
+    --speculative-dspark-block-size 9 \\` : ""}
+    --disable-radix-cache --mem-fraction-static ${vision ? "0.8" : "0.75"} --port 30000`}
+</CodeBlock>
+<p><strong>Query (OpenAI-compatible):</strong></p>
+<CodeBlock language="python">
+{`from openai import OpenAI
+
+client = OpenAI(base_url="http://localhost:30000/v1", api_key="None")
+
+response = client.chat.completions.create(
+    model="${modelId}",
+    messages=[${vision ? `{
+        "role": "user",
+        "content": [
+            {"type": "image_url", "image_url": {"url": "http://images.cocodataset.org/val2017/000000039769.jpg"}},
+            {"type": "text", "text": "Describe what you see in this image."},
+        ],
+    }` : `{"role": "user", "content": "What is machine learning?"}`}],
+    ${samplingParams}
+)
+
+print(response.choices[0].message.content)`}
+</CodeBlock>
+<p><strong>Flags:</strong></p>
+<ul>
+<li><code>--speculative-algorithm DSPARK</code>: turns on DSpark speculative decoding.</li>
+<li><code>--speculative-draft-model-path</code>: the drafter repo on Hugging Face, or a local path.</li>
+<li><code>--speculative-draft-attention-backend flashinfer</code>: the attention backend the drafter runs on.</li>
+{vision ? (
+<li><code>--speculative-dspark-block-size</code>: how many tokens the drafter proposes per step. Use 9, the block size the drafter was trained with.</li>
+) : (
+<li>Block size: read from the drafter's <code>config.json</code>, so you don't need to set it.</li>
+)}
+<li><code>--disable-radix-cache</code>: turns off SGLang's prefix cache, as in the drafter's model card.</li>
+<li><code>--mem-fraction-static</code>: the share of GPU memory SGLang reserves for weights and the KV cache.</li>
+</ul>
+</div>
+);
