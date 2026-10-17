@@ -64,3 +64,18 @@ print(response.choices[0].message.content)
 ## Sampling parameters
 
 LFM2.5 uses per-model sampling presets. The [cookbook's configuration tips](https://docs.sglang.ai/cookbook/autoregressive/LiquidAI/LFM2.5#2-configuration-tips) list the exact values per checkpoint. Pass them on every request, since some checkpoints ship no defaults in `generation_config.json` and the server won't apply them for you. Put `top_k`, `min_p`, and `repetition_penalty` in `extra_body`, and leave `max_tokens` unset unless you mean to cap output.
+
+## Speculative decoding
+
+Some LFM2.5 models have DSpark draft models that make generation faster without changing the output. Attach the drafter when you launch the server:
+
+```bash
+python -m sglang.launch_server \
+  --model-path LiquidAI/LFM2.5-1.2B-Instruct \
+  --speculative-algorithm DSPARK \
+  --speculative-draft-model-path LiquidAI/LFM2.5-1.2B-Instruct-DSpark \
+  --speculative-draft-attention-backend flashinfer \
+  --disable-radix-cache --mem-fraction-static 0.75 --port 30000
+```
+
+Text drafters need a build of SGLang with DSpark support ([PR #31041](https://github.com/sgl-project/sglang/pull/31041)), and vision drafters need SGLang v0.5.19 or newer. Requests are the same as without a drafter. See [Speculative Decoding](/lfm/key-concepts/speculative-decoding) for which models have drafters.

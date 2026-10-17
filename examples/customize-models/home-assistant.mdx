@@ -1,5 +1,6 @@
 ---
 title: "Fine-tuning LFM for a local Home Assistant"
+description: "End-to-end guide to fine-tuning and deploying a local home assistant with Liquid AI LFM models, covering prototyping, synthetic data, and tool calling."
 ---
 
 <Card title="View Source Code" icon="github" href="https://github.com/Liquid4All/cookbook/tree/main/examples/home-assistant">
@@ -276,7 +277,7 @@ Generate 500 examples distributed across the benchmark taxonomy (requires `OPENA
 uv run python benchmark/datasets/generate.py --count 500 --output benchmark/datasets/sft_data.jsonl
 ```
 
-Then convert the dataset to the LFM2 text format and push it to HuggingFace so Modal can pull it during training:
+Then convert the dataset to the LFM2 text format and push it to Hugging Face so Modal can pull it during training:
 
 ```bash
 uv run --group finetune python finetune/prepare_data.py \
@@ -287,16 +288,16 @@ uv run --group finetune python finetune/prepare_data.py \
 
 Fine-tuning adapts the base model to our specific task. We use LoRA (Low-Rank Adaptation), which injects a small set of trainable weight matrices on top of the frozen base model. This keeps GPU memory usage low and training fast while still producing meaningful accuracy gains.
 
-Training runs on [Modal](https://modal.com) (a serverless GPU cloud) via [leap-finetune](https://github.com/Liquid4All/leap-finetune), Liquid AI's open source fine-tuning tool.
+Training runs on [Modal](https://modal.com) (a serverless GPU cloud) via [liquid-finetune](https://github.com/Liquid4All/liquid-finetune), Liquid AI's open source fine-tuning tool.
 
 ```mermaid
 sequenceDiagram
     participant Local as Local machine
     participant Modal as Modal (H100)
     participant Volume as Modal Volume
-    participant HF as HuggingFace Hub
+    participant HF as Hugging Face Hub
 
-    Local->>Modal: submit training job (leap-finetune config.yaml)
+    Local->>Modal: submit training job (liquid-finetune config.yaml)
     Modal->>Modal: SFT + LoRA on H100
     Modal->>Volume: save checkpoint
     Local->>Volume: modal volume get
@@ -308,11 +309,11 @@ sequenceDiagram
 
 ### Steps
 
-**1. One-time setup.** Clone and install `leap-finetune`, then authenticate with HuggingFace and Modal.
+**1. One-time setup.** Clone and install `liquid-finetune`, then authenticate with Hugging Face and Modal.
 
 ```bash
-git clone https://github.com/Liquid4All/leap-finetune
-cd leap-finetune && uv sync && cd -
+git clone https://github.com/Liquid4All/liquid-finetune
+cd liquid-finetune && uv sync && cd -
 huggingface-cli login
 modal setup
 ```
@@ -320,18 +321,18 @@ modal setup
 **2. Kick off training on Modal.** Runs 5 epochs of LoRA SFT on an H100. Takes a few minutes and costs roughly $1.50.
 
 ```bash
-cd leap-finetune
-uv run leap-finetune ../finetune/configs/LFM2-350M.yaml
+cd liquid-finetune
+uv run liquid-finetune ../finetune/configs/LFM2-350M.yaml
 ```
 
 **3. Download the checkpoint** from the Modal Volume once training finishes.
 
 ```bash
-cd leap-finetune
-uv run modal volume get leap-finetune /outputs/home-assistant-350M ../finetune/output/350M-lora
+cd liquid-finetune
+uv run modal volume get liquid-finetune /outputs/home-assistant-350M ../finetune/output/350M-lora
 ```
 
-**4. Export.** Merges the LoRA adapter into the base model, converts to GGUF, and pushes to HuggingFace.
+**4. Export.** Merges the LoRA adapter into the base model, converts to GGUF, and pushes to Hugging Face.
 
 ```bash
 uv run --group export python finetune/export.py \
@@ -386,7 +387,7 @@ uv run uvicorn app.server:app --port 5173 --reload
 open http://localhost:5173
 ```
 
-**3.** Select **LFM2-350M fine-tuned Q8_0** from the model dropdown. The app downloads the model from HuggingFace and starts `llama-server` automatically.
+**3.** Select **LFM2-350M fine-tuned Q8_0** from the model dropdown. The app downloads the model from Hugging Face and starts `llama-server` automatically.
 
 If you pushed your own fine-tuned model in Step 4, register it by adding an entry to `LOCAL_MODELS` in `app/server.py`:
 

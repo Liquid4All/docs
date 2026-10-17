@@ -1,4 +1,4 @@
-export const VlSglang = ({ modelId, samplingArgs = "temperature=0.0" }) => (
+export const VlSglang = ({ modelId, samplingArgs = 'temperature=0.1, extra_body={"min_p": 0.15, "repetition_penalty": 1.05}' }) => (
 <div>
 <p><strong>Install:</strong></p>
 <CodeBlock language="bash">

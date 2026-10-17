@@ -1,6 +1,6 @@
 ---
 title: "MLX"
-description: "MLX is Apple's machine learning framework optimized for Apple Silicon. It provides efficient inference on Mac devices with M-series chips (M1, M2, M3, M4) using Metal acceleration for GPU computing."
+description: "Run Liquid AI LFM models on Apple Silicon with MLX. Setup, model downloads, and Metal-accelerated inference on M-series chips."
 ---
 
 <Tip>
@@ -192,3 +192,20 @@ LFM2-VL models support both text and image inputs for multimodal inference. Use 
   print(output)
   ```
 </Accordion>
+
+## Speculative Decoding
+
+Some LFM2.5 vision models have DSpark draft models that make generation faster without changing the output. Pass the drafter to MLX-VLM (v0.7.2 or newer) with `--draft-model`:
+
+```bash
+python -m mlx_vlm.generate \
+  --model LiquidAI/LFM2.5-VL-3B \
+  --draft-model LiquidAI/LFM2.5-VL-3B-DSpark \
+  --draft-block-size 8 \
+  --image /path/to/image.jpg \
+  --prompt "Describe this image." \
+  --max-tokens 256 \
+  --temperature 0
+```
+
+DSpark in MLX-VLM currently supports greedy sampling only, so keep `--temperature 0`. See [Speculative Decoding](/lfm/key-concepts/speculative-decoding) for which models have drafters.

@@ -1,0 +1,25 @@
+export const DsparkMlxVlm = ({ modelId, draftModelId }) => (
+<div>
+<p><strong>Install:</strong></p>
+<CodeBlock language="bash">
+{`pip install "mlx-vlm>=0.7.2"`}
+</CodeBlock>
+<p><strong>Run with the drafter:</strong></p>
+<CodeBlock language="bash">
+{`python -m mlx_vlm.generate \\
+    --model ${modelId} \\
+    --draft-model ${draftModelId} \\
+    --draft-block-size 8 \\
+    --image /path/to/image.jpg \\
+    --prompt "Describe this image." \\
+    --max-tokens 256 \\
+    --temperature 0`}
+</CodeBlock>
+<p><strong>Flags:</strong></p>
+<ul>
+<li><code>--draft-model</code>: the drafter repo on Hugging Face. MLX-VLM detects that it is a DSpark drafter.</li>
+<li><code>--draft-block-size</code>: how many tokens the drafter proposes per step. Use 8 on Apple silicon.</li>
+<li><code>--temperature 0</code>: DSpark in MLX-VLM currently supports greedy sampling only.</li>
+</ul>
+</div>
+);

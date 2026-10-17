@@ -30,6 +30,10 @@ LFM2-1.2B-Tool was optimized for efficient and precise tool calling. It has been
 
 For tool calling, use LFM2.5-1.2B-Instruct instead:
 
+```bash
+pip install "transformers>=5.2.0" torch accelerate
+```
+
 ```python
 from transformers import AutoTokenizer, AutoModelForCausalLM
 
