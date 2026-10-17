@@ -9,7 +9,7 @@ description: "Build a fully local home assistant that calls tools, from benchmar
 
 A step by step guide on building a home assistant system powered entirely by a local LFM model. Every stage of the journey is covered, from a first working prototype to a fine-tuned model for tool calling running fully on your own hardware.
 
-![Local home assistant demo: a voice request triggers a tool call that switches on a smart light](/images/examples/customize-models/home-assistant/Demo.gif)
+![Local home assistant demo: a typed command asks the LFM2.5 assistant to switch on the living room light](/images/examples/customize-models/home-assistant/Demo.gif)
 
 ## This is what you will learn
 
@@ -186,9 +186,9 @@ sequenceDiagram
 
 Play with the UI using one of the local models and you will quickly notice it sometimes works and sometimes it doesn't.
 
-![Home assistant happy path: the local model emits a correct tool call and the device responds](/images/examples/customize-models/home-assistant/happy_path.gif)
+![Home assistant success case: asked to switch off the living room light, the model calls the tool and confirms the light is off](/images/examples/customize-models/home-assistant/happy_path.gif)
 
-![Home assistant failure case: the local model emits a malformed tool call and the device does not respond](/images/examples/customize-models/home-assistant/unhappy_path.gif)
+![Home assistant failure case: asked to turn on all lights, the model sets the movie night scene instead and wrongly reports every light is on](/images/examples/customize-models/home-assistant/unhappy_path.gif)
 
 That is fine for a proof of concept. But the full power of small language models only comes out when you fine-tune them. Before you fine-tune, though, you need to know where you stand. You need to measure.
 

@@ -9,7 +9,7 @@ description: "Fine-tune LFM2-VL to identify car makers from photos, covering str
 
 A step by step guide on fine tuning a Vision Language Model for image identification tasks. The task we solve in this example is to identify the car maker from an image, but the learnings transfer to any other image classification task you might be interested in.
 
-![Car maker identification task: a car photo in, the manufacturer name out](/images/examples/customize-models/assets/images/task-01484227e78d02da63eeb840de314523.png)
+![Car maker classification: a car photo and the question about its maker go into a vision language model, which answers Audi](/images/examples/customize-models/assets/images/task-01484227e78d02da63eeb840de314523.png)
 
 ## This is what you will learn[​](#this-is-what-you-will-learn "Direct link to This is what you will learn")
 
@@ -308,7 +308,7 @@ Structured generation is a technique that allows us to “force” the Language 
   Structured generation techniques "intervene" at each step of the decoding process, by masking tokens that are not compatible with the structured output we want to generate.
 </Note>
 
-![Structured generation masks tokens incompatible with the target output schema at each decoding step](/images/examples/customize-models/assets/images/structured_generation-7f71325a54f868284e9b80abf22f1a8b.webp)
+![Token-by-token decoding of a JSON class prediction, illustrating how structured generation constrains each step](/images/examples/customize-models/assets/images/structured_generation-7f71325a54f868284e9b80abf22f1a8b.webp)
 
 For structured generation in Python apps we recommend the [Outlines](https://github.com/dottxt-ai/outlines) library because it is easy to use, robust and well-documented.
 
@@ -369,7 +369,7 @@ At this point you need to decide if the performance is good enough for your use 
 
 To fine-tune the model, we will use the LoRA technique. LoRA is a parameter-efficient fine-tuning technique that allows us to fine-tune the model by adding and tuning a small number of parameters.
 
-![LoRA parameter-efficient fine-tuning: frozen base weights with small trainable adapter matrices](/images/examples/customize-models/assets/images/lora-a398107b31f6809c153dc5da650dfea8.webp)
+![Weight updates in regular fine-tuning versus LoRA, which replaces the full update with two small matrices A and B](/images/examples/customize-models/assets/images/lora-a398107b31f6809c153dc5da650dfea8.webp)
 
 You can fine-tune each of the 3 LFM2-VL models with LoRA as follows:
 
