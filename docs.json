@@ -50,8 +50,8 @@
         "href": "https://discord.gg/DFU3WQeaYD"
       },
       {
+        "type": "github",
         "label": "Cookbook",
-        "icon": "github",
         "href": "https://github.com/Liquid4All/cookbook"
       }
     ],
