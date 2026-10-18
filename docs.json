@@ -48,11 +48,17 @@
         "label": "Discord",
         "icon": "discord",
         "href": "https://discord.gg/DFU3WQeaYD"
+      },
+      {
+        "label": "Cookbook",
+        "icon": "github",
+        "href": "https://github.com/Liquid4All/cookbook"
       }
     ],
     "primary": {
-      "type": "github",
-      "href": "https://github.com/Liquid4All/cookbook"
+      "type": "button",
+      "label": "Try our API",
+      "href": "https://console.liquid.ai/?utm_source=docs&utm_medium=navbar&utm_campaign=try_our_api"
     }
   },
   "navigation": {
