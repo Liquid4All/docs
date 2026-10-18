@@ -8,7 +8,7 @@
   "appearance": {
     "default": "light"
   },
-  "name": "Liquid Docs",
+  "name": "Liquid AI Docs",
   "description": "Documentation for Liquid AI Foundation Models (LFM)",
   "seo": {
     "organization": {
@@ -45,10 +45,6 @@
       "cursor",
       "vscode"
     ]
-  },
-  "metadata": {
-    "og:site_name": "Liquid AI Docs",
-    "twitter:card": "summary"
   },
   "favicon": "/favicon.svg",
   "logo": {
