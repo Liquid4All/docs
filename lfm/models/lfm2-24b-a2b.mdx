@@ -1,6 +1,6 @@
 ---
 title: "LFM2-24B-A2B"
-description: "24B parameter Mixture-of-Experts model with 2B active parameters, our largest model for laptops and single-GPU applications"
+description: "24B parameter Mixture-of-Experts model with 2B active parameters (deprecated - use LFM2.5-24B-A2B instead)"
 ---
 
 import { TextTransformers } from "/snippets/quickstart/text-transformers.mdx";
@@ -9,7 +9,11 @@ import { TextLlamacpp } from "/snippets/quickstart/text-llamacpp.mdx";
 
 <a href="/lfm/models/text-models" className="back-button">← Back to Text Models</a>
 
-LFM2-24B-A2B is Liquid AI's largest Mixture-of-Experts model, combining 24B total parameters with only 2B active parameters per forward pass. This delivers the quality of much larger models with the efficiency needed for laptops and single-GPU deployments.
+<Warning>
+This model is deprecated. Use [LFM2.5-24B-A2B](/lfm/models/lfm25-24b-a2b) for improved performance.
+</Warning>
+
+LFM2-24B-A2B was the largest model in the LFM2 series, a Mixture-of-Experts model combining 24B total parameters with only 2B active parameters per forward pass, built for laptops and single-GPU deployments. It has been superseded by LFM2.5-24B-A2B.
 
 <div style={{display: 'flex', gap: '0.5rem', margin: '0.5rem 0 1.5rem 0'}}>
   <a href="https://huggingface.co/LiquidAI/LFM2-24B-A2B" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#fbbf24'}}><span style={{color: '#000'}}>HF</span></a>

@@ -7,16 +7,19 @@ import { TextTransformers } from "/snippets/quickstart/text-transformers.mdx";
 import { TextVllm } from "/snippets/quickstart/text-vllm.mdx";
 import { TextSglang } from "/snippets/quickstart/text-sglang.mdx";
 import { TextLlamacpp } from "/snippets/quickstart/text-llamacpp.mdx";
+import { DsparkSglang } from "/snippets/quickstart/dspark-sglang.mdx";
+import { DsparkLlamacpp } from "/snippets/quickstart/dspark-llamacpp.mdx";
 
 <a href="/lfm/models/text-models" className="back-button">← Back to Text Models</a>
 
-LFM2.5-1.2B-Instruct is Liquid AI's flagship instruction-tuned model, delivering exceptional performance for chat, instruction-following, and tool-calling tasks. Built on the LFM2.5 architecture with extended pre-training and reinforcement learning.
+LFM2.5-1.2B-Instruct is Liquid AI's general-purpose instruction-tuned model for chat, instruction-following, and tool-calling tasks. Built on the LFM2.5 architecture with extended pre-training and reinforcement learning.
 
 <div style={{display: 'flex', gap: '0.5rem', margin: '0.5rem 0 1.5rem 0'}}>
   <a href="https://huggingface.co/LiquidAI/LFM2.5-1.2B-Instruct" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#fbbf24'}}><span style={{color: '#000'}}>HF</span></a>
   <a href="https://huggingface.co/LiquidAI/LFM2.5-1.2B-Instruct-GGUF" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#60a5fa'}}><span style={{color: '#000'}}>GGUF</span></a>
-  <a href="https://huggingface.co/mlx-community/LFM2.5-1.2B-Instruct-8bit" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#c4b5fd'}}><span style={{color: '#000'}}>MLX</span></a>
+  <a href="https://huggingface.co/LiquidAI/LFM2.5-1.2B-Instruct-MLX-8bit" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#c4b5fd'}}><span style={{color: '#000'}}>MLX</span></a>
   <a href="https://huggingface.co/LiquidAI/LFM2.5-1.2B-Instruct-ONNX" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#86efac'}}><span style={{color: '#000'}}>ONNX</span></a>
+  <a href="https://huggingface.co/LiquidAI/LFM2.5-1.2B-Instruct-DSpark" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#f9a8d4'}}><span style={{color: '#000'}}>DSpark</span></a>
 </div>
 
 ## Specifications
@@ -58,6 +61,17 @@ LFM2.5-1.2B-Instruct is Liquid AI's flagship instruction-tuned model, delivering
     <TextVllm modelId="LiquidAI/LFM2.5-1.2B-Instruct" samplingParams="temperature=0.1, top_k=50, repetition_penalty=1.05, "></TextVllm>
   </Tab>
   <Tab title="SGLang">
-    <TextSglang modelId="LiquidAI/LFM2.5-1.2B-Instruct" toolCallParser="lfm2"></TextSglang>
+    <TextSglang modelId="LiquidAI/LFM2.5-1.2B-Instruct" toolCallParser="lfm2" samplingParams={'temperature=0.1,\n    extra_body={"top_k": 50, "repetition_penalty": 1.05},'}></TextSglang>
+  </Tab>
+</Tabs>
+
+## Speculative Decoding
+
+<Tabs>
+  <Tab title="SGLang">
+    <DsparkSglang modelId="LiquidAI/LFM2.5-1.2B-Instruct" draftModelId="LiquidAI/LFM2.5-1.2B-Instruct-DSpark" samplingParams={'temperature=0.1,\n    extra_body={"top_k": 50, "repetition_penalty": 1.05},'}></DsparkSglang>
+  </Tab>
+  <Tab title="llama.cpp">
+    <DsparkLlamacpp ggufRepo="LiquidAI/LFM2.5-1.2B-Instruct-GGUF" draftRepo="LiquidAI/LFM2.5-1.2B-Instruct-DSpark-GGUF" samplingFlags="--temp 0.1 --top-k 50 --repeat-penalty 1.05"></DsparkLlamacpp>
   </Tab>
 </Tabs>

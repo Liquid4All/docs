@@ -8,11 +8,11 @@ icon: "headphones"
 <CardGroup cols={2}>
 
 <Card title="Text-to-Speech" icon="volume-high">
-  Natural speech synthesis with multiple voice styles and personalities.
+  Natural speech synthesis, with four built-in English voices (US and UK, male and female).
 </Card>
 
 <Card title="Speech Recognition" icon="ear-listen">
-  Multilingual automatic speech recognition and transcription.
+  English and Japanese speech recognition and transcription.
 </Card>
 
 <Card title="Audio-to-Audio" icon="waveform">
@@ -35,25 +35,13 @@ icon: "headphones"
 <Card title="LFM2.5-Audio-1.5B" href="/lfm/models/lfm25-audio-1.5b">
   1.5B · <Badge shape="pill" color="green">Recommended</Badge>
 
-  Best audio model for most use cases. Fast, accurate, and CPU-friendly.
+  English audio model for ASR, TTS, and interleaved voice chat. Runs on CPU with llama.cpp.
 </Card>
 
 <Card title="LFM2.5-Audio-1.5B-JP" href="/lfm/models/lfm25-audio-1.5b-jp">
   1.5B · <Badge shape="pill" color="blue">Japanese</Badge>
 
   Japanese-focused audio model for ASR, TTS, and interleaved voice chat.
-</Card>
-
-</CardGroup>
-
-## LFM2 Models
-
-<CardGroup cols={2}>
-
-<Card title="LFM2-Audio-1.5B" href="/lfm/models/lfm2-audio-1.5b">
-  1.5B · <Badge shape="pill" color="gray">Deprecated</Badge>
-
-  Use the new LFM2.5-Audio-1.5B checkpoint instead.
 </Card>
 
 </CardGroup>
@@ -65,9 +53,9 @@ Explore practical implementations using audio models:
 <CardGroup cols={2}>
 
 <Card title="Real-Time Audio Transcription CLI" href="/examples/laptop-examples/audio-to-text-in-real-time">
-  Transcribe audio files locally in real-time using LFM2-Audio-1.5B with llama.cpp for 100% private, on-device processing.
+  Transcribe audio files locally in real-time using LFM2.5-Audio-1.5B with llama.cpp for 100% private, on-device processing.
 
-  **Platform:** Desktop · **Uses:** LFM2-Audio-1.5B
+  **Platform:** Desktop · **Uses:** LFM2.5-Audio-1.5B
 </Card>
 
 <Card title="Browser Audio Demo with WebGPU" href="/examples/web/audio-webgpu-demo">
@@ -80,6 +68,6 @@ Explore practical implementations using audio models:
 
 <Panel>
   - [Liquid Playground](https://playground.liquid.ai/chat?model=cmk0wefde000204jp2knb2qr8)
-  - [HuggingFace Collections](https://huggingface.co/LiquidAI/collections)
+  - [Hugging Face Collections](https://huggingface.co/LiquidAI/collections)
   - [OpenRouter API](https://openrouter.ai/liquid)
 </Panel>

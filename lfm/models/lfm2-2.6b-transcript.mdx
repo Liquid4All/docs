@@ -10,7 +10,8 @@ LFM2-2.6B-Transcript is designed for private, on-device meeting summarization fr
 <div style={{display: 'flex', gap: '0.5rem', margin: '0.5rem 0 1.5rem 0'}}>
   <a href="https://huggingface.co/LiquidAI/LFM2-2.6B-Transcript" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#fbbf24'}}><span style={{color: '#000'}}>HF</span></a>
   <a href="https://huggingface.co/LiquidAI/LFM2-2.6B-Transcript-GGUF" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#60a5fa'}}><span style={{color: '#000'}}>GGUF</span></a>
-  <a href="https://huggingface.co/onnx-community/LFM2-2.6B-Transcript-ONNX" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#86efac'}}><span style={{color: '#000'}}>ONNX</span></a>
+  <a href="https://huggingface.co/LiquidAI/LFM2-2.6B-Transcript-ONNX" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#86efac'}}><span style={{color: '#000'}}>ONNX</span></a>
+  <a href="https://huggingface.co/mlx-community/LFM2-2.6B-Transcript-8bit" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#c4b5fd'}}><span style={{color: '#000'}}>MLX</span></a>
 </div>
 
 ## Specifications
@@ -43,43 +44,43 @@ LFM2-2.6B-Transcript is designed for private, on-device meeting summarization fr
 ## Prompting Recipe
 
 <Warning>
-Use `temperature=0.3` for optimal results. This model requires a specific transcript format.
+Use `temperature=0.3`. The model supports English only and is intended for single-turn conversations with the input format below.
 </Warning>
 
 **System Prompt:**
 
 ```
-You are an expert meeting analyst. Analyze the transcript carefully
-and provide clear, accurate information based on the content.
+You are an expert meeting analyst. Analyze the transcript carefully and provide clear, accurate information based on the content.
 ```
 
 **Input Format:**
 
 ```
-<summary_type>
+<user_prompt>
 
-Title: Meeting Title
-Date: Date
-Time: Time
-Duration: Duration
-Participants: Names (Roles)
-
+Title (example: Claims Processing training module)
+Date (example: July 2, 2021)
+Time (example: 1:00 PM)
+Duration (example: 45 minutes)
+Participants (example: Julie Franco (Training Facilitator), Amanda Newman (Subject Matter Expert))
 ----------
-
-**Speaker 1**: Message
-**Speaker 2**: Message
+**Speaker 1**: Message 1 (example: **Julie Franco**: Good morning, everyone. Thanks for joining me today.)
+**Speaker 2**: Message 2 (example: **Amanda Newman**: Good morning, Julie. Happy to be here.)
+etc.
 ```
 
-**Summary Types:**
+**Summary Types:** replace `<user_prompt>` with one of the following prompts.
 
 | Type | User Prompt |
 |------|-------------|
-| Executive summary | Provide a brief executive summary (2-3 sentences) of the key outcomes and decisions. |
-| Detailed summary | Provide a detailed summary covering all major topics, discussions, and outcomes. |
-| Action items | List the specific action items assigned during this meeting. |
-| Key decisions | List the key decisions that were made during this meeting. |
-| Participants | List the participants mentioned in this transcript. |
-| Topics discussed | List the main topics and subjects that were discussed. |
+| Executive summary | Provide a brief executive summary (2-3 sentences) of the key outcomes and decisions from this transcript. |
+| Detailed summary | Provide a detailed summary of the transcript, covering all major topics, discussions, and outcomes in paragraph form. |
+| Action items | List the specific action items that were assigned during this meeting. Include who is responsible for each item when mentioned. |
+| Key decisions | List the key decisions that were made during this meeting. Focus on concrete decisions and outcomes. |
+| Participants | List the participants mentioned in this transcript. Include their roles or titles when available. |
+| Topics discussed | List the main topics and subjects that were discussed in this meeting. |
+
+The prompt is freeform: you can combine several of these into a single request. The [model card](https://huggingface.co/LiquidAI/LFM2-2.6B-Transcript) links example meetings with model outputs.
 
 ## Quick Start
 
@@ -98,10 +99,9 @@ Participants: Names (Roles)
     tokenizer = AutoTokenizer.from_pretrained(model_id)
     model = AutoModelForCausalLM.from_pretrained(model_id, device_map="auto")
 
-    system_prompt = """You are an expert meeting analyst. Analyze the transcript carefully
-    and provide clear, accurate information based on the content."""
+    system_prompt = "You are an expert meeting analyst. Analyze the transcript carefully and provide clear, accurate information based on the content."
 
-    user_input = """Provide a brief executive summary (2-3 sentences) of the key outcomes and decisions.
+    user_input = """Provide a brief executive summary (2-3 sentences) of the key outcomes and decisions from this transcript.
 
     Title: Budget Planning Meeting
     Date: March 15, 2024
@@ -121,9 +121,9 @@ Participants: Names (Roles)
         {"role": "user", "content": user_input}
     ]
 
-    inputs = tokenizer.apply_chat_template(messages, return_tensors="pt", return_dict=True).to(model.device)
+    inputs = tokenizer.apply_chat_template(messages, add_generation_prompt=True, return_tensors="pt", return_dict=True).to(model.device)
     outputs = model.generate(**inputs, max_new_tokens=512, temperature=0.3, do_sample=True)
-    response = tokenizer.decode(outputs[0], skip_special_tokens=True)
+    response = tokenizer.decode(outputs[0][inputs["input_ids"].shape[-1]:], skip_special_tokens=True)
     print(response)
     ```
   </Tab>
@@ -135,10 +135,13 @@ Participants: Names (Roles)
       --local-dir ./LFM2-2.6B-Transcript-GGUF
     ```
 
-    **Run:**
+    **Run** (with an example transcript from the model card):
     ```bash
+    curl -L -o meeting_transcript.txt \
+      https://huggingface.co/LiquidAI/LFM2-2.6B-Transcript/resolve/main/examples/meeting1.txt
+
     llama-cli -m ./LFM2-2.6B-Transcript-GGUF/LFM2-2.6B-Transcript-Q4_K_M.gguf \
-      -sys "You are an expert meeting analyst." \
+      -sys "You are an expert meeting analyst. Analyze the transcript carefully and provide clear, accurate information based on the content." \
       -f meeting_transcript.txt \
       --temp 0.3
     ```

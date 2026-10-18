@@ -44,6 +44,6 @@ LFM2-1.2B was the original 1.2B parameter model in the LFM2 series. It has been 
     <TextVllm modelId="LiquidAI/LFM2-1.2B" samplingParams="temperature=0.3, min_p=0.15, repetition_penalty=1.05, "></TextVllm>
   </Tab>
   <Tab title="SGLang">
-    <TextSglang modelId="LiquidAI/LFM2-1.2B" toolCallParser="lfm2"></TextSglang>
+    <TextSglang modelId="LiquidAI/LFM2-1.2B" toolCallParser="lfm2" samplingParams={'temperature=0.3,\n    extra_body={"min_p": 0.15, "repetition_penalty": 1.05},'}></TextSglang>
   </Tab>
 </Tabs>

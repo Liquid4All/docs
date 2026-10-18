@@ -1,0 +1,119 @@
+---
+title: "Decision Models"
+description: "Purpose-built models for structured decisions: classification, routing, and scoring in a single call with zero generated tokens"
+icon: "scale-balanced"
+---
+
+Decision models are a new class of AI model purpose-built for structured decisions. Instead of generating text token by token, a decision model evaluates a situation and returns calibrated probabilities across a fixed set of outcomes in a single call with zero generated tokens.
+
+<div className="use-cases" style={{marginTop: '-0.5rem'}}>
+<CardGroup cols={2}>
+
+<Card title="Classification & Routing" icon="tags">
+  Intent detection, ticket routing, content moderation, and triage.
+</Card>
+
+<Card title="Scoring & Rating" icon="star">
+  Urgency scoring, quality assessment, LLM-as-judge replacement.
+</Card>
+
+<Card title="Binary Gates" icon="toggle-on">
+  Safety checks, guardrails, extraction validation, yes/no decisions.
+</Card>
+
+<Card title="Multimodal" icon="images">
+  Visual inspection, image classification, voice-command routing.
+</Card>
+
+</CardGroup>
+</div>
+
+<h2>d1 Models &nbsp;&nbsp;<Badge shape="rounded" icon="circle-check" color="green" size="lg">Latest release</Badge></h2>
+
+<CardGroup cols={2}>
+
+<Card title="d1-3B" href="/lfm/models/d1-3b">
+  3.1B · <Badge shape="pill" color="green">Recommended</Badge>
+
+  Multimodal decision model (text + images) built on LFM2.5-VL-3B.
+</Card>
+
+<Card title="d1-omni-600M" href="/lfm/models/d1-omni-600m">
+  587M · <Badge shape="pill" color="yellow">Smallest</Badge>
+
+  Multimodal decision model (text + images or audio) built on LFM2.5-Encoder-350M.
+</Card>
+
+<Card title="d1" href="/lfm/models/d1">
+  Hosted · <Badge shape="pill" color="blue">API</Badge>
+
+  Hosted decision model with Python and TypeScript SDKs via the Liquid API.
+</Card>
+
+<Card title="d1-ultra" href="/lfm/models/d1#models">
+  Hosted · <Badge shape="pill" color="purple">Most capable</Badge>
+
+  Multimodal decision model (text + images) via the Liquid API, built on a larger open-weight model.
+</Card>
+
+</CardGroup>
+
+## Which d1 Should I Use?
+
+| Model | Access | Inputs | Use it when |
+|---|---|---|---|
+| [d1-ultra](/lfm/models/d1#models) | Liquid API, OpenRouter, Vercel AI Gateway | Text, images | You need the most capable decision model, for harder decisions. |
+| [d1](/lfm/models/d1) | Liquid API, OpenRouter, Vercel AI Gateway | Text, images | You want a hosted model at a lower price than d1-ultra. |
+| [d1-3B](/lfm/models/d1-3b) | Open weights (3.1B) | Text, images | You want to run locally or on your own hardware, or fine-tune the model. |
+| [d1-omni-600M](/lfm/models/d1-omni-600m) | Open weights (587M) | Text with images or audio | You need the smallest model, or audio input (up to 30 s of speech). |
+
+## Pricing
+
+The hosted models are billed on input tokens only. Output is free because decision models do not generate tokens. Each question is billed as its own prompt, including its text and all images. See [Image Token Usage](/lfm/models/d1#image-token-usage) for how images are counted.
+
+The models are available through the [Liquid Console](https://console.liquid.ai), [OpenRouter](https://openrouter.ai/liquid/d1), and [Vercel AI Gateway](https://vercel.com/ai-gateway/models/d1). See the [Liquid AI pricing page](https://www.liquid.ai/pricing) for current prices and available credits.
+
+d1-3B and d1-omni-600M are open-weight models under the [LFM Open License](/lfm/help/model-license) and free to run on your own hardware.
+
+## Primitives
+
+Every question you ask a decision model uses one of three types:
+
+| If the answer is... | Use | Example |
+|---|---|---|
+| Pick one from a set of unordered categories | **Choice** | Which department handles this ticket? |
+| Rate something along an ordered scale with defined levels | **Score** | How severe is this bug? |
+| Yes or no, where the probability itself is useful | **Noul** | Does this message contain personal data? |
+
+- **Noul**: A yes/no question that returns a probability between 0 and 1. "Is this message spam?" might return `0.92`.
+- **Choice**: A pick-one-from-many question that returns a probability distribution over named options.
+- **Score**: A rate-on-a-scale question that returns a probability-weighted position on an ordered rubric.
+
+## When to Use Decision Models
+
+Decision models are a good fit when the answer is a structured decision: classification, categorization, routing (tickets, emails, requests), scoring, triage, content moderation, guardrails and safety checks, LLM-as-judge replacement, agent tool-call approval, and model routing or cascades.
+
+With image input, the same primitives support visual inspection, image classification, and decisions based on screenshots. With audio (d1-omni-600M), they support voice-command routing and spoken-intent detection.
+
+Use a language model instead for free-form text generation, creative writing, multi-turn conversation, complex multi-step reasoning, open-ended Q&A, summarization, and code generation.
+
+To move existing LLM calls to a decision model, see the [Decision Model Guide](/guides/decision-model-guide).
+
+## Examples
+
+<CardGroup cols={2}>
+
+<Card title="Build a Game with Decision Models" href="/examples/laptop-examples/build-a-game-with-decision-models">
+  Pixel-art racing game using d1 Choice for lane selection.
+
+  **Platform:** Desktop
+</Card>
+
+</CardGroup>
+
+<Panel>
+  - [Liquid Console](https://console.liquid.ai)
+  - [Pricing](https://www.liquid.ai/pricing)
+  - OpenRouter: [d1](https://openrouter.ai/liquid/d1), [d1-ultra](https://openrouter.ai/liquid/d1-ultra)
+  - Vercel AI Gateway: [d1](https://vercel.com/ai-gateway/models/d1), [d1-ultra](https://vercel.com/ai-gateway/models/d1-ultra)
+</Panel>

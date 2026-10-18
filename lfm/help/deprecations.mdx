@@ -4,7 +4,7 @@ description: "Deprecated LFM models and SDKs with their recommended replacements
 ---
 
 <Note>
-Deprecated models remain available for download on Hugging Face, but they are no longer actively maintained and receive no further updates. We recommend migrating to the suggested replacement for new projects when one is listed. Each listed replacement is a newer checkpoint that matches or improves on the deprecated model's quality at the same (or smaller) deployment footprint.
+Deprecated models remain available for download on Hugging Face, but they are no longer actively maintained and receive no further updates. We recommend migrating to the suggested replacement for new projects when one is listed. Each listed replacement is a newer model for the same use case. Size and resource needs can differ: for example, LFM2.5-1.2B-Instruct is larger than LFM2-700M, and LFM2.5-2.6B has more parameters (2.70B vs 2.57B) and a larger vocabulary (128,000 vs 65,536 tokens) than LFM2-2.6B. Check the replacement's model page before migrating.
 </Note>
 
 ## Deprecated models
@@ -23,12 +23,20 @@ Deprecated models remain available for download on Hugging Face, but they are no
   <tbody>
     <tr><td colSpan={6}><strong>Text-to-text Models</strong></td></tr>
     <tr>
+      <td><a href="/lfm/models/lfm2-24b-a2b">LFM2-24B-A2B</a></td>
+      <td><a href="/lfm/models/lfm25-24b-a2b">LFM2.5-24B-A2B</a></td>
+      <td><a href="https://huggingface.co/LiquidAI/LFM2-24B-A2B">✓</a></td>
+      <td><a href="https://huggingface.co/LiquidAI/LFM2-24B-A2B-GGUF">✓</a></td>
+      <td><a href="https://huggingface.co/LiquidAI/LFM2-24B-A2B-MLX-8bit">✓</a></td>
+      <td><a href="https://huggingface.co/LiquidAI/LFM2-24B-A2B-ONNX">✓</a></td>
+    </tr>
+    <tr>
       <td><a href="/lfm/models/lfm2-8b-a1b">LFM2-8B-A1B</a></td>
       <td><a href="/lfm/models/lfm25-8b-a1b">LFM2.5-8B-A1B</a></td>
       <td><a href="https://huggingface.co/LiquidAI/LFM2-8B-A1B">✓</a></td>
       <td><a href="https://huggingface.co/LiquidAI/LFM2-8B-A1B-GGUF">✓</a></td>
       <td><a href="https://huggingface.co/mlx-community/LFM2-8B-A1B-8bit">✓</a></td>
-      <td><a href="https://huggingface.co/onnx-community/LFM2-8B-A1B-ONNX">✓</a></td>
+      <td><a href="https://huggingface.co/LiquidAI/LFM2-8B-A1B-ONNX">✓</a></td>
     </tr>
     <tr>
       <td><a href="/lfm/models/lfm2-1.2b">LFM2-1.2B</a></td>
@@ -51,8 +59,24 @@ Deprecated models remain available for download on Hugging Face, but they are no
       <td><a href="/lfm/models/lfm25-2.6b">LFM2.5-2.6B</a></td>
       <td><a href="https://huggingface.co/LiquidAI/LFM2-2.6B-Exp">✓</a></td>
       <td><a href="https://huggingface.co/LiquidAI/LFM2-2.6B-Exp-GGUF">✓</a></td>
-      <td>✗</td>
-      <td>✗</td>
+      <td><a href="https://huggingface.co/mlx-community/LFM2-2.6B-Exp-8bit">✓</a></td>
+      <td><a href="https://huggingface.co/onnx-community/LFM2-2.6B-Exp-ONNX">✓</a></td>
+    </tr>
+    <tr>
+      <td><a href="/lfm/models/lfm25-1.2b-jp">LFM2.5-1.2B-JP</a></td>
+      <td><a href="/lfm/models/lfm25-1.2b-jp-202606">LFM2.5-1.2B-JP-202606</a></td>
+      <td><a href="https://huggingface.co/LiquidAI/LFM2.5-1.2B-JP">✓</a></td>
+      <td><a href="https://huggingface.co/LiquidAI/LFM2.5-1.2B-JP-GGUF">✓</a></td>
+      <td><a href="https://huggingface.co/LiquidAI/LFM2.5-1.2B-JP-MLX-8bit">✓</a></td>
+      <td><a href="https://huggingface.co/LiquidAI/LFM2.5-1.2B-JP-ONNX">✓</a></td>
+    </tr>
+    <tr>
+      <td><a href="/lfm/models/lfm2-700m">LFM2-700M</a></td>
+      <td><a href="/lfm/models/lfm25-1.2b-instruct">LFM2.5-1.2B-Instruct</a></td>
+      <td><a href="https://huggingface.co/LiquidAI/LFM2-700M">✓</a></td>
+      <td><a href="https://huggingface.co/LiquidAI/LFM2-700M-GGUF">✓</a></td>
+      <td><a href="https://huggingface.co/mlx-community/LFM2-700M-8bit">✓</a></td>
+      <td><a href="https://huggingface.co/onnx-community/LFM2-700M-ONNX">✓</a></td>
     </tr>
     <tr>
       <td><a href="/lfm/models/lfm2-350m">LFM2-350M</a></td>
@@ -87,6 +111,15 @@ Deprecated models remain available for download on Hugging Face, but they are no
       <td><a href="https://huggingface.co/mlx-community/LFM2-VL-450M-8bit">✓</a></td>
       <td><a href="https://huggingface.co/onnx-community/LFM2-VL-450M-ONNX">✓</a></td>
     </tr>
+    <tr><td colSpan={6}><strong>Audio Models</strong></td></tr>
+    <tr>
+      <td><a href="/lfm/models/lfm2-audio-1.5b">LFM2-Audio-1.5B</a></td>
+      <td><a href="/lfm/models/lfm25-audio-1.5b">LFM2.5-Audio-1.5B</a></td>
+      <td><a href="https://huggingface.co/LiquidAI/LFM2-Audio-1.5B">✓</a></td>
+      <td><a href="https://huggingface.co/LiquidAI/LFM2-Audio-1.5B-GGUF">✓</a></td>
+      <td>✗</td>
+      <td>✗</td>
+    </tr>
     <tr><td colSpan={6}><strong>Liquid Nanos</strong></td></tr>
     <tr>
       <td><a href="/lfm/models/lfm2-1.2b-extract">LFM2-1.2B-Extract</a></td>
@@ -116,7 +149,7 @@ Deprecated models remain available for download on Hugging Face, but they are no
       <td><a href="/lfm/models/lfm2-colbert-350m">LFM2-ColBERT-350M</a></td>
       <td><a href="/lfm/models/lfm25-colbert-350m">LFM2.5-ColBERT-350M</a></td>
       <td><a href="https://huggingface.co/LiquidAI/LFM2-ColBERT-350M">✓</a></td>
-      <td>✗</td>
+      <td><a href="https://huggingface.co/LiquidAI/LFM2-ColBERT-350M-GGUF">✓</a></td>
       <td>✗</td>
       <td>✗</td>
     </tr>

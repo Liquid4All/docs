@@ -5,11 +5,12 @@ description: "1.5B fully interleaved audio/text model for TTS, ASR, and voice ch
 
 <a href="/lfm/models/audio-models" className="back-button">← Back to Audio Models</a>
 
-LFM2.5-Audio-1.5B is Liquid AI's flagship audio model, featuring a custom LFM-based audio detokenizer. It delivers natural speech synthesis, multilingual speech recognition, and fully interleaved voice chat with reasoning capabilities in a single compact model.
+LFM2.5-Audio-1.5B is an end-to-end English speech and text model with a custom LFM-based audio detokenizer. It handles speech synthesis, speech recognition, and interleaved voice chat in a single model, without separate ASR and TTS components. For Japanese, use [LFM2.5-Audio-1.5B-JP](/lfm/models/lfm25-audio-1.5b-jp).
 
 <div style={{display: 'flex', gap: '0.5rem', margin: '0.5rem 0 1.5rem 0'}}>
   <a href="https://huggingface.co/LiquidAI/LFM2.5-Audio-1.5B" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#fbbf24'}}><span style={{color: '#000'}}>HF</span></a>
   <a href="https://huggingface.co/LiquidAI/LFM2.5-Audio-1.5B-GGUF" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#60a5fa'}}><span style={{color: '#000'}}>GGUF</span></a>
+  <a href="https://huggingface.co/mlx-community/LFM2.5-Audio-1.5B-8bit" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#c4b5fd'}}><span style={{color: '#000'}}>MLX</span></a>
   <a href="https://huggingface.co/LiquidAI/LFM2.5-Audio-1.5B-ONNX" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#86efac'}}><span style={{color: '#000'}}>ONNX</span></a>
 </div>
 
@@ -17,10 +18,11 @@ LFM2.5-Audio-1.5B is Liquid AI's flagship audio model, featuring a custom LFM-ba
 
 | Property | Value |
 |----------|-------|
-| Parameters | 1.5B (1.2B LM + 115M audio encoder) |
+| Parameters | 1.5B (1.2B LM + 115M audio encoder + 185M RQ-transformer for audio output) |
 | Context Length | 32K tokens |
 | Audio Output | 24kHz |
 | Supported Language | English |
+| License | [LFM Open License v1.0](/lfm/help/model-license) |
 
 <div className="use-cases">
 <CardGroup cols={3}>
@@ -30,7 +32,7 @@ LFM2.5-Audio-1.5B is Liquid AI's flagship audio model, featuring a custom LFM-ba
 </Card>
 
 <Card title="Speech Recognition" icon="ear-listen">
-  Multilingual ASR
+  English ASR
 </Card>
 
 <Card title="Voice Chat" icon="waveform">
@@ -46,10 +48,12 @@ LFM2.5-Audio-1.5B is Liquid AI's flagship audio model, featuring a custom LFM-ba
   <Tab title="liquid-audio">
     **Install:**
     ```bash
-    pip install liquid-audio
+    pip install liquid-audio torchcodec
     pip install "liquid-audio[demo]"  # optional, for demo dependencies
     pip install flash-attn --no-build-isolation  # optional, for flash attention 2
     ```
+
+    `torchaudio` loads audio files through `torchcodec`, which needs FFmpeg installed on the system (for example `brew install ffmpeg` or `apt install ffmpeg`).
 
     **Gradio Demo:**
     ```bash
@@ -120,8 +124,10 @@ LFM2.5-Audio-1.5B is Liquid AI's flagship audio model, featuring a custom LFM-ba
       -mm $CKPT/mmproj-LFM2.5-Audio-1.5B-Q4_0.gguf \
       -mv $CKPT/vocoder-LFM2.5-Audio-1.5B-Q4_0.gguf \
       --tts-speaker-file $CKPT/tokenizer-LFM2.5-Audio-1.5B-Q4_0.gguf \
-      -sys "Perform TTS." -p "Hi, how are you?" --output $OUTPUT_WAV
+      -sys "Perform TTS. Use the US male voice." -p "Hi, how are you?" --output $OUTPUT_WAV
     ```
+
+    The TTS system prompt must name a voice: `Use the US male voice.`, `Use the US female voice.`, `Use the UK male voice.`, or `Use the UK female voice.`
 
     **Interleaved Mode:**
     ```bash
