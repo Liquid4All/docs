@@ -1,0 +1,32 @@
+export const DsparkLlamacpp = ({ ggufRepo, draftRepo, vision = false, samplingFlags }) => (
+<div>
+<p><strong>Install:</strong></p>
+<CodeBlock language="bash">
+{`brew install llama.cpp`}
+</CodeBlock>
+<p>DSpark needs a recent build. Check that <code>llama-server --help</code> lists <code>draft-dspark</code> under <code>--spec-type</code>.</p>
+<p><strong>Run the target with the draft sidecar:</strong></p>
+<CodeBlock language="bash">
+{`llama-server \\
+    -hf ${ggufRepo}:F16 \\
+    -hfd ${draftRepo}:F16 \\
+    --spec-type draft-dspark --spec-draft-n-max ${vision ? "8" : "10"} --spec-draft-n-min 0 \\
+    -ngl 99 -ngld 99 -fa on \\
+    ${samplingFlags}`}
+</CodeBlock>
+<p><strong>Flags:</strong></p>
+<ul>
+<li><code>-hf</code>: the target GGUF on Hugging Face, with its quantization tag. Use <code>-m</code> for a local file.</li>
+<li><code>-hfd</code>: the draft sidecar GGUF. Use <code>-md</code> for a local file. The sidecar has no embeddings or LM head, so it cannot run on its own.</li>
+<li><code>--spec-type draft-dspark</code>: turns on DSpark speculative decoding.</li>
+{vision ? (
+<li><code>--spec-draft-n-max</code>: the most tokens the drafter proposes per step. The drafter was trained with block size 9. Use 8 on Apple silicon.</li>
+) : (
+<li><code>--spec-draft-n-max</code>: the most tokens the drafter proposes per step. llama.cpp clamps it to the drafter's block size.</li>
+)}
+<li><code>--spec-draft-n-min</code>: the fewest tokens the drafter proposes per step.</li>
+<li><code>-ngl 99</code> / <code>-ngld 99</code>: offload all target and drafter layers to the GPU.</li>
+<li><code>-fa on</code>: turns on flash attention.</li>
+</ul>
+</div>
+);

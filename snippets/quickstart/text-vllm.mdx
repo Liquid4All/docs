@@ -2,7 +2,7 @@ export const TextVllm = ({ modelId, samplingParams, maxTokens }) => (
 <div>
 <p><strong>Install:</strong></p>
 <CodeBlock language="bash">
-{`pip install vllm==0.14`}
+{`pip install -U vllm`}
 </CodeBlock>
 <p><strong>Run:</strong></p>
 <CodeBlock language="python">
@@ -12,7 +12,7 @@ llm = LLM(model="${modelId}")
 
 sampling_params = SamplingParams(${samplingParams}max_tokens=${maxTokens || 512})
 
-output = llm.chat("What is machine learning?", sampling_params)
+output = llm.chat([{"role": "user", "content": "What is machine learning?"}], sampling_params)
 print(output[0].outputs[0].text)`}
 </CodeBlock>
 </div>

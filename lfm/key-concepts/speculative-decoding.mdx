@@ -1,0 +1,75 @@
+---
+title: "Speculative Decoding"
+description: "Speed up LFM2.5 text and vision models with DSpark draft models in SGLang, llama.cpp, and MLX-VLM, with no change to output."
+keywords: ["speculative decoding", "DSpark", "draft model", "drafter", "MTP", "faster inference"]
+---
+
+import { DsparkSglang } from "/snippets/quickstart/dspark-sglang.mdx";
+import { DsparkLlamacpp } from "/snippets/quickstart/dspark-llamacpp.mdx";
+import { DsparkMlxVlm } from "/snippets/quickstart/dspark-mlx-vlm.mdx";
+
+Speculative decoding makes generation faster without changing what the model outputs. A small **draft model** proposes several tokens ahead, and the **target model** checks all of them in a single forward pass. The target keeps every token it agrees with and corrects the first one it does not.
+
+## Available draft models
+
+| Target model | DSpark Drafter (HF) | DSpark Drafter (GGUF) |
+| ----- | ----- | ----- |
+| **Text Models** | | |
+| [LFM2.5-1.2B-Instruct](/lfm/models/lfm25-1.2b-instruct) | [✓](https://huggingface.co/LiquidAI/LFM2.5-1.2B-Instruct-DSpark) | [✓](https://huggingface.co/LiquidAI/LFM2.5-1.2B-Instruct-DSpark-GGUF) |
+| [LFM2.5-2.6B](/lfm/models/lfm25-2.6b) | [✓](https://huggingface.co/LiquidAI/LFM2.5-2.6B-DSpark) | [✓](https://huggingface.co/LiquidAI/LFM2.5-2.6B-DSpark-GGUF) |
+| [LFM2.5-8B-A1B](/lfm/models/lfm25-8b-a1b) | [✓](https://huggingface.co/LiquidAI/LFM2.5-8B-A1B-DSpark) | [✓](https://huggingface.co/LiquidAI/LFM2.5-8B-A1B-DSpark-GGUF) |
+| **Vision Language Models** | | |
+| [LFM2.5-VL-3B](/lfm/models/lfm25-vl-3b) | [✓](https://huggingface.co/LiquidAI/LFM2.5-VL-3B-DSpark) | [✓](https://huggingface.co/LiquidAI/LFM2.5-VL-3B-DSpark-GGUF) |
+
+## Supported inference engines
+
+| Engine | Text drafters | Vision drafters |
+|---|---|---|
+| [SGLang](/deployment/gpu-inference/sglang) | ✓ | ✓ |
+| [llama.cpp](/deployment/on-device/llama-cpp) | ✓ | ✓ |
+| [MLX-VLM](/deployment/on-device/mlx) | ✗ | ✓ |
+
+## Run with text models
+
+<Tabs>
+  <Tab title="SGLang">
+    <DsparkSglang modelId="LiquidAI/LFM2.5-2.6B" draftModelId="LiquidAI/LFM2.5-2.6B-DSpark" samplingParams={'temperature=0.1,\n    extra_body={"top_k": 50, "repetition_penalty": 1.1},'}></DsparkSglang>
+  </Tab>
+  <Tab title="llama.cpp">
+    <DsparkLlamacpp ggufRepo="LiquidAI/LFM2.5-2.6B-GGUF" draftRepo="LiquidAI/LFM2.5-2.6B-DSpark-GGUF" samplingFlags="--temp 0.1 --top-k 50 --repeat-penalty 1.1"></DsparkLlamacpp>
+  </Tab>
+</Tabs>
+
+## Run with vision models
+
+<Tabs>
+  <Tab title="SGLang">
+    <DsparkSglang modelId="LiquidAI/LFM2.5-VL-3B" draftModelId="LiquidAI/LFM2.5-VL-3B-DSpark" vision={true} samplingParams={'temperature=0.2,\n    extra_body={"top_k": 50, "repetition_penalty": 1.0},'}></DsparkSglang>
+  </Tab>
+  <Tab title="llama.cpp">
+    <DsparkLlamacpp ggufRepo="LiquidAI/LFM2.5-VL-3B-GGUF" draftRepo="LiquidAI/LFM2.5-VL-3B-DSpark-GGUF" vision={true} samplingFlags="--temp 0.2 --top-k 50 --repeat-penalty 1.0"></DsparkLlamacpp>
+  </Tab>
+  <Tab title="MLX-VLM">
+    <DsparkMlxVlm modelId="LiquidAI/LFM2.5-VL-3B" draftModelId="LiquidAI/LFM2.5-VL-3B-DSpark"></DsparkMlxVlm>
+  </Tab>
+</Tabs>
+
+## FAQ
+
+<AccordionGroup>
+
+<Accordion title="Does speculative decoding change the model's output?">
+  No. The target model checks every drafted token and keeps only the ones it would have generated itself. With greedy decoding (`temperature=0`), the output is identical to running the target model alone. With sampling, the output follows the same distribution as the target model, as long as you use the same sampling settings.
+</Accordion>
+
+<Accordion title="What speculative decoding methods are supported for LFMs?">
+  Only DSpark. Liquid AI publishes DSpark draft models for the models listed in [Available draft models](#available-draft-models). Other methods, such as DFlash, DFlash2, EAGLE, and multi-token prediction (MTP), are not supported. LFM models do not include MTP heads, so engine options such as vLLM's `--speculative-config` with `"method": "mtp"` do not work with them.
+</Accordion>
+
+<Accordion title="Why is the speedup smaller with quantized models?">
+  DSpark gives the largest speedup with 16-bit (F16 or BF16) target models. With a quantized target, such as Q4, each verification step costs more, so the speedup is much smaller. On CPUs and Apple silicon, a quantized target may give little or no speedup.
+
+  Quantizing the drafter has little effect on speed. For the best results, run a 16-bit target. If you need a quantized target to fit in memory, measure the speedup on your own hardware first.
+</Accordion>
+
+</AccordionGroup>

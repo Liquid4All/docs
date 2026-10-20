@@ -70,7 +70,7 @@ SNIPPET_CONFIG = {
         "sections": [
             {"type": "label", "text": "Install:"},
             {"type": "code_block", "language": "bash",
-             "code": "pip install vllm==0.14"},
+             "code": "pip install -U vllm"},
             {"type": "label", "text": "Run:"},
             {"type": "code_block", "language": "python",
              "code": (
@@ -80,7 +80,7 @@ SNIPPET_CONFIG = {
                  "\n"
                  "sampling_params = SamplingParams(${samplingParams}max_tokens=${maxTokens || 512})\n"
                  "\n"
-                 'output = llm.chat("What is machine learning?", sampling_params)\n'
+                 'output = llm.chat([{"role": "user", "content": "What is machine learning?"}], sampling_params)\n'
                  "print(output[0].outputs[0].text)"
              )},
         ],
@@ -96,28 +96,42 @@ SNIPPET_CONFIG = {
              "code": "brew install llama.cpp"},
             {"type": "label", "text": "Run:"},
             {"type": "code_block", "language": "bash",
-             "code": "llama-cli -hf ${ggufRepo} --conversation \\\n    ${samplingFlags}"},
+             "code": "llama-cli -hf ${ggufRepo} \\\n    ${samplingFlags}"},
             {"type": "raw_html",
              "html": '<p>The <code>-hf</code> flag downloads the model directly from Hugging Face. For other installation methods and advanced usage, see the <a href="/deployment/on-device/llama-cpp">llama.cpp guide</a>.</p>'},
         ],
     },
     "vl-transformers": {
         "component_name": "VlTransformers",
-        "props": "{ modelId }",
+        "props": '{ modelId, samplingArgs = "temperature=0.1, min_p=0.15, repetition_penalty=1.05" }',
         "replacement_group": "vl",
+        "code_replacements": [
+            (
+                "temperature=0.1, min_p=0.15, repetition_penalty=1.05",
+                "${samplingArgs}",
+            ),
+        ],
         "source": "notebook",
         "sections": [
             {"type": "label", "text": "Install:"},
             {"type": "code_block", "language": "bash",
-             "code": 'pip install "transformers>=5.2.0" pillow torch'},
+             "code": 'pip install "transformers>=5.2.0" pillow torch torchvision accelerate'},
             {"type": "label", "text": "Download & Run:"},
             {"type": "notebook_code", "language": "python"},
         ],
     },
     "vl-vllm": {
         "component_name": "VlVllm",
-        "props": "{ modelId }",
+        "props": '{ modelId, samplingArgs = "temperature=0.1, min_p=0.15, repetition_penalty=1.05" }',
         "replacement_group": "vl",
+        "code_replacements": [
+            (
+                "    temperature=0.1,\n"
+                "    min_p=0.15,\n"
+                "    repetition_penalty=1.05,\n",
+                "    ${samplingArgs},\n",
+            ),
+        ],
         "source": "notebook",
         "sections": [
             {"type": "label", "text": "Install:"},
@@ -168,8 +182,10 @@ def read_notebook_cells():
     return cells
 
 
-def apply_replacements(code, group):
+def apply_replacements(code, group, code_replacements=()):
     for old, new in REPLACEMENTS[group]:
+        code = code.replace(old, new)
+    for old, new in code_replacements:
         code = code.replace(old, new)
     return code
 
@@ -234,7 +250,11 @@ def generate_snippet(name, config, notebook_cells):
         if raw_code is None:
             logger.error("No notebook cell found for snippet %s", name)
             return None
-        notebook_code = apply_replacements(raw_code, group)
+        notebook_code = apply_replacements(
+            raw_code,
+            group,
+            config.get("code_replacements", ()),
+        )
 
     parts = []
     for section in config["sections"]:

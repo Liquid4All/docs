@@ -1,30 +1,32 @@
 ---
-title: "Model License"
+title: "LFM Open License User Guide"
 description: "Understand how you can use, modify, and distribute Liquid Foundation Models under the LFM Open License v1.0."
 ---
 
-<Info>Last updated: April 2, 2026</Info>
+<Info>Last updated: October 15, 2026</Info>
 
-The **LFM Open License v1.0** governs the use of models we release publicly. This guide explains the license in plain, approachable terms — for the complete legal text, see the [LFM Open License v1.0](https://www.liquid.ai/lfm-open-license-v1.0).
+The [LFM Open License v1.0](https://www.liquid.ai/lfm-license) governs the use of models we release publicly under this license. This guide explains the license in plain terms.
+
+For the complete license text, see the [LFM Open License v1.0](https://www.liquid.ai/lfm-license).
 
 ## At a Glance
 
 | Question | Answer |
 |----------|--------|
-| Can I use the models commercially? | Free if your annual revenue is under **$10M USD**. Paid license required above that. |
-| Can I use them for research or nonprofit work? | Yes, free with no revenue threshold. |
-| Can I modify the models? | Yes, but the $10M revenue threshold still applies to modified models. |
+| Can I use the models commercially? | Free if your annual revenue is under **\$10 million USD**. At **\$10 million USD or more**, you need a separate commercial license. |
+| Can I use the models for research or nonprofit purposes? | Yes. The revenue threshold only applies to commercial use, and qualified nonprofits are exempt from it for non-commercial or research use. |
+| Can I modify the models? | Yes, but the **$10 million USD** revenue threshold applies to modified models too. |
 | Do I have to open-source my modifications? | No. |
-| Do I own my modifications? | You own your modifications. Liquid AI owns the base models, and derivative models remain subject to this license. |
-| Can I distribute the models? | Yes, with attribution. |
+| Do I own my modifications? | Yes. You can add your own copyright statement to your modifications and license them under your own terms, as long as your use of the original models still complies with this license. |
+| Can I distribute the models? | Yes, subject to the distribution requirements below. |
 
 ## Overview
 
-The LFM Open License is based on **Apache 2.0**, granting broad, royalty-free, perpetual rights to use, modify, and distribute our models and their derivatives. The key difference from Apache 2.0 is a **commercial use threshold**: free commercial use is limited to companies with annual revenue under $10 million USD.
+The LFM Open License is based on **Apache 2.0**, granting broad, royalty-free, perpetual rights to use, modify, and distribute our models and their derivatives. The key difference from Apache 2.0 is a **commercial use threshold**: free commercial use is limited to companies with annual revenue under $10 million USD. Revenue is counted for your Legal Entity, which the license defines to include entities that control, are controlled by, or are under common control with you.
 
 ## Using the Models
 
-You can use, modify, fine-tune, and distribute the models for any purpose — including commercial products and services.
+You can use, modify, fine-tune, and distribute the models for any purpose, including commercial products and services, subject to the commercial use threshold.
 
 <AccordionGroup>
 
@@ -32,29 +34,49 @@ You can use, modify, fine-tune, and distribute the models for any purpose — in
 No. The license has no copyleft requirement. You can keep your fine-tuned models proprietary.
 </Accordion>
 
-<Accordion title="Who owns what?">
-Liquid AI retains ownership of the base models. You own your modifications, but use of derivative models remains subject to this license.
+<Accordion title="Can I license my fine-tuned model under my own terms?">
+Yes. Section 4 lets you add your own copyright statement to your modifications and provide additional or different license terms for your modifications, or for the derivative model as a whole. This is allowed only if your own use, reproduction, and distribution of the original models still complies with this license, including the commercial use threshold.
 </Accordion>
 
 </AccordionGroup>
 
 ## Commercial Use
 
-Companies with annual revenue **under $10 million USD** can use the models at no cost for commercial purposes.
+Companies with annual revenue under **$10 million USD** can use the models at no cost for commercial purposes.
 
-If your company's annual revenue **exceeds $10 million USD**, your right to use the models commercially under this license ends. Contact [sales@liquid.ai](mailto:sales@liquid.ai) to obtain a commercial license.
+If your company's annual revenue is **$10 million USD or more**, commercial use of the models and their derivatives is not licensed under this license. Contact [sales@liquid.ai](mailto:sales@liquid.ai) to obtain a commercial license.
+
+<AccordionGroup>
 
 <Accordion title="What counts as commercial use?">
 Any use for direct or indirect commercial advantage or monetary compensation.
 </Accordion>
 
+<Accordion title="How does the threshold apply if I distribute the models to customers?">
+The threshold applies separately to each company using the models commercially. Your company’s revenue determines your right to use and distribute the models commercially. If a downstream customer uses the models commercially, that customer’s own revenue determines whether it needs a commercial license. A customer with annual revenue of **$10 million USD or more** needs a commercial license from Liquid AI.
+</Accordion>
+
+<Accordion title="Can I get a commercial license that covers my customers or end users?">
+The open license doesn’t automatically cover a downstream customer’s commercial use. If you are interested in a custom commercial license covering your customers or end users, contact [sales@liquid.ai](mailto:sales@liquid.ai) to discuss available options.
+</Accordion>
+
+</AccordionGroup>
+
 ## Research & Nonprofit Use
 
-Qualified nonprofits (501(c)(3) or equivalent) can use the models for non-commercial or research purposes with **no revenue threshold**.
+The revenue threshold only limits commercial use. Section 5(c) also states that the threshold does not apply to a qualified nonprofit (501(c)(3) or equivalent) using the models for non-commercial or research purposes.
+
+<AccordionGroup>
 
 <Accordion title="What qualifies as a nonprofit?">
-Organizations exempt under Section 501(c)(3) of the U.S. tax code, or equivalent charitable/educational organizations in other jurisdictions.
+Organizations operated exclusively for religious, charitable, scientific, public-safety testing, literary, or educational purposes and exempt under Section 501(c)(3) of the U.S. Internal Revenue Code, or equivalent non-profit or charitable organizations in other jurisdictions.
 </Accordion>
+
+<Accordion title="What about for-profit schools and education companies?">
+For-profit organizations using the models commercially remain subject to the commercial-use threshold.
+</Accordion>
+
+</AccordionGroup>
 
 ## Distribution Requirements
 
@@ -62,22 +84,28 @@ When distributing the models or derivatives, you must:
 
 - Include a copy of the license
 - Retain all copyright and attribution notices
+- Include the NOTICE file if one is provided with the model
 - Mark any files you have modified
+
+<Accordion title="Can I say that my product uses Liquid AI models?">
+Yes. You may say that your product uses Liquid AI models, but the license doesn’t allow broader use of Liquid AI’s trademarks or branding.
+</Accordion>
 
 ## Termination
 
-The license terminates **automatically and immediately** if you violate any of its terms. Upon termination, you must stop using the models and delete all copies.
+The license terminates **automatically and immediately** if you fail to comply with any of its terms and conditions (Section 11), not only the commercial use limitation. Upon termination, you must stop using the models and any derivative works and delete all copies in your possession.
 
 ## Comparison to Apache 2.0
 
-The LFM Open License is based directly on Apache 2.0. Other than the differences below, the licenses are identical.
+The LFM Open License is based on the Apache License 2.0. It differs in the following ways:
 
-| Area | What Changed |
-|------|-------------|
-| **Conditional License Grants** (Sections 2 & 3) | Copyright and patent grants are explicitly "subject to" the commercial use limitation. |
-| **Commercial Use Limitation** (Section 5) | Free commercial use is limited to companies with under $10M in annual revenue. This is the most significant change. |
-| **Specific Licensor** | The "Licensor" is explicitly defined as "Liquid AI, Inc." |
-| **Termination** (Section 11) | The license terminates automatically if you fail to comply with its terms. |
+- **Licensor (Section 1):** "Licensor" is defined as Liquid AI, Inc., instead of the copyright owner or an entity authorized by the copyright owner.
+- **New definitions (Section 1):** The license adds definitions for "Commercial Use", "Qualified Non-Profit Organization", "Non-Commercial or Research Purposes", and "Threshold" (annual revenue of $10,000,000 or more).
+- **Conditional license grants (Sections 2 and 3):** The copyright and patent grants are subject to the Commercial Use limitation in Section 5.
+- **Commercial Use Limitation (Section 5):** A new section. Commercial use rights depend on you or your Legal Entity not reaching the Threshold. Qualified nonprofits using the models for non-commercial or research purposes are exempt from the Threshold.
+- **Section renumbering:** Because Section 5 is new, Apache 2.0 Sections 5 to 9 (Submission of Contributions, Trademarks, Disclaimer of Warranty, Limitation of Liability, Accepting Warranty or Additional Liability) become Sections 6 to 10.
+- **Termination (Section 11):** A new section. The license terminates automatically if you fail to comply with any of its terms, and you must then stop using the models and any derivative works and delete your copies. Apache 2.0 has no general termination clause.
+- **Minor wording:** The "License" definition refers to the whole document instead of Sections 1 through 9, the "Work" definition drops the reference to the Apache appendix, the Trademarks section uses slightly different wording, and the appendix on how to apply the license is not included.
 
 ## Contact
 

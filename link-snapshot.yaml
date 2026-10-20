@@ -128,6 +128,7 @@ active:
   - /lfm/fine-tuning
   - /lfm/fine-tuning/datasets
   - /lfm/fine-tuning/leap-finetune
+  - /lfm/fine-tuning/liquid-finetune
   - /lfm/fine-tuning/overview
   - /lfm/fine-tuning/trl
   - /lfm/fine-tuning/unsloth
@@ -148,11 +149,15 @@ active:
   - /lfm/inference/transformers
   - /lfm/inference/vllm
   - /lfm/key-concepts/chat-template
+  - /lfm/key-concepts/speculative-decoding
   - /lfm/key-concepts/text-generation-and-prompting
   - /lfm/key-concepts/tool-use
   - /lfm/key-concepts/vision-capabilities
   - /lfm/models/audio-models
   - /lfm/models/complete-library
+  - /lfm/models/d1
+  - /lfm/models/d1-3b
+  - /lfm/models/d1-omni-600m
   - /lfm/models/decision-models
   - /lfm/models/lfm2-1.2b
   - /lfm/models/lfm2-1.2b-extract
@@ -176,9 +181,11 @@ active:
   - /lfm/models/lfm2-vl-450m
   - /lfm/models/lfm25-1.2b-instruct
   - /lfm/models/lfm25-1.2b-jp
+  - /lfm/models/lfm25-1.2b-jp-202606
   - /lfm/models/lfm25-1.2b-thinking
   - /lfm/models/lfm25-2.6b
   - /lfm/models/lfm25-230m
+  - /lfm/models/lfm25-24b-a2b
   - /lfm/models/lfm25-350m
   - /lfm/models/lfm25-8b-a1b
   - /lfm/models/lfm25-audio-1.5b

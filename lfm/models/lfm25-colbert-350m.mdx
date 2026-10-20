@@ -10,6 +10,7 @@ LFM2.5-ColBERT-350M is a late-interaction retrieval model. It creates 128-dimens
 <div style={{display: 'flex', gap: '0.5rem', margin: '0.5rem 0 1.5rem 0'}}>
   <a href="https://huggingface.co/LiquidAI/LFM2.5-ColBERT-350M" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#fbbf24'}}><span style={{color: '#000'}}>HF</span></a>
   <a href="https://huggingface.co/LiquidAI/LFM2.5-ColBERT-350M-GGUF" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#60a5fa'}}><span style={{color: '#000'}}>GGUF</span></a>
+  <a href="https://huggingface.co/mlx-community/LFM2.5-ColBERT-350M-8bit" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#c4b5fd'}}><span style={{color: '#000'}}>MLX</span></a>
 </div>
 
 <Note>
@@ -48,11 +49,41 @@ Use LFM2.5-ColBERT-350M when you want stronger retrieval or reranking quality an
 
 ## Quick Start
 
-<Warning>
-This model uses PyLate for indexing, retrieval, and reranking.
-</Warning>
+Run the model with Sentence Transformers (`MultiVectorEncoder`), with PyLate for indexing, retrieval, and reranking, or with llama.cpp through the GGUF checkpoint.
 
 <Tabs>
+  <Tab title="Sentence Transformers">
+    **Install:**
+    ```bash
+    pip install "sentence-transformers>=6.0.0"
+    ```
+
+    **Run:**
+    ```python
+    from sentence_transformers import MultiVectorEncoder
+
+    model = MultiVectorEncoder("LiquidAI/LFM2.5-ColBERT-350M", trust_remote_code=True)
+
+    query = "Which planet is known as the Red Planet?"
+    documents = [
+        "Venus is often called Earth's twin because of its similar size and proximity.",
+        "Mars, known for its reddish appearance, is often referred to as the Red Planet.",
+        "Jupiter, the largest planet in our solar system, has a prominent red spot.",
+        "Saturn, famous for its rings, is sometimes mistaken for the Red Planet.",
+    ]
+
+    query_embeddings = model.encode_query([query])
+    document_embeddings = model.encode_document(documents)
+    print(query_embeddings[0].shape, document_embeddings[0].shape)
+    # (32, 128) (17, 128)
+
+    # MaxSim late-interaction scoring (the Mars document ranks highest)
+    scores = model.similarity(query_embeddings, document_embeddings)
+    print(scores)
+    # tensor([[27.1621, 28.2578, 27.7266, 28.1992]])
+    ```
+  </Tab>
+
   <Tab title="PyLate">
     **Install:**
     ```bash
@@ -101,7 +132,7 @@ This model uses PyLate for indexing, retrieval, and reranking.
     )
 
     retriever = retrieve.ColBERT(index=index)
-    results = retriever.retrieve(query_embeddings=query_embeddings, k=10)
+    results = retriever.retrieve(queries_embeddings=query_embeddings, k=10)
     print(results)
     ```
   </Tab>
@@ -136,12 +167,17 @@ This model uses PyLate for indexing, retrieval, and reranking.
   </Tab>
 
   <Tab title="GGUF">
-    **Download GGUF:**
+    **Start llama-server:**
     ```bash
-    hf download LiquidAI/LFM2.5-ColBERT-350M-GGUF \
-      --local-dir ./LFM2.5-ColBERT-350M-GGUF
+    llama-server -hf LiquidAI/LFM2.5-ColBERT-350M-GGUF --embeddings
     ```
 
-    Use the GGUF files with a llama.cpp build that supports LFM2.5 ColBERT models.
+    The `/embedding` endpoint returns one vector per token. The client applies the ColBERT pre- and post-processing defined in the model's `config_sentence_transformers.json`:
+
+    - Prefix queries with `[Q] ` and documents with `[D] `.
+    - Pad queries to 32 tokens with the pad token. Truncate documents to 512 tokens and drop the vectors of punctuation tokens listed in `skiplist_words`.
+    - L2-normalize each token vector, then score query/document pairs with MaxSim.
+
+    The [GGUF model card](https://huggingface.co/LiquidAI/LFM2.5-ColBERT-350M-GGUF) has a complete client script (`colbert-rerank.py`) that does this against a local `llama-server`.
   </Tab>
 </Tabs>
