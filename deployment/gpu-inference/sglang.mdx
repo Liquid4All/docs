@@ -78,4 +78,4 @@ python -m sglang.launch_server \
   --disable-radix-cache --mem-fraction-static 0.75 --port 30000
 ```
 
-Text drafters need a build of SGLang with DSpark support ([PR #31041](https://github.com/sgl-project/sglang/pull/31041)), and vision drafters need SGLang v0.5.19 or newer. Requests are the same as without a drafter. See [Speculative Decoding](/lfm/key-concepts/speculative-decoding) for which models have drafters.
+Text drafters need a build of SGLang with DSpark support ([PR #31041](https://github.com/sgl-project/sglang/pull/31041)), and vision drafters need SGLang v0.5.19 or newer. The LFM2.5-24B-A2B drafter also needs native Hugging Face configuration support ([PR #43939](https://github.com/sgl-project/sglang/pull/43939)) and takes different flags, so follow the command on its [model page](/lfm/models/lfm25-24b-a2b#speculative-decoding). Requests are the same as without a drafter. See [Speculative Decoding](/lfm/key-concepts/speculative-decoding) for which models have drafters.
