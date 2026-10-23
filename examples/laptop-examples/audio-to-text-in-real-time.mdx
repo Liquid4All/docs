@@ -62,7 +62,7 @@ Intelligent audio assistants on the edge are possible, and this repository is ju
 
 This example is a 100% local audio-to-text transcription CLI, that runs on your machine thanks to llama.cpp. Neither inputs audios nor outputs text are sent to any server. Everything runs on your machine.
 
-![](https://raw.githubusercontent.com/Liquid4All/cookbook/main/examples/audio-transcription-cli/media/diagram.gif)
+![Audio transcription architecture: audio is processed by an LFM audio model on llama.cpp, entirely on your local device](https://raw.githubusercontent.com/Liquid4All/cookbook/main/examples/audio-transcription-cli/media/diagram.gif)
 
 The Python code downloads the necessary llama.cpp builds for your platform automatically, so you don't need to worry about it. Audio support in llama.cpp is still quite experimental, and not fully integrated on the main branch of the llama.cpp project. Because of this, the Liquid AI team has released specialized llama.cpp builds that support the LFM2.5-Audio-1.5B model, that you will need to run this CLI.
 
