@@ -12,7 +12,7 @@
 | Audio | Inline (unique code) | LFM2.5-Audio-1.5B, LFM2.5-Audio-1.5B-JP, LFM2-Audio-1.5B |
 | Retrieval | Inline (sentence-transformers / PyLate / GGUF) | LFM2.5-Embedding-350M, LFM2.5-ColBERT-350M, LFM2-ColBERT-350M |
 | Encoders | Inline (Transformers / llama.cpp) | LFM2.5-Encoder-350M, LFM2.5-Encoder-230M |
-| Decision | Inline (Transformers `system_one` / llama.cpp `/v1/systemone`) | d1-3B, d1-omni-600M; hosted d1 and d1-ultra on `lfm/models/d1.mdx` |
+| Decision | Inline (Transformers `system_one` / llama.cpp `/v1/systemone`) | d1-3B, d1-omni-600M; hosted d1.1 and d1-ultra on `lfm/models/d1.mdx` |
 | Nanos | Inline (custom prompts/temps) | VL-Extract, Transcript, Math, ENJP-MT, PII-Extract-JP; deprecated Extract, RAG, Tool |
 
 ## Full Implementation Matrix
@@ -41,7 +41,7 @@ MLX/ONNX "Yes" means a repo exists (LiquidAI, or mlx-community/onnx-community wh
 | **Decision** |
 | d1-3B | `LiquidAI/d1-3B` | system_one (remote code) | /v1/systemone | NO | NO | Yes (mlx-vlm) | NO | Also d1-3B-w8a8 (torchao INT8); trainable (TRL, Unsloth) |
 | d1-omni-600M | `LiquidAI/d1-omni-600M` | system_one (remote code) | /v1/systemone | NO | NO | Yes (mlx-vlm) | NO | Text + images or audio; 16K ctx |
-| d1 / d1-ultra | API only (`api.liquid.ai/decisions/v1/systemone`) | -- | -- | -- | -- | -- | -- | Also on OpenRouter and Vercel AI Gateway |
+| d1.1 / d1-ultra | API only (`api.liquid.ai/decisions/v1/systemone`) | -- | -- | -- | -- | -- | -- | Also on OpenRouter and Vercel AI Gateway |
 | **LFM2 Text** |
 | 24B-A2B | `LiquidAI/LFM2-24B-A2B` | Standard | Standard | Standard | Standard | Yes | Yes | Deprecated; use LFM2.5-24B-A2B |
 | 2.6B | `LiquidAI/LFM2-2.6B` | Standard | Standard | Standard | Standard | Yes | Yes | Deprecated; use LFM2.5-2.6B |

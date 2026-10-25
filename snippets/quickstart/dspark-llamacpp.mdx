@@ -1,4 +1,4 @@
-export const DsparkLlamacpp = ({ ggufRepo, draftRepo, vision = false, samplingFlags }) => (
+export const DsparkLlamacpp = ({ ggufRepo, draftRepo, vision = false, samplingFlags, draftNMax }) => (
 <div>
 <p><strong>Install:</strong></p>
 <CodeBlock language="bash">
@@ -10,7 +10,7 @@ export const DsparkLlamacpp = ({ ggufRepo, draftRepo, vision = false, samplingFl
 {`llama-server \\
     -hf ${ggufRepo}:F16 \\
     -hfd ${draftRepo}:F16 \\
-    --spec-type draft-dspark --spec-draft-n-max ${vision ? "8" : "10"} --spec-draft-n-min 0 \\
+    --spec-type draft-dspark --spec-draft-n-max ${vision ? "8" : (draftNMax || "10")} --spec-draft-n-min 0 \\
     -ngl 99 -ngld 99 -fa on \\
     ${samplingFlags}`}
 </CodeBlock>
