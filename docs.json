@@ -214,7 +214,7 @@
   "redirects": [
     {
       "source": "/lfm/key-concepts/tool-search",
-      "destination": "/lfm/key-concepts/tool-use#tool-search"
+      "destination": "/lfm/key-concepts/tool-use"
     },
     {
       "source": "/docs/getting-started/welcome",
