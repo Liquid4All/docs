@@ -30,19 +30,19 @@ MLX/ONNX "Yes" means a repo exists (LiquidAI, or mlx-community/onnx-community wh
 | d1-2B | `LiquidAI/d1-2B` | system_one (remote code) | TODO | NO | NO | Yes | Yes | Typed answers; 128K ctx |
 | d1-omni-2B | `LiquidAI/d1-omni-2B` | system_one (remote code) | TODO | NO | NO | Yes | Yes | Audio input; 128K ctx |
 | **LFM2.5 Text** |
-| 1.2B-Instruct | `LiquidAI/LFM2.5-1.2B-Instruct` | Standard | Standard | Standard | Standard | Yes | Yes | Deprecated; use LFM3-1.7B |
-| 1.2B-Thinking | `LiquidAI/LFM2.5-1.2B-Thinking` | Standard | Standard | Standard | Standard | Yes | Yes | Deprecated; use LFM3-1.7B |
+| 1.2B-Instruct | `LiquidAI/LFM2.5-1.2B-Instruct` | Standard | Standard | Standard | Standard | Yes | Yes | Flagship |
+| 1.2B-Thinking | `LiquidAI/LFM2.5-1.2B-Thinking` | Standard | Standard | Standard | Standard | Yes | Yes | |
 | 1.2B-Base | `LiquidAI/LFM2.5-1.2B-Base` | Base (no chat) | -- | Base (no chat) | -- | -- | Yes | Raw text completion; no docs page |
-| 1.2B-JP-202606 | `LiquidAI/LFM2.5-1.2B-JP-202606` | Standard | Standard | Standard | Standard | Yes | Yes | Deprecated; use LFM3-1.7B |
+| 1.2B-JP-202606 | `LiquidAI/LFM2.5-1.2B-JP-202606` | Standard | Standard | Standard | Standard | Yes | Yes | Japanese; replaces 1.2B-JP |
 | 1.2B-JP | `LiquidAI/LFM2.5-1.2B-JP` | Standard | Standard | Standard | Standard | Yes | Yes | Deprecated; use LFM2.5-1.2B-JP-202606 |
 | 230M | `LiquidAI/LFM2.5-230M` | Standard | Standard | Standard | Standard | Yes | Yes | Smallest LFM2.5 |
 | 350M | `LiquidAI/LFM2.5-350M` | Standard | Standard | Standard | Standard | Yes | Yes | |
-| 2.6B | `LiquidAI/LFM2.5-2.6B` | Standard | Standard | Standard | Standard | Yes | Yes | 131K ctx, 128K vocab |
+| 2.6B | `LiquidAI/LFM2.5-2.6B` | Standard | Standard | Standard | Standard | Yes | Yes | Deprecated; use LFM3-1.7B. 131K ctx, 128K vocab |
 | 8B-A1B | `LiquidAI/LFM2.5-8B-A1B` | Inline | Standard | Standard | Standard | Yes | Yes | MoE, 128K ctx |
 | 24B-A2B | `LiquidAI/LFM2.5-24B-A2B` | Inline | Standard | Standard | Standard | Yes | Yes | MoE, 131K ctx; FP8 checkpoint |
 | **LFM2.5 Vision & Audio** |
 | VL-3B | `LiquidAI/LFM2.5-VL-3B` | VL (v5 req) | VL (--image) | VL | NO (PR#14069) | Yes | Yes | |
-| VL-1.6B | `LiquidAI/LFM2.5-VL-1.6B` | VL (v5 req) | VL (--image) | VL | NO (PR#14069) | Yes (community) | Yes | |
+| VL-1.6B | `LiquidAI/LFM2.5-VL-1.6B` | VL (v5 req) | VL (--image) | VL | NO (PR#14069) | Yes (community) | Yes | Deprecated; use LFM3-VL-2B |
 | VL-450M | `LiquidAI/LFM2.5-VL-450M` | VL (v5 req) | VL (--image) | VL | NO (PR#14069) | Yes | Yes | |
 | Audio-1.5B | `LiquidAI/LFM2.5-Audio-1.5B` | liquid-audio | Custom binary | NO | NO | Yes (community) | Yes | Deprecated; use LFM3-Audio-2B |
 | Audio-1.5B-JP | `LiquidAI/LFM2.5-Audio-1.5B-JP` | liquid-audio | Custom binary | NO | NO | NO | NO | Japanese |
