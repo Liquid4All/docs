@@ -153,18 +153,7 @@ LFM3-Omni-2B is Liquid AI's first omni model: a single end-to-end model that und
   </Tab>
 
   <Tab title="llama.cpp">
-    {/* TODO: verify the GGUF repository, file names, and llama-server flags at release. */}
-    The model is split into a language-model GGUF and a multimodal projector GGUF (audio encoder, vision encoder, audio decoder, and codec).
-
-    **Server Mode:**
-
-    `llama-server` serves an OpenAI-compatible realtime WebSocket at `/v1/realtime` for spoken conversations. Start it with `--reasoning off`, since this model does not reason:
-
-    ```bash
-    llama-server -m lfm3-omni-2b.gguf --mmproj mmproj-lfm3-omni-2b.gguf --reasoning off
-    ```
-
-    In a realtime session, leave `output_modalities` unset to let the model choose, or set it to `["text"]`, `["audio"]`, or `["text", "audio"]` (interleaved). Speech comes back as base64 PCM16 in `response.output_audio.delta` events.
+    Download the GGUF files and follow the llama.cpp instructions in the [LiquidAI/LFM3-Omni-2B-GGUF](https://huggingface.co/LiquidAI/LFM3-Omni-2B-GGUF) repository.
   </Tab>
 
   <Tab title="SGLang">
