@@ -1,0 +1,122 @@
+---
+title: "d1-omni-2B"
+description: "2.17B parameter decision model for text, pictures, and audio, built on LFM3-Omni-2B"
+---
+
+<a href="/lfm/models/decision-models" className="back-button">← Back to Decision Models</a>
+
+d1-omni-2B is a 2.17B parameter decision model for text, pictures, and audio, built on [LFM3-Omni-2B](/lfm/models/lfm3-omni-2b). It returns calibrated answers in one forward pass, without generating tokens. Clips and spoken questions go through the same pass as text and pictures, so a voice request can be routed, checked, or answered just like a typed one.
+
+{/* TODO: confirm the GGUF, MLX, and ONNX repository names at release. */}
+<div style={{display: 'flex', gap: '0.5rem', margin: '0.5rem 0 1.5rem 0'}}>
+  <a href="https://huggingface.co/LiquidAI/d1-omni-2B" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#fbbf24'}}><span style={{color: '#000'}}>HF</span></a>
+  <a href="https://huggingface.co/LiquidAI/d1-omni-2B-GGUF" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#60a5fa'}}><span style={{color: '#000'}}>GGUF</span></a>
+  <a href="https://huggingface.co/LiquidAI/d1-omni-2B-MLX-8bit" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#c4b5fd'}}><span style={{color: '#000'}}>MLX</span></a>
+  <a href="https://huggingface.co/LiquidAI/d1-omni-2B-ONNX" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#86efac'}}><span style={{color: '#000'}}>ONNX</span></a>
+</div>
+
+## Specifications
+
+| Property | Value |
+|----------|-------|
+| Parameters | 2.17B |
+| Context Length | 128K tokens |
+| Architecture | LFM3-Omni — LFM3 backbone, 24 layers (13 gated short convolution + 5 sliding-window attention + 6 global attention) |
+| Languages | English, Arabic, Chinese, French, German, Italian, Japanese, Korean, Portuguese, Spanish, Vietnamese, Thai, Indonesian, Hindi, Russian, Polish. Speech covers the same languages except Hindi, Thai, Vietnamese, and Indonesian. |
+| License | [LFM Open License v1.0](/lfm/help/model-license) |
+
+<div className="use-cases">
+<CardGroup cols={3}>
+
+<Card title="Native Audio" icon="waveform">
+  Audio clips and spoken questions in the same pass
+</Card>
+
+<Card title="Typed Answers" icon="brackets-curly">
+  Values with their span, boxes, and estimates with an interval
+</Card>
+
+<Card title="Zero Output Tokens" icon="gauge-high">
+  No generated tokens, transcript, or speech
+</Card>
+
+</CardGroup>
+</div>
+
+d1-omni-2B is designed for decisions that depend on what is heard, such as call and voice-message routing and sound events, and it handles the same text and picture decisions as [d1-2B](/lfm/models/d1-2b). It is not a chat model and writes no transcript or speech. Without audio, use d1-2B: it is stronger on text and single boxes, reports missing values more often, and is better calibrated.
+
+## Quick Start
+
+<Tabs>
+  <Tab title="Transformers">
+    **Install:**
+
+    ```bash
+    pip install "transformers>=5.19" torch torchvision pillow
+    ```
+
+    **Text input:**
+
+    ```python
+    import torch
+    from transformers import AutoModel
+
+    device = "cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu"
+    dtype = torch.float32 if device == "cpu" else torch.bfloat16
+    model = AutoModel.from_pretrained("LiquidAI/d1-omni-2B", trust_remote_code=True, dtype=dtype).to(device)
+
+    questions = {
+        "refund": {"type": "noul", "instructions": "Is the customer asking for a refund?"},
+        "team": {"type": "choice", "instructions": "Which team should handle this?",
+                 "criteria": {"billing": "Charges, refunds, invoices", "shipping": "Delivery and parcels",
+                              "technical": "App or site faults"}},
+        "topics": {"type": "choice", "multiple": True, "instructions": "Which topics does the message raise?",
+                   "criteria": {"billing": "Payments and charges", "delivery": "Shipping and parcels",
+                                "login": "Signing in to the account"}},
+    }
+    output = model.system_one("I was charged twice and my parcel never arrived. Please refund one charge.", questions)
+    print(output)
+    ```
+
+    **Audio input:**
+
+    A clip from a file is `{"type": "audio", "path": "call.wav"}` (16-bit PCM WAV, resampled to 16 kHz), or a waveform under `"audio"` with its `"sampling_rate"`:
+
+    ```python
+    import numpy as np
+
+    # A recording: three short beeps over quiet noise, 16 kHz mono
+    rate = 16000
+    clip = np.random.default_rng(0).normal(0, 0.003, 4 * rate).astype(np.float32)
+    for start in (0.5, 1.5, 2.5):
+        clip[int(start * rate):int(start * rate) + 3200] += 0.3 * np.sin(2 * np.pi * 880 * np.arange(3200) / rate)
+
+    output = model.system_one(None, {
+        "beeps": {"type": "number", "instructions": "How many beeps are there?", "range": [0, 10], "step": 1},
+        "speech": {"type": "noul", "instructions": "Does someone speak in the recording?"},
+    }, media=[{"type": "audio", "audio": clip, "sampling_rate": rate}])
+    print(output)
+    ```
+
+    A spoken question takes a clip as its instructions: `{"type": "noul", "instructions": {"type": "audio", "path": "question.wav"}}`.
+
+    **Image input:**
+
+    ```python
+    from transformers.image_utils import load_image
+
+    image = load_image("http://images.cocodataset.org/val2017/000000039769.jpg")
+    output = model.system_one(None, {
+        "cats": {"type": "number", "instructions": "How many cats are there?", "range": [0, 10], "step": 1},
+        "remote": {"type": "box", "instructions": "Where is the remote control on the left?"},
+        "every_cat": {"type": "boxes", "instructions": "Every cat.", "max": 4},
+    }, media=[image])
+    print(output)
+    ```
+  </Tab>
+  <Tab title="llama.cpp">
+    {/* TODO: add the minimum llama.cpp release, server command, and /v1/systemone examples at release. */}
+  </Tab>
+</Tabs>
+
+A value or a box is missing when `found` is under 0.5, and it is then `None`. Calibrate any decision threshold on data from your own use. See [Decision Models](/lfm/models/decision-models#primitives) for all question types.

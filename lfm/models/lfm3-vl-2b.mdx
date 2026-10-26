@@ -1,0 +1,196 @@
+---
+title: "LFM3-VL-2B"
+description: "2B vision-language model with video understanding, thinking, and spatial reasoning for on-device deployment"
+---
+
+<a href="/lfm/models/vision-models" className="back-button">← Back to Vision Models</a>
+
+LFM3-VL-2B is a vision-language model in the LFM3 family designed for on-device deployment. It processes text, images, and videos at their native resolution, and pairs the LFM3 language backbone with a new in-house Liquid hybrid convolution/attention vision encoder. It is the first LFM vision model to take video as input, and it reasons step by step before answering.
+
+{/* TODO: confirm the MLX repository name at release. */}
+<div style={{display: 'flex', gap: '0.5rem', margin: '0.5rem 0 1.5rem 0'}}>
+  <a href="https://huggingface.co/LiquidAI/LFM3-VL-2B" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#fbbf24'}}><span style={{color: '#000'}}>HF</span></a>
+  <a href="https://huggingface.co/LiquidAI/LFM3-VL-2B-GGUF" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#60a5fa'}}><span style={{color: '#000'}}>GGUF</span></a>
+  <a href="https://huggingface.co/LiquidAI/LFM3-VL-2B-MLX-8bit" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#c4b5fd'}}><span style={{color: '#000'}}>MLX</span></a>
+  <a href="https://huggingface.co/LiquidAI/LFM3-VL-2B-ONNX" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#86efac'}}><span style={{color: '#000'}}>ONNX</span></a>
+</div>
+
+## Specifications
+
+{/* TODO: add Context Length and Languages rows once the model card has them. */}
+
+| Property | Value |
+|----------|-------|
+| Parameters | 2B (1.73B language model + 164M vision encoder + 25M projector) |
+| Architecture | LFM3-VL — LFM3 backbone + Liquid hybrid vision encoder, 14 layers (8 gated depthwise 2D convolution + 6 bidirectional attention) |
+| Vocabulary Size | 128K |
+| Generation Parameters | `temperature=0.1`, `top_k=50`, `repetition_penalty=1.1` |
+| License | [LFM Open License v1.0](/lfm/help/model-license) |
+
+<div className="use-cases">
+<CardGroup cols={3}>
+
+<Card title="Video Understanding" icon="video">
+  Questions about recorded lectures, phone walkthroughs, and camera clips
+</Card>
+
+<Card title="Thinking" icon="lightbulb">
+  Step-by-step reasoning for math, charts, and multi-step visual questions
+</Card>
+
+<Card title="Spatial & Embodied Reasoning" icon="location-crosshairs">
+  Object localization and spatial relationships for robotics applications
+</Card>
+
+</CardGroup>
+</div>
+
+## Quick Start
+
+<Tabs>
+  <Tab title="Transformers">
+    {/* TODO: confirm the minimum Transformers version at release. */}
+    **Install:**
+
+    ```bash
+    pip install "transformers>=5.2.0" torch torchvision pillow
+    ```
+
+    **Download & Run:**
+
+    ```python
+    import torch
+    from transformers import AutoModelForImageTextToText, AutoProcessor
+
+    model_id = "LiquidAI/LFM3-VL-2B"
+
+    model = AutoModelForImageTextToText.from_pretrained(model_id, dtype=torch.bfloat16, device_map="auto", trust_remote_code=True)
+    processor = AutoProcessor.from_pretrained(model_id, trust_remote_code=True)
+
+    messages = [
+        {
+            "role": "user",
+            "content": [
+                {"type": "image", "url": "http://images.cocodataset.org/val2017/000000039769.jpg"},
+                {"type": "text", "text": "Describe this image."},
+            ],
+        }
+    ]
+
+    inputs = processor.apply_chat_template(
+        messages,
+        add_generation_prompt=True,
+        tokenize=True,
+        return_dict=True,
+        return_tensors="pt",
+    ).to(model.device)
+
+    with torch.inference_mode():
+        output_ids = model.generate(
+            **inputs,
+            do_sample=True,
+            temperature=0.1,
+            top_k=50,
+            repetition_penalty=1.1,
+            max_new_tokens=16384,
+        )
+
+    generated_ids = output_ids[:, inputs["input_ids"].shape[1] :]
+    print(processor.batch_decode(generated_ids, skip_special_tokens=True)[0])
+    ```
+  </Tab>
+  <Tab title="vLLM">
+    {/* TODO: add the minimum vLLM version and required flags (reasoning parser, tool-call parser) at release. */}
+    **Launch server:**
+
+    ```bash
+    vllm serve LiquidAI/LFM3-VL-2B
+    ```
+
+    **Query (OpenAI-compatible):**
+
+    ```python
+    from openai import OpenAI
+
+    client = OpenAI(base_url="http://localhost:8000/v1", api_key="EMPTY")
+
+    response = client.chat.completions.create(
+        model="LiquidAI/LFM3-VL-2B",
+        messages=[
+            {
+                "role": "user",
+                "content": [
+                    {"type": "image_url", "image_url": {"url": "http://images.cocodataset.org/val2017/000000039769.jpg"}},
+                    {"type": "text", "text": "Describe this image."},
+                ],
+            }
+        ],
+        temperature=0.1,
+        extra_body={"top_k": 50, "repetition_penalty": 1.1},
+    )
+    print(response.choices[0].message.content)
+    ```
+  </Tab>
+  <Tab title="SGLang">
+    {/* TODO: add the minimum SGLang version and required flags (reasoning parser, tool-call parser) at release. */}
+    **Launch server:**
+
+    ```bash
+    sglang serve --model-path LiquidAI/LFM3-VL-2B --host 0.0.0.0 --port 30000
+    ```
+
+    **Query (OpenAI-compatible):**
+
+    ```python
+    from openai import OpenAI
+
+    client = OpenAI(base_url="http://localhost:30000/v1", api_key="None")
+
+    response = client.chat.completions.create(
+        model="LiquidAI/LFM3-VL-2B",
+        messages=[
+            {
+                "role": "user",
+                "content": [
+                    {"type": "image_url", "image_url": {"url": "http://images.cocodataset.org/val2017/000000039769.jpg"}},
+                    {"type": "text", "text": "Describe this image."},
+                ],
+            }
+        ],
+        temperature=0.1,
+        extra_body={"top_k": 50, "repetition_penalty": 1.1},
+    )
+    print(response.choices[0].message.content)
+    ```
+  </Tab>
+  <Tab title="llama.cpp">
+    {/* TODO: add the minimum llama.cpp release and any required flags at release. */}
+    **Install:**
+
+    ```bash
+    brew install llama.cpp
+    ```
+
+    **Start the server:**
+
+    ```bash
+    llama-server \
+      -hf LiquidAI/LFM3-VL-2B-GGUF:Q4_K_M \
+      --jinja \
+      --temp 0.1 --top-k 50 --repeat-penalty 1.1 \
+      --port 8080
+    ```
+
+    With `-hf`, llama.cpp downloads the model and the matching vision projector (mmproj). The server is OpenAI-compatible, so you can query it with the vLLM example above by changing `base_url` to `http://localhost:8080/v1`. To chat in the terminal, use `llama-cli` with the same flags, then type `/image <path>` to add an image to the chat.
+
+    For advanced usage, see the [llama.cpp guide](/deployment/on-device/llama-cpp#vision-models).
+  </Tab>
+</Tabs>
+
+## Reasoning
+
+LFM3-VL-2B thinks in a `<think>` block before it answers. Reasoning can be long, so allow up to 16,384 new tokens. See [Chat Template](/lfm/key-concepts/chat-template) and [Tool Use](/lfm/key-concepts/tool-use) for the message format.
+
+## Video Input
+
+Images and videos are processed at their native resolution, and every 2×2 block of patches is merged into one language token. Videos are sampled at 2 fps, consecutive frames are paired, and each frame is prefixed with its timestamp. See [Vision Capabilities](/lfm/key-concepts/vision-capabilities#video-understanding) for a video example.

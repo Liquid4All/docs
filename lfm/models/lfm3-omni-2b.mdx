@@ -1,0 +1,178 @@
+---
+title: "LFM3-Omni-2B"
+description: "2B omni model that understands text, images, video, and audio, and answers in text, speech, or both"
+---
+
+<a href="/lfm/models/omni-models" className="back-button">← Back to Omni Models</a>
+
+LFM3-Omni-2B is Liquid AI's first omni model: a single end-to-end model that understands text, images, video, and audio, and answers in text, speech, or interleaved text and speech. It is built for on-device use, where one model replaces a separate ASR model, vision-language model, LLM, and TTS model. It is a non-reasoning model.
+
+{/* TODO: the model card calls this model LFM3-Omni-2.2B. Confirm the final name and the MLX and ONNX repository names at release. */}
+<div style={{display: 'flex', gap: '0.5rem', margin: '0.5rem 0 1.5rem 0'}}>
+  <a href="https://huggingface.co/LiquidAI/LFM3-Omni-2B" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#fbbf24'}}><span style={{color: '#000'}}>HF</span></a>
+  <a href="https://huggingface.co/LiquidAI/LFM3-Omni-2B-GGUF" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#60a5fa'}}><span style={{color: '#000'}}>GGUF</span></a>
+  <a href="https://huggingface.co/LiquidAI/LFM3-Omni-2B-MLX-8bit" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#c4b5fd'}}><span style={{color: '#000'}}>MLX</span></a>
+  <a href="https://huggingface.co/LiquidAI/LFM3-Omni-2B-ONNX" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#86efac'}}><span style={{color: '#000'}}>ONNX</span></a>
+</div>
+
+## Specifications
+
+{/* TODO: add the text languages once the model card has them. */}
+
+| Property | Value |
+|----------|-------|
+| Parameters | 2.2B (2.17B + 74M audio codec) |
+| Context Length | 32K tokens |
+| Architecture | LFM3 backbone (1.73B) + Liquid hybrid vision encoder (164M) + LFM-based hybrid audio encoder (110M) + audio decoder (84M) + Liquid Codec |
+| Input | Text, images, video (with or without its soundtrack), audio |
+| Output | Text, speech, or interleaved text and speech (24kHz) |
+| Speech Recognition | 31 languages |
+| Speech Synthesis | English (American and British), Arabic, Chinese, Danish, Dutch, Finnish, French, German, Greek, Hebrew, Italian, Japanese, Korean, Polish, Portuguese, Spanish, Swedish, Turkish; female and male voices |
+| Generation Parameters | Greedy decoding for text output; `audio_temperature=0.4`, `audio_repetition_penalty=1.2` for speech output |
+| License | [LFM Open License v1.0](/lfm/help/model-license) |
+
+<div className="use-cases">
+<CardGroup cols={3}>
+
+<Card title="Spoken Visual Q&A" icon="comments">
+  Ask about images by voice, get answers in text or speech
+</Card>
+
+<Card title="Audio-Visual Video" icon="video">
+  Video frames and their soundtrack, interleaved in time
+</Card>
+
+<Card title="Multimodal Tool Calling" icon="wrench">
+  Tool calls from visual context and spoken instructions
+</Card>
+
+</CardGroup>
+</div>
+
+## Quick Start
+
+<Tabs>
+  <Tab title="Transformers">
+    **Install:**
+
+    ```bash
+    pip install "transformers>=5.20.2" accelerate torch torchvision torchcodec pillow soundfile librosa
+    ```
+
+    **Load the model:**
+
+    The processor bundles the tokenizer, the image, video, and audio preprocessors, and the audio codec that turns generated speech into a 24kHz waveform. The helper below renders the conversation, generates, and returns the text reply and the speech, if any.
+
+    ```python
+    import soundfile as sf
+    import torch
+    from transformers import AutoModelForImageTextToText, AutoProcessor
+
+    model_id = "LiquidAI/LFM3-Omni-2B"
+    processor = AutoProcessor.from_pretrained(model_id, trust_remote_code=True)
+    model = AutoModelForImageTextToText.from_pretrained(
+        model_id, dtype=torch.bfloat16, device_map="cuda", trust_remote_code=True
+    )
+    codec = processor.audio_tokenizer.to(model.device)
+
+    @torch.inference_mode()
+    def generate(conversation, generation_mode=None, **processor_kwargs):
+        inputs = processor.apply_chat_template(
+            conversation, add_generation_prompt=True, tokenize=True, return_dict=True, return_tensors="pt",
+            processor_kwargs=processor_kwargs,
+        ).to(model.device)
+        out = model.generate(
+            **inputs, max_new_tokens=512, generation_mode=generation_mode,
+            audio_temperature=0.4, audio_repetition_penalty=1.2,
+        )
+        prompt_len = inputs["input_ids"].shape[1]
+        reply = processor.decode(out.sequences[0, prompt_len : out.sequence_lengths[0]], skip_special_tokens=True)
+        speech = None
+        if out.audio_lengths[0] > 0:
+            speech = codec.decode(out.audio_codes[:1, :, : out.audio_lengths[0]]).audio_values[0].float().cpu()
+        return reply, speech
+    ```
+
+    The model chooses its output modality itself, guided by the system prompt. Pass `generation_mode="text"`, `"audio"`, or `"interleaved"` to fix it.
+
+    **ASR (Audio to Text):**
+
+    ```python
+    transcript, _ = generate([
+        {"role": "system", "content": "Perform ASR in English."},
+        {"role": "user", "content": [{"type": "audio", "audio": "speech.wav"}]},
+    ])
+    ```
+
+    **TTS (Text to Audio):**
+
+    ```python
+    _, speech = generate([
+        {"role": "system", "content": "Read this with a female voice in American English."},
+        {"role": "user", "content": "The harbor was quiet that morning."},
+    ])
+    sf.write("speech.wav", speech.squeeze(0).numpy(), 24_000)
+    ```
+
+    **Spoken Chat:**
+
+    The model answers with text and speech interleaved, so speech can start playing before the full answer is written. The question can be text or speech.
+
+    ```python
+    reply, speech = generate([
+        {"role": "system", "content": "Respond with interleaved text and audio."},
+        {"role": "user", "content": [{"type": "audio", "audio": "question.wav"}]},
+    ])
+    ```
+
+    **Image with a Spoken Question:**
+
+    ```python
+    reply, _ = generate([
+        {"role": "system", "content": "Answer questions about the provided image. Base every answer only on what can be seen. Respond with text."},
+        {"role": "user", "content": [{"type": "image", "image": "photo.jpg"}, {"type": "audio", "audio": "question.wav"}]},
+    ])
+    ```
+
+    **Video with Soundtrack:**
+
+    Set `load_audio_from_video=True` and `use_audio_in_video=True` to interleave the video's audio track with its frames. Without the two flags, only the frames are used.
+
+    ```python
+    inputs = processor.apply_chat_template(
+        [
+            {"role": "system", "content": "Answer questions about the video using what you see and hear."},
+            {"role": "user", "content": [{"type": "video", "video": "clip.mp4"}, {"type": "text", "text": "What happens here?"}]},
+        ],
+        add_generation_prompt=True, tokenize=True, return_dict=True, return_tensors="pt",
+        load_audio_from_video=True, processor_kwargs={"use_audio_in_video": True},
+    ).to(model.device)
+    out = model.generate(**inputs, max_new_tokens=512, generation_mode="text")
+    reply = processor.decode(out.sequences[0, inputs["input_ids"].shape[1] :], skip_special_tokens=True)
+    ```
+  </Tab>
+
+  <Tab title="llama.cpp">
+    {/* TODO: verify the GGUF repository, file names, and llama-server flags at release. */}
+    The model is split into a language-model GGUF and a multimodal projector GGUF (audio encoder, vision encoder, audio decoder, and codec).
+
+    **Server Mode:**
+
+    `llama-server` serves an OpenAI-compatible realtime WebSocket at `/v1/realtime` for spoken conversations. Start it with `--reasoning off`, since this model does not reason:
+
+    ```bash
+    llama-server -m lfm3-omni-2b.gguf --mmproj mmproj-lfm3-omni-2b.gguf --reasoning off
+    ```
+
+    In a realtime session, leave `output_modalities` unset to let the model choose, or set it to `["text"]`, `["audio"]`, or `["text", "audio"]` (interleaved). Speech comes back as base64 PCM16 in `response.output_audio.delta` events.
+  </Tab>
+
+  <Tab title="SGLang">
+    {/* TODO: verify the SGLang version and flags at release. */}
+    SGLang serves LFM3-Omni-2B with text output. Text, image, video (optionally with its soundtrack, via `use_audio_in_video`), and audio inputs are supported.
+
+    ```bash
+    python -m sglang.launch_server --model-path LiquidAI/LFM3-Omni-2B
+    ```
+  </Tab>
+</Tabs>
