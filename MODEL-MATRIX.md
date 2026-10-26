@@ -25,7 +25,7 @@ MLX/ONNX "Yes" means a repo exists (LiquidAI, or mlx-community/onnx-community wh
 | 1.7B | `LiquidAI/LFM3-1.7B` | Inline (pipeline, remote code) | Standard (LFM3 build) | Standard | -- | Yes | Yes | 256K ctx; also FP8 and NVFP4 for SGLang; TODO parsers/versions |
 | 1.7B-Base | `LiquidAI/LFM3-1.7B-Base` | Base (no chat) | -- | -- | -- | -- | -- | No docs page |
 | VL-2B | `LiquidAI/LFM3-VL-2B` | Inline | Inline (llama-server) | Inline (serve) | -- | Yes | Yes | Video input, thinking; TODO versions/flags |
-| Audio-2B | `LiquidAI/LFM3-Audio-2B` | Inline (remote code) | TODO | NO | NO | Yes | Yes | 19 speech languages; LiquidCodec bundled in `audio_detokenizer/` |
+| Audio-2B | `LiquidAI/LFM3-Audio-2B` | Inline (remote code) | TODO | NO | NO | Yes | Yes | 19 speech languages; audio codec bundled in the repo |
 | Omni-2B | `LiquidAI/LFM3-Omni-2B` | Inline (remote code) | Inline (realtime server) | NO | NO | Yes | Yes | SGLang text output only; TODO flags |
 | d1-2B | `LiquidAI/d1-2B` | system_one (remote code) | TODO | NO | NO | Yes | Yes | Typed answers; 128K ctx |
 | d1-omni-2B | `LiquidAI/d1-omni-2B` | system_one (remote code) | TODO | NO | NO | Yes | Yes | Audio input; 128K ctx |

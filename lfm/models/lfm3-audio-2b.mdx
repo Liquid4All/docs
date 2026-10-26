@@ -5,7 +5,7 @@ description: "2B audio model for multilingual speech recognition, speech synthes
 
 <a href="/lfm/models/audio-models" className="back-button">← Back to Audio Models</a>
 
-LFM3-Audio-2B is a compact, fully featured audio model that runs locally on laptops and edge devices. It takes text or audio as input and responds with text, speech, or both. It introduces an in-house audio encoder and the LiquidCodec audio tokenizer, improving speech quality over LFM2.5-Audio.
+LFM3-Audio-2B is a compact, fully featured audio model that runs locally on laptops and edge devices. It takes text or audio as input and responds with text, speech, or both. It introduces an in-house audio encoder and audio codec, improving speech quality over LFM2.5-Audio.
 
 {/* TODO: confirm the MLX repository name at release. */}
 <div style={{display: 'flex', gap: '0.5rem', margin: '0.5rem 0 1.5rem 0'}}>
@@ -22,7 +22,7 @@ LFM3-Audio-2B is a compact, fully featured audio model that runs locally on lapt
 | Property | Value |
 |----------|-------|
 | Parameters | 2B |
-| Architecture | LFM3 backbone + causal audio encoder + LiquidCodec audio tokenizer |
+| Architecture | LFM3 backbone + causal audio encoder + audio codec |
 | Input | Text or audio (16kHz) |
 | Output | Text, speech (24kHz), or interleaved text and speech |
 | Speech Languages | Arabic, Danish, German, Greek, British English, American English, Finnish, French, Hebrew, Italian, Japanese, Korean, Dutch, Polish, Portuguese, Spanish, Swedish, Turkish, Chinese |
@@ -59,14 +59,13 @@ LFM3-Audio-2B is a compact, fully featured audio model that runs locally on lapt
 
     **Load the model:**
 
-    The LiquidCodec implementation ships in the model repository, with its weights in `audio_detokenizer/`. The loaded codec is passed to the processor.
+    The processor bundles the tokenizer, the audio preprocessor, and the audio codec that turns generated speech into a 24 kHz waveform.
 
     ```python
     import torch
     import soundfile as sf
 
     from transformers import AutoModelForMultimodalLM, AutoProcessor
-    from transformers.dynamic_module_utils import get_class_from_dynamic_module
 
     model_id = "LiquidAI/LFM3-Audio-2B"
     device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -75,15 +74,8 @@ LFM3-Audio-2B is a compact, fully featured audio model that runs locally on lapt
     model = AutoModelForMultimodalLM.from_pretrained(
         model_id, dtype=dtype, device_map=device, trust_remote_code=True
     ).eval()
-    LiquidCodecModel = get_class_from_dynamic_module(
-        "modeling_liquid_codec.LiquidCodecModel", model_id
-    )
-    codec = LiquidCodecModel.from_pretrained(
-        model_id, subfolder="audio_detokenizer", dtype=dtype, device_map=device
-    ).eval()
-    processor = AutoProcessor.from_pretrained(
-        model_id, audio_tokenizer=codec, trust_remote_code=True
-    )
+    processor = AutoProcessor.from_pretrained(model_id, trust_remote_code=True)
+    codec = processor.audio_tokenizer.to(device=device, dtype=dtype).eval()
     ```
 
     **ASR (Audio to Text):**
@@ -187,7 +179,7 @@ LFM3-Audio-2B is a compact, fully featured audio model that runs locally on lapt
     sf.write("reply.wav", waveform.float().cpu().numpy(), 24_000)
     ```
 
-    For streaming applications, `model.generate()` accepts `streamer` for text tokens and `audio_streamer` for speech frames, and LiquidCodec decodes those frames incrementally.
+    For streaming applications, `model.generate()` accepts `streamer` for text tokens and `audio_streamer` for speech frames, and the codec decodes those frames incrementally.
 
     **Speech-to-Text Chat:**
 

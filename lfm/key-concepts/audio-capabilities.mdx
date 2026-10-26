@@ -21,14 +21,13 @@ Install PyTorch, Transformers, and the packages used by the examples. `librosa` 
 %pip install -q "transformers>=5.20.2"
 ```
 
-Load LFM3-Audio-2B, LiquidCodec, and the processor with the checkpoint's custom code. The LiquidCodec implementation ships in the model repository, with its weights in `audio_detokenizer/`, and it turns generated speech tokens into a 24 kHz waveform.
+Load LFM3-Audio-2B and its processor with the checkpoint's custom code. The processor bundles the audio codec, which turns generated speech tokens into a 24 kHz waveform.
 
 ```python
 import torch
 import soundfile as sf
 
 from transformers import AutoModelForMultimodalLM, AutoProcessor
-from transformers.dynamic_module_utils import get_class_from_dynamic_module
 
 MODEL_ID = "LiquidAI/LFM3-Audio-2B"
 device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -37,15 +36,8 @@ dtype = torch.bfloat16 if device == "cuda" else torch.float32
 model = AutoModelForMultimodalLM.from_pretrained(
     MODEL_ID, dtype=dtype, device_map=device, trust_remote_code=True
 ).eval()
-LiquidCodecModel = get_class_from_dynamic_module(
-    "modeling_liquid_codec.LiquidCodecModel", MODEL_ID
-)
-codec = LiquidCodecModel.from_pretrained(
-    MODEL_ID, subfolder="audio_detokenizer", dtype=dtype, device_map=device
-).eval()
-processor = AutoProcessor.from_pretrained(
-    MODEL_ID, audio_tokenizer=codec, trust_remote_code=True
-)
+processor = AutoProcessor.from_pretrained(MODEL_ID, trust_remote_code=True)
+codec = processor.audio_tokenizer.to(device=device, dtype=dtype).eval()
 ```
 
 For speech output, use `audio_temperature=0.4` and `audio_repetition_penalty=1.2`. For text-only output, set `suppress_mixed=True` and `suppress_audio_out=True`.
@@ -184,7 +176,7 @@ sf.write("reply.wav", waveform.float().cpu().numpy().squeeze(), 24_000)
 A quick breath reset before you walk in can calm you fast, just inhale for four counts, hold two, exhale four. Picture yourself succeeding and notice the details of the room, like the lighting and the chair. A short walk around the block can also clear your head. Would you like a simple breathing script to try right now?
 ```
 
-This example saves the complete response. For streaming applications, `model.generate()` accepts `streamer` for text tokens and `audio_streamer` for speech frames, and LiquidCodec decodes those frames incrementally, so speech can be played as it is generated.
+This example saves the complete response. For streaming applications, `model.generate()` accepts `streamer` for text tokens and `audio_streamer` for speech frames, and the codec decodes those frames incrementally, so speech can be played as it is generated.
 
 ## Spoken questions with text answers
 
@@ -615,7 +607,7 @@ Both models take audio at 16 kHz. LFM3-Omni-2B resamples audio files to 16 kHz m
 
 **Can the models stream speech?**
 
-Yes. LFM3-Audio-2B uses a causal audio encoder that supports live audio input and incremental prefill, and LiquidCodec supports streaming encoding and decoding. In Transformers, pass `streamer` and `audio_streamer` to `model.generate()`.
+Yes. LFM3-Audio-2B uses a causal audio encoder that supports live audio input and incremental prefill, and its audio codec supports streaming encoding and decoding. In Transformers, pass `streamer` and `audio_streamer` to `model.generate()`.
 
 **Do the models reason before answering?**
 
