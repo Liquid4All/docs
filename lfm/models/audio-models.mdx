@@ -8,11 +8,11 @@ icon: "headphones"
 <CardGroup cols={2}>
 
 <Card title="Text-to-Speech" icon="volume-high">
-  Natural speech synthesis, with four built-in English voices (US and UK, male and female).
+  Natural speech synthesis in 19 languages, with female and male voices.
 </Card>
 
 <Card title="Speech Recognition" icon="ear-listen">
-  English and Japanese speech recognition and transcription.
+  Multilingual speech recognition, transcription, and translation.
 </Card>
 
 <Card title="Audio-to-Audio" icon="waveform">
@@ -26,22 +26,42 @@ icon: "headphones"
 </CardGroup>
 </div>
 
-<h2>LFM2.5 Models &nbsp;&nbsp;<Badge shape="rounded" icon="circle-check" color="green" size="lg">Latest release</Badge></h2>
+<h2>LFM3 Models &nbsp;&nbsp;<Badge shape="rounded" icon="circle-check" color="green" size="lg">Latest release</Badge></h2>
+
+<Info>LFM3-Audio uses a new architecture with an audio encoder and codec developed in-house. It improves speech quality over LFM2.5-Audio, supports 19 languages, and adds audio understanding, general-purpose audio reasoning, and tool calling.</Info>
+
+<CardGroup cols={2}>
+
+<Card title="LFM3-Audio-2B" href="/lfm/models/lfm3-audio-2b">
+  2B · <Badge shape="pill" color="green">Recommended</Badge>
+
+  Multilingual audio model for ASR, TTS, voice chat, and audio understanding.
+</Card>
+
+</CardGroup>
+
+## LFM2.5 Models
 
 <Info>LFM2.5-Audio adds a custom LFM-based audio detokenizer, llama.cpp-compatible GGUFs for CPU inference, and improved ASR and TTS performance over LFM2-Audio.</Info>
 
 <CardGroup cols={2}>
 
-<Card title="LFM2.5-Audio-1.5B" href="/lfm/models/lfm25-audio-1.5b">
-  1.5B · <Badge shape="pill" color="green">Recommended</Badge>
-
-  English audio model for ASR, TTS, and interleaved voice chat. Runs on CPU with llama.cpp.
-</Card>
-
 <Card title="LFM2.5-Audio-1.5B-JP" href="/lfm/models/lfm25-audio-1.5b-jp">
   1.5B · <Badge shape="pill" color="blue">Japanese</Badge>
 
   Japanese-focused audio model for ASR, TTS, and interleaved voice chat.
+</Card>
+
+</CardGroup>
+
+## Guides
+
+Learn how to use these models in your application:
+
+<CardGroup cols={2}>
+
+<Card title="Audio Capabilities" icon="headphones" href="/lfm/key-concepts/audio-capabilities">
+  Speech recognition, speech synthesis, voice chat, translation, audio understanding, and spoken tool calling.
 </Card>
 
 </CardGroup>

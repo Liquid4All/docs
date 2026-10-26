@@ -26,29 +26,25 @@ icon: "comment"
 </CardGroup>
 </div>
 
-<h2>LFM2.5 Models &nbsp;&nbsp;<Badge shape="rounded" icon="circle-check" color="green" size="lg">Latest release</Badge></h2>
+<h2>LFM3 Models &nbsp;&nbsp;<Badge shape="rounded" icon="circle-check" color="green" size="lg">Latest release</Badge></h2>
+
+<Info>LFM3 is built on a new tri-hybrid architecture of gated short convolutions, sliding-window attention, and global attention, pre-trained on 22T tokens. It is far more expressive than LFM2 while maintaining its efficiency.</Info>
+
+<CardGroup cols={2}>
+
+<Card title="LFM3-1.7B" href="/lfm/models/lfm3-1.7b">
+  1.7B · <Badge shape="pill" color="green">Recommended</Badge>
+
+  Text model for local agents and specialized applications, with 256K context and native tool calling.
+</Card>
+
+</CardGroup>
+
+## LFM2.5 Models
 
 <Info>LFM2.5 builds on the LFM2 architecture with extended pre-training and reinforcement learning for improved chat, instruction-following, and tool-calling performance.</Info>
 
 <CardGroup cols={2}>
-
-<Card title="LFM2.5-1.2B-Instruct" href="/lfm/models/lfm25-1.2b-instruct">
-  1.2B · <Badge shape="pill" color="green">Recommended</Badge>
-
-  Instruction-tuned for chat. Best for most use cases.
-</Card>
-
-<Card title="LFM2.5-1.2B-Thinking" href="/lfm/models/lfm25-1.2b-thinking">
-  1.2B · <Badge shape="pill" color="purple">Reasoning</Badge>
-
-  Optimized for math and logical problem-solving.
-</Card>
-
-<Card title="LFM2.5-1.2B-JP-202606" href="/lfm/models/lfm25-1.2b-jp-202606">
-  1.2B · <Badge shape="pill" color="red">Japanese</Badge>
-
-  Japanese chat model for Japanese and English assistants, tool use, and structured outputs.
-</Card>
 
 <Card title="LFM2.5-2.6B" href="/lfm/models/lfm25-2.6b">
   2.6B · <Badge shape="pill" color="purple">Agentic</Badge>
