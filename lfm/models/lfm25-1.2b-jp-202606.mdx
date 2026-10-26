@@ -1,6 +1,6 @@
 ---
 title: "LFM2.5-1.2B-JP-202606"
-description: "1.2B parameter Japanese chat model for Japanese and English assistants, tool use, and structured outputs"
+description: "1.2B parameter Japanese chat model for Japanese and English assistants, tool use, and structured outputs (deprecated - use LFM3-1.7B instead)"
 ---
 
 import { TextTransformers } from "/snippets/quickstart/text-transformers.mdx";
@@ -9,6 +9,10 @@ import { TextSglang } from "/snippets/quickstart/text-sglang.mdx";
 import { TextLlamacpp } from "/snippets/quickstart/text-llamacpp.mdx";
 
 <a href="/lfm/models/text-models" className="back-button">← Back to Text Models</a>
+
+<Warning>
+This model is deprecated. Use [LFM3-1.7B](/lfm/models/lfm3-1.7b), which supports Japanese and English, for improved performance.
+</Warning>
 
 LFM2.5-1.2B-JP-202606 is Liquid AI's general-purpose Japanese chat model. It improves on [LFM2.5-1.2B-JP](/lfm/models/lfm25-1.2b-jp) in knowledge, instruction following, math, code, and tool use. It is recommended for agentic workflows, tool use, structured outputs, bilingual English-Japanese assistants, and on-device personal assistants. It is not recommended for knowledge-intensive tasks, and it works best with clear, explicit instructions that define the task, expected behavior, and output format.
 

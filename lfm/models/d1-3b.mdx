@@ -1,9 +1,13 @@
 ---
 title: "d1-3B"
-description: "3B parameter multimodal decision model for text and images, built on LFM2.5-VL-3B"
+description: "3B parameter multimodal decision model for text and images, built on LFM2.5-VL-3B (deprecated - use d1-2B instead)"
 ---
 
 <a href="/lfm/models/decision-models" className="back-button">← Back to Decision Models</a>
+
+<Warning>
+This model is deprecated. Use [d1-2B](/lfm/models/d1-2b) for improved accuracy with a third fewer parameters, plus typed answers.
+</Warning>
 
 d1-3B is a 3.1B parameter decision model built on [LFM2.5-VL-3B](/lfm/models/lfm25-vl-3b). It evaluates text, JSON, images, or a mix and returns calibrated Noul, Choice, and Score answers in one forward pass with zero output tokens.
 
