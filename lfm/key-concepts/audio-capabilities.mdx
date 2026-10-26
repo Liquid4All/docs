@@ -1,0 +1,626 @@
+---
+title: "Audio Capabilities"
+description: "Use LFM3-Audio and LFM3-Omni models for speech recognition, speech synthesis, voice chat, speech translation, audio understanding, voice-driven tool calling, and spoken questions about images and video."
+---
+
+LFM3-Audio and LFM3-Omni models' audio capabilities enable the model to listen to and speak with users.
+These models take text or audio as input and respond with text, speech, or both. They support common speech tasks such as transcription, speech synthesis, voice chat, and translation, and they can answer questions about the speech, sounds, and events in a recording. They also support tool calling from spoken requests. LFM3-Omni additionally takes images and video, so users can ask spoken questions about what the model sees.
+
+The examples below show how to send audio to LFM3-Audio and LFM3-Omni models.
+
+Install PyTorch, Transformers, and the packages used by the examples. `librosa` and `soundfile` load and save audio files, and `datasets` loads a sample recording. `torchvision`, `torchcodec`, and `Pillow` are used by the LFM3-Omni image and video examples, and `torchcodec` needs FFmpeg.
+
+```python
+# Install PyTorch and acceleration libraries
+%pip install -q torch torchvision torchcodec accelerate
+
+# Install audio, image, and dataset helper libraries
+%pip install -q librosa soundfile pillow datasets
+
+# Install Transformers
+%pip install -q "transformers>=5.20.2"
+```
+
+Load LFM3-Audio-2B, LiquidCodec, and the processor with the checkpoint's custom code. The LiquidCodec implementation ships in the model repository, with its weights in `audio_detokenizer/`, and it turns generated speech tokens into a 24 kHz waveform.
+
+```python
+import torch
+import soundfile as sf
+
+from transformers import AutoModelForMultimodalLM, AutoProcessor
+from transformers.dynamic_module_utils import get_class_from_dynamic_module
+
+MODEL_ID = "LiquidAI/LFM3-Audio-2B"
+device = "cuda" if torch.cuda.is_available() else "cpu"
+dtype = torch.bfloat16 if device == "cuda" else torch.float32
+
+model = AutoModelForMultimodalLM.from_pretrained(
+    MODEL_ID, dtype=dtype, device_map=device, trust_remote_code=True
+).eval()
+LiquidCodecModel = get_class_from_dynamic_module(
+    "modeling_liquid_codec.LiquidCodecModel", MODEL_ID
+)
+codec = LiquidCodecModel.from_pretrained(
+    MODEL_ID, subfolder="audio_detokenizer", dtype=dtype, device_map=device
+).eval()
+processor = AutoProcessor.from_pretrained(
+    MODEL_ID, audio_tokenizer=codec, trust_remote_code=True
+)
+```
+
+For speech output, use `audio_temperature=0.4` and `audio_repetition_penalty=1.2`. For text-only output, set `suppress_mixed=True` and `suppress_audio_out=True`.
+
+Besides a LibriSpeech recording, the examples use three short recordings: `french.wav` says "Bonjour ! Le petit déjeuner est servi de sept heures à dix heures.", `question.wav` asks "I have a job interview tomorrow morning. Any tips to calm my nerves?", and `request.wav` asks "Do I need an umbrella in Edinburgh today?" You can record them with the text-to-speech example below, or replace them with your own audio files.
+
+## Speech recognition
+
+Use the system prompt `Perform ASR in <language>.`, where `<language>` is the English name of the language. To let the model infer the language, use `Perform ASR.` This example transcribes a LibriSpeech recording.
+
+```python
+import io
+from datasets import Audio, load_dataset
+
+librispeech = load_dataset("hf-internal-testing/librispeech_asr_dummy", "clean", split="validation")
+librispeech = librispeech.cast_column("audio", Audio(decode=False))
+sample = librispeech[0]
+speech, sr = sf.read(io.BytesIO(sample["audio"]["bytes"]))
+sf.write("librispeech.wav", speech, sr)
+print("Reference:", sample["text"])
+
+conversation = [
+    {"role": "system", "content": "Perform ASR in English."},
+    {"role": "user", "content": [{"type": "audio", "audio": "librispeech.wav"}]},
+]
+
+inputs = processor.apply_chat_template(
+    conversation,
+    add_generation_prompt=True,
+    tokenize=True,
+    return_dict=True,
+    return_tensors="pt",
+).to(device)
+
+with torch.no_grad():
+    outputs = model.generate(
+        **inputs,
+        max_new_tokens=1024,
+        suppress_mixed=True,
+        suppress_audio_out=True,
+        return_dict_in_generate=True,
+    )
+
+text = processor.decode(
+    outputs.sequences[0, inputs["input_ids"].shape[1]:],
+    skip_special_tokens=True,
+)
+print(text)
+```
+
+**Output**
+
+```text
+Reference: MISTER QUILTER IS THE APOSTLE OF THE MIDDLE CLASSES AND WE ARE GLAD TO WELCOME HIS GOSPEL
+Mr. Quilter is the apostle of the middle classes, and we are glad to welcome his gospel.
+```
+
+## Text-to-speech
+
+Use the system prompt `Perform TTS in <language> using a <gender> voice.`, with a `female` or `male` voice. Prefill the assistant turn with `<|audio_start|>`.
+
+The supported speech languages and locales are Arabic, Danish, German, Greek, British English, American English, Finnish, French, Hebrew, Italian, Japanese, Korean, Dutch, Polish, Portuguese, Spanish, Swedish, Turkish, and Chinese.
+
+```python
+conversation = [
+    {"role": "system", "content": "Perform TTS in American English using a female voice."},
+    {"role": "user", "content": "Liquid AI builds efficient foundation models that run on any device."},
+    {"role": "assistant", "content": "<|audio_start|>"},
+]
+
+inputs = processor.apply_chat_template(
+    conversation,
+    continue_final_message=True,
+    tokenize=True,
+    return_dict=True,
+    return_tensors="pt",
+).to(device)
+
+with torch.no_grad():
+    outputs = model.generate(
+        **inputs,
+        max_new_tokens=256,
+        audio_temperature=0.4,
+        audio_repetition_penalty=1.2,
+        return_dict_in_generate=True,
+    )
+    waveform = codec.decode(
+        outputs.audio_codes[:1, :, :outputs.audio_lengths[0]]
+    ).audio_values[0]  # 24 kHz
+
+sf.write("tts_en.wav", waveform.float().cpu().numpy().squeeze(), 24_000)
+```
+
+## Voice chat
+
+Use the system prompt `Respond with interleaved text and audio.` and prefill the assistant turn with `<|mixed_start|>`. The user input can be text or audio, and the model responds in a conversational style with interleaved text and speech.
+
+```python
+conversation = [
+    {"role": "system", "content": "Respond with interleaved text and audio."},
+    {"role": "user", "content": [{"type": "audio", "audio": "question.wav"}]},
+    {"role": "assistant", "content": "<|mixed_start|>"},
+]
+
+inputs = processor.apply_chat_template(
+    conversation,
+    continue_final_message=True,
+    tokenize=True,
+    return_dict=True,
+    return_tensors="pt",
+).to(device)
+
+with torch.no_grad():
+    outputs = model.generate(
+        **inputs,
+        max_new_tokens=1024,
+        audio_temperature=0.4,
+        audio_repetition_penalty=1.2,
+        return_dict_in_generate=True,
+    )
+    text = processor.decode(
+        outputs.sequences[0, inputs["input_ids"].shape[1]:],
+        skip_special_tokens=True,
+    )
+    waveform = codec.decode(
+        outputs.audio_codes[:1, :, :outputs.audio_lengths[0]]
+    ).audio_values[0]  # 24 kHz
+
+print(text)
+sf.write("reply.wav", waveform.float().cpu().numpy().squeeze(), 24_000)
+```
+
+**Output** (text part; the speech is saved to `reply.wav`)
+
+```text
+A quick breath reset before you walk in can calm you fast, just inhale for four counts, hold two, exhale four. Picture yourself succeeding and notice the details of the room, like the lighting and the chair. A short walk around the block can also clear your head. Would you like a simple breathing script to try right now?
+```
+
+This example saves the complete response. For streaming applications, `model.generate()` accepts `streamer` for text tokens and `audio_streamer` for speech frames, and LiquidCodec decodes those frames incrementally, so speech can be played as it is generated.
+
+## Spoken questions with text answers
+
+For a text-only answer, no specific system prompt is needed. Prefill `<think>` to let the model reason before answering, or `<think></think>` for a direct response.
+
+```python
+use_thinking = True
+conversation = [
+    {"role": "user", "content": [{"type": "audio", "audio": "question.wav"}]},
+    {"role": "assistant", "content": "<think>" if use_thinking else "<think></think>"},
+]
+
+inputs = processor.apply_chat_template(
+    conversation,
+    continue_final_message=True,
+    tokenize=True,
+    return_dict=True,
+    return_tensors="pt",
+).to(device)
+
+with torch.no_grad():
+    outputs = model.generate(
+        **inputs,
+        max_new_tokens=2048,
+        suppress_mixed=True,
+        suppress_audio_out=True,
+        return_dict_in_generate=True,
+    )
+    text = processor.decode(
+        outputs.sequences[0, inputs["input_ids"].shape[1]:],
+        skip_special_tokens=True,
+    )
+
+if use_thinking:
+    _, separator, text = text.partition("</think>")
+    if not separator:
+        raise RuntimeError("Reasoning has not finished; increase max_new_tokens.")
+print(text.strip())
+```
+
+**Output** (truncated)
+
+```text
+It is completely normal to feel nervous before a job interview, but you can definitely manage it. The key is to shift your focus from "what could go wrong" to "what I can control."
+
+Here are some practical tips to calm your nerves for tomorrow morning:
+
+**1. Physical Relaxation**
+*   **Deep Breathing:** Take a few deep breaths. Try the "box breathing" method: inhale for 4 seconds, hold for 4, exhale for 4, and hold for 4. This signals to your nervous system that your body is safe.
+*   **Stretch Out:** Tense shoulders, neck, and jaw are the primary culprits of interview anxiety. Take a minute to stretch—roll your shoulders back, gently tilt your head side-to-side, and shake out your hands.
+...
+```
+
+## Speech translation
+
+{/* TODO: the LFM3-Audio-2B and LFM3-Omni-2B model cards use different translation prompts. Confirm the canonical wording with the audio team. These prompts are from the LFM3-Audio-2B card. */}
+
+Use a system prompt that specifies the source language, target language, and output format. Replace `{source}` and `{target}` with the English names of the languages:
+
+| Direction | System prompt |
+|---|---|
+| Speech → text | `Translate the following speech from {source} to {target} in text form.` |
+| Text → text | `Translate the following {source} text into {target}.` |
+| Speech → speech | `Convert this {source} speech into {target} speech.` |
+| Text → speech | `Convert this {source} text into {target} speech.` |
+
+Translation supports the speech languages listed above, and translation to or from English generally works best. For written output, follow the speech recognition example with the translation prompt:
+
+```python
+conversation = [
+    {"role": "system", "content": "Translate the following speech from French to English in text form."},
+    {"role": "user", "content": [{"type": "audio", "audio": "french.wav"}]},
+]
+
+inputs = processor.apply_chat_template(
+    conversation,
+    add_generation_prompt=True,
+    tokenize=True,
+    return_dict=True,
+    return_tensors="pt",
+).to(device)
+
+with torch.no_grad():
+    outputs = model.generate(
+        **inputs,
+        max_new_tokens=1024,
+        suppress_mixed=True,
+        suppress_audio_out=True,
+        return_dict_in_generate=True,
+    )
+
+print(processor.decode(
+    outputs.sequences[0, inputs["input_ids"].shape[1]:],
+    skip_special_tokens=True,
+))
+```
+
+{/* TODO: add an Output block once a run translates "petit déjeuner" correctly. The latest run returned "Hello, lunch is served from 7 to 10." */}
+
+For spoken output, follow the text-to-speech example with `<|audio_start|>`, replacing the system prompt and user input. This example turns the English text-to-speech clip into Spanish speech:
+
+```python
+conversation = [
+    {"role": "system", "content": "Convert this English speech into Spanish speech."},
+    {"role": "user", "content": [{"type": "audio", "audio": "tts_en.wav"}]},
+    {"role": "assistant", "content": "<|audio_start|>"},
+]
+
+inputs = processor.apply_chat_template(
+    conversation,
+    continue_final_message=True,
+    tokenize=True,
+    return_dict=True,
+    return_tensors="pt",
+).to(device)
+
+with torch.no_grad():
+    outputs = model.generate(
+        **inputs,
+        max_new_tokens=512,
+        audio_temperature=0.4,
+        audio_repetition_penalty=1.2,
+        return_dict_in_generate=True,
+    )
+    waveform = codec.decode(
+        outputs.audio_codes[:1, :, :outputs.audio_lengths[0]]
+    ).audio_values[0]  # 24 kHz
+
+sf.write("spanish.wav", waveform.float().cpu().numpy().squeeze(), 24_000)
+```
+
+## Audio understanding
+
+Include the recording and a question in the user turn. Questions can address speech, music, background sounds, or events. No specific system prompt is required. To ground answers in the recording, use `Answer questions about the provided audio clip. Base every answer only on what can be heard.` This example asks about the speaker in the LibriSpeech recording.
+
+```python
+conversation = [
+    {
+        "role": "system",
+        "content": "Answer questions about the provided audio clip. Base every answer only on what can be heard.",
+    },
+    {
+        "role": "user",
+        "content": [
+            {"type": "audio", "audio": "librispeech.wav"},
+            {"type": "text", "text": "Who or what is the speaker talking about, and what is their attitude towards it?"},
+        ],
+    },
+    {"role": "assistant", "content": "<think></think>"},
+]
+
+inputs = processor.apply_chat_template(
+    conversation,
+    continue_final_message=True,
+    tokenize=True,
+    return_dict=True,
+    return_tensors="pt",
+).to(device)
+
+with torch.no_grad():
+    outputs = model.generate(
+        **inputs,
+        max_new_tokens=1024,
+        suppress_mixed=True,
+        suppress_audio_out=True,
+        return_dict_in_generate=True,
+    )
+
+print(processor.decode(
+    outputs.sequences[0, inputs["input_ids"].shape[1]:],
+    skip_special_tokens=True,
+))
+```
+
+**Output**
+
+```text
+The speaker is talking about “Mr. Quilter,” who is described as “the apostle of the middle classes,” and the speaker’s attitude is one of welcome and gladness—“we’re glad to welcome his gospel.”
+```
+
+Questions about music and other sounds work the same way. For a short trumpet solo from the `librosa` example data (`librosa.ex("trumpet")`, resampled to 16 kHz) and the question "Describe the mood and tempo of this music.", the model answers:
+
+**Output**
+
+```text
+The music has a playful, mischievous mood and a brisk, lively tempo.
+```
+
+To enable reasoning, use the `<think>` prefix and answer extraction from the [spoken questions example](#spoken-questions-with-text-answers). For multiple-choice questions, include the choices in the text part and ask the model to select an answer.
+
+## Tool calling
+
+Pass function schemas through `tools=...` to `apply_chat_template()`. The chat template inserts the definitions into the system prompt in the LFM3 format. Requests may be spoken or written, and the example below sends the spoken weather question and asks for a text response.
+
+```python
+tools = [
+    {
+        "type": "function",
+        "function": {
+            "name": "set_alarm",
+            "description": "Sets an alarm at a given time.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "time": {"type": "string", "description": "Time in 24h HH:MM format."},
+                    "label": {"type": "string", "description": "Optional label for the alarm."},
+                },
+                "required": ["time"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "get_weather",
+            "description": "Returns the current weather for a city.",
+            "parameters": {"type": "object", "properties": {"city": {"type": "string"}}, "required": ["city"]},
+        },
+    },
+]
+
+conversation = [
+    {"role": "user", "content": [{"type": "audio", "audio": "request.wav"}]},
+    {"role": "assistant", "content": "<think></think>"},
+]
+
+inputs = processor.apply_chat_template(
+    conversation,
+    tools=tools,
+    continue_final_message=True,
+    tokenize=True,
+    return_dict=True,
+    return_tensors="pt",
+).to(device)
+
+with torch.no_grad():
+    outputs = model.generate(
+        **inputs,
+        max_new_tokens=1024,
+        suppress_mixed=True,
+        suppress_audio_out=True,
+        return_dict_in_generate=True,
+    )
+
+print(processor.decode(
+    outputs.sequences[0, inputs["input_ids"].shape[1]:],
+    skip_special_tokens=False,
+))
+```
+
+**Output**
+
+```text
+<tool_call>
+<function=get_weather>
+<parameter=city>
+Edinburgh
+</parameter>
+</function>
+</tool_call><|im_end|>
+```
+
+Generated calls use the LFM3 `<tool_call>` XML format. Your application parses and executes the call, adds the assistant's `tool_calls` to the conversation, and returns the result as a `tool` message. Pass the tool schemas on subsequent turns. See [Tool Use](/lfm/key-concepts/tool-use) for the full workflow.
+
+## Images with spoken questions
+
+<Info>**Model support:** This capability requires LFM3-Omni-2B.</Info>
+
+LFM3-Omni-2B takes images, video, and audio in a single model. Load it with `AutoModelForImageTextToText`. Its processor bundles the audio codec, and audio files are resampled to 16 kHz mono on load. The helper below renders the conversation, generates, and returns the text reply and the speech, if any.
+
+```python
+import torch
+from transformers import AutoModelForImageTextToText, AutoProcessor
+
+OMNI_MODEL_ID = "LiquidAI/LFM3-Omni-2B"
+omni_processor = AutoProcessor.from_pretrained(OMNI_MODEL_ID, trust_remote_code=True)
+omni_model = AutoModelForImageTextToText.from_pretrained(
+    OMNI_MODEL_ID, dtype=torch.bfloat16, device_map="cuda", trust_remote_code=True
+)
+omni_codec = omni_processor.audio_tokenizer.to(omni_model.device)
+
+@torch.inference_mode()
+def omni_generate(conversation, generation_mode=None, max_new_tokens=512, **processor_kwargs):
+    inputs = omni_processor.apply_chat_template(
+        conversation, add_generation_prompt=True, tokenize=True, return_dict=True, return_tensors="pt",
+        processor_kwargs=processor_kwargs,
+    ).to(omni_model.device)
+    out = omni_model.generate(
+        **inputs, max_new_tokens=max_new_tokens, generation_mode=generation_mode,
+        audio_temperature=0.4, audio_repetition_penalty=1.2,
+    )
+    prompt_len = inputs["input_ids"].shape[1]
+    reply = omni_processor.decode(out.sequences[0, prompt_len : out.sequence_lengths[0]], skip_special_tokens=True)
+    speech = None
+    if out.audio_lengths[0] > 0:
+        speech = omni_codec.decode(out.audio_codes[:1, :, : out.audio_lengths[0]]).audio_values[0].float().cpu().numpy().squeeze()
+    return reply, speech
+```
+
+Images are processed at their native resolution. Use the system prompt `Describe the provided image.` for captions.
+
+```python
+from transformers.image_utils import load_image
+
+image = load_image("https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/bee.jpg")
+image.save("bee.jpg")
+
+caption, _ = omni_generate([
+    {"role": "system", "content": "Describe the provided image."},
+    {"role": "user", "content": [{"type": "image", "image": "bee.jpg"}]},
+])
+print(caption)
+```
+
+**Output**
+
+![Input photo](https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/bee.jpg)
+
+```text
+This is a close‑up (macro) photograph of a garden scene dominated by pink cosmos flowers. The central subject is a fully open, light‑pink cosmos with five broad, slightly ruffled petals radiating from a bright yellow disc of stamens; perched right in the middle of that disc is a fuzzy bumblebee, black with a band of orange‑yellow on its thorax and pale, hairy wings, actively foraging on the orange center. To the left, a second, similar pink cosmos is in soft focus, showing its yellow center and a dried, brownish flower head above it. The background is rendered in smooth, creamy bokeh: a large, out‑of‑focus green leaf spans the top of the frame, several other cosmos heads—some still pink, some faded to mauve—hang on thin stems, and a small, vivid red cosmos with a slender reddish stem and a pale, withered bud sits in the lower right. Thin, needle‑like green leaves and a few more blurred green leaves fill the lower portion, while the shallow depth of field keeps the focus locked on the pink bloom and the bee, giving the image a vivid, natural, spring‑garden feel.
+```
+
+For questions, use `Answer questions about the provided image. Base every answer only on what can be seen.` The question can be asked by voice, with the recording in place of the text. The model chooses its output modality from the system prompt: when the answer should be in a different modality from the question, add `Respond with text.` or `Respond with interleaved text and audio.` after the task prompt. In this example, `image_question.wav` asks "What is the animal in this picture doing?"
+
+```python
+answer, _ = omni_generate([
+    {"role": "system", "content": "Answer questions about the provided image. Base every answer only on what can be seen. Respond with text."},
+    {"role": "user", "content": [{"type": "image", "image": "bee.jpg"}, {"type": "audio", "audio": "image_question.wav"}]},
+])
+print(answer)
+```
+
+**Output**
+
+```text
+The animal in the picture is a **bee**, and it is **feeding on a pink cosmos flower**. You can see it perched directly on the center of the open pink bloom, with its fuzzy black‑and‑yellow body and translucent wings pressed against the orange disc of the flower's center, where it is collecting nectar (and pollen) to feed on. The surrounding cosmos flowers, some still in bloom and some dried, along with the green leaves in the background, confirm this is a bee foraging for nectar on a flower.
+```
+
+You can also ask in text and get a spoken answer:
+
+```python
+answer, speech = omni_generate([
+    {"role": "system", "content": "Answer questions about the provided image. Base every answer only on what can be seen. Respond with interleaved text and audio."},
+    {"role": "user", "content": [{"type": "image", "image": "bee.jpg"}, {"type": "text", "text": "Is this insect useful for the garden? Why?"}]},
+])
+print(answer)
+sf.write("bee_answer.wav", speech, 24_000)
+```
+
+**Output** (text part; the speech is saved to `bee_answer.wav`)
+
+```text
+Yes, this insect is useful for the garden because it is a bee.
+```
+
+## Video with soundtrack
+
+<Info>**Model support:** This capability requires LFM3-Omni-2B.</Info>
+
+LFM3-Omni-2B can answer questions that depend on both what is seen and what is heard in a video. Set `load_audio_from_video=True` and `use_audio_in_video=True`: the processor reads the video's audio track and interleaves it with the frames, so each pair of frames is followed by the sound that goes with it. Without the two flags, only the frames are used.
+
+Video is sampled at 2 frames per second, consecutive frames are paired, and each pair is prefixed with its timestamp. This example asks about a short clip from the Hugging Face test videos, first with the frames only, then with the frames and the soundtrack.
+
+```python
+from huggingface_hub import hf_hub_download
+
+video_path = hf_hub_download("raushan-testing-hf/videos-test", "sample_demo_1.mp4", repo_type="dataset")
+
+@torch.inference_mode()
+def ask_video(question, use_audio=False):
+    extra = dict(load_audio_from_video=True, processor_kwargs={"use_audio_in_video": True}) if use_audio else {}
+    inputs = omni_processor.apply_chat_template(
+        [
+            {"role": "system", "content": "Answer questions about the video using what you see and hear."},
+            {"role": "user", "content": [{"type": "video", "video": video_path}, {"type": "text", "text": question}]},
+        ],
+        add_generation_prompt=True, tokenize=True, return_dict=True, return_tensors="pt", **extra,
+    ).to(omni_model.device)
+    out = omni_model.generate(**inputs, max_new_tokens=256, generation_mode="text")
+    return omni_processor.decode(out.sequences[0, inputs["input_ids"].shape[1]:], skip_special_tokens=True)
+
+print("Frames only:\n", ask_video("What happens in this video?"))
+print("\nFrames and soundtrack:\n", ask_video("What happens in this video, and what can you hear?", use_audio=True))
+```
+
+{/* TODO: the clip's soundtrack is a toddler babbling, and the model quoted it as clear words. Replace the clip with one that has clearly audible speech or sounds, then add the "Frames and soundtrack" output. */}
+
+**Output** (frames only)
+
+<video controls width="480" src="https://huggingface.co/datasets/raushan-testing-hf/videos-test/resolve/main/sample_demo_1.mp4"></video>
+
+```text
+The video shows a young toddler sitting on a bed and playing with an open book. The child, who has blonde hair, is wearing dark-framed glasses, a light blue sleeveless top, and pink pants, and is barefoot with legs stretched out on the bed. At the start, the child is looking down at the open book, then raises both hands and claps them together in a playful gesture. After a moment, the child lowers their hands, grabs the book with both hands, and begins turning the pages, flipping through the pages while continuing to look at them. The setting is a bedroom, with a crib visible in the background, a white blanket and clothing scattered on the bed, and a small framed photo on a nightstand to the right. A "clideo.com" watermark appears in the bottom-right corner throughout the clip. Overall, the video captures a cute, playful moment of a baby toddling around on the bed and flipping through a book.
+```
+
+## Output modality
+
+<Info>**Model support:** This capability requires LFM3-Omni-2B.</Info>
+
+LFM3-Omni-2B chooses its output modality from the system prompt. Pass `generation_mode="text"`, `"audio"`, or `"interleaved"` to override it. Use `"audio"` (speech only) for reading text aloud and speech-to-speech translation, and prefer `"interleaved"` for open-ended spoken answers. This example answers the same question in text and in interleaved text and speech.
+
+```python
+conversation = [
+    {"role": "user", "content": [{"type": "image", "image": "bee.jpg"}, {"type": "text", "text": "Describe this picture in one sentence."}]},
+]
+for mode in ["text", "interleaved"]:
+    torch.manual_seed(0)
+    reply, speech = omni_generate(conversation, generation_mode=mode)
+    print(f"{mode}: {reply}")
+```
+
+**Output**
+
+```text
+text: A vibrant pink cosmos flower, with a black-and-yellow bumblebee perched on its bright yellow center, is the focal point of this close-up garden shot, surrounded by blurred pink blooms, dried brown flower heads, and a single red flower against a soft green background.
+interleaved: A bright pink cosmos flower with a fuzzy bumblebee perched on its yellow center is the focal point, surrounded by other pink blooms, a single red flower, and blurred green leaves in the background.
+```
+
+## FAQ
+
+**Which model should I use?**
+
+Use `LFM3-Audio-2B` for speech and audio tasks: transcription, speech synthesis, voice chat, translation, audio understanding, and spoken tool calls. Use `LFM3-Omni-2B` when the request also involves images or video, such as spoken questions about a photo or questions about a video and its soundtrack.
+
+**What audio input is supported?**
+
+Both models take audio at 16 kHz. LFM3-Omni-2B resamples audio files to 16 kHz mono on load. Speech output is a 24 kHz waveform.
+
+**Can the models stream speech?**
+
+Yes. LFM3-Audio-2B uses a causal audio encoder that supports live audio input and incremental prefill, and LiquidCodec supports streaming encoding and decoding. In Transformers, pass `streamer` and `audio_streamer` to `model.generate()`.
+
+**Do the models reason before answering?**
+
+LFM3-Audio-2B reasons before text-only answers when you prefill `<think>`, and answers directly with `<think></think>`. LFM3-Omni-2B is a non-reasoning model.
+
+**Why should I always sample speech output?**
+
+With LFM3-Omni-2B, greedy audio decoding degenerates, so always pass `audio_temperature` for speech or interleaved output. In Transformers, generation decodes audio greedily when `audio_temperature` is not set. Text output works with greedy decoding.
