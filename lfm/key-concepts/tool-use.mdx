@@ -162,32 +162,166 @@ What is the current status of candidate ID 12345?<|im_end|>
 <think>The tool says the interview is scheduled for 2023-11-20.</think>The candidate with ID 12345 is currently in the "Interview Scheduled" stage for the position of Clinical Research Associate, with an interview date set for 2023-11-20.<|im_end|>
 ```
 
-## Tool Search
+## Defer Loading and Tool Search
 
-LFM3 supports deferred tools. Set `defer_loading=True` to keep tool definitions out of the prompt until your harness's search tool returns their names as `tool_reference` parts. The chat template then inserts their definitions into `<tools>`.
+Every tool definition in `<tools>` is part of the prompt. With a few tools that's fine, but an agent on a phone, in a car, or in a smart home may have hundreds or thousands of tools, far more than fit in the context window.
+
+LFM3 solves this with **deferred tools** and **tool search**:
+
+- **Defer loading:** mark a tool with `"defer_loading": True`. The chat template leaves its definition out of the system prompt, but the tool stays in your `tools` list, so your application still knows its schema.
+- **Tool search:** give the model one tool that is always loaded, such as `search_tools`. When none of its loaded tools fit a request, the model calls the search tool. Your application runs the search and returns the matching tools as `tool_reference` parts. The chat template adds their definitions to the tool response inside `<additional_tools>`, and the model can call them from then on.
+
+This has two benefits:
+
+- **Shorter prompts:** only the always-loaded tools are in the system prompt. Deferred tools enter the context only when the model needs them.
+- **Stable prompt prefix:** discovered tools arrive in the tool response, so the system prompt never changes. Inference engines can keep reusing the cached prefix as the conversation grows.
+
+### How it works
+
+1. Pass all tools, deferred or not, in `tools` on every request. The chat template raises an error if a `tool_reference` names a tool that isn't in `tools`.
+2. In the system prompt, tell the model when to search.
+3. When the model calls the search tool, run your search and return a `tool` message with one `tool_reference` part per matching tool.
+4. The model calls the discovered tool. Run it and return the result as usual.
+
+### Complete Example
+
+This example uses a keyword search over a small catalog. In production, replace `search_catalog()` with your own search, for example over tool descriptions with an embedding model.
 
 ```python
+import json
+import re
+from transformers import AutoModelForCausalLM, AutoTokenizer
+
+model_id = "LiquidAI/LFM3-1.7B"
+model = AutoModelForCausalLM.from_pretrained(model_id, dtype="bfloat16", device_map="auto", trust_remote_code=True)
+tokenizer = AutoTokenizer.from_pretrained(model_id, trust_remote_code=True)
+
+def tool(name, description, properties, required, defer_loading=False):
+    schema = {
+        "type": "function",
+        "function": {
+            "name": name,
+            "description": description,
+            "parameters": {"type": "object", "properties": properties, "required": required},
+        },
+    }
+    if defer_loading:
+        schema["defer_loading"] = True
+    return schema
+
+# The search tool is always loaded; the catalog tools are deferred
 tools = [
-    search_tool,
-    {"type": "function", "defer_loading": True, "function": get_weather_schema},
+    tool("search_tools", "Search the tool catalog and return the tools that match a query.",
+         {"query": {"type": "string", "description": "What the tool should do"}}, ["query"]),
+    tool("get_weather", "Get the current weather for a city.",
+         {"city": {"type": "string", "description": "City name"}}, ["city"], defer_loading=True),
+    tool("convert_currency", "Convert an amount of money from one currency to another.",
+         {"amount": {"type": "number"}, "from_currency": {"type": "string"}, "to_currency": {"type": "string"}},
+         ["amount", "from_currency", "to_currency"], defer_loading=True),
 ]
-messages.append({
-    "role": "tool",
-    "tool_call_id": call_id,
-    "content": [
-        {"type": "text", "text": "Found 1 tool."},
-        {"type": "tool_reference", "name": "get_weather"},
-    ],
-})
+
+# Mock functions (replace with actual API calls in production)
+functions = {
+    "get_weather": lambda city: {"city": city, "condition": "light rain", "temperature_c": 11},
+    "convert_currency": lambda amount, from_currency, to_currency: {"amount": round(float(amount) * 1.17, 2), "currency": to_currency},
+}
+
+def search_catalog(query):
+    words = set(query.lower().split())
+    return [
+        t["function"]["name"] for t in tools
+        if t.get("defer_loading") and words & set(t["function"]["description"].lower().rstrip(".").split())
+    ]
+
+def parse_tool_calls(text):
+    calls = []
+    for name, body in re.findall(r"<function=([^>\n]+)>\n(.*?)</function>", text, re.S):
+        arguments = dict(re.findall(r"<parameter=([^>\n]+)>\n(.*?)\n</parameter>", body, re.S))
+        calls.append({"name": name, "arguments": arguments})
+    return calls
+
+messages = [
+    {"role": "system", "content": "You only have one tool right now: search_tools, which searches a catalog of many more tools. If none of your current tools can handle a request, call search_tools to find one, then call the tool it returns."},
+    {"role": "user", "content": "Do I need an umbrella in Edinburgh today?"},
+]
+
+for _ in range(5):
+    inputs = tokenizer.apply_chat_template(
+        messages, tools=tools, add_generation_prompt=True, return_dict=True, return_tensors="pt"
+    )
+    outputs = model.generate(
+        **inputs.to(model.device),
+        do_sample=True,
+        temperature=0.1,
+        top_k=50,
+        repetition_penalty=1.1,
+        max_new_tokens=1024,
+    )
+    text = tokenizer.decode(outputs[0][len(inputs["input_ids"][0]):], skip_special_tokens=False)
+    reasoning, _, answer = text.partition("</think>")
+    calls = parse_tool_calls(answer)
+    if not calls:
+        print(answer.replace("<|im_end|>", "").strip())
+        break
+
+    messages.append({
+        "role": "assistant",
+        "reasoning": reasoning,
+        "tool_calls": [{"type": "function", "function": call} for call in calls],
+    })
+    for call in calls:
+        if call["name"] == "search_tools":
+            names = search_catalog(call["arguments"]["query"])
+            content = [{"type": "text", "text": f"Found {len(names)} tool(s)."}]
+            content += [{"type": "tool_reference", "name": name} for name in names]
+        else:
+            content = json.dumps(functions[call["name"]](**call["arguments"]))
+        messages.append({"role": "tool", "content": content})
 ```
 
-Your harness implements and runs the search. Keep the full `tools` list, including deferred tools, on every request. In the system prompt, tell the model when to search:
+The system prompt lists only `search_tools`. After the search, the definition of `get_weather` appears in the tool response, and the model calls it:
 
 ```
+<|startoftext|><|im_start|>system
 You only have one tool right now: search_tools, which searches a catalog of many more tools. If none of your current tools can handle a request, call search_tools to find one, then call the tool it returns.
+
+<tools>
+{"name": "search_tools", "description": "Search the tool catalog and return the tools that match a query.", "parameters": {...}}
+</tools><|im_end|>
+<|im_start|>user
+Do I need an umbrella in Edinburgh today?<|im_end|>
+<|im_start|>assistant
+<think>...</think><tool_call>
+<function=search_tools>
+<parameter=query>
+current weather for a city
+</parameter>
+</function>
+</tool_call><|im_end|>
+<|im_start|>tool
+<tool_response>
+Found 1 tool(s).
+<additional_tools>
+{"name": "get_weather", "description": "Get the current weather for a city.", "parameters": {...}}
+</additional_tools>
+</tool_response><|im_end|>
+<|im_start|>assistant
+<think>...</think><tool_call>
+<function=get_weather>
+<parameter=city>
+Edinburgh
+</parameter>
+</function>
+</tool_call><|im_end|>
+<|im_start|>tool
+<tool_response>
+{"city": "Edinburgh", "condition": "light rain", "temperature_c": 11}
+</tool_response><|im_end|>
 ```
 
-Tool search works with vLLM, SGLang, and LFM3-compatible llama.cpp builds. For llama.cpp, use a GGUF with the current chat template or load it with `--chat-template-file`.
+If your search returns full tool definitions instead of names, pass them in the tool message's `additional_tools` field, for example `{"role": "tool", "additional_tools": [weather_schema]}`. The chat template renders them the same way.
+
+Defer loading works with vLLM, SGLang, and LFM3-compatible llama.cpp builds. For llama.cpp, use a GGUF with the current chat template or load it with `--chat-template-file`.
 
 ## Vision, Audio, and Omni Models
 
@@ -206,7 +340,7 @@ Tool definitions consume context tokens since they're inserted as text. For larg
 
 To manage this effectively, only include tools relevant to the current request. Write clear, concise descriptions. Group related tools and remove unused ones when they're not needed.
 
-With LFM3, use [tool search](#tool-search) for large tool catalogs, so only the tools the model needs enter the context.
+With LFM3, use [defer loading and tool search](#defer-loading-and-tool-search) for large tool catalogs, so only the tools the model needs enter the context.
 
 ## LFM2 and LFM2.5
 
