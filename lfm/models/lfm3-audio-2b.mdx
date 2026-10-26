@@ -26,7 +26,7 @@ LFM3-Audio-2B is a compact, fully featured audio model that runs locally on lapt
 | Input | Text or audio (16kHz) |
 | Output | Text, speech (24kHz), or interleaved text and speech |
 | Speech Languages | Arabic, Danish, German, Greek, British English, American English, Finnish, French, Hebrew, Italian, Japanese, Korean, Dutch, Polish, Portuguese, Spanish, Swedish, Turkish, Chinese |
-| Generation Parameters | `audio_temperature=0.4`, `audio_repetition_penalty=1.2` for speech output; `suppress_mixed=True`, `suppress_audio_out=True` for text-only output |
+| Generation Parameters | `audio_temperature=1.0`, `audio_top_k=128`, `audio_repetition_penalty=1.1`, `audio_repetition_window=4096` for speech output; `suppress_mixed=True`, `suppress_audio_out=True` for text-only output |
 | License | [LFM Open License v1.0](/lfm/help/model-license) |
 
 <div className="use-cases">
@@ -131,8 +131,10 @@ LFM3-Audio-2B is a compact, fully featured audio model that runs locally on lapt
         outputs = model.generate(
             **inputs,
             max_new_tokens=256,
-            audio_temperature=0.4,
-            audio_repetition_penalty=1.2,
+            audio_temperature=1.0,
+            audio_top_k=128,
+            audio_repetition_penalty=1.1,
+            audio_repetition_window=4096,
             return_dict_in_generate=True,
         )
         waveform = codec.decode(
@@ -163,8 +165,10 @@ LFM3-Audio-2B is a compact, fully featured audio model that runs locally on lapt
         outputs = model.generate(
             **inputs,
             max_new_tokens=1024,
-            audio_temperature=0.4,
-            audio_repetition_penalty=1.2,
+            audio_temperature=1.0,
+            audio_top_k=128,
+            audio_repetition_penalty=1.1,
+            audio_repetition_window=4096,
             return_dict_in_generate=True,
         )
         text = processor.decode(
@@ -216,6 +220,8 @@ LFM3-Audio-2B is a compact, fully featured audio model that runs locally on lapt
             raise RuntimeError("Reasoning has not finished; increase max_new_tokens.")
     print(text.strip())
     ```
+
+    For more examples, see [Audio Capabilities](/lfm/key-concepts/audio-capabilities).
   </Tab>
 
   <Tab title="llama.cpp">

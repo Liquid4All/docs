@@ -145,7 +145,7 @@ Every inference example must use the correct sampling params from the upstream H
 | LFM3-1.7B (general) | 0.1 | 50 | — | — | 1.1 |
 | LFM3-1.7B (math & STEM) | 1.0 | 20 | 0.95 | — | 1.0 |
 | LFM3-VL-2B | 0.1 | 50 | — | — | 1.1 |
-| LFM3-Audio-2B, LFM3-Omni-2B (speech output) | audio_temperature=0.4 | — | — | — | audio_repetition_penalty=1.2 |
+| LFM3-Audio-2B, LFM3-Omni-2B (speech output) | audio_temperature=1.0 | audio_top_k=128 | — | — | audio_repetition_penalty=1.1, audio_repetition_window=4096 |
 | LFM3-Omni-2B (text output) | 0 (greedy) | — | — | — | — |
 | d1-2B, d1-omni-2B | n/a (single forward pass) | — | — | — | — |
 | LFM2.5-1.2B-Instruct, LFM2.5-350M, LFM2.5-230M | 0.1 | 50 | — | — | 1.05 |

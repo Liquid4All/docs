@@ -28,7 +28,7 @@ LFM3-Omni-2B is Liquid AI's first omni model: a single end-to-end model that und
 | Output | Text, speech, or interleaved text and speech (24kHz) |
 | Speech Recognition | 31 languages |
 | Speech Synthesis | English (American and British), Arabic, Chinese, Danish, Dutch, Finnish, French, German, Greek, Hebrew, Italian, Japanese, Korean, Polish, Portuguese, Spanish, Swedish, Turkish; female and male voices |
-| Generation Parameters | Greedy decoding for text output; `audio_temperature=0.4`, `audio_repetition_penalty=1.2` for speech output |
+| Generation Parameters | Greedy decoding for text output; `audio_temperature=1.0`, `audio_top_k=128`, `audio_repetition_penalty=1.1`, `audio_repetition_window=4096` for speech output |
 | License | [LFM Open License v1.0](/lfm/help/model-license) |
 
 <div className="use-cases">
@@ -66,14 +66,12 @@ LFM3-Omni-2B is Liquid AI's first omni model: a single end-to-end model that und
     ```python
     import soundfile as sf
     import torch
-    from transformers import AutoModelForImageTextToText, AutoProcessor
+    from transformers import AutoProcessor, Lfm3OmniForConditionalGeneration
 
     model_id = "LiquidAI/LFM3-Omni-2B"
     processor = AutoProcessor.from_pretrained(model_id, trust_remote_code=True)
-    model = AutoModelForImageTextToText.from_pretrained(
-        model_id, dtype=torch.bfloat16, device_map="cuda", trust_remote_code=True
-    )
-    codec = processor.audio_tokenizer.to(model.device)
+    codec = processor.audio_tokenizer.to("cuda")
+    model = Lfm3OmniForConditionalGeneration.from_pretrained(model_id, dtype=torch.bfloat16, device_map="cuda")
 
     @torch.inference_mode()
     def generate(conversation, generation_mode=None, **processor_kwargs):
@@ -83,7 +81,7 @@ LFM3-Omni-2B is Liquid AI's first omni model: a single end-to-end model that und
         ).to(model.device)
         out = model.generate(
             **inputs, max_new_tokens=512, generation_mode=generation_mode,
-            audio_temperature=0.4, audio_repetition_penalty=1.2,
+            audio_temperature=1.0, audio_top_k=128, audio_repetition_penalty=1.1, audio_repetition_window=4096,
         )
         prompt_len = inputs["input_ids"].shape[1]
         reply = processor.decode(out.sequences[0, prompt_len : out.sequence_lengths[0]], skip_special_tokens=True)
@@ -150,6 +148,8 @@ LFM3-Omni-2B is Liquid AI's first omni model: a single end-to-end model that und
     out = model.generate(**inputs, max_new_tokens=512, generation_mode="text")
     reply = processor.decode(out.sequences[0, inputs["input_ids"].shape[1] :], skip_special_tokens=True)
     ```
+
+    For more examples, see [Omni Capabilities](/lfm/key-concepts/omni-capabilities).
   </Tab>
 
   <Tab title="llama.cpp">
