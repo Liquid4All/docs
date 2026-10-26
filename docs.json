@@ -82,6 +82,7 @@
               "lfm/key-concepts/tool-use",
               "lfm/key-concepts/vision-capabilities",
               "lfm/key-concepts/audio-capabilities",
+              "lfm/key-concepts/omni-capabilities",
               "lfm/key-concepts/speculative-decoding"
             ]
           },

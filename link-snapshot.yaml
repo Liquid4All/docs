@@ -150,6 +150,7 @@ active:
   - /lfm/inference/vllm
   - /lfm/key-concepts/audio-capabilities
   - /lfm/key-concepts/chat-template
+  - /lfm/key-concepts/omni-capabilities
   - /lfm/key-concepts/speculative-decoding
   - /lfm/key-concepts/text-generation-and-prompting
   - /lfm/key-concepts/tool-search

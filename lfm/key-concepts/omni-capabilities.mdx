@@ -1,0 +1,447 @@
+---
+title: "Omni Capabilities"
+description: "Use LFM3-Omni to understand text, images, video, and audio in one model, and answer in text, speech, or interleaved text and speech."
+---
+
+LFM3-Omni is a single end-to-end model that understands text, images, video, and audio, and answers in text, speech, or interleaved text and speech. One small model replaces a separate speech recognition model, vision-language model, LLM, and text-to-speech model.
+
+The examples below use [LFM3-Omni-2B](/lfm/models/lfm3-omni-2b) with Transformers. They cover:
+
+- **Speech:** recognition, synthesis, translation, and spoken chat
+- **Images:** captioning and visual question answering, asked in text or by voice, answered in text or speech
+- **Video:** questions about a clip, using the frames alone or the frames and their soundtrack
+- **Audio understanding:** open-ended and multiple-choice questions about a recording
+- **Tool calling:** function calls from an image and a spoken request
+- **Output control:** let the model choose its output modality, or force text, speech, or interleaved output
+
+For speech-only workloads, see [Audio Capabilities](/lfm/key-concepts/audio-capabilities).
+
+## Setup
+
+Install Transformers and the packages used by the examples. `torchcodec` decodes video and the soundtrack of a video. A GPU is recommended; the model runs in bfloat16.
+
+```bash
+pip install "transformers>=5.20.2" accelerate datasets torchcodec pillow librosa soundfile
+```
+
+The processor bundles the tokenizer, the image, video, and audio preprocessors, and the audio codec (`processor.audio_tokenizer`), which turns generated speech codes into a 24 kHz waveform.
+
+```python
+import torch
+from transformers import AutoProcessor, Lfm3OmniForConditionalGeneration
+
+model_id = "LiquidAI/LFM3-Omni-2B"
+
+processor = AutoProcessor.from_pretrained(model_id, trust_remote_code=True)
+codec = processor.audio_tokenizer.to("cuda")
+model = Lfm3OmniForConditionalGeneration.from_pretrained(model_id, dtype=torch.bfloat16, device_map="cuda")
+```
+
+### Helper
+
+Every example below is a chat conversation. The helper renders it, loading any image, video, or audio it names, then generates and returns the text reply and the speech, if any.
+
+The model chooses its output modality itself, guided by the system prompt. Pass `generation_mode="text"`, `"audio"`, or `"interleaved"` to force one.
+
+```python
+import soundfile as sf
+
+SR = 24_000  # generated speech is 24 kHz
+
+
+@torch.inference_mode()
+def generate(conversation, generation_mode=None, max_new_tokens=512, **processor_kwargs):
+    inputs = processor.apply_chat_template(
+        conversation,
+        add_generation_prompt=True,
+        tokenize=True,
+        return_dict=True,
+        return_tensors="pt",
+        processor_kwargs=processor_kwargs,
+    ).to(model.device)
+    out = model.generate(
+        **inputs,
+        max_new_tokens=max_new_tokens,
+        generation_mode=generation_mode,
+        audio_temperature=1.0,
+        audio_top_k=128,
+        audio_repetition_penalty=1.1,
+        audio_repetition_window=4096,
+    )
+    prompt_len = inputs["input_ids"].shape[1]
+    reply = processor.decode(out.sequences[0, prompt_len : out.sequence_lengths[0]], skip_special_tokens=True)
+    speech = None
+    if out.audio_lengths[0] > 0:
+        speech = codec.decode(out.audio_codes[:1, :, : out.audio_lengths[0]]).audio_values[0].float().cpu().numpy().squeeze()
+    return reply, speech
+```
+
+## Speech
+
+### Text-to-speech
+
+Use the system prompt `Read this with a {female|male} voice in {language}.` Supported languages: English (American and British), Arabic, Chinese, Danish, Dutch, Finnish, French, German, Greek, Hebrew, Italian, Japanese, Korean, Polish, Portuguese, Spanish, Swedish, and Turkish.
+
+```python
+torch.manual_seed(0)
+_, speech = generate([
+    {"role": "system", "content": "Read this with a female voice in American English."},
+    {"role": "user", "content": "What is this tiny garden visitor doing?"},
+])
+sf.write("question.wav", speech, SR)
+
+_, speech_de = generate([
+    {"role": "system", "content": "Read this with a male voice in German."},
+    {"role": "user", "content": "Heute probieren wir etwas Neues: Wir malen Tiere mit geschlossenen Augen. Mein erster Versuch sieht aus wie eine Kartoffel mit Ohren."},
+])
+sf.write("german.wav", speech_de, SR)
+```
+
+### Speech recognition
+
+Use the system prompt `Perform ASR in {language}.` Pass audio in the user turn as `{"type": "audio", "audio": <path or URL>}`. It's resampled to 16 kHz mono on load.
+
+```python
+for path, language in [("question.wav", "English"), ("german.wav", "German")]:
+    transcript, _ = generate([
+        {"role": "system", "content": f"Perform ASR in {language}."},
+        {"role": "user", "content": [{"type": "audio", "audio": path}]},
+    ])
+    print(f"[{language}] {transcript}")
+```
+
+**Output**
+
+```text
+[English] What is this tiny garden visitor doing?
+[German] Heute probieren wir etwas Neues. Wir malen Tiere mit geschlossenen Augen. Mein erster Versuch sieht aus wie eine Kartoffel mit Ohren.
+```
+
+### Speech translation
+
+Translation works best into or out of English.
+
+| Direction | System prompt |
+|---|---|
+| Speech → speech | `Produce spoken {target} for the following {source} audio.` |
+| Speech → text | `Convert the speech in {source} to written {target}.` |
+| Text → speech | `Convert this {source} text into {target} speech.` |
+
+```python
+translation, _ = generate([
+    {"role": "system", "content": "Convert the speech in German to written English."},
+    {"role": "user", "content": [{"type": "audio", "audio": "german.wav"}]},
+])
+print("Speech → text:", translation)
+
+_, spoken_fr = generate([
+    {"role": "system", "content": "Convert this English text into French speech."},
+    {"role": "user", "content": "Let's try a new recipe tonight. If it looks strange, we can give it a fancy name."},
+])
+sf.write("french.wav", spoken_fr, SR)
+```
+
+**Output** (text part; the French speech is saved to `french.wav`)
+
+```text
+Speech → text: Today we are trying something new. We paint animals with closed eyes. My first attempt looks like a potato with ears.
+```
+
+### Spoken chat
+
+Use the system prompt `Respond with interleaved text and audio.` The model answers with text and speech interleaved, so speech can start playing before the full answer is written. The question can be text or speech.
+
+```python
+reply, speech = generate(
+    [
+        {"role": "system", "content": "Respond with interleaved text and audio. Give two practical ideas in short, friendly sentences."},
+        {"role": "user", "content": "I want to move more, but I have not found an activity I enjoy. How can I try a few options and build a small habit?"},
+    ],
+    max_new_tokens=1024,
+)
+print(reply)
+sf.write("reply.wav", speech, SR)
+```
+
+**Output** (text part; the speech is saved to `reply.wav`)
+
+```text
+Try a 10 minute walk each morning and note how you feel. Then pick one new activity, like a short yoga session, and do it for a week to see what clicks. Does that sound doable for you?
+```
+
+For plain text chat, use no system prompt, or `Respond with text.`
+
+```python
+reply, _ = generate([{"role": "user", "content": "Write a haiku about a small model that can see and hear."}])
+print(reply)
+```
+
+**Output**
+
+```text
+Tiny lens, keen eye,
+Hear the world in whispers,
+Small model, awake.
+```
+
+## Images
+
+Images are processed at their native resolution. Recommended system prompts: `Describe the provided image.` for captions, and `Answer questions about the provided image. Base every answer only on what can be seen.` for questions.
+
+```python
+from transformers.image_utils import load_image
+
+image = load_image("https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/bee.jpg")
+image.save("bee.jpg")
+
+caption, _ = generate([
+    {"role": "system", "content": "Describe the provided image."},
+    {"role": "user", "content": [{"type": "image", "image": "bee.jpg"}]},
+])
+print(caption)
+```
+
+**Output**
+
+![Input photo](https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/bee.jpg)
+
+```text
+This is a close‑up (macro) photograph of a garden scene dominated by pink cosmos flowers. The central subject is a fully open, light‑pink cosmos with five broad, slightly ruffled petals radiating from a bright yellow disc of stamens; perched right in the middle of that disc is a fuzzy bumblebee, black on its back with a band of orange‑yellow on its thorax and pale, hairy wings folded over its body. To the left, a second, similar pink cosmos is in soft focus, its yellow center just visible, and behind it are several dried, brown, spent flower heads with withered, papery petals. In the lower right, a small, vivid red cosmos blooms with its five pointed petals, accompanied by another out‑of‑focus red bloom and a small pale, withered bud on a thin stem. The background is rendered in soft, blurred green foliage, with one large, broad green leaf stretching across the top of the frame and a faint vertical brownish stem at the upper left, all of which keeps the sharp focus on the pink bloom and the bee. The overall effect is a bright, naturalistic nature shot emphasizing the contrast between the soft pink petals, the orange‑and‑black bee, and the muted green‑and‑brown surroundings.
+```
+
+The question can also be asked by voice, with the recording in place of the text. This example uses the spoken question from the text-to-speech example. When the answer should be in a different modality from the question, add an output instruction after the task prompt, for example `Respond with text.`
+
+```python
+answer, _ = generate([
+    {"role": "system", "content": "Answer questions about the provided image. Base every answer only on what can be seen. Respond with text."},
+    {"role": "user", "content": [{"type": "image", "image": "bee.jpg"}, {"type": "audio", "audio": "question.wav"}]},
+])
+print(answer)
+```
+
+**Output**
+
+```text
+The tiny garden visitor is a **bee** (a bumblebee, identifiable by its black body with yellow-orange bands and fuzzy white abdomen) perched on the center of the pink cosmos flower. It is **feeding on nectar/pollen** — its head is pressed into the orange center of the bloom, where it is collecting nectar and pollen to fuel its flight. In short, the bee is visiting the flower to feed on its nectar.
+```
+
+Or ask in text and get a spoken answer:
+
+```python
+answer, speech = generate([
+    {"role": "system", "content": "Answer questions about the provided image. Base every answer only on what can be seen. Respond with interleaved text and audio."},
+    {"role": "user", "content": [{"type": "image", "image": "bee.jpg"}, {"type": "text", "text": "Is this insect useful for the garden? Why?"}]},
+])
+print(answer)
+sf.write("bee_answer.wav", speech, SR)
+```
+
+**Output** (text part; the speech is saved to `bee_answer.wav`)
+
+```text
+Yes, this insect is useful for the garden because it is a bee. Bees pollinate flowers, which helps plants reproduce and grow. This pollination is essential for the health and productivity of many garden plants, including the cosmos and red flowers in the image.
+```
+
+## Video
+
+Video is sampled at 2 frames per second. Consecutive frames are paired, and each pair is prefixed with its timestamp. Use the system prompt `Answer questions about the video using what you see and hear.`
+
+To include the soundtrack, pass `load_audio_from_video=True` and `use_audio_in_video=True`. The processor reads the video's audio track and interleaves it with the frames, so each pair of frames is followed by the sound that goes with it.
+
+```python
+from huggingface_hub import hf_hub_download
+
+video = hf_hub_download("raushan-testing-hf/videos-test", "sample_demo_1.mp4", repo_type="dataset")
+
+
+@torch.inference_mode()
+def ask_video(question, use_audio=False):
+    extra = dict(load_audio_from_video=True, processor_kwargs={"use_audio_in_video": True}) if use_audio else {}
+    inputs = processor.apply_chat_template(
+        [
+            {"role": "system", "content": "Answer questions about the video using what you see and hear."},
+            {"role": "user", "content": [{"type": "video", "video": video}, {"type": "text", "text": question}]},
+        ],
+        add_generation_prompt=True, tokenize=True, return_dict=True, return_tensors="pt", **extra,
+    ).to(model.device)
+    out = model.generate(**inputs, max_new_tokens=256, generation_mode="text")
+    return processor.decode(out.sequences[0, inputs["input_ids"].shape[1]:], skip_special_tokens=True)
+
+
+print("Frames only:\n", ask_video("What happens in this video?"))
+print("\nFrames and soundtrack:\n", ask_video("What happens in this video, and what can you hear?", use_audio=True))
+```
+
+{/* TODO: the clip's soundtrack is a toddler babbling, and the model quotes it as clear words. Replace the clip with one that has clearly audible speech or sounds, then add the "Frames and soundtrack" output. */}
+
+**Output** (frames only)
+
+<video controls width="480" src="https://huggingface.co/datasets/raushan-testing-hf/videos-test/resolve/main/sample_demo_1.mp4"></video>
+
+```text
+The video shows a young toddler sitting on a bed, holding an open picture book. The child, who has blonde hair, is wearing dark-framed glasses, a light blue sleeveless top, and pink pants, and is barefoot with legs stretched out on the bed. At the start, the child is looking down at the pages of the book, then briefly raises a hand to adjust the glasses. After that, the child turns their attention back to the book and repeatedly turns the pages, flipping through them with both hands while gazing at the text. The setting is a bedroom, with a crib visible in the background, a white blanket and clothing scattered on the bed, and a framed photo on a small stand to the right. A "clideo.com" watermark appears in the bottom-right corner throughout the clip. Overall, the video captures a baby playfully turning the pages of a book on the bed.
+```
+
+## Audio understanding
+
+Open-ended questions about sounds, music, and speech need no system prompt: put the audio and the question in the user turn.
+
+```python
+answer, _ = generate([
+    {"role": "user", "content": [
+        {"type": "audio", "audio": "german.wav"},
+        {"type": "text", "text": "What language is spoken, is the speaker a man or a woman, and what is the message about?"},
+    ]},
+])
+print(answer)
+```
+
+**Output**
+
+```text
+The speaker is a man, and he is saying, "Today we try something new. We paint animals with closed eyes. My first attempt looks like a potato with ears."
+```
+
+For multiple choice, use the system prompt `Answer questions about the provided audio clip. Base every answer only on what can be heard.` and end the user turn with `Please choose the answer from the options.`
+
+```python
+answer, _ = generate([
+    {"role": "system", "content": "Answer questions about the provided audio clip. Base every answer only on what can be heard."},
+    {"role": "user", "content": [
+        {"type": "audio", "audio": "german.wav"},
+        {"type": "text", "text": "What activity does the speaker suggest?\nA. Cooking a new recipe\nB. Drawing animals with closed eyes\nC. Planting flowers\nD. Learning a dance\nPlease choose the answer from the options."},
+    ]},
+])
+print(answer)
+```
+
+**Output**
+
+```text
+Drawing animals with closed eyes
+```
+
+## Tool calling
+
+This example shows the model a restaurant photo and asks by voice to book a table. The model reads the restaurant name from the sign and combines it with the city, date, time, party size, and reservation name from the spoken request. The example only prints the proposed call and doesn't make a reservation.
+
+Pass the `book_table` schema to `apply_chat_template()` with `tools=...`. The model returns the call between `<tool_call>` and `</tool_call>`.
+
+```python
+from datetime import date, timedelta
+from urllib.request import Request, urlopen
+from PIL import Image
+
+tools = [{
+    "name": "book_table",
+    "description": "Book a table at a restaurant using its name and city.",
+    "parameters": {
+        "type": "object",
+        "properties": {
+            "restaurant_name": {"type": "string"},
+            "city": {"type": "string"},
+            "date": {"type": "string", "description": "Local date, YYYY-MM-DD."},
+            "time": {"type": "string", "description": "Local time, HH:MM in 24-hour format."},
+            "party_size": {"type": "integer", "minimum": 1},
+            "reservation_name": {"type": "string"},
+        },
+        "required": ["restaurant_name", "city", "date", "time", "party_size", "reservation_name"],
+    },
+}]
+
+photo_url = "https://upload.wikimedia.org/wikipedia/commons/8/80/Cafe_de_Flore_Paris_France.jpg"
+with urlopen(Request(photo_url, headers={"User-Agent": "LFM3Cookbook"}), timeout=30) as response:
+    Image.open(response).convert("RGB").save("restaurant.jpg")
+
+# Record the spoken request
+booking_date = date.today() + timedelta(days=7)
+_, spoken_request = generate([
+    {"role": "system", "content": "Read this with a male voice in British English."},
+    {"role": "user", "content": f"Please book a table for two at this restaurant in Paris on {booking_date:%B %d, %Y} at seven in the evening, under Alex Taylor."},
+])
+sf.write("request.wav", spoken_request, SR)
+
+inputs = processor.apply_chat_template(
+    [
+        {"role": "system", "content": "Use the tools to help the user complete their goal."},
+        {"role": "user", "content": [
+            {"type": "image", "image": "restaurant.jpg"},
+            {"type": "audio", "audio": "request.wav"},
+        ]},
+    ],
+    tools=tools, add_generation_prompt=True, tokenize=True, return_dict=True, return_tensors="pt",
+).to(model.device)
+with torch.inference_mode():
+    out = model.generate(**inputs, max_new_tokens=512, generation_mode="text")
+print(processor.decode(out.sequences[0, inputs["input_ids"].shape[1]:], skip_special_tokens=True))
+```
+
+**Output**
+
+![Café de Flore, Paris](https://upload.wikimedia.org/wikipedia/commons/8/80/Cafe_de_Flore_Paris_France.jpg)
+
+Photo: [Café de Flore, Paris](https://commons.wikimedia.org/wiki/File:Cafe_de_Flore_Paris_France.jpg) by ayustety, [CC BY-SA 2.0](https://creativecommons.org/licenses/by-sa/2.0/).
+
+```text
+<tool_call>
+<function=book_table>
+<parameter=restaurant_name>
+Café de Flore
+</parameter>
+<parameter=city>
+Paris
+</parameter>
+<parameter=date>
+2026-11-01
+</parameter>
+<parameter=time>
+19:00
+</parameter>
+<parameter=party_size>
+2
+</parameter>
+<parameter=reservation_name>
+Alex Taylor
+</parameter>
+</function>
+</tool_call>
+```
+
+Your application parses and executes the call and returns the result as a `tool` message. See [Tool Use](/lfm/key-concepts/tool-use) for the full workflow.
+
+## Output modality
+
+`generation_mode` overrides the output modality the model would choose on its own. Use `generation_mode="audio"` (speech only) for reading text aloud and speech-to-speech translation. For open-ended answers, prefer `"interleaved"`. This example answers the same question in text and in interleaved text and speech:
+
+```python
+conversation = [
+    {"role": "user", "content": [{"type": "image", "image": "bee.jpg"}, {"type": "text", "text": "Describe this picture in one sentence."}]},
+]
+for mode in ["text", "interleaved"]:
+    torch.manual_seed(0)
+    reply, speech = generate(conversation, generation_mode=mode)
+    print(f"{mode}: {reply}")
+    if speech is not None:
+        sf.write(f"{mode}.wav", speech, SR)
+```
+
+**Output**
+
+```text
+text: A bright pink cosmos flower, with a black-and-yellow bumblebee perched on its yellow center, is the sharp focal point of this close-up, surrounded by softly blurred pink blooms, dried brown flower heads, a single vivid red flower, and large green leaves in the background.
+interleaved: A bright pink cosmos flower with a fuzzy bumblebee perched on its yellow center is the focal point of this close-up, surrounded by blurred pink and red blooms and green leaves in a softly lit garden setting.
+```
+
+## FAQ
+
+**When should I use LFM3-Omni-2B instead of LFM3-Audio-2B?**
+
+Use LFM3-Omni-2B when a request involves images or video, such as spoken questions about a photo or questions about a video and its soundtrack. For speech-only workloads, use [LFM3-Audio-2B](/lfm/key-concepts/audio-capabilities).
+
+**What input formats are supported?**
+
+Audio files are resampled to 16 kHz mono on load. Images are processed at their native resolution. Video is sampled at 2 frames per second. Speech output is a 24 kHz waveform.
+
+**Does the model reason before answering?**
+
+No. LFM3-Omni-2B is a non-reasoning model.
