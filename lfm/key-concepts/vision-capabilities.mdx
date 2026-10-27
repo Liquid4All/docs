@@ -22,7 +22,7 @@ Install PyTorch, Transformers, and the image and video packages used by the exam
 %pip install -q pillow
 
 # Install Transformers
-%pip install -q "transformers>=5.20.2"
+%pip install -q "transformers>=5.21.0"
 ```
 
 Load the model with `AutoProcessor` and `AutoModelForImageTextToText`. LFM3-VL ships its model code in the checkpoint, so pass `trust_remote_code=True`.
@@ -170,8 +170,6 @@ messages = [
 _, answer = generate(messages)
 print(answer)
 ```
-
-{/* TODO: add an Output block once a run identifies the candy correctly. The latest run described the M&M's as "glossy, multicolored beads". */}
 
 ## OCR
 

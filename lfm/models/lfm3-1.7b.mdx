@@ -11,7 +11,6 @@ import { TextLlamacpp } from "/snippets/quickstart/text-llamacpp.mdx";
 
 LFM3-1.7B is Liquid AI's text model for local agents and specialized applications, based on the new LFM3 tri-hybrid architecture. It is post-trained for agentic harnesses such as Hermes Agent, Pi, and OpenClaw, with a 256K-token context window. At 4-bit precision, it takes about 1 GB of memory, so it fits on any phone or laptop.
 
-{/* TODO: confirm the MLX, FP8, and NVFP4 repository names at release. */}
 <div style={{display: 'flex', gap: '0.5rem', margin: '0.5rem 0 1.5rem 0'}}>
   <a href="https://huggingface.co/LiquidAI/LFM3-1.7B" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#fbbf24'}}><span style={{color: '#000'}}>HF</span></a>
   <a href="https://huggingface.co/LiquidAI/LFM3-1.7B-Base" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#fdba74'}}><span style={{color: '#000'}}>Base</span></a>
@@ -58,11 +57,10 @@ LFM3-1.7B is designed for local agents, tool calling, structured outputs, and do
 
 <Tabs>
   <Tab title="Transformers">
-    {/* TODO: confirm the minimum Transformers version at release. */}
     Install:
 
     ```bash
-    pip install "transformers>=5.2.0" torch accelerate
+    pip install -U transformers torch accelerate
     ```
 
     Run:
@@ -89,15 +87,14 @@ LFM3-1.7B is designed for local agents, tool calling, structured outputs, and do
     ```
   </Tab>
   <Tab title="llama.cpp">
-    {/* TODO: add the minimum llama.cpp release with LFM3 support. */}
+    Requires a llama.cpp build with LFM3 support. Use a GGUF with the current chat template, or load the template with `--chat-template-file`.
+
     <TextLlamacpp ggufRepo="LiquidAI/LFM3-1.7B-GGUF" samplingFlags="--temp 0.1 --top-k 50 --repeat-penalty 1.1"></TextLlamacpp>
   </Tab>
   <Tab title="vLLM">
-    {/* TODO: confirm the minimum vLLM version and any required flags at release. */}
     <TextVllm modelId="LiquidAI/LFM3-1.7B" samplingParams="temperature=0.1, top_k=50, repetition_penalty=1.1, " maxTokens="8192"></TextVllm>
   </Tab>
   <Tab title="SGLang">
-    {/* TODO: add the reasoning and tool-call parsers (reasoningParser, toolCallParser) at release. */}
     <TextSglang modelId="LiquidAI/LFM3-1.7B" samplingParams={'temperature=0.1,\n    extra_body={"top_k": 50, "repetition_penalty": 1.1},'}></TextSglang>
   </Tab>
 </Tabs>
