@@ -171,6 +171,12 @@ transcribe(mel, is_final=True)
 print()
 ```
 
+**Output**
+
+```text
+Mr. Quilter is the apostle of the middle classes, and we're glad to welcome his gospel.
+```
+
 For streams longer than 30 seconds, pass `input_ids=prompt` again to start a new text context. The encoder keeps following the audio stream.
 
 ## Text-to-speech
@@ -237,7 +243,7 @@ print("Translation:", translation)
 **Output**
 
 ```text
-Translation: We could invent a new recipe tonight. If the result is strange, we will give it a very funny name.
+Translation: We could invent a new recipe this evening. If the result is strange, it will be given a very fancy name.
 ```
 
 ## Spoken chat
@@ -273,7 +279,7 @@ sf.write("reply.wav", reply_speech, SAMPLE_RATE_OUT)
 **Output** (text part; the speech is saved to `reply.wav`)
 
 ```text
-Text: Try a 15 minute walk in a new neighborhood each day and note how you feel, or sign up for a beginner class in something you've never tried before. Which of those sounds more doable for you?
+Text: Try a short trial of each activity, like a weekend hike, a cooking class, or a volunteer shift, and note how much fun you had each time. Pick the one that feels most appealing and commit to doing it for just one week to see if it sticks. Does a one‑week trial of a single activity sound doable?
 ```
 
 For streaming applications, `model.generate()` accepts `streamer` for text tokens and `audio_streamer` for speech frames, and the codec decodes those frames incrementally, so speech can be played as it is generated.
@@ -305,7 +311,7 @@ Thinking: We need to answer the question: "I want to move more, but I have not f
     *   **Problem:** Hasn't found an activity they enjoy.
     *   **Solution Needed:** How to try a few options and build a small habit.
 ...
-Answer: It is completely normal to struggle to find an activity you enjoy when you want to move more. The key to overcoming this is to **lower the barrier to entry** and focus on the *process* rather than the *outcome*.
+Answer: It is completely normal to struggle to find an activity you enjoy when you want to move more. The key to overcoming this is to break the process into tiny, manageable steps and focus on the *process* rather than the *result*.
 ...
 ```
 

@@ -159,7 +159,7 @@ sf.write("reply.wav", speech, SR)
 **Output** (text part; the speech is saved to `reply.wav`)
 
 ```text
-Try a 10 minute walk each morning and note how you feel. Then pick one new activity, like a short yoga session, and do it for a week to see what clicks. Does that sound doable for you?
+Try a short walk in a new neighborhood each day and notice how it feels. Then pick a weekly community class that interests you and attend for a few sessions.
 ```
 
 For plain text chat, use no system prompt, or `Respond with text.`
@@ -199,7 +199,7 @@ print(caption)
 ![Input photo](https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/bee.jpg)
 
 ```text
-This is a close‑up (macro) photograph of a garden scene dominated by pink cosmos flowers. The central subject is a fully open, light‑pink cosmos with five broad, slightly ruffled petals radiating from a bright yellow disc of stamens; perched right in the middle of that disc is a fuzzy bumblebee, black on its back with a band of orange‑yellow on its thorax and pale, hairy wings folded over its body. To the left, a second, similar pink cosmos is in soft focus, its yellow center just visible, and behind it are several dried, brown, spent flower heads with withered, papery petals. In the lower right, a small, vivid red cosmos blooms with its five pointed petals, accompanied by another out‑of‑focus red bloom and a small pale, withered bud on a thin stem. The background is rendered in soft, blurred green foliage, with one large, broad green leaf stretching across the top of the frame and a faint vertical brownish stem at the upper left, all of which keeps the sharp focus on the pink bloom and the bee. The overall effect is a bright, naturalistic nature shot emphasizing the contrast between the soft pink petals, the orange‑and‑black bee, and the muted green‑and‑brown surroundings.
+This is a close‑up (macro) photograph of a garden scene dominated by pink cosmos flowers. The central subject is a fully open, light‑pink cosmos with five broad, slightly ruffled petals radiating from a bright yellow disc of stamens; perched right in the middle of that disc is a fuzzy bumblebee, black with a band of orange‑yellow on its thorax and pale, hairy wings, actively foraging on the orange center. To the left, a second, similar pink cosmos is in soft focus, its yellow center just visible, and behind it are several dried, brown, spent flower heads with withered petals. In the lower right, a small, vivid red cosmos blooms with its five pointed petals, accompanied by a small pale, withered bud on a thin reddish stem. The background is rendered in smooth, out‑of‑focus green, with a large, broad green leaf arcing across the top of the frame and finer green foliage filling the lower area, giving the image a shallow depth of field that isolates the pollinating bee and the pink bloom in sharp detail.
 ```
 
 The question can also be asked by voice, with the recording in place of the text. This example uses the spoken question from the text-to-speech example. When the answer should be in a different modality from the question, add an output instruction after the task prompt, for example `Respond with text.`
@@ -215,7 +215,7 @@ print(answer)
 **Output**
 
 ```text
-The tiny garden visitor is a **bee** (a bumblebee, identifiable by its black body with yellow-orange bands and fuzzy white abdomen) perched on the center of the pink cosmos flower. It is **feeding on nectar/pollen** — its head is pressed into the orange center of the bloom, where it is collecting nectar and pollen to fuel its flight. In short, the bee is visiting the flower to feed on its nectar.
+The tiny garden visitor is a **bee** (a bumblebee, identifiable by its black body with yellow-orange bands and fuzzy white abdomen) perched on the center of the pink cosmos flower. It is **feeding on the flower's nectar** — its head is positioned directly over the orange, pollen‑bearing center of the bloom, with its antennae extended toward the stamens as it collects nectar. In short, the bee is visiting the flower to feed on its nectar.
 ```
 
 Or ask in text and get a spoken answer:
@@ -232,7 +232,7 @@ sf.write("bee_answer.wav", speech, SR)
 **Output** (text part; the speech is saved to `bee_answer.wav`)
 
 ```text
-Yes, this insect is useful for the garden because it is a bee. Bees pollinate flowers, which helps plants reproduce and grow. This pollination is essential for the health and productivity of many garden plants, including the cosmos and red flowers in the image.
+Yes, this insect is useful for the garden because it is a bee, and bees pollinate flowers, helping plants reproduce and grow.
 ```
 
 ## Video
@@ -270,7 +270,7 @@ print("\nFrames and soundtrack:\n", ask_video("What happens in this video, and w
 <video controls width="480" src="https://huggingface.co/datasets/raushan-testing-hf/videos-test/resolve/main/sample_demo_1.mp4"></video>
 
 ```text
-The video shows a young toddler sitting on a bed, holding an open picture book. The child, who has blonde hair, is wearing dark-framed glasses, a light blue sleeveless top, and pink pants, and is barefoot with legs stretched out on the bed. At the start, the child is looking down at the pages of the book, then briefly raises a hand to adjust the glasses. After that, the child turns their attention back to the book and repeatedly turns the pages, flipping through them with both hands while gazing at the text. The setting is a bedroom, with a crib visible in the background, a white blanket and clothing scattered on the bed, and a framed photo on a small stand to the right. A "clideo.com" watermark appears in the bottom-right corner throughout the clip. Overall, the video captures a baby playfully turning the pages of a book on the bed.
+The video shows a young toddler sitting on a bed and playing with an open book. The child, who has blonde hair, is wearing dark-framed glasses, a light blue sleeveless top, and pink pants, and is barefoot with legs stretched out on the bed. At the start, the child is looking down at the open book, then raises both hands and claps them together in a playful gesture. After a moment, the child lowers their hands, grabs the book with both hands, and begins turning the pages, flipping through the pages while continuing to look at them. The setting is a bedroom, with a crib visible in the background, a white blanket and clothing scattered on the bed, and a small framed photo on a surface to the right. A "clideo.com" watermark appears in the bottom right corner throughout the clip.
 ```
 
 ## Audio understanding
@@ -290,7 +290,7 @@ print(answer)
 **Output**
 
 ```text
-The speaker is a man, and he is saying, "Today we try something new. We paint animals with closed eyes. My first attempt looks like a potato with ears."
+The speaker is speaking German. He is a man, and the message is an introduction to a new activity: painting animals with closed eyes. He begins by saying, "Today we try something new. We paint animals with closed eyes." He then adds, "My first attempt looks like a potato with ears," describing his initial result humorously.
 ```
 
 For multiple choice, use the system prompt `Answer questions about the provided audio clip. Base every answer only on what can be heard.` and end the user turn with `Please choose the answer from the options.`
@@ -420,7 +420,7 @@ for mode in ["text", "interleaved"]:
 
 ```text
 text: A bright pink cosmos flower, with a black-and-yellow bumblebee perched on its yellow center, is the sharp focal point of this close-up, surrounded by softly blurred pink blooms, dried brown flower heads, a single vivid red flower, and large green leaves in the background.
-interleaved: A bright pink cosmos flower with a fuzzy bumblebee perched on its yellow center is the focal point of this close-up, surrounded by blurred pink and red blooms and green leaves in a softly lit garden setting.
+interleaved: A bright pink cosmos flower with a fuzzy bumblebee perched on its yellow center is the focal point, surrounded by other pink blooms, a small red flower, and blurred green leaves in the background.
 ```
 
 ## FAQ
