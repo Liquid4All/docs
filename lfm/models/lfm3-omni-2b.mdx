@@ -7,28 +7,23 @@ description: "2B omni model that understands text, images, video, and audio, and
 
 LFM3-Omni-2B is Liquid AI's first omni model: a single end-to-end model that understands text, images, video, and audio, and answers in text, speech, or interleaved text and speech. It is built for on-device use, where one model replaces a separate ASR model, vision-language model, LLM, and TTS model. It is a non-reasoning model.
 
-{/* TODO: the model card calls this model LFM3-Omni-2.2B. Confirm the final name and the MLX and ONNX repository names at release. */}
 <div style={{display: 'flex', gap: '0.5rem', margin: '0.5rem 0 1.5rem 0'}}>
   <a href="https://huggingface.co/LiquidAI/LFM3-Omni-2B" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#fbbf24'}}><span style={{color: '#000'}}>HF</span></a>
   <a href="https://huggingface.co/LiquidAI/LFM3-Omni-2B-GGUF" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#60a5fa'}}><span style={{color: '#000'}}>GGUF</span></a>
-  <a href="https://huggingface.co/LiquidAI/LFM3-Omni-2B-MLX-8bit" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#c4b5fd'}}><span style={{color: '#000'}}>MLX</span></a>
-  <a href="https://huggingface.co/LiquidAI/LFM3-Omni-2B-ONNX" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#86efac'}}><span style={{color: '#000'}}>ONNX</span></a>
 </div>
 
 ## Specifications
 
-{/* TODO: add the text languages once the model card has them. */}
-
 | Property | Value |
 |----------|-------|
-| Parameters | 2.2B (2.17B + 74M audio codec) |
+| Parameters | 2.17B |
 | Context Length | 32K tokens |
-| Architecture | LFM3 backbone (1.73B) + Liquid hybrid vision encoder (164M) + LFM-based hybrid audio encoder (110M) + audio decoder (84M) + audio codec |
+| Architecture | LFM3 backbone, LFM3 vision encoder, LFM3 causal audio encoder, and LiquidCodec audio tokenizer |
 | Input | Text, images, video (with or without its soundtrack), audio |
 | Output | Text, speech, or interleaved text and speech (24kHz) |
-| Speech Recognition | 31 languages |
-| Speech Synthesis | English (American and British), Arabic, Chinese, Danish, Dutch, Finnish, French, German, Greek, Hebrew, Italian, Japanese, Korean, Polish, Portuguese, Spanish, Swedish, Turkish; female and male voices |
-| Generation Parameters | Greedy decoding for text output; `audio_temperature=1.0`, `audio_top_k=128`, `audio_repetition_penalty=1.1`, `audio_repetition_window=4096` for speech output |
+| Text Languages | English, Arabic, Chinese, French, German, Italian, Japanese, Korean, Portuguese, Spanish, Vietnamese, Thai, Indonesian, Hindi, Russian, Polish |
+| Speech Languages | Arabic, Danish, German, Greek, British English, American English, Finnish, French, Hebrew, Italian, Japanese, Korean, Dutch, Polish, Portuguese, Spanish, Swedish, Turkish, Chinese; female and male voices |
+| Generation Parameters | Greedy decoding for text output; `audio_temperature=0.4`, `audio_repetition_penalty=1.2`, `audio_repetition_window=64` for speech output (the defaults in `generation_config.json`) |
 | License | [LFM Open License v1.0](/lfm/help/model-license) |
 
 <div className="use-cases">
@@ -66,12 +61,17 @@ LFM3-Omni-2B is Liquid AI's first omni model: a single end-to-end model that und
     ```python
     import soundfile as sf
     import torch
-    from transformers import AutoProcessor, Lfm3OmniForConditionalGeneration
+    from transformers import AutoModelForMultimodalLM, AutoProcessor
 
     model_id = "LiquidAI/LFM3-Omni-2B"
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    dtype = torch.bfloat16 if device == "cuda" else torch.float32
+
+    model = AutoModelForMultimodalLM.from_pretrained(
+        model_id, dtype=dtype, device_map=device, trust_remote_code=True
+    ).eval()
     processor = AutoProcessor.from_pretrained(model_id, trust_remote_code=True)
-    codec = processor.audio_tokenizer.to("cuda")
-    model = Lfm3OmniForConditionalGeneration.from_pretrained(model_id, dtype=torch.bfloat16, device_map="cuda")
+    codec = processor.audio_tokenizer.to(device=device).eval()
 
     @torch.inference_mode()
     def generate(conversation, generation_mode=None, **processor_kwargs):
@@ -81,7 +81,7 @@ LFM3-Omni-2B is Liquid AI's first omni model: a single end-to-end model that und
         ).to(model.device)
         out = model.generate(
             **inputs, max_new_tokens=512, generation_mode=generation_mode,
-            audio_temperature=1.0, audio_top_k=128, audio_repetition_penalty=1.1, audio_repetition_window=4096,
+            audio_temperature=0.4, audio_repetition_penalty=1.2, audio_repetition_window=64,
         )
         prompt_len = inputs["input_ids"].shape[1]
         reply = processor.decode(out.sequences[0, prompt_len : out.sequence_lengths[0]], skip_special_tokens=True)
@@ -106,9 +106,9 @@ LFM3-Omni-2B is Liquid AI's first omni model: a single end-to-end model that und
 
     ```python
     _, speech = generate([
-        {"role": "system", "content": "Read this with a female voice in American English."},
+        {"role": "system", "content": "Perform TTS in American English using a female voice."},
         {"role": "user", "content": "The harbor was quiet that morning."},
-    ])
+    ], generation_mode="audio")
     sf.write("speech.wav", speech.squeeze(0).numpy(), 24_000)
     ```
 
@@ -157,7 +157,6 @@ LFM3-Omni-2B is Liquid AI's first omni model: a single end-to-end model that und
   </Tab>
 
   <Tab title="SGLang">
-    {/* TODO: verify the SGLang version and flags at release. */}
     SGLang serves LFM3-Omni-2B with text output. Text, image, video (optionally with its soundtrack, via `use_audio_in_video`), and audio inputs are supported.
 
     ```bash

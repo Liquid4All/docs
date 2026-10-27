@@ -7,7 +7,7 @@ LFM3-Omni is a single end-to-end model that understands text, images, video, and
 
 The examples below use [LFM3-Omni-2B](/lfm/models/lfm3-omni-2b) with Transformers. They cover:
 
-- **Speech:** recognition, synthesis, translation, and spoken chat
+- **Speech:** recognition, synthesis, speech-to-text translation, and spoken chat
 - **Images:** captioning and visual question answering, asked in text or by voice, answered in text or speech
 - **Video:** questions about a clip, using the frames alone or the frames and their soundtrack
 - **Audio understanding:** open-ended and multiple-choice questions about a recording
@@ -28,13 +28,17 @@ The processor bundles the tokenizer, the image, video, and audio preprocessors, 
 
 ```python
 import torch
-from transformers import AutoProcessor, Lfm3OmniForConditionalGeneration
+from transformers import AutoModelForMultimodalLM, AutoProcessor
 
 model_id = "LiquidAI/LFM3-Omni-2B"
+device = "cuda" if torch.cuda.is_available() else "cpu"
+dtype = torch.bfloat16 if device == "cuda" else torch.float32
 
+model = AutoModelForMultimodalLM.from_pretrained(
+    model_id, dtype=dtype, device_map=device, trust_remote_code=True
+).eval()
 processor = AutoProcessor.from_pretrained(model_id, trust_remote_code=True)
-codec = processor.audio_tokenizer.to("cuda")
-model = Lfm3OmniForConditionalGeneration.from_pretrained(model_id, dtype=torch.bfloat16, device_map="cuda")
+codec = processor.audio_tokenizer.to(device=device).eval()
 ```
 
 ### Helper
@@ -42,6 +46,8 @@ model = Lfm3OmniForConditionalGeneration.from_pretrained(model_id, dtype=torch.b
 Every example below is a chat conversation. The helper renders it, loading any image, video, or audio it names, then generates and returns the text reply and the speech, if any.
 
 The model chooses its output modality itself, guided by the system prompt. Pass `generation_mode="text"`, `"audio"`, or `"interleaved"` to force one.
+
+Text output is greedy. Speech uses `audio_temperature=0.4`, `audio_repetition_penalty=1.2`, and `audio_repetition_window=64`. These are also the defaults in the model's `generation_config.json`; the helper passes them explicitly to keep the examples reproducible.
 
 ```python
 import soundfile as sf
@@ -63,10 +69,9 @@ def generate(conversation, generation_mode=None, max_new_tokens=512, **processor
         **inputs,
         max_new_tokens=max_new_tokens,
         generation_mode=generation_mode,
-        audio_temperature=1.0,
-        audio_top_k=128,
-        audio_repetition_penalty=1.1,
-        audio_repetition_window=4096,
+        audio_temperature=0.4,
+        audio_repetition_penalty=1.2,
+        audio_repetition_window=64,
     )
     prompt_len = inputs["input_ids"].shape[1]
     reply = processor.decode(out.sequences[0, prompt_len : out.sequence_lengths[0]], skip_special_tokens=True)
@@ -80,20 +85,20 @@ def generate(conversation, generation_mode=None, max_new_tokens=512, **processor
 
 ### Text-to-speech
 
-Use the system prompt `Read this with a {female|male} voice in {language}.` Supported languages: English (American and British), Arabic, Chinese, Danish, Dutch, Finnish, French, German, Greek, Hebrew, Italian, Japanese, Korean, Polish, Portuguese, Spanish, Swedish, and Turkish.
+Use the system prompt `Perform TTS in {language} using a {female|male} voice.` and pass `generation_mode="audio"`. For English, say `American English` or `British English`. Supported languages: English (American and British), Arabic, Chinese, Danish, Dutch, Finnish, French, German, Greek, Hebrew, Italian, Japanese, Korean, Polish, Portuguese, Spanish, Swedish, and Turkish.
 
 ```python
 torch.manual_seed(0)
 _, speech = generate([
-    {"role": "system", "content": "Read this with a female voice in American English."},
+    {"role": "system", "content": "Perform TTS in American English using a female voice."},
     {"role": "user", "content": "What is this tiny garden visitor doing?"},
-])
+], generation_mode="audio")
 sf.write("question.wav", speech, SR)
 
 _, speech_de = generate([
-    {"role": "system", "content": "Read this with a male voice in German."},
+    {"role": "system", "content": "Perform TTS in German using a male voice."},
     {"role": "user", "content": "Heute probieren wir etwas Neues: Wir malen Tiere mit geschlossenen Augen. Mein erster Versuch sieht aus wie eine Kartoffel mit Ohren."},
-])
+], generation_mode="audio")
 sf.write("german.wav", speech_de, SR)
 ```
 
@@ -119,43 +124,31 @@ for path, language in [("question.wav", "English"), ("german.wav", "German")]:
 
 ### Speech translation
 
-Translation works best into or out of English.
-
-| Direction | System prompt |
-|---|---|
-| Speech → speech | `Produce spoken {target} for the following {source} audio.` |
-| Speech → text | `Convert the speech in {source} to written {target}.` |
-| Text → speech | `Convert this {source} text into {target} speech.` |
+LFM3-Omni translates speech into text. Translation works best into or out of English. Name the source and target languages in the system prompt, for example `Convert the speech in {source} to written {target}.` or `Please translate the following spoken {source} into {target} text.` The model was trained on many phrasings, so pick the one that works best for your data.
 
 ```python
 translation, _ = generate([
     {"role": "system", "content": "Convert the speech in German to written English."},
     {"role": "user", "content": [{"type": "audio", "audio": "german.wav"}]},
 ])
-print("Speech → text:", translation)
-
-_, spoken_fr = generate([
-    {"role": "system", "content": "Convert this English text into French speech."},
-    {"role": "user", "content": "Let's try a new recipe tonight. If it looks strange, we can give it a fancy name."},
-])
-sf.write("french.wav", spoken_fr, SR)
+print("Translation:", translation)
 ```
 
-**Output** (text part; the French speech is saved to `french.wav`)
+**Output**
 
 ```text
-Speech → text: Today we are trying something new. We paint animals with closed eyes. My first attempt looks like a potato with ears.
+Translation: Today we are trying something new. We paint animals with closed eyes. My first attempt looks like a potato with ears.
 ```
 
 ### Spoken chat
 
-Use the system prompt `Respond with interleaved text and audio.` The model answers with text and speech interleaved, so speech can start playing before the full answer is written. The question can be text or speech.
+Use the system prompt `Respond with interleaved text and audio.` The model answers with text and speech interleaved, so speech can start playing before the full answer is written. The question can be text or speech. Keep the system prompt exactly as shown, and give any further instructions in the user turn.
 
 ```python
 reply, speech = generate(
     [
-        {"role": "system", "content": "Respond with interleaved text and audio. Give two practical ideas in short, friendly sentences."},
-        {"role": "user", "content": "I want to move more, but I have not found an activity I enjoy. How can I try a few options and build a small habit?"},
+        {"role": "system", "content": "Respond with interleaved text and audio."},
+        {"role": "user", "content": "I want to move more, but I have not found an activity I enjoy. How can I try a few options and build a small habit? Give me two practical ideas in short, friendly sentences."},
     ],
     max_new_tokens=1024,
 )
@@ -272,8 +265,6 @@ print("Frames only:\n", ask_video("What happens in this video?"))
 print("\nFrames and soundtrack:\n", ask_video("What happens in this video, and what can you hear?", use_audio=True))
 ```
 
-{/* TODO: the clip's soundtrack is a toddler babbling, and the model quotes it as clear words. Replace the clip with one that has clearly audible speech or sounds, then add the "Frames and soundtrack" output. */}
-
 **Output** (frames only)
 
 <video controls width="480" src="https://huggingface.co/datasets/raushan-testing-hf/videos-test/resolve/main/sample_demo_1.mp4"></video>
@@ -356,9 +347,9 @@ with urlopen(Request(photo_url, headers={"User-Agent": "LFM3Cookbook"}), timeout
 # Record the spoken request
 booking_date = date.today() + timedelta(days=7)
 _, spoken_request = generate([
-    {"role": "system", "content": "Read this with a male voice in British English."},
+    {"role": "system", "content": "Perform TTS in British English using a male voice."},
     {"role": "user", "content": f"Please book a table for two at this restaurant in Paris on {booking_date:%B %d, %Y} at seven in the evening, under Alex Taylor."},
-])
+], generation_mode="audio")
 sf.write("request.wav", spoken_request, SR)
 
 inputs = processor.apply_chat_template(
@@ -411,7 +402,7 @@ Your application parses and executes the call and returns the result as a `tool`
 
 ## Output modality
 
-`generation_mode` overrides the output modality the model would choose on its own. Use `generation_mode="audio"` (speech only) for reading text aloud and speech-to-speech translation. For open-ended answers, prefer `"interleaved"`. This example answers the same question in text and in interleaved text and speech:
+`generation_mode` overrides the output modality the model would choose on its own. Use `generation_mode="audio"` (speech only) for reading text aloud. For open-ended answers, prefer `"interleaved"`. This example answers the same question in text and in interleaved text and speech:
 
 ```python
 conversation = [

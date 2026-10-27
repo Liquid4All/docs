@@ -118,8 +118,6 @@ You are a helpful assistant trained by Liquid AI.<|im_end|>
 
 ## Audio and Omni Models
 
-{/* TODO: confirm that LFM3-Audio-2B renders audio the same way as LFM3-Omni-2B. */}
-
 LFM3-Omni follows the same chat template. Every input audio clip, image, and video sits inside a `<|vision_start|>` / `<|vision_end|>` span, which `apply_chat_template()` inserts for you. Audio clips render as `<|vision_start|><|audio|><|vision_end|>`.
 
 ```
