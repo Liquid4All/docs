@@ -169,7 +169,7 @@ Every tool definition in `<tools>` is part of the prompt. With a few tools that'
 LFM3 solves this with **deferred tools** and **tool search**:
 
 - **Defer loading:** mark a tool with `"defer_loading": True`. The chat template leaves its definition out of the system prompt, but the tool stays in your `tools` list, so your application still knows its schema.
-- **Tool search:** give the model one tool that is always loaded, such as `search_tools`. When none of its loaded tools fit a request, the model calls the search tool. Your application runs the search and returns the matching tools as `tool_reference` parts. The chat template adds their definitions to the tool response inside `<additional_tools>`, and the model can call them from then on.
+- **Tool search:** give the model one tool that is always loaded. We recommend naming it `search_tools`. When none of its loaded tools fit a request, the model calls the search tool. Your application runs the search and returns the matching tools as `tool_reference` parts. The chat template adds their definitions to the tool response inside `<additional_tools>`, and the model can call them from then on.
 
 This has two benefits:
 
@@ -182,6 +182,39 @@ This has two benefits:
 2. In the system prompt, tell the model when to search.
 3. When the model calls the search tool, run your search and return a `tool` message with one `tool_reference` part per matching tool.
 4. The model calls the discovered tool. Run it and return the result as usual.
+
+### Returning search results as `tool_reference`
+
+When the model calls `search_tools`, return the matching tool names as `tool_reference` content parts. You can put text before them:
+
+```python
+messages += [
+    {"role": "assistant", "content": "", "tool_calls": [{"id": "call_1", "type": "function",
+        "function": {"name": "search_tools", "arguments": {"query": "weather"}}}]},
+    {"role": "tool", "tool_call_id": "call_1", "content": [
+        {"type": "text", "text": "Found 2 tools."},
+        {"type": "tool_reference", "name": "get_weather"},
+        {"type": "tool_reference", "name": "get_forecast"},
+    ]},
+]
+inputs = tokenizer.apply_chat_template(messages, tools=tools, add_generation_prompt=True,
+                                       return_dict=True, return_tensors="pt")
+```
+
+The chat template looks up each referenced name in `tools` and writes the full definitions into an `<additional_tools>` block inside the tool response:
+
+```text
+<|im_start|>tool
+<tool_response>
+Found 2 tools.
+<additional_tools>
+{"name": "get_weather", "description": "Get the current weather for a city.", "parameters": {"type": "object", "properties": {"city": {"type": "string"}}, "required": ["city"]}}
+{"name": "get_forecast", "description": "Get a 5-day forecast for a city.", "parameters": {"type": "object", "properties": {"city": {"type": "string"}}, "required": ["city"]}}
+</additional_tools>
+</tool_response><|im_end|>
+```
+
+The model can now call `get_weather` like any other tool, in this turn and in later ones, without searching again.
 
 ### Complete Example
 
