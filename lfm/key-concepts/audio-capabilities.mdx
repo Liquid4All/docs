@@ -15,7 +15,7 @@ Install Transformers and the packages used by the examples. `librosa` and `sound
 pip install "transformers>=5.20.2" accelerate datasets librosa soundfile
 ```
 
-Load the model and processor with `trust_remote_code=True`. The processor bundles the audio codec, which turns generated speech codes into a 24 kHz waveform. Access it as `processor.audio_tokenizer` and move it to the model's device and dtype.
+Load the model and processor with `trust_remote_code=True`. The processor bundles the audio codec, which turns generated speech codes into a 24 kHz waveform. Access it as `processor.audio_tokenizer` and move it to the model's device. Keep the codec in its own precision; don't cast it to bfloat16.
 
 ```python
 import torch
@@ -29,7 +29,7 @@ model = AutoModelForMultimodalLM.from_pretrained(
     model_id, dtype=dtype, device_map=device, trust_remote_code=True
 ).eval()
 processor = AutoProcessor.from_pretrained(model_id, trust_remote_code=True)
-codec = processor.audio_tokenizer.to(device=device, dtype=dtype).eval()
+codec = processor.audio_tokenizer.to(device=device).eval()
 ```
 
 ### Output modes
@@ -50,7 +50,7 @@ The thinking prefixes are for text-only answers. For those, also pass `suppress_
 
 ### Helper
 
-The helper below runs one assistant turn and returns the text and the speech waveform, if any. When you pass `prefill`, it sets `continue_final_message=True`, so generation continues the prefilled message instead of starting a new assistant turn. For speech and interleaved output, pass `SPEECH_SAMPLING`.
+The helper below runs one assistant turn and returns the text and the speech waveform, if any. When you pass `prefill`, it sets `continue_final_message=True`, so generation continues the prefilled message instead of starting a new assistant turn. For speech and interleaved output, pass `SPEECH_SAMPLING`. These values are also the defaults in the model's `generation_config.json`; passing them explicitly keeps the examples reproducible.
 
 ```python
 import soundfile as sf
@@ -113,6 +113,66 @@ Reference: MISTER QUILTER IS THE APOSTLE OF THE MIDDLE CLASSES AND WE ARE GLAD T
 Transcript: Mr. Quilter is the apostle of the middle classes, and we are glad to welcome his gospel.
 ```
 
+## Live speech recognition
+
+Live speech recognition transcribes speech while it is still being spoken, instead of waiting for the full recording. Use the system prompt `Perform live ASR.`. It currently supports English only.
+
+The model processes audio in chunks of about 0.96 s and writes the text for each chunk as soon as the chunk arrives. `model.transcribe_live()` runs one chunk at a time and returns a state that you pass to the next call. In an application, you open a microphone stream into the model and a text stream out of it. This example simulates the microphone by feeding the LibriSpeech clip in 100 ms pieces:
+
+```python
+import librosa
+
+tokenizer = processor.tokenizer
+chunk_frames = 8 * model.config.interleaved_n_audio
+prompt = tokenizer(
+    "<|startoftext|><|im_start|>system\nPerform live ASR.<|im_end|>\n<|im_start|>assistant\n",
+    add_special_tokens=False,
+    return_tensors="pt",
+).input_ids.to(device)
+suppress = tokenizer.convert_tokens_to_ids(["<|mixed_end|>", "<|endoftext|>"])
+stop = tokenizer.convert_tokens_to_ids(["<|endoftext|>", "<|im_start|>"])
+
+state, feature_cache = None, None
+mel = torch.empty((1, processor.feature_extractor.feature_size, 0), device=device)
+
+
+def transcribe(frames, is_final=False):
+    global state
+    output = model.transcribe_live(
+        frames,
+        state,
+        input_ids=prompt if state is None else None,
+        is_final=is_final,
+        max_new_tokens=96 if is_final else 48,
+        suppress_token_ids=suppress,
+        stop_token_ids=stop,
+    )
+    state = output.state
+    print(tokenizer.decode(output.sequences[0], skip_special_tokens=True), end="", flush=True)
+
+
+waveform, _ = librosa.load("librispeech.wav", sr=16_000)
+for start in range(0, len(waveform), 1_600):  # 100 ms microphone chunks
+    features, feature_cache = processor.feature_extractor.stream(
+        waveform[start:start + 1_600], feature_cache
+    )
+    mel = torch.cat((mel, features.input_features.to(device)), dim=-1)
+    while mel.shape[-1] >= chunk_frames:
+        transcribe(mel[..., :chunk_frames])
+        mel = mel[..., chunk_frames:]
+
+# Flush the remaining audio and end the transcript
+features, feature_cache = processor.feature_extractor.stream([], feature_cache, is_final=True)
+mel = torch.cat((mel, features.input_features.to(device)), dim=-1)
+while mel.shape[-1] > chunk_frames:
+    transcribe(mel[..., :chunk_frames])
+    mel = mel[..., chunk_frames:]
+transcribe(mel, is_final=True)
+print()
+```
+
+For streams longer than 30 seconds, pass `input_ids=prompt` again to start a new text context. The encoder keeps following the audio stream.
+
 ## Text-to-speech
 
 Use the system prompt `Perform TTS in <language> using a <female|male> voice.` and prefill `<|audio_start|>`.
@@ -160,53 +220,29 @@ Transcript: On pourrait inventer une nouvelle recette ce soir. Si le résultat e
 
 ## Speech translation
 
-Translation works best into or out of English. The system prompt picks the direction and the output modality:
+LFM3-Audio translates speech into text. Translation works best into or out of English. Name the source and target languages in the system prompt, for example `Convert the speech in {source} to written {target}.` or `Translate the following speech from {source} to {target} in text form.` The model was trained on many phrasings, so pick the one that works best for your data.
 
-| Direction | System prompt |
-|---|---|
-| Speech → text | `Convert the speech in {source} to written {target}.` |
-| Text → speech | `Convert this {source} text into {target} speech.` |
-| Speech → speech | `Produce spoken {target} for the following {source} audio.` |
+For text-to-text translation, use the text model [LFM3-1.7B](/lfm/models/lfm3-1.7b) instead.
 
-Speech to text, using the French clip from the text-to-speech example:
+This example translates the French clip from the text-to-speech example into English:
 
 ```python
 translation, _ = generate([
     {"role": "system", "content": "Convert the speech in French to written English."},
     {"role": "user", "content": [{"type": "audio", "audio": "tts_fr.wav"}]},
 ])
-print("Speech → text:", translation)
+print("Translation:", translation)
 ```
 
 **Output**
 
 ```text
-Speech → text: We could invent a new recipe tonight. If the result is strange, we will give it a very funny name.
-```
-
-Speech to speech, without a prefill: the model writes the translation and speaks it.
-
-```python
-text_de, spoken_de = generate(
-    [
-        {"role": "system", "content": "Produce spoken German for the following English audio."},
-        {"role": "user", "content": [{"type": "audio", "audio": "tts_en.wav"}]},
-    ],
-    **SPEECH_SAMPLING,
-)
-print("Speech → speech (English → German):", text_de)
-sf.write("german.wav", spoken_de, SAMPLE_RATE_OUT)
-```
-
-**Output** (text part; the speech is saved to `german.wav`)
-
-```text
-Speech → speech (English → German): Ich habe einen kleinen Plan für heute gemacht, nämlich einen Spaziergang, eine neue Workout-Playlist zu finden und ein neues Kuchenrezept auszuprobieren.
+Translation: We could invent a new recipe tonight. If the result is strange, we will give it a very funny name.
 ```
 
 ## Spoken chat
 
-With the system prompt `Respond with interleaved text and audio.` and the `<|mixed_start|>` prefill, the model answers conversationally in text and speech at the same time, so speech can start playing before the full answer is written.
+With the system prompt `Respond with interleaved text and audio.` and the `<|mixed_start|>` prefill, the model answers conversationally in text and speech at the same time, so speech can start playing before the full answer is written. Keep the system prompt exactly as shown, and give any further instructions in the user turn.
 
 This example first records a spoken question with text-to-speech, then asks it:
 
@@ -223,7 +259,7 @@ sf.write("question.wav", question, SAMPLE_RATE_OUT)
 
 reply, reply_speech = generate(
     [
-        {"role": "system", "content": "Respond with interleaved text and audio. Give two practical ideas in short, friendly sentences."},
+        {"role": "system", "content": "Respond with interleaved text and audio."},
         {"role": "user", "content": [{"type": "audio", "audio": "question.wav"}]},
     ],
     prefill="<|mixed_start|>",
@@ -326,7 +362,7 @@ tools = [
         "parameters": {
             "type": "object",
             "properties": {
-                "platform": {"type": "string", "enum": ["StreamBox"]},
+                "platform": {"type": "string", "description": "Name of the streaming platform, for example StreamBox."},
                 "effective_when": {
                     "type": "string",
                     "enum": ["immediately", "end_of_billing_period"],
@@ -341,7 +377,7 @@ tools = [
         "parameters": {
             "type": "object",
             "properties": {
-                "platform": {"type": "string", "enum": ["PodSpace"]},
+                "platform": {"type": "string", "description": "Name of the podcast platform, for example PodSpace."},
                 "plan": {"type": "string", "enum": ["basic", "plus", "max"]},
                 "billing_frequency": {"type": "string", "enum": ["monthly", "annual"]},
             },
@@ -358,7 +394,7 @@ tool_prompt = (
 # Record the spoken request
 _, request = generate(
     [
-        {"role": "system", "content": "Perform TTS in British English using a female voice.\n\n Current date: 27 October 2026"},
+        {"role": "system", "content": "Perform TTS in British English using a female voice."},
         {"role": "user", "content": "Please cancel my StreamBox subscription starting December first. Then subscribe me to PodSpace on the Max plan, billed monthly."},
     ],
     prefill="<|audio_start|>",
@@ -371,7 +407,6 @@ call, _ = generate(
         {"role": "system", "content": tool_prompt},
         {"role": "user", "content": [{"type": "audio", "audio": "request.wav"}]},
     ],
-    prefill="<think></think>",
     max_new_tokens=512,
     suppress_mixed=True,
     suppress_audio_out=True,
@@ -379,11 +414,9 @@ call, _ = generate(
 print(call)
 ```
 
-**Output** (the model's reasoning is truncated)
+**Output**
 
 ```text
-We need to call the cancel_subscription tool first to cancel the StreamBox subscription. ...
-</think>
 <tool_call>
 <function=cancel_subscription>
 <parameter=platform>
@@ -409,7 +442,9 @@ monthly
 </tool_call>
 ```
 
-Generated calls use the LFM3 `<tool_call>` XML format. Your application parses and executes the calls and returns the results as `tool` messages. See [Tool Use](/lfm/key-concepts/tool-use) for the full workflow.
+Generated calls use the LFM3 `<tool_call>` XML format. Your application parses and executes the calls and returns the results as `tool` messages. See [Tool Use](/lfm/key-concepts/tool-use) for the full workflow. Don't prefill a thinking block for tool calls; the model calls tools without reasoning first.
+
+To get a spoken answer once the tool results are in, start the system prompt with `Respond with function calls, and interleaved text and audio.\n\n`, followed by any instructions and the tool list, and don't pass `suppress_mixed` or `suppress_audio_out`. The model then either calls tools or answers in interleaved text and speech. The model card's [tool calling example](https://huggingface.co/LiquidAI/LFM3-Audio-2B) shows the full loop, including returning tool results.
 
 ## FAQ
 
@@ -423,7 +458,7 @@ Audio files are resampled to 16 kHz mono on load. Speech output is a 24 kHz wave
 
 **Can the model stream speech?**
 
-Yes. LFM3-Audio-2B uses a causal audio encoder that supports live audio input and incremental prefill, and its audio codec supports streaming encoding and decoding. In Transformers, pass `streamer` and `audio_streamer` to `model.generate()`.
+Yes. LFM3-Audio-2B uses a causal audio encoder that supports live audio input (see [Live speech recognition](#live-speech-recognition)), and its audio codec supports streaming decoding. In Transformers, pass `streamer` and `audio_streamer` to `model.generate()`.
 
 **Does the model reason before answering?**
 

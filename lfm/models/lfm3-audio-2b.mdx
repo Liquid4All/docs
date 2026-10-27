@@ -7,21 +7,17 @@ description: "2B audio model for multilingual speech recognition, speech synthes
 
 LFM3-Audio-2B is a compact, fully featured audio model that runs locally on laptops and edge devices. It takes text or audio as input and responds with text, speech, or both. It introduces an in-house audio encoder and audio codec, improving speech quality over LFM2.5-Audio.
 
-{/* TODO: confirm the MLX repository name at release. */}
 <div style={{display: 'flex', gap: '0.5rem', margin: '0.5rem 0 1.5rem 0'}}>
   <a href="https://huggingface.co/LiquidAI/LFM3-Audio-2B" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#fbbf24'}}><span style={{color: '#000'}}>HF</span></a>
-  <a href="https://huggingface.co/LiquidAI/LFM3-Audio-2B-GGUF" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#60a5fa'}}><span style={{color: '#000'}}>GGUF</span></a>
-  <a href="https://huggingface.co/LiquidAI/LFM3-Audio-2B-MLX-8bit" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#c4b5fd'}}><span style={{color: '#000'}}>MLX</span></a>
-  <a href="https://huggingface.co/LiquidAI/LFM3-Audio-2B-ONNX" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#86efac'}}><span style={{color: '#000'}}>ONNX</span></a>
+  <span style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, backgroundColor: '#e5e7eb', color: '#4b5563'}}>GGUF · coming soon</span>
 </div>
 
 ## Specifications
 
-{/* TODO: add Context Length once the model card has it, and confirm the license (the model card has no license field yet). */}
-
 | Property | Value |
 |----------|-------|
 | Parameters | 2B |
+| Context Length | 32K tokens |
 | Architecture | LFM3 backbone + causal audio encoder + audio codec |
 | Input | Text or audio (16kHz) |
 | Output | Text, speech (24kHz), or interleaved text and speech |
@@ -37,7 +33,7 @@ LFM3-Audio-2B is a compact, fully featured audio model that runs locally on lapt
 </Card>
 
 <Card title="Multilingual Speech" icon="language">
-  Transcribe, synthesize, and translate speech in 19 languages
+  Transcribe and synthesize speech in 18 languages
 </Card>
 
 <Card title="Audio Understanding" icon="ear-listen">
@@ -75,7 +71,7 @@ LFM3-Audio-2B is a compact, fully featured audio model that runs locally on lapt
         model_id, dtype=dtype, device_map=device, trust_remote_code=True
     ).eval()
     processor = AutoProcessor.from_pretrained(model_id, trust_remote_code=True)
-    codec = processor.audio_tokenizer.to(device=device, dtype=dtype).eval()
+    codec = processor.audio_tokenizer.to(device=device).eval()
     ```
 
     **ASR (Audio to Text):**
@@ -225,6 +221,6 @@ LFM3-Audio-2B is a compact, fully featured audio model that runs locally on lapt
   </Tab>
 
   <Tab title="llama.cpp">
-    Download the GGUF files and follow the llama.cpp instructions in the [LiquidAI/LFM3-Audio-2B-GGUF](https://huggingface.co/LiquidAI/LFM3-Audio-2B-GGUF) repository.
+    GGUF checkpoints for llama.cpp are coming soon. Until then, use Transformers.
   </Tab>
 </Tabs>
