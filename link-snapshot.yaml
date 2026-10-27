@@ -148,15 +148,20 @@ active:
   - /lfm/inference/ollama
   - /lfm/inference/transformers
   - /lfm/inference/vllm
+  - /lfm/key-concepts/audio-capabilities
   - /lfm/key-concepts/chat-template
+  - /lfm/key-concepts/omni-capabilities
   - /lfm/key-concepts/speculative-decoding
   - /lfm/key-concepts/text-generation-and-prompting
+  - /lfm/key-concepts/tool-search
   - /lfm/key-concepts/tool-use
   - /lfm/key-concepts/vision-capabilities
   - /lfm/models/audio-models
   - /lfm/models/complete-library
   - /lfm/models/d1
+  - /lfm/models/d1-2b
   - /lfm/models/d1-3b
+  - /lfm/models/d1-omni-2b
   - /lfm/models/d1-omni-600m
   - /lfm/models/decision-models
   - /lfm/models/lfm2-1.2b
@@ -199,7 +204,12 @@ active:
   - /lfm/models/lfm25-vl-3b
   - /lfm/models/lfm25-vl-450m
   - /lfm/models/lfm25-vl-450m-extract
+  - /lfm/models/lfm3-1.7b
+  - /lfm/models/lfm3-audio-2b
+  - /lfm/models/lfm3-omni-2b
+  - /lfm/models/lfm3-vl-2b
   - /lfm/models/liquid-nanos
+  - /lfm/models/omni-models
   - /lfm/models/text-models
   - /lfm/models/vision-models
 # Examples of `deleted` entries (uncomment and adapt):

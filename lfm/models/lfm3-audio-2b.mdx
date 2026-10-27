@@ -1,0 +1,226 @@
+---
+title: "LFM3-Audio-2B"
+description: "2B audio model for multilingual speech recognition, speech synthesis, voice chat, audio understanding, and tool calling"
+---
+
+<a href="/lfm/models/audio-models" className="back-button">← Back to Audio Models</a>
+
+LFM3-Audio-2B is a compact, fully featured audio model that runs locally on laptops and edge devices. It takes text or audio as input and responds with text, speech, or both. It introduces an in-house audio encoder and audio codec, improving speech quality over LFM2.5-Audio.
+
+<div style={{display: 'flex', gap: '0.5rem', margin: '0.5rem 0 1.5rem 0'}}>
+  <a href="https://huggingface.co/LiquidAI/LFM3-Audio-2B" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#fbbf24'}}><span style={{color: '#000'}}>HF</span></a>
+  <span style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, backgroundColor: '#e5e7eb', color: '#4b5563'}}>GGUF · coming soon</span>
+</div>
+
+## Specifications
+
+| Property | Value |
+|----------|-------|
+| Parameters | 2B |
+| Context Length | 32K tokens |
+| Architecture | LFM3 backbone + causal audio encoder + audio codec |
+| Input | Text or audio (16kHz) |
+| Output | Text, speech (24kHz), or interleaved text and speech |
+| Speech Languages | Arabic, Danish, German, Greek, British English, American English, Finnish, French, Hebrew, Italian, Japanese, Korean, Dutch, Polish, Portuguese, Spanish, Swedish, Turkish, Chinese |
+| Generation Parameters | `audio_temperature=1.0`, `audio_top_k=128`, `audio_repetition_penalty=1.1`, `audio_repetition_window=4096` for speech output; `suppress_mixed=True`, `suppress_audio_out=True` for text-only output |
+| License | [LFM Open License v1.0](/lfm/help/model-license) |
+
+<div className="use-cases">
+<CardGroup cols={3}>
+
+<Card title="Voice Chat" icon="waveform">
+  Streaming replies in text and speech
+</Card>
+
+<Card title="Multilingual Speech" icon="language">
+  Transcribe and synthesize speech in 18 languages
+</Card>
+
+<Card title="Audio Understanding" icon="ear-listen">
+  Questions about speech, sounds, and events in recordings
+</Card>
+
+</CardGroup>
+</div>
+
+## Quick Start
+
+<Tabs>
+  <Tab title="Transformers">
+    **Install:**
+
+    ```bash
+    pip install "transformers>=5.20.2" torch accelerate librosa soundfile
+    ```
+
+    **Load the model:**
+
+    The processor bundles the tokenizer, the audio preprocessor, and the audio codec that turns generated speech into a 24 kHz waveform.
+
+    ```python
+    import torch
+    import soundfile as sf
+
+    from transformers import AutoModelForMultimodalLM, AutoProcessor
+
+    model_id = "LiquidAI/LFM3-Audio-2B"
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    dtype = torch.bfloat16 if device == "cuda" else torch.float32
+
+    model = AutoModelForMultimodalLM.from_pretrained(
+        model_id, dtype=dtype, device_map=device, trust_remote_code=True
+    ).eval()
+    processor = AutoProcessor.from_pretrained(model_id, trust_remote_code=True)
+    codec = processor.audio_tokenizer.to(device=device).eval()
+    ```
+
+    **ASR (Audio to Text):**
+
+    Use the system prompt `Perform ASR in <language>.`, where `<language>` is the English name of the language. To let the model infer the language, use `Perform ASR.`
+
+    ```python
+    conversation = [
+        {"role": "system", "content": "Perform ASR in English."},
+        {"role": "user", "content": [{"type": "audio", "audio": "audio.wav"}]},
+    ]
+
+    inputs = processor.apply_chat_template(
+        conversation,
+        add_generation_prompt=True,
+        tokenize=True,
+        return_dict=True,
+        return_tensors="pt",
+    ).to(device)
+    with torch.no_grad():
+        outputs = model.generate(
+            **inputs,
+            max_new_tokens=1024,
+            suppress_mixed=True,
+            suppress_audio_out=True,
+            return_dict_in_generate=True,
+        )
+    text = processor.decode(
+        outputs.sequences[0, inputs["input_ids"].shape[1]:],
+        skip_special_tokens=True,
+    )
+    print(text)
+    ```
+
+    **TTS (Text to Audio):**
+
+    Use the system prompt `Perform TTS in <language> using a <gender> voice.`, with a `female` or `male` voice and any of the speech languages. Prefill the assistant turn with `<|audio_start|>`.
+
+    ```python
+    conversation = [
+        {"role": "system", "content": "Perform TTS in American English using a female voice."},
+        {"role": "user", "content": "The quick brown fox jumps over the lazy dog"},
+        {"role": "assistant", "content": "<|audio_start|>"},
+    ]
+    inputs = processor.apply_chat_template(
+        conversation,
+        continue_final_message=True,
+        tokenize=True,
+        return_dict=True,
+        return_tensors="pt",
+    ).to(device)
+    with torch.no_grad():
+        outputs = model.generate(
+            **inputs,
+            max_new_tokens=256,
+            audio_temperature=1.0,
+            audio_top_k=128,
+            audio_repetition_penalty=1.1,
+            audio_repetition_window=4096,
+            return_dict_in_generate=True,
+        )
+        waveform = codec.decode(
+            outputs.audio_codes[:1, :, :outputs.audio_lengths[0]]
+        ).audio_values[0]
+
+    sf.write("tts.wav", waveform.float().cpu().numpy(), 24_000)
+    ```
+
+    **Interleaved Mode:**
+
+    Use the system prompt `Respond with interleaved text and audio.` and prefill the assistant turn with `<|mixed_start|>`. The input can be text or audio, and the model answers in text and speech at the same time.
+
+    ```python
+    conversation = [
+        {"role": "system", "content": "Respond with interleaved text and audio."},
+        {"role": "user", "content": [{"type": "audio", "audio": "question.wav"}]},
+        {"role": "assistant", "content": "<|mixed_start|>"},
+    ]
+    inputs = processor.apply_chat_template(
+        conversation,
+        continue_final_message=True,
+        tokenize=True,
+        return_dict=True,
+        return_tensors="pt",
+    ).to(device)
+    with torch.no_grad():
+        outputs = model.generate(
+            **inputs,
+            max_new_tokens=1024,
+            audio_temperature=1.0,
+            audio_top_k=128,
+            audio_repetition_penalty=1.1,
+            audio_repetition_window=4096,
+            return_dict_in_generate=True,
+        )
+        text = processor.decode(
+            outputs.sequences[0, inputs["input_ids"].shape[1]:],
+            skip_special_tokens=True,
+        )
+        waveform = codec.decode(
+            outputs.audio_codes[:1, :, :outputs.audio_lengths[0]]
+        ).audio_values[0]
+
+    print(text)
+    sf.write("reply.wav", waveform.float().cpu().numpy(), 24_000)
+    ```
+
+    For streaming applications, `model.generate()` accepts `streamer` for text tokens and `audio_streamer` for speech frames, and the codec decodes those frames incrementally.
+
+    **Speech-to-Text Chat:**
+
+    No system prompt is needed. Prefill `<think>` to let the model reason before answering, or `<think></think>` for a direct response.
+
+    ```python
+    use_thinking = True
+    conversation = [
+        {"role": "user", "content": [{"type": "audio", "audio": "question.wav"}]},
+        {"role": "assistant", "content": "<think>" if use_thinking else "<think></think>"},
+    ]
+    inputs = processor.apply_chat_template(
+        conversation,
+        continue_final_message=True,
+        tokenize=True,
+        return_dict=True,
+        return_tensors="pt",
+    ).to(device)
+    with torch.no_grad():
+        outputs = model.generate(
+            **inputs,
+            max_new_tokens=1024,
+            suppress_mixed=True,
+            suppress_audio_out=True,
+            return_dict_in_generate=True,
+        )
+        text = processor.decode(
+            outputs.sequences[0, inputs["input_ids"].shape[1]:],
+            skip_special_tokens=True,
+        )
+    if use_thinking:
+        _, separator, text = text.partition("</think>")
+        if not separator:
+            raise RuntimeError("Reasoning has not finished; increase max_new_tokens.")
+    print(text.strip())
+    ```
+
+    For more examples, see [Audio Capabilities](/lfm/key-concepts/audio-capabilities).
+  </Tab>
+
+  <Tab title="llama.cpp">
+    GGUF checkpoints for llama.cpp are coming soon. Until then, use Transformers.
+  </Tab>
+</Tabs>

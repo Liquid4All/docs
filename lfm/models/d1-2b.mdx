@@ -1,0 +1,143 @@
+---
+title: "d1-2B"
+description: "1.92B parameter decision model for text, pictures, and video, built on LFM3-VL-2B"
+---
+
+<a href="/lfm/models/decision-models" className="back-button">← Back to Decision Models</a>
+
+d1-2B is a 1.92B parameter decision model for text, pictures, and video, built on [LFM3-VL-2B](/lfm/models/lfm3-vl-2b). It returns calibrated answers in one forward pass, without generating tokens. Beyond classification, it also extracts text, numbers, and dates with their span, locates objects in pictures, and estimates quantities with an interval. It replaces [d1-3B](/lfm/models/d1-3b) with a third fewer parameters.
+
+<div style={{display: 'flex', gap: '0.5rem', margin: '0.5rem 0 1.5rem 0'}}>
+  <a href="https://huggingface.co/LiquidAI/d1-2B" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#fbbf24'}}><span style={{color: '#000'}}>HF</span></a>
+  <span style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, backgroundColor: '#e5e7eb', color: '#4b5563'}}>GGUF · coming soon</span>
+</div>
+
+## Specifications
+
+| Property | Value |
+|----------|-------|
+| Parameters | 1.92B |
+| Context Length | 128K tokens |
+| Architecture | LFM3-VL — LFM3 backbone, 24 layers (13 gated short convolution + 5 sliding-window attention + 6 global attention) |
+| Languages | English, Arabic, Chinese, French, German, Italian, Japanese, Korean, Portuguese, Spanish, Vietnamese, Thai, Indonesian, Hindi, Russian, Polish |
+| License | [LFM Open License v1.0](/lfm/help/model-license) |
+
+<div className="use-cases">
+<CardGroup cols={3}>
+
+<Card title="Multimodal" icon="images">
+  Text, pictures, or video in the same state
+</Card>
+
+<Card title="Typed Answers" icon="brackets-curly">
+  Values with their span, boxes, and estimates with an interval
+</Card>
+
+<Card title="Zero Output Tokens" icon="gauge-high">
+  Any number of questions answered in one forward pass
+</Card>
+
+</CardGroup>
+</div>
+
+d1-2B is designed for any pipeline step that needs a decision: routing and triage, moderation and guardrails, intent and topic classification, extraction from documents and forms, judging and reranking, and visual inspection. It is not a chat model. Knowledge-heavy questions favor larger models, and answers get less reliable past about 64K tokens of state.
+
+## Quick Start
+
+<Tabs>
+  <Tab title="Transformers">
+    **Install:**
+
+    ```bash
+    pip install "transformers>=5.19" torch torchvision pillow
+    ```
+
+    **Text input:**
+
+    ```python
+    import torch
+    from transformers import AutoModel
+
+    device = "cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu"
+    dtype = torch.float32 if device == "cpu" else torch.bfloat16
+    model = AutoModel.from_pretrained("LiquidAI/d1-2B", trust_remote_code=True, dtype=dtype).to(device)
+
+    questions = {
+        "refund": {"type": "noul", "instructions": "Is the customer asking for a refund?"},
+        "team": {"type": "choice", "instructions": "Which team should handle this?",
+                 "criteria": {"billing": "Charges, refunds, invoices", "shipping": "Delivery and parcels",
+                              "technical": "App or site faults"}},
+        "topics": {"type": "choice", "multiple": True, "instructions": "Which topics does the message raise?",
+                   "criteria": {"billing": "Payments and charges", "delivery": "Shipping and parcels",
+                                "login": "Signing in to the account"}},
+        "urgency": {"type": "score", "instructions": "How urgent is this ticket?", "criteria": ["low", "medium", "high"]},
+    }
+    output = model.system_one("I was charged twice and my parcel never arrived. Please refund one charge.", questions)
+    a = output["answers"]
+    urgency = a["urgency"]["legend"][str(int(a["urgency"]["score"]))]
+    print(round(a["refund"]["noul"], 2), a["team"]["choice"], a["topics"]["choices"], urgency)
+    # 1.0 billing ['billing', 'delivery'] medium
+    ```
+
+    **Values from a document:**
+
+    ```python
+    invoice = "ACME SA\nInvoice 2026-117\nTotal due: 1 234,50 EUR\nPay before 03/04/2026 (day/month/year)"
+    output = model.system_one(invoice, {
+        "payee": {"type": "text", "instructions": "Who issued the invoice?"},
+        "total": {"type": "number", "instructions": "How much is due?"},
+        "due": {"type": "date", "instructions": "By when must it be paid?"},
+        "vat": {"type": "number", "instructions": "How much VAT is charged?"},
+    })
+    a = output["answers"]
+    print(a["payee"]["text"], a["total"]["number"], a["due"]["date"], a["vat"]["number"])
+    # ACME SA 1234.5 2026-04-03 None
+    ```
+
+    **Image input:**
+
+    Count, locate one object, or list every instance (`max` reads at most that many):
+
+    ```python
+    from transformers.image_utils import load_image
+
+    image = load_image("http://images.cocodataset.org/val2017/000000039769.jpg")
+    output = model.system_one(None, {
+        "cats": {"type": "number", "instructions": "How many cats are there?", "range": [0, 10], "step": 1},
+        "remote": {"type": "box", "instructions": "Where is the remote control on the left?"},
+        "every_cat": {"type": "boxes", "instructions": "Every cat.", "max": 4},
+    }, media=[image])
+    a = output["answers"]
+    print(a["cats"]["number"], a["every_cat"]["count"], {k: round(v, 2) for k, v in a["remote"]["box"].items()})
+    # 2.0 2 {'top': 0.15, 'bottom': 0.24, 'left': 0.06, 'right': 0.28}
+    ```
+
+    **Many requests in one call:**
+
+    ```python
+    tickets = ["Where is my parcel? It was due Monday.", "The app crashes when I open settings."]
+    for output in model.system_one_batch([(t, {"team": questions["team"]}) for t in tickets]):
+        print(output["answers"]["team"]["choice"])
+    # shipping
+    # technical
+    ```
+  </Tab>
+  <Tab title="llama.cpp">
+    GGUF checkpoints for llama.cpp are coming soon. llama.cpp supports Noul, Choice, and Score questions; for typed answers, use Transformers.
+  </Tab>
+</Tabs>
+
+## Typed Answers
+
+Besides Noul, Choice, and Score, d1-2B answers typed questions. Each question in `questions` has a `type` and `instructions`:
+
+| Type | Question | Answer |
+|---|---|---|
+| `choice` with `multiple: True` | Any of the options `criteria` names | `choices`, `probabilities` (each option's own P(yes)) |
+| `text`, `number`, `date` | A value to read from the state | The field of its type (a number with its unit, a date in ISO 8601), `span`, `found` |
+| `number` with `range` | An estimate, `step` apart | `number` (the median), `interval` (p10, p90) |
+| `box`, `boxes` | One object, or every instance (16 at most, or `max`), in the one picture | `box` (top, bottom, left, right as fractions of the picture), `found`, `confidence`, or `boxes` and `count` |
+
+A value or a box is missing when `found` is under 0.5, and it is then `None`. Calibrate any decision threshold on data from your own use. See [Typed Answers](/lfm/models/decision-models#typed-answers) for every question and answer field.
+
+Typed answers run in Transformers. llama.cpp supports Noul, Choice, and Score questions only.
