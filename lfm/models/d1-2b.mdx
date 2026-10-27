@@ -7,12 +7,9 @@ description: "1.92B parameter decision model for text, pictures, and video, buil
 
 d1-2B is a 1.92B parameter decision model for text, pictures, and video, built on [LFM3-VL-2B](/lfm/models/lfm3-vl-2b). It returns calibrated answers in one forward pass, without generating tokens. Beyond classification, it also extracts text, numbers, and dates with their span, locates objects in pictures, and estimates quantities with an interval. It replaces [d1-3B](/lfm/models/d1-3b) with a third fewer parameters.
 
-{/* TODO: confirm the GGUF, MLX, and ONNX repository names at release. */}
 <div style={{display: 'flex', gap: '0.5rem', margin: '0.5rem 0 1.5rem 0'}}>
   <a href="https://huggingface.co/LiquidAI/d1-2B" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#fbbf24'}}><span style={{color: '#000'}}>HF</span></a>
-  <a href="https://huggingface.co/LiquidAI/d1-2B-GGUF" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#60a5fa'}}><span style={{color: '#000'}}>GGUF</span></a>
-  <a href="https://huggingface.co/LiquidAI/d1-2B-MLX-8bit" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#c4b5fd'}}><span style={{color: '#000'}}>MLX</span></a>
-  <a href="https://huggingface.co/LiquidAI/d1-2B-ONNX" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#86efac'}}><span style={{color: '#000'}}>ONNX</span></a>
+  <span style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, backgroundColor: '#e5e7eb', color: '#4b5563'}}>GGUF · coming soon</span>
 </div>
 
 ## Specifications
@@ -126,8 +123,7 @@ d1-2B is designed for any pipeline step that needs a decision: routing and triag
     ```
   </Tab>
   <Tab title="llama.cpp">
-    {/* TODO: the d1-2B-GGUF repository isn't published yet. Confirm the repository name at release. */}
-    llama.cpp supports Noul, Choice, and Score questions. Download the GGUF files and follow the llama.cpp instructions in the [LiquidAI/d1-2B-GGUF](https://huggingface.co/LiquidAI/d1-2B-GGUF) repository. For typed answers, use Transformers.
+    GGUF checkpoints for llama.cpp are coming soon. llama.cpp supports Noul, Choice, and Score questions; for typed answers, use Transformers.
   </Tab>
 </Tabs>
 
