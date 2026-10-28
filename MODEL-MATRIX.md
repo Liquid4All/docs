@@ -42,7 +42,7 @@ MLX/ONNX "Yes" means a repo exists (LiquidAI, or mlx-community/onnx-community wh
 | 24B-A2B | `LiquidAI/LFM2.5-24B-A2B` | Inline | Standard | Standard | Standard | Yes | Yes | MoE, 131K ctx; FP8 checkpoint |
 | **LFM2.5 Vision & Audio** |
 | VL-3B | `LiquidAI/LFM2.5-VL-3B` | VL (v5 req) | VL (--image) | VL | NO (PR#14069) | Yes | Yes | |
-| VL-1.6B | `LiquidAI/LFM2.5-VL-1.6B` | VL (v5 req) | VL (--image) | VL | NO (PR#14069) | Yes (community) | Yes | Deprecated; use LFM3-VL-2B |
+| VL-1.6B | `LiquidAI/LFM2.5-VL-1.6B` | VL (v5 req) | VL (--image) | VL | NO (PR#14069) | Yes (community) | Yes | |
 | VL-450M | `LiquidAI/LFM2.5-VL-450M` | VL (v5 req) | VL (--image) | VL | NO (PR#14069) | Yes | Yes | |
 | Audio-1.5B | `LiquidAI/LFM2.5-Audio-1.5B` | liquid-audio | Custom binary | NO | NO | Yes (community) | Yes | Deprecated; use LFM3-Audio-2B |
 | Audio-1.5B-JP | `LiquidAI/LFM2.5-Audio-1.5B-JP` | liquid-audio | Custom binary | NO | NO | NO | NO | Japanese |
