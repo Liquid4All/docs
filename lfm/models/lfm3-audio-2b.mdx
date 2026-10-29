@@ -9,7 +9,7 @@ LFM3-Audio-2B is a compact, fully featured audio model that runs locally on lapt
 
 <div style={{display: 'flex', gap: '0.5rem', margin: '0.5rem 0 1.5rem 0'}}>
   <a href="https://huggingface.co/LiquidAI/LFM3-Audio-2B" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#fbbf24'}}><span style={{color: '#000'}}>HF</span></a>
-  <span style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, backgroundColor: '#e5e7eb', color: '#4b5563'}}>GGUF · coming soon</span>
+  <a href="https://huggingface.co/LiquidAI/LFM3-Audio-2B-GGUF" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#60a5fa'}}><span style={{color: '#000'}}>GGUF</span></a>
 </div>
 
 ## Specifications
@@ -221,6 +221,28 @@ LFM3-Audio-2B is a compact, fully featured audio model that runs locally on lapt
   </Tab>
 
   <Tab title="llama.cpp">
-    GGUF checkpoints for llama.cpp are coming soon. Until then, use Transformers.
+    Requires llama.cpp 0.8.0 (b11960) or later. Add a quantization tag to pick a file; with `-hf`, llama.cpp also downloads the audio projector.
+
+    **ASR (Audio to Text):**
+
+    Use the system prompt `Perform ASR in <language>.`, or `Perform ASR.` to let the model infer the language.
+
+    ```bash
+    llama-mtmd-cli -hf LiquidAI/LFM3-Audio-2B-GGUF:Q4_K_M \
+      --audio speech.wav -sys "Perform ASR in English." -p "<__media__>" --temp 0
+    ```
+
+    **TTS (Text to Audio):**
+
+    ```bash
+    hf download LiquidAI/LFM3-Audio-2B-GGUF LFM3-Audio-2B-Q4_K_M.gguf mmproj-LFM3-Audio-2B-Q8_0.gguf --local-dir .
+
+    llama-tts -m LFM3-Audio-2B-Q4_K_M.gguf -mm mmproj-LFM3-Audio-2B-Q8_0.gguf \
+      -p "Hello world" --tts-voice male -o out.wav
+    ```
+
+    `--tts-lang` takes a language code (default `en`) and `--tts-voice` is `female` (default) or `male`. The audio sampling parameters from the model card are stored in the GGUF, so no sampling flags are needed.
+
+    **Real-time voice chat:** `llama-server` serves real-time voice conversations, including tool calls, on its `/v1/realtime` WebSocket API.
   </Tab>
 </Tabs>
