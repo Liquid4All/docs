@@ -6,8 +6,7 @@
   },
   "theme": "mint",
   "appearance": {
-    "default": "system",
-    "strict": true
+    "default": "light"
   },
   "name": "Liquid Docs",
   "description": "Documentation for Liquid AI Foundation Models (LFM)",
