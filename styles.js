@@ -34,6 +34,12 @@
       background-color: #864bc4 !important;
     }
 
+    /* Hide the "Ask Assistant" box in the desktop header. The assistant stays on:
+       it opens with Cmd/Ctrl+I, and the mobile header keeps its icon. */
+    #assistant-entry {
+      display: none !important;
+    }
+
     /* Fix sidebar anchor icons visibility (About Us, Blog) */
     /* The icons use mask-image which may not load in local dev */
     a[href*="liquid.ai/company"] svg.secondary-opacity {
