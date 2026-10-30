@@ -152,8 +152,10 @@ samp {
   font-size: var(--lfm-fs-sm) !important;
 }
 
-/* Page body - em-based prose spacing scales with this */
-#content.mdx-content {
+/* Page body - em-based prose spacing scales with this. Tabs and Accordions wrap
+   their content in a nested .prose, which resets font-size to 1rem, so target it too */
+#content.mdx-content,
+.mdx-content .prose {
   font-size: var(--lfm-fs-base) !important;
   line-height: 1.65 !important;
 }
