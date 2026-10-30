@@ -1,13 +1,445 @@
 ---
 title: "Vision Capabilities"
-description: "Use LFM2.5-VL models for image understanding, multi-image prompting, OCR, layout annotations, grounding, and vision-guided tool calling."
+description: "Use LFM3-VL and LFM2.5-VL models for image and video understanding, multi-image prompting, OCR, layout annotations, pointing, grounding, and vision-guided tool calling."
 ---
 
+LFM vision models' capabilities enable the model to analyze and understand images and, with LFM3-VL, videos.
+These models support common vision-language tasks such as describing images, answering questions about visual content, comparing multiple images, reading text, and localizing objects. They also support tool calling, including examples where an image helps determine the tool arguments.
 
-LFM2.5-VL models' vision capabilities enable the model to analyze and understand images.
-These models support common vision-language tasks such as describing images, answering questions about visual content, comparing multiple images, reading text, and localizing objects. LFM2.5-VL also supports tool calling, including examples where an image helps determine the tool arguments.
+LFM3-VL is the latest generation: it reasons step by step before answering, takes video as input, and points at objects natively. The examples below show how to send images and videos to LFM3-VL models.
 
-The examples below show how to send images to LFM2.5-VL models.
+<Note>
+Using LFM2.5-VL? See [LFM2.5-VL](#lfm25-vl) for its examples, including document layout annotations.
+</Note>
+
+Install PyTorch, Transformers, and the image and video packages used by the examples. `torchvision` and `Pillow` are required by the LFM3-VL image processor, and `torchcodec` decodes videos. `torchcodec` needs FFmpeg.
+
+```python
+# Install PyTorch and acceleration libraries
+%pip install -q torch torchvision torchcodec accelerate
+
+# Install image helper libraries
+%pip install -q pillow
+
+# Install Transformers
+%pip install -q "transformers>=5.21.0"
+```
+
+Load the model with `AutoProcessor` and `AutoModelForImageTextToText`. LFM3-VL ships its model code in the checkpoint, so pass `trust_remote_code=True`.
+
+```python
+import torch
+from transformers import AutoProcessor, AutoModelForImageTextToText
+
+MODEL_ID = "LiquidAI/LFM3-VL-2B"
+
+processor = AutoProcessor.from_pretrained(MODEL_ID, trust_remote_code=True)
+model = AutoModelForImageTextToText.from_pretrained(
+    MODEL_ID,
+    device_map="auto",
+    dtype="bfloat16",
+    trust_remote_code=True,
+)
+```
+
+LFM3-VL thinks in a `<think>` block before it answers, and reasoning can be long. The helper below generates with the recommended sampling parameters (`temperature=0.1`, `top_k=50`, `repetition_penalty=1.1`), then splits the reasoning from the answer.
+
+```python
+def generate(messages, max_new_tokens=8192, **template_kwargs):
+    inputs = processor.apply_chat_template(
+        messages,
+        add_generation_prompt=True,
+        tokenize=True,
+        return_dict=True,
+        return_tensors="pt",
+        **template_kwargs,
+    ).to(model.device)
+
+    with torch.inference_mode():
+        outputs = model.generate(
+            **inputs,
+            do_sample=True,
+            temperature=0.1,
+            top_k=50,
+            repetition_penalty=1.1,
+            max_new_tokens=max_new_tokens,
+        )
+
+    text = processor.decode(outputs[0, inputs["input_ids"].shape[1]:], skip_special_tokens=False)
+    text = text.replace("<|im_end|>", "").strip()
+    reasoning, separator, answer = text.partition("</think>")
+    if not separator:
+        return "", text
+    return reasoning.replace("<think>", "").strip(), answer.strip()
+```
+
+## Single-image prompt
+
+Provide one image and a text question in the same user message. This pattern is useful for captioning, visual question answering, and scene understanding.
+
+```python
+from transformers.image_utils import load_image
+
+img_url = "https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/coco_sample.png"
+input_image = load_image(img_url)
+
+messages = [
+    {
+        "role": "user",
+        "content": [
+            {"type": "image", "image": input_image},
+            {"type": "text", "text": "Describe this image in two concise sentences."},
+        ],
+    }
+]
+
+reasoning, answer = generate(messages)
+print("Reasoning:\n", reasoning, "\n")
+print("Answer:\n", answer)
+```
+
+**Output**
+
+![Input image](https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/coco_sample.png)
+
+```text
+Reasoning:
+ The user wants a concise description of the image, limited to two sentences. I need to observe the key elements: two tabby cats sleeping on a pink/magenta surface (likely a couch or blanket), and two remote controls nearby. Let me look carefully.
+
+Left cat: stretched out, head near a white remote control, eyes closed, lying on its side/back with paws extended. Right cat: larger, also tabby, curled/stretched with head down, near another remote control. The background is a bright pink fabric/couch.
+
+I should produce two concise sentences capturing these details without over-explaining. Avoid listing every detail; keep it tight.
+
+Draft: "Two tabby cats are asleep on a bright pink couch or blanket, each stretched out in a relaxed pose. A white remote control lies near the smaller cat's head, while a second remote rests between the two cats."
+
+That's two sentences, accurate and concise. Good.
+
+Answer:
+ Two tabby cats are curled up asleep on a vivid pink couch or blanket, each stretched out in a relaxed, sprawling pose. A white remote control lies beside the smaller cat's head, with a second remote resting between the two cats.
+```
+
+## Answer without reasoning
+
+For simple questions, set `enable_thinking=False` to skip the reasoning and get a direct answer with lower latency.
+
+```python
+messages = [
+    {
+        "role": "user",
+        "content": [
+            {"type": "image", "image": input_image},
+            {"type": "text", "text": "How many cats are in this image? Answer with a number."},
+        ],
+    }
+]
+
+_, answer = generate(messages, enable_thinking=False)
+print(answer)
+```
+
+**Output**
+
+```text
+2
+```
+
+## Multi-image prompt
+
+You can include multiple images in a single prompt. Label each image in the prompt, such as `Media-1` and `Media-2`, to make cross-image references clearer.
+
+```python
+img_urls = [
+    "https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/p-blog/candy.JPG",
+    "https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/coco_sample.png",
+]
+input_images = [load_image(img_url) for img_url in img_urls]
+
+messages = [
+    {
+        "role": "user",
+        "content": [
+            {"type": "text", "text": "Media-1\n"},
+            {"type": "image", "image": input_images[0]},
+            {"type": "text", "text": "\nMedia-2\n"},
+            {"type": "image", "image": input_images[1]},
+            {"type": "text", "text": "\nCaption Media-1 and Media-2 separately. Keep each caption to one sentence."},
+        ],
+    }
+]
+
+_, answer = generate(messages)
+print(answer)
+```
+
+## OCR
+
+LFM3-VL can read text in document images and screenshots.
+
+```python
+img_url = "https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/enterprise/audit-logs.png"
+document_image = load_image(img_url)
+
+messages = [
+    {
+        "role": "user",
+        "content": [
+            {"type": "image", "image": document_image},
+            {
+                "type": "text",
+                "text": "Read this audit log screenshot. Identify the page heading, table columns, visible rows, users, actions, timestamps, and other structured fields. Transcribe the visible text in reading order.",
+            },
+        ],
+    }
+]
+
+_, answer = generate(messages)
+print(answer)
+```
+
+**Output** (truncated)
+
+![Input image](https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/enterprise/audit-logs.png)
+
+```text
+**Page Heading:** Audit log
+
+**Table / Section Header:** Events log  *(with a “Download as JSON” button on the right)*
+
+...
+
+**Visible Rows (in reading order):**
+
+1. **clboetticher** — `org.update_join_settings`
+   - *Action:* enabled join requests with manual approval and set default role to write
+   - *Location:* United States, Austin · *ID:* 136.62.181.0 · *On Oct 15*
+
+2. **clboetticher** — `repo.delete`
+   - *Action:* deleted a model: enterprise-explorers/test_model
+   - *Location:* United States, Austin · *ID:* 136.62.181.0 · *On Oct 10*
+
+3. **clboetticher** — `repo.create`
+   - *Action:* created a public model: enterprise-explorers/test_model
+   - *Location:* United States, Austin · *ID:* 136.62.181.0 · *On Oct 10*
+
+4. **System** — `billing.renew_subscription`
+   - *Action:* System Automatic subscription renewal for hf/enterprise-free
+   - *Location:* Unknown Location · *On Oct 7*
+
+5. **derek-thomas** — `resource_group.add_users`
+   - *Action:* added users to resource group Read access members: derek-thomas (read)
+   - *Location:* United Arab Emirates, Abu Dhabi · *ID:* 217.164.173.0 · *On Sep 17*
+
+6. **erikrigner** — `resource_group.change_role`
+   - *Action:* changed role for user erikrigner in resource group Read access members from write to admin
+   - *Location:* Sweden, Norrköping · *ID:* 2a02:1406:59d60:1dfd:0:0 · *On Sep 16*
+
+...
+```
+
+## Pointing
+
+Pointing asks the model to locate visible objects with a single point each. LFM3-VL points natively as `{"point_2d": [x, y]}`, with `x` and `y` as integers normalized to `[0, 1000]`. This example asks for a point on each cat and each remote control, then draws the points.
+
+```python
+import json
+import re
+from IPython.display import display
+from PIL import ImageDraw
+
+def parse_json(answer):
+    match = re.search(r"\[.*\]", answer, flags=re.DOTALL)
+    return json.loads(match.group(0)) if match else []
+
+messages = [
+    {
+        "role": "user",
+        "content": [
+            {"type": "image", "image": input_image},
+            {
+                "type": "text",
+                "text": 'Point to each cat and each remote control. Answer in JSON as a list of points: [{"point_2d": [x, y], "label": "<short label>"}, ...], with x and y as integers normalized to 0-1000.',
+            },
+        ],
+    }
+]
+
+_, answer = generate(messages)
+print(answer)
+
+points = parse_json(answer)
+annotated = input_image.copy()
+draw = ImageDraw.Draw(annotated)
+width, height = annotated.size
+for point in points:
+    x, y = point["point_2d"]
+    px, py = x / 1000 * width, y / 1000 * height
+    draw.ellipse((px - 8, py - 8, px + 8, py + 8), fill="red", outline="white", width=2)
+    draw.text((px + 12, py - 8), point.get("label", ""), fill="red")
+display(annotated)
+```
+
+**Output**
+
+```text
+[{"point_2d": [260, 500], "label": "cat"}, {"point_2d": [720, 400], "label": "cat"}, {"point_2d": [168, 195], "label": "remote control"}, {"point_2d": [550, 270], "label": "remote control"}]
+```
+
+![Points drawn on the cats and remote controls](/images/lfm/key-concepts/vision-capabilities/lfm3-pointing.png)
+
+## Object detection and grounding
+
+Grounding asks the model to localize visible objects with bounding boxes. This example uses the same image, asks for boxes in `[xmin, ymin, xmax, ymax]` format normalized to `[0, 1000]`, then draws the returned boxes.
+
+> **Coordinate format:** Convert normalized coordinates back to pixels with `x / 1000 * width` and `y / 1000 * height`. Points and boxes are approximate, so visually inspect the result before using coordinates in downstream workflows.
+
+```python
+system_prompt = """When asked for bounding boxes for objects, return a valid JSON array.
+Each array item must be an object with:
+- bbox_2d: [xmin, ymin, xmax, ymax] normalized integer coordinates in [0, 1000]
+- label: a concise label you choose for the predicted object or region
+
+Return one item per visible matching object or region. Return [] if none are visible."""
+
+messages = [
+    {"role": "system", "content": system_prompt},
+    {
+        "role": "user",
+        "content": [
+            {"type": "image", "image": input_image},
+            {"type": "text", "text": "Provide bounding boxes for the two cats and the two remote controls."},
+        ],
+    },
+]
+
+_, answer = generate(messages)
+print(answer)
+
+objects = parse_json(answer)
+annotated = input_image.copy()
+draw = ImageDraw.Draw(annotated)
+for obj in objects:
+    xmin, ymin, xmax, ymax = obj["bbox_2d"]
+    box = (xmin / 1000 * width, ymin / 1000 * height, xmax / 1000 * width, ymax / 1000 * height)
+    draw.rectangle(box, outline="red", width=3)
+    draw.text((box[0] + 4, box[1] + 4), obj.get("label", ""), fill="red")
+display(annotated)
+```
+
+**Output**
+
+```text
+[{"bbox_2d": [15, 113, 497, 987], "label": "cat"}, {"bbox_2d": [536, 46, 999, 776], "label": "cat"}, {"bbox_2d": [62, 145, 276, 245], "label": "remote control"}, {"bbox_2d": [519, 156, 585, 393], "label": "remote control"}]
+```
+
+![Bounding boxes drawn around the cats and remote controls](/images/lfm/key-concepts/vision-capabilities/lfm3-grounding.png)
+
+## Video understanding
+
+LFM3-VL takes video as input. Videos are processed at their native resolution: they are sampled at 2 frames per second, consecutive frames are paired, and each frame is prefixed with its timestamp. Pass a local video path with `{"type": "video", "video": ...}`. This example uses a short clip from the Hugging Face test videos.
+
+```python
+from huggingface_hub import hf_hub_download
+
+video_path = hf_hub_download("raushan-testing-hf/videos-test", "sample_demo_1.mp4", repo_type="dataset")
+
+messages = [
+    {
+        "role": "user",
+        "content": [
+            {"type": "video", "video": video_path},
+            {"type": "text", "text": "Describe what happens in this video."},
+        ],
+    }
+]
+
+_, answer = generate(messages)
+print(answer)
+```
+
+**Output**
+
+<video controls width="480" src="https://huggingface.co/datasets/raushan-testing-hf/videos-test/resolve/main/sample_demo_1.mp4"></video>
+
+```text
+In this short home-video clip, a young blonde toddler is sitting on a bed covered with a patterned quilt, apparently "reading" a small paperback book. The baby is dressed in a light blue/mint sleeveless top and pink pants, and is wearing a pair of large dark-framed eyeglasses that make her look like a little reader. Behind her you can see a wooden crib or chair and some folded clothes and fabric on the bed.
+
+At the start, the child holds the open book in her lap and gazes down at the pages. Around the middle of the clip she becomes animated—she lifts her hands and claps/waves them excitedly, as if reacting to something or getting absorbed in her activity. After a moment she brings her hands back down to the book and begins turning the pages one by one, looking attentively at the text as though reading. She continues to flip through the pages and study them until the end of the clip. Overall, the video shows a baby wearing glasses sitting on a bed and pretending to read, pausing briefly to clap her hands before going back to turning the pages of the book.
+```
+
+To also use a video's soundtrack, use LFM3-Omni-2B. See [Omni Capabilities](/lfm/key-concepts/omni-capabilities#video).
+
+## Tool calling
+
+In this example, the model sees an image and can route the request to the most relevant tool. Pass the tool schemas to `apply_chat_template()` with `tools=...`. LFM3-VL writes each call between `<tool_call>` and `</tool_call>`, with the function name in a `<function=...>` tag and each argument in a `<parameter=...>` tag.
+
+```python
+tools = [
+    {
+        "type": "function",
+        "function": {
+            "name": "search_pet_care",
+            "description": "Search for care guidance for an animal visible in an image.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "animal": {"type": "string", "description": "The animal visible in the image"},
+                    "topic": {"type": "string", "description": "The care topic to search for"},
+                },
+                "required": ["animal", "topic"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "search_replacement_remote",
+            "description": "Search for replacement remote controls or remote-control accessories visible in an image.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "item": {"type": "string", "description": "The remote-control item to search for"},
+                    "quantity": {"type": "integer", "description": "How many matching items are visible"},
+                },
+                "required": ["item"],
+            },
+        },
+    },
+]
+
+messages = [
+    {
+        "role": "user",
+        "content": [
+            {"type": "image", "image": input_image},
+            {"type": "text", "text": "Find a care guide for the animals in this image. Choose the best tool for this request."},
+        ],
+    }
+]
+
+_, answer = generate(messages, tools=tools)
+print(answer)
+```
+
+**Output**
+
+```text
+<tool_call>
+<function=search_pet_care>
+<parameter=animal>
+cat
+</parameter>
+<parameter=topic>
+care
+</parameter>
+</function>
+</tool_call>
+```
+
+Execute the call in your application, add the parsed call to the conversation as a `tool_calls` entry, and return the result as a `tool` message. See [Tool Use](/lfm/key-concepts/tool-use) for the full workflow.
+
+## LFM2.5-VL
+
+LFM2.5-VL models answer directly without a reasoning trace and use the LFM2.5 tool call format. LFM2.5-VL-3B also returns document layout annotations.
 
 Install PyTorch, Transformers, and the image-processing packages used by the examples. `torchvision` and `Pillow` are required by the LFM2.5-VL image processor, and `opencv-python` is used to draw grounding and layout boxes.
 
@@ -37,7 +469,7 @@ model = AutoModelForImageTextToText.from_pretrained(
 )
 ```
 
-## Single-image prompt
+### LFM2.5-VL single-image prompt
 
 Provide one image and a text question in the same user message. This pattern is useful for captioning, visual question answering, and scene understanding.
 
@@ -90,7 +522,7 @@ print(output)
 Two cats are sleeping on a pink couch with two remote controls.
 ```
 
-## Multi-image prompt
+### LFM2.5-VL multi-image prompt
 <Info>**Model support:** This capability is best supported by LFM2.5-VL-3B.</Info>
 
 You can include multiple images in a single prompt. Label each image in the prompt, such as `Media-1` and `Media-2`, to make cross-image references clearer.
@@ -156,7 +588,7 @@ Media-1: A person is holding a collection of colorful M&M's with various designs
 Media-2: Two cats are peacefully sleeping on a pink couch, each with a remote control nearby.
 ```
 
-## OCR
+### LFM2.5-VL OCR
 
 <Info>**Model support:** This capability is best supported by LFM2.5-VL-3B.</Info>
 
@@ -238,7 +670,7 @@ Audit log
 | Sweden, Norrköping · 2a02:1406:59:5d60:1dfd:0:0 · On Sep 16 |
 ```
 
-## Document layout annotations
+### Document layout annotations
 
 For document understanding tasks, LFM2.5-VL-3B can return OCR with layout annotations. Each region contains a label, normalized bounding box, and content:
 
@@ -353,7 +785,7 @@ Billing
 
 ![Cell 13 output](/images/lfm/key-concepts/vision-capabilities/cell-13-output-5.png)
 
-## Object detection and grounding
+### LFM2.5-VL object detection and grounding
 
 <Info>**Model support:** This capability is best supported by LFM2.5-VL-3B.</Info>
 
@@ -441,7 +873,7 @@ display(Image.fromarray(image))
 
 ![Cell 15 output](/images/lfm/key-concepts/vision-capabilities/cell-15-output-6.png)
 
-## Tool calling
+### LFM2.5-VL tool calling
 
 <Info>**Model support:** This capability is best supported by LFM2.5-VL-3B.</Info>
 
@@ -529,28 +961,30 @@ print(output)
 
 ## FAQ
 
-**Which LFM2.5-VL model should I use?**
+**Which LFM vision model should I use?**
 
-Use `LFM2.5-VL-450M` or `LFM2.5-VL-1.6B` for fast image captioning and visual question answering. Use `LFM2.5-VL-3B` for the strongest support for multi-image prompts, grounding, document layout parsing, and tool calling.
+Use `LFM3-VL-2B` for most use cases, including video understanding, harder visual questions that benefit from reasoning, pointing, and grounding. Among LFM2.5-VL models, use `LFM2.5-VL-450M` or `LFM2.5-VL-1.6B` for fast image captioning and visual question answering, and `LFM2.5-VL-3B` for document layout parsing.
 
-**What image formats are supported?**
+**Can I turn off reasoning?**
 
-LFM2.5-VL works with common image formats supported by the image loading path you use, such as JPEG and PNG. In the examples above, images are loaded from Hugging Face URLs with `transformers.image_utils.load_image`.
+Yes, for LFM3-VL. Pass `enable_thinking=False` to `apply_chat_template()` for direct answers with lower latency. LFM2.5-VL models always answer directly.
 
-**Can LFM2.5-VL return bounding boxes?**
+**What image and video formats are supported?**
 
-Yes. For grounding tasks, prompt the model to return bounding boxes in a structured format such as JSON. Coordinates in these examples are normalized to `[0, 1000]`, so you can scale them back to the displayed image size.
+LFM vision models work with common image formats such as JPEG and PNG. In the examples above, images are loaded from Hugging Face URLs with `transformers.image_utils.load_image`. LFM3-VL also takes video files that `torchcodec` can decode, such as MP4.
 
-Note that bounding boxes are approximate and can vary with prompt wording, image resolution, and generation settings. For workflows that require precise localization, inspect the returned boxes and validate them against the original image.
+**Can the models point at or localize objects?**
 
-**Can LFM2.5-VL parse documents?**
+Yes. Prompt LFM3-VL to return points as `{"point_2d": [x, y]}` or bounding boxes as `bbox_2d: [xmin, ymin, xmax, ymax]`, with coordinates normalized to `[0, 1000]`. LFM2.5-VL returns bounding boxes in the same format. Boxes and points are approximate and can vary with prompt wording, image resolution, and generation settings. For workflows that require precise localization, inspect the returned coordinates and validate them against the original image.
 
-Yes. `LFM2.5-VL-3B` can read visible text and return document layout annotations, including region labels, bounding boxes, and extracted content. This is useful for tables, forms, screenshots, reports, and other structured document images.
+**Can the models parse documents?**
 
-**Can LFM2.5-VL call tools based on an image?**
+Yes. LFM3-VL reads visible text in documents and screenshots. `LFM2.5-VL-3B` can also return document layout annotations, including region labels, bounding boxes, and extracted content.
 
-Yes. You can provide tool schemas through the chat template and ask the model to choose the relevant tool based on the visual content. For example, an image can help determine the right tool arguments.
+**Can the models call tools based on an image?**
 
-**Can LFM2.5-VL generate or edit images?**
+Yes. You can provide tool schemas through the chat template and ask the model to choose the relevant tool based on the visual content. LFM3-VL uses the LFM3 `<tool_call>` format, and LFM2.5-VL uses the LFM2.5 format. See [Tool Use](/lfm/key-concepts/tool-use).
 
-No. LFM2.5-VL models are image understanding models. They can analyze images, answer questions, read text, localize objects, parse layouts, and route tool calls, but they do not generate or edit images.
+**Can the models generate or edit images?**
+
+No. LFM vision models are image and video understanding models. They can analyze images and videos, answer questions, read text, localize objects, parse layouts, and route tool calls, but they do not generate or edit images.

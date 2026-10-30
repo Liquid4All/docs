@@ -1,6 +1,6 @@
 ---
 title: "Vision Models"
-description: "Liquid's LFM vision models pair LFM language backbones with SigLIP2 NaFlex image encoders for fast multimodal inference on-device."
+description: "Liquid's LFM vision models pair LFM language backbones with efficient vision encoders for fast image and video understanding on-device."
 icon: "eye"
 ---
 
@@ -26,7 +26,21 @@ icon: "eye"
 </CardGroup>
 </div>
 
-<h2>LFM2.5 Models &nbsp;&nbsp;<Badge shape="rounded" icon="circle-check" color="green" size="lg">Latest release</Badge></h2>
+<h2>LFM3 Models &nbsp;&nbsp;<Badge shape="rounded" icon="circle-check" color="green" size="lg">Latest release</Badge></h2>
+
+<Info>LFM3-VL pairs the LFM3 language backbone with a new in-house vision encoder that combines convolution and attention. It brings video understanding to LFM vision models for the first time, and reasons step by step before answering.</Info>
+
+<CardGroup cols={2}>
+
+<Card title="LFM3-VL-2B" href="/lfm/models/lfm3-vl-2b">
+  2B · <Badge shape="pill" color="green">Recommended</Badge>
+
+  Video understanding, thinking, and spatial and embodied reasoning.
+</Card>
+
+</CardGroup>
+
+## LFM2.5 Models
 
 <Info>LFM2.5-VL models are refreshed versions of LFM2-VL, built on new LFM2.5 language backbones (LFM2.5-350M, LFM2.5-1.2B-Base, and LFM2.5-2.6B) with SigLIP2 NaFlex vision encoders. They improve instruction following and multilingual vision understanding, and support function calling.</Info>
 
@@ -39,7 +53,7 @@ icon: "eye"
 </Card>
 
 <Card title="LFM2.5-VL-1.6B" href="/lfm/models/lfm25-vl-1.6b">
-  1.6B · <Badge shape="pill" color="green">Recommended</Badge>
+  1.6B · <Badge shape="pill" color="blue">Balanced</Badge>
 
   Balance of speed and quality for most use cases.
 </Card>
@@ -48,6 +62,18 @@ icon: "eye"
   450M · <Badge shape="pill" color="yellow">Fastest</Badge>
 
   Compact vision model for edge deployment and fast inference.
+</Card>
+
+</CardGroup>
+
+## Guides
+
+Learn how to use these models in your application:
+
+<CardGroup cols={2}>
+
+<Card title="Vision Capabilities" icon="eye" href="/lfm/key-concepts/vision-capabilities">
+  Image and video understanding, multi-image prompts, OCR, layout annotations, pointing, grounding, and vision-guided tool calling.
 </Card>
 
 </CardGroup>

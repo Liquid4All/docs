@@ -1,11 +1,381 @@
 ---
 title: "Tool Use"
-description: "How tool use (function calling) works with LFM models: define tools in JSON, parse Pythonic or JSON tool calls, and use tools with vision models."
+description: "LFM3, LFM2.5, and LFM2 models support tool use (function calling), enabling models to interact with APIs, databases, and external services to provide accurate, up-to-date information."
 ---
 
 import { ToolCallTokenExample } from "/snippets/key-concepts/tool-call-token-example.mdx";
 
 ## Overview
+
+The tool use workflow follows four steps:
+
+1. **Define** tools by passing them to [`.apply_chat_template()`](https://huggingface.co/docs/transformers/en/chat_extras#passing-tools) with `tools=...`. The template places them in the system prompt between `<tools>` and `</tools>`.
+2. **Generate** a response where the model writes each call between `<tool_call>` and `</tool_call>`, with the function name in a `<function=...>` tag and each argument in a `<parameter=...>` tag.
+3. **Execute** the function and return results as a `tool` role message.
+4. **Regenerate** to let the model interpret results and respond to the user.
+
+<Warning>
+LFM3's tool call format has changed from the custom LFM2/LFM2.5 format to a superset of `qwen3_coder`. Using LFM2 or LFM2.5? See [LFM2 and LFM2.5](#lfm2-and-lfm25).
+</Warning>
+
+## Complete Example
+
+Start by loading the model and defining your tools and conversation:
+
+```python
+import json
+from transformers import AutoModelForCausalLM, AutoTokenizer
+
+model_id = "LiquidAI/LFM3-1.7B"
+model = AutoModelForCausalLM.from_pretrained(model_id, dtype="bfloat16", device_map="auto", trust_remote_code=True)
+tokenizer = AutoTokenizer.from_pretrained(model_id, trust_remote_code=True)
+
+tools = [{
+    "type": "function",
+    "function": {
+        "name": "get_candidate_status",
+        "description": "Retrieves the current status of a candidate in the recruitment process",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "candidate_id": {
+                    "type": "string",
+                    "description": "Unique identifier for the candidate",
+                }
+            },
+            "required": ["candidate_id"],
+        },
+    },
+}]
+
+messages = [{"role": "user", "content": "What is the current status of candidate ID 12345?"}]
+```
+
+Generate the first response. The model may decide to call a tool:
+
+```python
+inputs = tokenizer.apply_chat_template(
+    messages,
+    tools=tools,
+    add_generation_prompt=True,
+    return_dict=True,
+    return_tensors="pt"
+)
+
+outputs = model.generate(
+    **inputs.to(model.device),
+    do_sample=True,
+    temperature=0.1,
+    top_k=50,
+    repetition_penalty=1.1,
+    max_new_tokens=1024,
+)
+
+response = tokenizer.decode(
+    outputs[0][len(inputs["input_ids"][0]):],
+    skip_special_tokens=False
+)
+```
+
+After its reasoning, the model outputs a tool call in XML:
+
+```
+<tool_call>
+<function=get_candidate_status>
+<parameter=candidate_id>
+12345
+</parameter>
+</function>
+</tool_call>
+```
+
+Parse the tool call and execute the function in your application. Add the parsed assistant call to history as a `tool_calls` entry, then append the result as a `tool` message. `function.arguments` must be a Python mapping, so decode JSON strings with `json.loads()` before applying the template.
+
+```python
+# Mock function (replace with actual API call in production)
+def get_candidate_status(candidate_id: str):
+    return [{
+        "candidate_id": candidate_id,
+        "status": "Interview Scheduled",
+        "position": "Clinical Research Associate",
+        "date": "2023-11-20",
+    }]
+
+messages.append({
+    "role": "assistant",
+    "tool_calls": [{
+        "type": "function",
+        "function": {"name": "get_candidate_status", "arguments": {"candidate_id": "12345"}},
+    }],
+})
+messages.append({"role": "tool", "content": json.dumps(get_candidate_status("12345"))})
+```
+
+Generate again, passing the same tool schemas, so the model can interpret the tool result and respond to the user. Keep the assistant's content and reasoning from the current tool-use turn in the history.
+
+```python
+inputs = tokenizer.apply_chat_template(
+    messages,
+    tools=tools,
+    add_generation_prompt=True,
+    return_dict=True,
+    return_tensors="pt"
+)
+
+outputs = model.generate(
+    **inputs.to(model.device),
+    do_sample=True,
+    temperature=0.1,
+    top_k=50,
+    repetition_penalty=1.1,
+    max_new_tokens=1024,
+)
+
+final = tokenizer.decode(
+    outputs[0][len(inputs["input_ids"][0]):],
+    skip_special_tokens=True
+)
+```
+
+The full conversation now looks like this:
+
+```
+<|startoftext|><|im_start|>system
+<tools>
+{"name": "get_candidate_status", "description": "Retrieves the current status of a candidate in the recruitment process", "parameters": {...}}
+</tools><|im_end|>
+<|im_start|>user
+What is the current status of candidate ID 12345?<|im_end|>
+<|im_start|>assistant
+<think>The user wants the status of candidate 12345. I will call get_candidate_status.</think><tool_call>
+<function=get_candidate_status>
+<parameter=candidate_id>
+12345
+</parameter>
+</function>
+</tool_call><|im_end|>
+<|im_start|>tool
+<tool_response>
+[{"candidate_id": "12345", "status": "Interview Scheduled", "position": "Clinical Research Associate", "date": "2023-11-20"}]
+</tool_response><|im_end|>
+<|im_start|>assistant
+<think>The tool says the interview is scheduled for 2023-11-20.</think>The candidate with ID 12345 is currently in the "Interview Scheduled" stage for the position of Clinical Research Associate, with an interview date set for 2023-11-20.<|im_end|>
+```
+
+## Defer Loading and Tool Search
+
+Every tool definition in `<tools>` is part of the prompt. With a few tools that's fine, but an agent on a phone, in a car, or in a smart home may have hundreds or thousands of tools, far more than fit in the context window.
+
+LFM3 solves this with **deferred tools** and **tool search**:
+
+- **Defer loading:** mark a tool with `"defer_loading": True`. The chat template leaves its definition out of the system prompt, but the tool stays in your `tools` list, so your application still knows its schema.
+- **Tool search:** give the model one tool that is always loaded. We recommend naming it `search_tools`. When none of its loaded tools fit a request, the model calls the search tool. Your application runs the search and returns the matching tools as `tool_reference` parts. The chat template adds their definitions to the tool response inside `<additional_tools>`, and the model can call them from then on.
+
+This has two benefits:
+
+- **Shorter prompts:** only the always-loaded tools are in the system prompt. Deferred tools enter the context only when the model needs them.
+- **Stable prompt prefix:** discovered tools arrive in the tool response, so the system prompt never changes. Inference engines can keep reusing the cached prefix as the conversation grows.
+
+### How it works
+
+1. Pass all tools, deferred or not, in `tools` on every request. The chat template raises an error if a `tool_reference` names a tool that isn't in `tools`.
+2. In the system prompt, tell the model when to search.
+3. When the model calls the search tool, run your search and return a `tool` message with one `tool_reference` part per matching tool.
+4. The model calls the discovered tool. Run it and return the result as usual.
+
+### Returning search results as `tool_reference`
+
+When the model calls `search_tools`, return the matching tool names as `tool_reference` content parts. You can put text before them:
+
+```python
+messages += [
+    {"role": "assistant", "content": "", "tool_calls": [{"id": "call_1", "type": "function",
+        "function": {"name": "search_tools", "arguments": {"query": "weather"}}}]},
+    {"role": "tool", "tool_call_id": "call_1", "content": [
+        {"type": "text", "text": "Found 2 tools."},
+        {"type": "tool_reference", "name": "get_weather"},
+        {"type": "tool_reference", "name": "get_forecast"},
+    ]},
+]
+inputs = tokenizer.apply_chat_template(messages, tools=tools, add_generation_prompt=True,
+                                       return_dict=True, return_tensors="pt")
+```
+
+The chat template looks up each referenced name in `tools` and writes the full definitions into an `<additional_tools>` block inside the tool response:
+
+```text
+<|im_start|>tool
+<tool_response>
+Found 2 tools.
+<additional_tools>
+{"name": "get_weather", "description": "Get the current weather for a city.", "parameters": {"type": "object", "properties": {"city": {"type": "string"}}, "required": ["city"]}}
+{"name": "get_forecast", "description": "Get a 5-day forecast for a city.", "parameters": {"type": "object", "properties": {"city": {"type": "string"}}, "required": ["city"]}}
+</additional_tools>
+</tool_response><|im_end|>
+```
+
+The model can now call `get_weather` like any other tool, in this turn and in later ones, without searching again.
+
+### Complete Example
+
+This example uses a keyword search over a small catalog. In production, replace `search_catalog()` with your own search, for example over tool descriptions with an embedding model.
+
+```python
+import json
+import re
+from transformers import AutoModelForCausalLM, AutoTokenizer
+
+model_id = "LiquidAI/LFM3-1.7B"
+model = AutoModelForCausalLM.from_pretrained(model_id, dtype="bfloat16", device_map="auto", trust_remote_code=True)
+tokenizer = AutoTokenizer.from_pretrained(model_id, trust_remote_code=True)
+
+def tool(name, description, properties, required, defer_loading=False):
+    schema = {
+        "type": "function",
+        "function": {
+            "name": name,
+            "description": description,
+            "parameters": {"type": "object", "properties": properties, "required": required},
+        },
+    }
+    if defer_loading:
+        schema["defer_loading"] = True
+    return schema
+
+# The search tool is always loaded; the catalog tools are deferred
+tools = [
+    tool("search_tools", "Search the tool catalog and return the tools that match a query.",
+         {"query": {"type": "string", "description": "What the tool should do"}}, ["query"]),
+    tool("get_weather", "Get the current weather for a city.",
+         {"city": {"type": "string", "description": "City name"}}, ["city"], defer_loading=True),
+    tool("convert_currency", "Convert an amount of money from one currency to another.",
+         {"amount": {"type": "number"}, "from_currency": {"type": "string"}, "to_currency": {"type": "string"}},
+         ["amount", "from_currency", "to_currency"], defer_loading=True),
+]
+
+# Mock functions (replace with actual API calls in production)
+functions = {
+    "get_weather": lambda city: {"city": city, "condition": "light rain", "temperature_c": 11},
+    "convert_currency": lambda amount, from_currency, to_currency: {"amount": round(float(amount) * 1.17, 2), "currency": to_currency},
+}
+
+def search_catalog(query):
+    words = set(query.lower().split())
+    return [
+        t["function"]["name"] for t in tools
+        if t.get("defer_loading") and words & set(t["function"]["description"].lower().rstrip(".").split())
+    ]
+
+def parse_tool_calls(text):
+    calls = []
+    for name, body in re.findall(r"<function=([^>\n]+)>\n(.*?)</function>", text, re.S):
+        arguments = dict(re.findall(r"<parameter=([^>\n]+)>\n(.*?)\n</parameter>", body, re.S))
+        calls.append({"name": name, "arguments": arguments})
+    return calls
+
+messages = [
+    {"role": "system", "content": "You only have one tool right now: search_tools, which searches a catalog of many more tools. If none of your current tools can handle a request, call search_tools to find one, then call the tool it returns."},
+    {"role": "user", "content": "Do I need an umbrella in Edinburgh today?"},
+]
+
+for _ in range(5):
+    inputs = tokenizer.apply_chat_template(
+        messages, tools=tools, add_generation_prompt=True, return_dict=True, return_tensors="pt"
+    )
+    outputs = model.generate(
+        **inputs.to(model.device),
+        do_sample=True,
+        temperature=0.1,
+        top_k=50,
+        repetition_penalty=1.1,
+        max_new_tokens=1024,
+    )
+    text = tokenizer.decode(outputs[0][len(inputs["input_ids"][0]):], skip_special_tokens=False)
+    reasoning, _, answer = text.partition("</think>")
+    calls = parse_tool_calls(answer)
+    if not calls:
+        print(answer.replace("<|im_end|>", "").strip())
+        break
+
+    messages.append({
+        "role": "assistant",
+        "reasoning": reasoning,
+        "tool_calls": [{"type": "function", "function": call} for call in calls],
+    })
+    for call in calls:
+        if call["name"] == "search_tools":
+            names = search_catalog(call["arguments"]["query"])
+            content = [{"type": "text", "text": f"Found {len(names)} tool(s)."}]
+            content += [{"type": "tool_reference", "name": name} for name in names]
+        else:
+            content = json.dumps(functions[call["name"]](**call["arguments"]))
+        messages.append({"role": "tool", "content": content})
+```
+
+The system prompt lists only `search_tools`. After the search, the definition of `get_weather` appears in the tool response, and the model calls it:
+
+```
+<|startoftext|><|im_start|>system
+You only have one tool right now: search_tools, which searches a catalog of many more tools. If none of your current tools can handle a request, call search_tools to find one, then call the tool it returns.
+
+<tools>
+{"name": "search_tools", "description": "Search the tool catalog and return the tools that match a query.", "parameters": {...}}
+</tools><|im_end|>
+<|im_start|>user
+Do I need an umbrella in Edinburgh today?<|im_end|>
+<|im_start|>assistant
+<think>...</think><tool_call>
+<function=search_tools>
+<parameter=query>
+current weather for a city
+</parameter>
+</function>
+</tool_call><|im_end|>
+<|im_start|>tool
+<tool_response>
+Found 1 tool(s).
+<additional_tools>
+{"name": "get_weather", "description": "Get the current weather for a city.", "parameters": {...}}
+</additional_tools>
+</tool_response><|im_end|>
+<|im_start|>assistant
+<think>...</think><tool_call>
+<function=get_weather>
+<parameter=city>
+Edinburgh
+</parameter>
+</function>
+</tool_call><|im_end|>
+<|im_start|>tool
+<tool_response>
+{"city": "Edinburgh", "condition": "light rain", "temperature_c": 11}
+</tool_response><|im_end|>
+```
+
+If your search returns full tool definitions instead of names, pass them in the tool message's `additional_tools` field, for example `{"role": "tool", "additional_tools": [weather_schema]}`. The chat template renders them the same way.
+
+Defer loading works with vLLM, SGLang, and LFM3-compatible llama.cpp builds. For llama.cpp, use a GGUF with the current chat template or load it with `--chat-template-file`.
+
+## Vision, Audio, and Omni Models
+
+[LFM3-VL-2B](/lfm/models/lfm3-vl-2b), [LFM3-Audio-2B](/lfm/models/lfm3-audio-2b), and [LFM3-Omni-2B](/lfm/models/lfm3-omni-2b) use the same tool call format. Pass the tool list to the processor's `.apply_chat_template()` with `tools=...`. With LFM3-Audio-2B and LFM3-Omni-2B, the user can ask in text or in speech, and the model can also respond with text or speech alongside its tool calls:
+
+```python
+inputs = processor.apply_chat_template(
+    [{"role": "user", "content": "What's the weather in Boston?"}],
+    tools=tools, add_generation_prompt=True, tokenize=True, return_dict=True, return_tensors="pt",
+).to(model.device)
+```
+
+## Best Practices
+
+Tool definitions consume context tokens since they're inserted as text. For large tool lists (100+ tools), this can use significant portions of your context window.
+
+To manage this effectively, only include tools relevant to the current request. Write clear, concise descriptions. Group related tools and remove unused ones when they're not needed.
+
+With LFM3, use [defer loading and tool search](#defer-loading-and-tool-search) for large tool catalogs, so only the tools the model needs enter the context.
+
+## LFM2 and LFM2.5
 
 The tool use workflow follows four steps:
 
@@ -18,7 +388,7 @@ LFM2.5 wraps tool calls in `<|tool_call_start|>` and `<|tool_call_end|>` tokens.
 
 By default, models generate Pythonic function calls. Add "Output function calls as JSON" to your system prompt for JSON format.
 
-## Defining Tools
+### LFM2 Defining Tools
 
 You have two options for providing tool definitions.
 
@@ -70,7 +440,7 @@ inputs = tokenizer.apply_chat_template(
 )
 ```
 
-## Complete Example
+### LFM2 Complete Example
 
 Start by loading the model and defining your tools and conversation:
 
@@ -178,7 +548,7 @@ Checking the current status of candidate ID 12345.<|im_end|>
 The candidate with ID 12345 is currently in the "Interview Scheduled" stage.<|im_end|>
 ```
 
-## Vision Models
+### LFM2 Vision Models
 
 LFM2-VL and LFM2.5-VL vision models support text-only function calling. Use the tokenizer from the processor:
 
@@ -220,9 +590,3 @@ response = processor.tokenizer.decode(
     skip_special_tokens=False
 )
 ```
-
-## Best Practices
-
-Tool definitions consume context tokens since they're inserted as text. For large tool lists (100+ tools), this can use significant portions of your context window.
-
-To manage this effectively, only include tools relevant to the current request. Write clear, concise descriptions. Group related tools and remove unused ones when they're not needed.
