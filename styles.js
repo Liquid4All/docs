@@ -69,7 +69,7 @@
     :root {
       --lfm-fs-xs: 12px;
       --lfm-fs-sm: 13px;
-      --lfm-fs-base: 14px;
+      --lfm-fs-base: 15px;
       --lfm-fs-lg: 16px;
       --lfm-fs-xl: 20px;
       --lfm-fs-2xl: 28px;
@@ -118,7 +118,7 @@
       line-height: 1.3 !important;
     }
 
-    /* Inline code - slightly smaller than surrounding text (13px in body copy) */
+    /* Inline code - slightly smaller than surrounding text (~14px in body copy) */
     .mdx-content code:not(pre code) {
       font-size: 0.93em !important;
     }
