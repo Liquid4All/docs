@@ -50,11 +50,11 @@ This demo uses the **[LFM2.5-VL-1.6B](/lfm/models/lfm25-vl-1.6b)** model, a 1.6 
 
 Traditional cloud-based approaches require sending video frames to remote servers for processing:
 
-![](https://raw.githubusercontent.com/Liquid4All/cookbook/main/examples/vl-webgpu-demo/media/remote-inference.gif)
+![Cloud video captioning: browser sends each video frame to a remote server for inference](https://raw.githubusercontent.com/Liquid4All/cookbook/main/examples/vl-webgpu-demo/media/remote-inference.gif)
 
 With WebGPU and local inference, everything runs directly in your browser:
 
-![](https://raw.githubusercontent.com/Liquid4All/cookbook/main/examples/vl-webgpu-demo/media/local-inference.gif)
+![Local video captioning: the vision language model downloads once and runs in the browser through ONNX Runtime, with no inference server](https://raw.githubusercontent.com/Liquid4All/cookbook/main/examples/vl-webgpu-demo/media/local-inference.gif)
 
 ### Technical Stack
 
