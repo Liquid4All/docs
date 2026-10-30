@@ -107,7 +107,8 @@
               "deployment/on-device/mlx",
               "deployment/on-device/onnx",
               "deployment/on-device/ollama",
-              "deployment/on-device/atomic-chat"
+              "deployment/on-device/atomic-chat",
+              "deployment/on-device/llama"
             ]
           },
           {

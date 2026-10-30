@@ -1,0 +1,105 @@
+---
+title: "Llama"
+description: "Run Liquid AI LFM models locally with Llama, the desktop app from the llama.cpp team, with a built-in chat and an OpenAI-compatible API."
+---
+
+<Tip>
+  Use Llama for one-click model downloads, a built-in chat, and a local OpenAI-compatible API that other apps can use, with no command-line setup.
+</Tip>
+
+Llama runs GGUF models with [llama.cpp](/deployment/on-device/llama-cpp) and keeps them in the standard Hugging Face cache.
+
+## Installation
+
+Download and install Llama from [llama.app](https://llama.app):
+
+* **macOS** (Apple Silicon, macOS 15 or later)
+* **Windows 11** (x64 and ARM64)
+
+## Downloading Models
+
+To install LFM3-1.7B, open this link in your browser:
+
+```
+llama://install?repo=LiquidAI/LFM3-1.7B-GGUF
+```
+
+Llama picks a quantization that fits your computer's memory. The link works for any LFM GGUF repository: replace the repository name. See the [Models page](/lfm/models/complete-library) for all available GGUF models.
+
+## Using the Chat Interface
+
+1. Open the model in Llama
+2. Click **Chat with model** to open the chat in your browser
+3. Start chatting
+
+The model loads on the first message.
+
+## Using the API
+
+Llama serves every installed model through a local OpenAI-compatible server at `http://localhost:9931/v1` (the port is configurable in settings). Models load on the first request.
+
+Get the model IDs before sending requests:
+
+```bash
+curl http://localhost:9931/v1/models
+```
+
+IDs take the form `org/repo:QUANT`, for example `LiquidAI/LFM3-1.7B-GGUF:Q4_K_M`.
+
+Use the OpenAI Python client:
+
+```python
+from openai import OpenAI
+
+client = OpenAI(
+    base_url="http://localhost:9931/v1",
+    api_key="not-needed"
+)
+
+response = client.chat.completions.create(
+    model="LiquidAI/LFM3-1.7B-GGUF:Q4_K_M",
+    messages=[
+        {"role": "user", "content": "What is machine learning?"}
+    ],
+    temperature=0.1,
+    max_tokens=2048,
+    extra_body={"top_k": 50, "repeat_penalty": 1.1},
+)
+print(response.choices[0].message.content)
+```
+
+### Streaming Responses
+
+```python
+stream = client.chat.completions.create(
+    model="LiquidAI/LFM3-1.7B-GGUF:Q4_K_M",
+    messages=[
+        {"role": "user", "content": "Tell me a story."}
+    ],
+    stream=True
+)
+
+for chunk in stream:
+    if chunk.choices[0].delta.content is not None:
+        print(chunk.choices[0].delta.content, end="")
+```
+
+You can also use curl to interact with the server:
+
+<Accordion title="Curl request example">
+  ```bash
+  curl http://localhost:9931/v1/chat/completions \
+    -H "Content-Type: application/json" \
+    -d '{
+      "model": "LiquidAI/LFM3-1.7B-GGUF:Q4_K_M",
+      "messages": [{"role": "user", "content": "Hello!"}],
+      "temperature": 0.1,
+      "top_k": 50,
+      "repeat_penalty": 1.1
+    }'
+  ```
+</Accordion>
+
+## Using with Agents
+
+LFM3-1.7B is post-trained for agent harnesses such as Pi, Hermes Agent, and OpenClaw. To run it, follow [Run local agents with LFMs](/examples/agent-harnesses) and point the harness at `http://localhost:9931/v1`. For harder tasks, use [LFM2.5-24B-A2B](/lfm/models/lfm25-24b-a2b) from Llama's catalog.
