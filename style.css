@@ -202,9 +202,10 @@ pre code {
   line-height: 1.5 !important;
 }
 
-/* Left sidebar */
+/* Left sidebar - collapsible groups (e.g. "Liquid Foundation Models") are buttons, not links */
 #navigation-items a,
-#sidebar-content a {
+#sidebar-content a,
+.sidebar-group button {
   font-size: var(--lfm-fs-sm) !important;
   line-height: 1.4 !important;
 }
