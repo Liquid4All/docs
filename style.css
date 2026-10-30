@@ -246,6 +246,7 @@ body > div.antialiased {
 
 .panel {
   width: 16.5rem !important;
+  font-size: var(--lfm-fs-sm) !important;
 }
 
 /* Panel links - spacing and clickable styling */
@@ -344,14 +345,12 @@ body > div.antialiased {
 /* Title inline with icon */
 .use-cases [data-component-part="card-title"] {
   margin-top: 0 !important;
-  font-size: 0.9rem !important;
   color: #374151 !important;
 }
 
 /* Description text */
 .use-cases [data-component-part="card-content"] {
   margin-top: 0.25rem !important;
-  font-size: 0.85rem !important;
   color: #4b5563 !important;
   line-height: 1.35 !important;
 }
@@ -430,6 +429,7 @@ article a[href^="#"][aria-label*="link" i],
 
 /* Default table styling - applies to all tables */
 table {
+  font-size: var(--lfm-fs-sm) !important;
   border-collapse: collapse !important;
   border-spacing: 0 !important;
   width: 100% !important;
@@ -467,14 +467,12 @@ table:not(:has(thead th:nth-child(6))) th {
 
 table:not(:has(thead th:nth-child(6))) {
   table-layout: auto !important;
-  font-size: inherit !important;
 }
 
 /* Model table styling - only for tables with 6 columns (Model, HF, GGUF, MLX, ONNX, Trainable?) */
 
 table:has(thead th:nth-child(6):not(:nth-child(7))) {
   table-layout: fixed !important;
-  font-size: 0.8rem !important;
   margin: 0 !important;
 }
 
@@ -537,7 +535,7 @@ table:has(thead th:nth-child(6):not(:nth-child(7))) tbody tr:has(td:nth-child(2)
 
 table:has(thead th:nth-child(6):not(:nth-child(7))) tbody tr:has(td:nth-child(2):empty):not(:has(strong)) td:first-child {
   text-align: left !important;
-  font-size: 0.75rem !important;
+  font-size: var(--lfm-fs-xs) !important;
   color: #166534 !important;
   padding-left: 1rem !important;
 }
@@ -545,7 +543,6 @@ table:has(thead th:nth-child(6):not(:nth-child(7))) tbody tr:has(td:nth-child(2)
 /* Model overview table with Family column - only for 7-column tables */
 table:has(thead th:nth-child(7):not(:nth-child(8))) {
   table-layout: fixed !important;
-  font-size: 0.8rem !important;
   margin: 0 !important;
 }
 
@@ -852,7 +849,7 @@ table:has(thead th:nth-child(7):not(:nth-child(8))) td:first-child a:hover {
   display: inline-block !important;
   padding: 0.35rem 0.7rem !important;
   border-radius: 4px !important;
-  font-size: 0.85rem !important;
+  font-size: var(--lfm-fs-sm) !important;
   font-weight: 600 !important;
   text-decoration: none !important;
   background-image: none !important;
@@ -901,7 +898,7 @@ table:has(thead th:nth-child(7):not(:nth-child(8))) td:first-child a:hover {
   align-items: center !important;
   gap: 0.25rem !important;
   margin-bottom: 0.75rem !important;
-  font-size: 0.85rem !important;
+  font-size: var(--lfm-fs-sm) !important;
   font-weight: 500 !important;
   color: #6b7280 !important;
   text-decoration: none !important;
