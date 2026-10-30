@@ -16,15 +16,15 @@ Pick the hosted model with the `model` field. Every model uses the same endpoint
 | Model | Inputs | Description |
 | ----- | ----- | ----- |
 | `d1-ultra` | Text, images | Most capable decision model, built on a larger open-weight model with Liquid-specific customizations. |
-| `d1` | Text, images | Default hosted decision model. |
+| `d1.1` | Text, images | Default hosted decision model. |
 
-The examples below use `d1`. Replace it with `d1-ultra` for harder decisions.
+The examples below use `d1.1`. Replace it with `d1-ultra` for harder decisions.
 
 ## Pricing
 
 Both models are billed on input tokens only, and output is free. Each question is billed for its text and all supplied images (see [Image Token Usage](#image-token-usage)).
 
-The models are available through the Liquid API, OpenRouter ([d1](https://openrouter.ai/liquid/d1), [d1-ultra](https://openrouter.ai/liquid/d1-ultra)), and Vercel AI Gateway ([d1](https://vercel.com/ai-gateway/models/d1), [d1-ultra](https://vercel.com/ai-gateway/models/d1-ultra)). See the [Liquid AI pricing page](https://www.liquid.ai/pricing) for current prices and available credits.
+The models are available through the Liquid API. The earlier `d1` model and `d1-ultra` are also on OpenRouter ([d1](https://openrouter.ai/liquid/d1), [d1-ultra](https://openrouter.ai/liquid/d1-ultra)), and Vercel AI Gateway ([d1](https://vercel.com/ai-gateway/models/d1), [d1-ultra](https://vercel.com/ai-gateway/models/d1-ultra)). See the [Liquid AI pricing page](https://www.liquid.ai/pricing) for current prices and available credits.
 
 ## Setup
 
@@ -107,7 +107,7 @@ A single API call contains the following fields:
       -H "Authorization: Bearer $LIQUID_API_KEY" \
       -H "Content-Type: application/json" \
       -d '{
-        "model": "d1",
+        "model": "d1.1",
         "state": "I have been waiting over three weeks for my order and nobody has responded to my emails. This is completely unacceptable.",
         "questions": {
           "is_complaint": {
@@ -123,7 +123,7 @@ A single API call contains the following fields:
     from typesafe_sdk import Noul
     
     result = client.system_one(
-        model="d1",
+        model="d1.1",
         state="I have been waiting over three weeks for my order and nobody has responded to my emails. This is completely unacceptable.",
         questions={
             "is_complaint": Noul(
@@ -137,7 +137,7 @@ A single API call contains the following fields:
   <Tab title="TypeScript">
     ```typescript
     const result = await client.systemOne({
-      model: "d1",
+      model: "d1.1",
       state: "I have been waiting over three weeks for my order and nobody has responded to my emails. This is completely unacceptable.",
       questions: {
         is_complaint: {
@@ -155,7 +155,7 @@ A single API call contains the following fields:
 
 ```json
 {
-  "model": "d1",
+  "model": "d1.1",
   "answers": {
     "is_complaint": {
       "type": "noul",
@@ -190,7 +190,7 @@ A Noul question returns a single probability between 0 and 1. Your code receives
       -H "Authorization: Bearer $LIQUID_API_KEY" \
       -H "Content-Type: application/json" \
       -d '{
-        "model": "d1",
+        "model": "d1.1",
         "state": "You'\''re an absolute idiot and I hope your company goes bankrupt. I'\''m going to find out where you work.",
         "questions": {
           "is_harmful": {
@@ -206,7 +206,7 @@ A Noul question returns a single probability between 0 and 1. Your code receives
     from typesafe_sdk import Noul
 
     result = client.system_one(
-        model="d1",
+        model="d1.1",
         state="You're an absolute idiot and I hope your company goes bankrupt. I'm going to find out where you work.",
         questions={
             "is_harmful": Noul(
@@ -219,7 +219,7 @@ A Noul question returns a single probability between 0 and 1. Your code receives
   <Tab title="TypeScript">
     ```typescript
     const result = await client.systemOne({
-      model: "d1",
+      model: "d1.1",
       state: "You're an absolute idiot and I hope your company goes bankrupt. I'm going to find out where you work.",
       questions: {
         is_harmful: {
@@ -267,7 +267,7 @@ A Choice question returns the selected option, a probability distribution over a
       -H "Authorization: Bearer $LIQUID_API_KEY" \
       -H "Content-Type: application/json" \
       -d '{
-        "model": "d1",
+        "model": "d1.1",
         "state": "Hi, I was charged twice for my subscription last month. The amounts are $29.99 on March 3rd and again on March 5th. Can you refund the duplicate charge?",
         "questions": {
           "intent": {
@@ -290,7 +290,7 @@ A Choice question returns the selected option, a probability distribution over a
     from typesafe_sdk import Choice
 
     result = client.system_one(
-        model="d1",
+        model="d1.1",
         state="Hi, I was charged twice for my subscription last month. The amounts are $29.99 on March 3rd and again on March 5th. Can you refund the duplicate charge?",
         questions={
             "intent": Choice(
@@ -310,7 +310,7 @@ A Choice question returns the selected option, a probability distribution over a
   <Tab title="TypeScript">
     ```typescript
     const result = await client.systemOne({
-      model: "d1",
+      model: "d1.1",
       state: "Hi, I was charged twice for my subscription last month. The amounts are $29.99 on March 3rd and again on March 5th. Can you refund the duplicate charge?",
       questions: {
         intent: {
@@ -379,7 +379,7 @@ A Score question returns a continuous value across an ordered rubric you define,
       -H "Authorization: Bearer $LIQUID_API_KEY" \
       -H "Content-Type: application/json" \
       -d '{
-        "model": "d1",
+        "model": "d1.1",
         "state": "Our production API is returning 500 errors on every request. All customers are affected. Revenue impact is approximately $12,000 per hour. Started 15 minutes ago.",
         "questions": {
           "urgency": {
@@ -401,7 +401,7 @@ A Score question returns a continuous value across an ordered rubric you define,
     from typesafe_sdk import Score
 
     result = client.system_one(
-        model="d1",
+        model="d1.1",
         state="Our production API is returning 500 errors on every request. All customers are affected. Revenue impact is approximately $12,000 per hour. Started 15 minutes ago.",
         questions={
             "urgency": Score(
@@ -420,7 +420,7 @@ A Score question returns a continuous value across an ordered rubric you define,
   <Tab title="TypeScript">
     ```typescript
     const result = await client.systemOne({
-      model: "d1",
+      model: "d1.1",
       state: "Our production API is returning 500 errors on every request. All customers are affected. Revenue impact is approximately $12,000 per hour. Started 15 minutes ago.",
       questions: {
         urgency: {
@@ -487,7 +487,7 @@ You can ask multiple questions of different types in the same call. The model ev
       -H "Authorization: Bearer $LIQUID_API_KEY" \
       -H "Content-Type: application/json" \
       -d '{
-        "model": "d1",
+        "model": "d1.1",
         "state": "{\"message\": \"The checkout page crashes with a white screen whenever I try to apply a promo code. I'\''ve tried three different browsers. This is blocking a $4,200 order for our team and we need to place it before our procurement window closes on Friday.\", \"account\": {\"plan\": \"enterprise\", \"arr\": 52000, \"customer_since\": \"2022-03-15\"}}",
         "questions": {
           "is_bug": {
@@ -532,7 +532,7 @@ You can ask multiple questions of different types in the same call. The model ev
     }
 
     result = client.system_one(
-        model="d1",
+        model="d1.1",
         state=json.dumps(ticket),
         questions={
             "is_bug": Noul(
@@ -571,7 +571,7 @@ You can ask multiple questions of different types in the same call. The model ev
     };
 
     const result = await client.systemOne({
-      model: "d1",
+      model: "d1.1",
       state: JSON.stringify(ticket),
       questions: {
         is_bug: {
@@ -671,7 +671,7 @@ if team_confidence < 0.5:
 Send images to the decision model through the same `/decisions/v1/systemone` endpoint used for text decisions. Add an `images` array alongside `model`, `state`, and `questions`. The question types and response format stay the same.
 
 <Note>
-Vision is available through the Liquid API with the `d1` and `d1-ultra` models.
+Vision is available through the Liquid API with the `d1.1` and `d1-ultra` models.
 </Note>
 
 Each image can be a Base64 data URL or an object with `content_type` and `base64` fields. Remote image URLs are not accepted. If an image is hosted online, download it and encode its contents before sending the request.
@@ -690,7 +690,7 @@ Pass a single image as a Base64 data URL in the `images` array. The model evalua
       -H "Content-Type: application/json" \
       --data-binary @- <<JSON
     {
-      "model": "d1",
+      "model": "d1.1",
       "state": "Camera image of a circuit board on the production line.",
       "images": ["data:image/jpeg;base64,$IMAGE_BASE64"],
       "questions": {
@@ -717,7 +717,7 @@ Pass a single image as a Base64 data URL in the `images` array. The model evalua
         "https://api.liquid.ai/decisions/v1/systemone",
         headers={"Authorization": f"Bearer {os.environ['LIQUID_API_KEY']}"},
         json={
-            "model": "d1",
+            "model": "d1.1",
             "state": "Camera image of a circuit board on the production line.",
             "images": [f"data:image/jpeg;base64,{image}"],
             "questions": {
@@ -744,7 +744,7 @@ Pass a single image as a Base64 data URL in the `images` array. The model evalua
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "d1",
+        model: "d1.1",
         state: "Camera image of a circuit board on the production line.",
         images: [`data:image/jpeg;base64,${image}`],
         questions: {
@@ -813,7 +813,7 @@ All questions in a request receive all images. The order of the images matters. 
       -H "Content-Type: application/json" \
       --data-binary @- <<JSON
     {
-      "model": "d1",
+      "model": "d1.1",
       "state": "The first image shows a reference circuit board with no defects. The second image shows the board being inspected.",
       "images": ["data:image/jpeg;base64,$REF_BASE64", "data:image/jpeg;base64,$INSPECT_BASE64"],
       "questions": {
@@ -841,7 +841,7 @@ All questions in a request receive all images. The order of the images matters. 
         "https://api.liquid.ai/decisions/v1/systemone",
         headers={"Authorization": f"Bearer {os.environ['LIQUID_API_KEY']}"},
         json={
-            "model": "d1",
+            "model": "d1.1",
             "state": "The first image shows a reference circuit board with no defects. The second image shows the board being inspected.",
             "images": [
                 f"data:image/jpeg;base64,{image1}",
@@ -872,7 +872,7 @@ All questions in a request receive all images. The order of the images matters. 
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "d1",
+        model: "d1.1",
         state: "The first image shows a reference circuit board with no defects. The second image shows the board being inspected.",
         images: [
           `data:image/jpeg;base64,${image1}`,
@@ -916,7 +916,7 @@ All questions in a request receive all images. The order of the images matters. 
 Base64 encoding increases the request size compared with the original files. Resize or compress images before encoding them if the request is too large, and use the media type that matches each file.
 
 <Note>
-If a request returns an error saying the model does not accept images, image input is not available for that model on the endpoint you called. Use `d1` or `d1-ultra`.
+If a request returns an error saying the model does not accept images, image input is not available for that model on the endpoint you called. Use `d1.1` or `d1-ultra`.
 </Note>
 
 ### Image Token Usage

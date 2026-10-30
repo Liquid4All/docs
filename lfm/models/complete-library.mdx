@@ -7,8 +7,8 @@ description: "Liquid Foundation Models (LFMs) are a new class of multimodal arch
 
 Across the library:
 
-- Context length depends on the model: 32K tokens for most text, vision, and audio models, 128K for LFM2.5-8B-A1B, 131K for LFM2.5-2.6B and LFM2.5-24B-A2B, 8K for the LFM2.5 encoders, and 16K for d1-omni-600M. Each model page lists its exact limit.
-- Text and vision models run with [Transformers](/deployment/gpu-inference/transformers), [llama.cpp](/deployment/on-device/llama-cpp), [vLLM](/deployment/gpu-inference/vllm), [SGLang](/deployment/gpu-inference/sglang), [MLX](/deployment/on-device/mlx), [Ollama](/deployment/on-device/ollama), and [Atomic Chat](/deployment/on-device/atomic-chat). Audio, retrieval, encoder, and decision models support fewer runtimes (d1-3B and d1-omni-600M: Transformers, llama.cpp, and mlx-vlm); check each model page.
+- Context length depends on the model: 32K tokens for most text, vision, audio, and omni models, 256K for LFM3-1.7B, 128K for LFM3-VL-2B, LFM2.5-8B-A1B, d1-2B, and d1-omni-2B, 131K for LFM2.5-24B-A2B, 8K for the LFM2.5 encoders, and 16K for d1-omni-600M. Each model page lists its exact limit.
+- Text and vision models run with [Transformers](/deployment/gpu-inference/transformers), [llama.cpp](/deployment/on-device/llama-cpp), [vLLM](/deployment/gpu-inference/vllm), [SGLang](/deployment/gpu-inference/sglang), [MLX](/deployment/on-device/mlx), [Ollama](/deployment/on-device/ollama), and [Atomic Chat](/deployment/on-device/atomic-chat). Audio, omni, retrieval, encoder, and decision models support fewer runtimes (d1-omni-600M: Transformers, llama.cpp, and mlx-vlm); check each model page.
 - Most open-weight models can be fine-tuned with [Liquid Finetune](/lfm/fine-tuning/liquid-finetune), [TRL](/lfm/fine-tuning/trl), or [Unsloth](/lfm/fine-tuning/unsloth). The **Trainable?** column in the matrix below lists the documented path for each model.
 
 </div>
@@ -36,6 +36,10 @@ Start with the model family that matches your input and output shape, then choos
 
 <Card title="Audio Models" icon="headphones" href="/lfm/models/audio-models">
   Interleaved audio/text models for TTS, ASR, and voice chat.
+</Card>
+
+<Card title="Omni Models" icon="circle-nodes" href="/lfm/models/omni-models">
+  Text, image, video, and audio input with text or speech output in one model.
 </Card>
 
 <Card title="Decision Models" icon="scale-balanced" href="/lfm/models/decision-models">
@@ -76,14 +80,14 @@ Use the format that matches your runtime and deployment target. The matrix below
 
 - **GGUF** — Best for local CPU/GPU inference on any platform. Use with [llama.cpp](/deployment/on-device/llama-cpp), [LM Studio](/deployment/on-device/lm-studio), [Ollama](/deployment/on-device/ollama), or [Atomic Chat](/deployment/on-device/atomic-chat). Every open-weight model in the matrix has a `LiquidAI/<model>-GGUF` repository.
 - **MLX** — Best for Mac users with Apple Silicon. Leverages unified memory for fast inference via [MLX](/deployment/on-device/mlx) or [Atomic Chat](/deployment/on-device/atomic-chat). Many models have official `LiquidAI/<model>-MLX-<bits>` repositories; the others are community conversions on [mlx-community](https://huggingface.co/mlx-community/collections?search=LFM).
-- **ONNX** — Best for production deployments and edge devices. Cross-platform with ONNX Runtime across CPUs, GPUs, and accelerators. Available as `LiquidAI/<model>-ONNX` for the main LFM2.5 text, vision, and audio models, and for some LFM2 models through [onnx-community](https://huggingface.co/onnx-community); see the matrix.
+- **ONNX** — Best for production deployments and edge devices. Cross-platform with ONNX Runtime across CPUs, GPUs, and accelerators. Available as `LiquidAI/<model>-ONNX` for the LFM3 models and the main LFM2.5 text, vision, and audio models, and for some LFM2 models through [onnx-community](https://huggingface.co/onnx-community); see the matrix.
 
 ### Quantization
 
 Quantization reduces model size and speeds up inference with minimal quality loss. Available options by format:
 
 - **GGUF** — Text and vision repositories usually include `Q4_0`, `Q4_K_M`, `Q5_K_M`, `Q6_K`, `Q8_0`, `BF16`, and `F16`. Some repositories ship a smaller set (for example, d1-omni-600M has only `Q8_0`, `BF16`, and `F16`), so check the file list. `Q4_K_M` offers the best balance of size and quality.
-- **MLX** — Official LiquidAI repositories usually come in `4bit`, `5bit`, `6bit`, `8bit`, and `bf16`. Some ship a subset (the d1 models have `8bit` and `fp16`, plus `4bit` for d1-3B). `8bit` is recommended.
+- **MLX** — Official LiquidAI repositories usually come in `4bit`, `5bit`, `6bit`, `8bit`, and `bf16`. Some ship a subset (d1-omni-600M has `8bit` and `fp16`). `8bit` is recommended.
 - **ONNX** — Supports `FP32`, `FP16`, `Q4`, and `Q8` (some repositories also include `Q4F16`). `Q4` is recommended for most deployments.
 
 ## Complete Model Matrix
@@ -91,21 +95,24 @@ Quantization reduces model size and speeds up inference with minimal quality los
 | Model | HF | GGUF | MLX | ONNX | Drafter | Trainable? |
 | ----- | ----- | ----- | ----- | ----- | ----- | ----- |
 | **Text-to-text Models** | | | | | | |
+| [LFM3-1.7B](/lfm/models/lfm3-1.7b) | [✓](https://huggingface.co/LiquidAI/LFM3-1.7B) | [✓](https://huggingface.co/LiquidAI/LFM3-1.7B-GGUF) | [✓](https://huggingface.co/LiquidAI/LFM3-1.7B-MLX-4bit) | [✓](https://huggingface.co/LiquidAI/LFM3-1.7B-ONNX) | ✗ | Yes (TRL) |
 | [LFM2.5-1.2B-Instruct](/lfm/models/lfm25-1.2b-instruct) | [✓](https://huggingface.co/LiquidAI/LFM2.5-1.2B-Instruct) | [✓](https://huggingface.co/LiquidAI/LFM2.5-1.2B-Instruct-GGUF) | [✓](https://huggingface.co/LiquidAI/LFM2.5-1.2B-Instruct-MLX-8bit) | [✓](https://huggingface.co/LiquidAI/LFM2.5-1.2B-Instruct-ONNX) | [✓](/lfm/key-concepts/speculative-decoding#available-draft-models) | Yes (TRL) |
 | [LFM2.5-1.2B-Thinking](/lfm/models/lfm25-1.2b-thinking) | [✓](https://huggingface.co/LiquidAI/LFM2.5-1.2B-Thinking) | [✓](https://huggingface.co/LiquidAI/LFM2.5-1.2B-Thinking-GGUF) | [✓](https://huggingface.co/LiquidAI/LFM2.5-1.2B-Thinking-MLX-8bit) | [✓](https://huggingface.co/LiquidAI/LFM2.5-1.2B-Thinking-ONNX) | ✗ | Yes (TRL) |
 | [LFM2.5-1.2B-JP-202606](/lfm/models/lfm25-1.2b-jp-202606) | [✓](https://huggingface.co/LiquidAI/LFM2.5-1.2B-JP-202606) | [✓](https://huggingface.co/LiquidAI/LFM2.5-1.2B-JP-202606-GGUF) | [✓](https://huggingface.co/LiquidAI/LFM2.5-1.2B-JP-202606-MLX-8bit) | [✓](https://huggingface.co/LiquidAI/LFM2.5-1.2B-JP-202606-ONNX) | ✗ | Yes (TRL) |
 | [LFM2.5-350M](/lfm/models/lfm25-350m) | [✓](https://huggingface.co/LiquidAI/LFM2.5-350M) | [✓](https://huggingface.co/LiquidAI/LFM2.5-350M-GGUF) | [✓](https://huggingface.co/LiquidAI/LFM2.5-350M-MLX-8bit) | [✓](https://huggingface.co/LiquidAI/LFM2.5-350M-ONNX) | ✗ | Yes (TRL) |
 | [LFM2.5-230M](/lfm/models/lfm25-230m) | [✓](https://huggingface.co/LiquidAI/LFM2.5-230M) | [✓](https://huggingface.co/LiquidAI/LFM2.5-230M-GGUF) | [✓](https://huggingface.co/LiquidAI/LFM2.5-230M-MLX-8bit) | [✓](https://huggingface.co/LiquidAI/LFM2.5-230M-ONNX) | ✗ | Yes (TRL) |
-| [LFM2.5-2.6B](/lfm/models/lfm25-2.6b) | [✓](https://huggingface.co/LiquidAI/LFM2.5-2.6B) | [✓](https://huggingface.co/LiquidAI/LFM2.5-2.6B-GGUF) | [✓](https://huggingface.co/LiquidAI/LFM2.5-2.6B-MLX-8bit) | [✓](https://huggingface.co/LiquidAI/LFM2.5-2.6B-ONNX) | [✓](/lfm/key-concepts/speculative-decoding#available-draft-models) | Yes (TRL) |
 | [LFM2.5-8B-A1B](/lfm/models/lfm25-8b-a1b) | [✓](https://huggingface.co/LiquidAI/LFM2.5-8B-A1B) | [✓](https://huggingface.co/LiquidAI/LFM2.5-8B-A1B-GGUF) | [✓](https://huggingface.co/LiquidAI/LFM2.5-8B-A1B-MLX-8bit) | [✓](https://huggingface.co/LiquidAI/LFM2.5-8B-A1B-ONNX) | [✓](/lfm/key-concepts/speculative-decoding#available-draft-models) | Yes (TRL) |
-| [LFM2.5-24B-A2B](/lfm/models/lfm25-24b-a2b) | [✓](https://huggingface.co/LiquidAI/LFM2.5-24B-A2B) | [✓](https://huggingface.co/LiquidAI/LFM2.5-24B-A2B-GGUF) | [✓](https://huggingface.co/LiquidAI/LFM2.5-24B-A2B-MLX-8bit) | [✓](https://huggingface.co/LiquidAI/LFM2.5-24B-A2B-ONNX) | ✗ | Yes (TRL) |
+| [LFM2.5-24B-A2B](/lfm/models/lfm25-24b-a2b) | [✓](https://huggingface.co/LiquidAI/LFM2.5-24B-A2B) | [✓](https://huggingface.co/LiquidAI/LFM2.5-24B-A2B-GGUF) | [✓](https://huggingface.co/LiquidAI/LFM2.5-24B-A2B-MLX-8bit) | [✓](https://huggingface.co/LiquidAI/LFM2.5-24B-A2B-ONNX) | [✓](/lfm/key-concepts/speculative-decoding#available-draft-models) | Yes (TRL) |
 | **Vision Language Models** | | | | | | |
+| [LFM3-VL-2B](/lfm/models/lfm3-vl-2b) | [✓](https://huggingface.co/LiquidAI/LFM3-VL-2B) | [✓](https://huggingface.co/LiquidAI/LFM3-VL-2B-GGUF) | [✓](https://huggingface.co/LiquidAI/LFM3-VL-2B-MLX-8bit) | [✓](https://huggingface.co/LiquidAI/LFM3-VL-2B-ONNX) | ✗ | Yes |
 | [LFM2.5-VL-3B](/lfm/models/lfm25-vl-3b) | [✓](https://huggingface.co/LiquidAI/LFM2.5-VL-3B) | [✓](https://huggingface.co/LiquidAI/LFM2.5-VL-3B-GGUF) | [✓](https://huggingface.co/LiquidAI/LFM2.5-VL-3B-MLX-8bit) | [✓](https://huggingface.co/LiquidAI/LFM2.5-VL-3B-ONNX) | [✓](/lfm/key-concepts/speculative-decoding#available-draft-models) | Yes (TRL) |
 | [LFM2.5-VL-1.6B](/lfm/models/lfm25-vl-1.6b) | [✓](https://huggingface.co/LiquidAI/LFM2.5-VL-1.6B) | [✓](https://huggingface.co/LiquidAI/LFM2.5-VL-1.6B-GGUF) | [✓](https://huggingface.co/mlx-community/LFM2.5-VL-1.6B-8bit) | [✓](https://huggingface.co/LiquidAI/LFM2.5-VL-1.6B-ONNX) | ✗ | Yes (TRL) |
 | [LFM2.5-VL-450M](/lfm/models/lfm25-vl-450m) | [✓](https://huggingface.co/LiquidAI/LFM2.5-VL-450M) | [✓](https://huggingface.co/LiquidAI/LFM2.5-VL-450M-GGUF) | [✓](https://huggingface.co/LiquidAI/LFM2.5-VL-450M-MLX-8bit) | [✓](https://huggingface.co/LiquidAI/LFM2.5-VL-450M-ONNX) | ✗ | Yes (TRL) |
 | **Audio Models** | | | | | | |
-| [LFM2.5-Audio-1.5B](/lfm/models/lfm25-audio-1.5b) | [✓](https://huggingface.co/LiquidAI/LFM2.5-Audio-1.5B) | [✓](https://huggingface.co/LiquidAI/LFM2.5-Audio-1.5B-GGUF) | [✓](https://huggingface.co/mlx-community/LFM2.5-Audio-1.5B-8bit) | [✓](https://huggingface.co/LiquidAI/LFM2.5-Audio-1.5B-ONNX) | ✗ | Yes ([liquid-audio](https://github.com/Liquid4All/liquid-audio#finetuning)) |
+| [LFM3-Audio-2B](/lfm/models/lfm3-audio-2b) | [✓](https://huggingface.co/LiquidAI/LFM3-Audio-2B) | [✓](https://huggingface.co/LiquidAI/LFM3-Audio-2B-GGUF) | ✗ | ✗ | ✗ | Yes |
 | [LFM2.5-Audio-1.5B-JP](/lfm/models/lfm25-audio-1.5b-jp) | [✓](https://huggingface.co/LiquidAI/LFM2.5-Audio-1.5B-JP) | [✓](https://huggingface.co/LiquidAI/LFM2.5-Audio-1.5B-JP-GGUF) | ✗ | ✗ | ✗ | Yes ([liquid-audio](https://github.com/Liquid4All/liquid-audio#finetuning)) |
+| **Omni Models** | | | | | | |
+| [LFM3-Omni-2B](/lfm/models/lfm3-omni-2b) | [✓](https://huggingface.co/LiquidAI/LFM3-Omni-2B) | [✓](https://huggingface.co/LiquidAI/LFM3-Omni-2B-GGUF) | ✗ | ✗ | ✗ | Yes |
 | **Liquid Nanos** | | | | | | |
 | [LFM2.5-VL-1.6B-Extract](/lfm/models/lfm25-vl-1.6b-extract) | [✓](https://huggingface.co/LiquidAI/LFM2.5-VL-1.6B-Extract) | [✓](https://huggingface.co/LiquidAI/LFM2.5-VL-1.6B-Extract-GGUF) | ✗ | ✗ | ✗ | Yes (TRL) |
 | [LFM2.5-VL-450M-Extract](/lfm/models/lfm25-vl-450m-extract) | [✓](https://huggingface.co/LiquidAI/LFM2.5-VL-450M-Extract) | [✓](https://huggingface.co/LiquidAI/LFM2.5-VL-450M-Extract-GGUF) | ✗ | ✗ | ✗ | Yes (TRL) |
@@ -118,9 +125,10 @@ Quantization reduces model size and speeds up inference with minimal quality los
 | [LFM2-350M-PII-Extract-JP](/lfm/models/lfm2-350m-pii-extract-jp) | [✓](https://huggingface.co/LiquidAI/LFM2-350M-PII-Extract-JP) | [✓](https://huggingface.co/LiquidAI/LFM2-350M-PII-Extract-JP-GGUF) | ✗ | ✗ | ✗ | Yes (TRL) |
 | [LFM2-2.6B-Transcript](/lfm/models/lfm2-2.6b-transcript) | [✓](https://huggingface.co/LiquidAI/LFM2-2.6B-Transcript) | [✓](https://huggingface.co/LiquidAI/LFM2-2.6B-Transcript-GGUF) | [✓](https://huggingface.co/mlx-community/LFM2-2.6B-Transcript-8bit) | [✓](https://huggingface.co/LiquidAI/LFM2-2.6B-Transcript-ONNX) | ✗ | Yes (TRL) |
 | **Decision Models** | | | | | | |
-| [d1-3B](/lfm/models/d1-3b) | [✓](https://huggingface.co/LiquidAI/d1-3B) | [✓](https://huggingface.co/LiquidAI/d1-3B-GGUF) | [✓](https://huggingface.co/LiquidAI/d1-3B-MLX-8bit) | ✗ | ✗ | Yes (TRL, Unsloth) |
+| [d1-2B](/lfm/models/d1-2b) | [✓](https://huggingface.co/LiquidAI/d1-2B) | [✓](https://huggingface.co/LiquidAI/d1-2B-GGUF) | ✗ | ✗ | ✗ | Yes |
+| [d1-omni-2B](/lfm/models/d1-omni-2b) | [✓](https://huggingface.co/LiquidAI/d1-Omni-2B) | [✓](https://huggingface.co/LiquidAI/d1-Omni-2B-GGUF) | ✗ | ✗ | ✗ | Yes |
 | [d1-omni-600M](/lfm/models/d1-omni-600m) | [✓](https://huggingface.co/LiquidAI/d1-omni-600M) | [✓](https://huggingface.co/LiquidAI/d1-omni-600M-GGUF) | [✓](https://huggingface.co/LiquidAI/d1-omni-600M-MLX-8bit) | ✗ | ✗ | No |
-| [d1-ultra](/lfm/models/d1#models) | API | ✗ | ✗ | ✗ | ✗ | No |
-| [d1](/lfm/models/d1) | API | ✗ | ✗ | ✗ | ✗ | No |
+| [d1-ultra](/lfm/models/d1#models) | API | — | — | — | — | No |
+| [d1.1](/lfm/models/d1) | API | — | — | — | — | No |
 
 <Note>Looking for an older model? Deprecated models and their recommended replacements are listed on the [Deprecations](/lfm/help/deprecations) page.</Note>
