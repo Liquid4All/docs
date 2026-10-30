@@ -4,6 +4,9 @@
 (function() {
   const style = document.createElement('style');
   style.textContent = `
+    /* Liquid AI brand mono font (body/heading font is set via \`fonts\` in docs.json) */
+    @import url("https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&display=swap");
+
     /* Discord navbar link styling - dim the icon to match GitHub */
     /* The icon uses SVG with mask-image, color is set via background */
     a[href*="discord.gg"] svg,
@@ -52,6 +55,14 @@
     .mdx-content {
       contain: none !important;
       overflow: visible !important;
+    }
+
+    /* Code font - Liquid AI brand mono */
+    code,
+    pre,
+    kbd,
+    samp {
+      font-family: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace !important;
     }
 
     [class*="overflow-x-clip"],

@@ -1,5 +1,8 @@
 /* Custom styles for Liquid AI Documentation */
 
+/* Liquid AI brand mono font (body/heading font is set via `fonts` in docs.json) */
+@import url("https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&display=swap");
+
 /* Fix Tabs component layout - ensure tabpanel appears below tablist */
 .tabs,
 .tab-container {
@@ -114,6 +117,14 @@ a[href*="discord.gg"] svg[class*="arrow"] {
 .mdx-content {
   contain: none !important;
   overflow: visible !important;
+}
+
+/* Code font - Liquid AI brand mono */
+code,
+pre,
+kbd,
+samp {
+  font-family: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace !important;
 }
 
 .lg\:overflow-x-clip {
