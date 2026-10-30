@@ -100,11 +100,6 @@
       line-height: 1.65 !important;
     }
 
-    .mdx-content h1 {
-      font-size: var(--lfm-fs-2xl) !important;
-      line-height: 1.25 !important;
-    }
-
     .mdx-content h2 {
       font-size: var(--lfm-fs-xl) !important;
       line-height: 1.3 !important;
@@ -115,19 +110,13 @@
       line-height: 1.3 !important;
     }
 
-    .mdx-content :is(h4, h5, h6) {
-      font-size: var(--lfm-fs-base) !important;
-      line-height: 1.3 !important;
-    }
-
     /* Inline code - slightly smaller than surrounding text (~14px in body copy) */
     .mdx-content code:not(pre code) {
       font-size: 0.93em !important;
     }
 
     /* Code blocks */
-    pre,
-    pre code {
+    pre {
       font-size: var(--lfm-fs-sm) !important;
       line-height: 1.6 !important;
     }
@@ -144,7 +133,6 @@
 
     /* Left sidebar - collapsible groups (e.g. "Liquid Foundation Models") are buttons, not links */
     #navigation-items a,
-    #sidebar-content a,
     .sidebar-group button {
       font-size: var(--lfm-fs-sm) !important;
       line-height: 1.4 !important;
