@@ -18,19 +18,13 @@ Download and install Llama from [llama.app](https://llama.app):
 
 ## Downloading Models
 
-LFM2.5-24B-A2B is in Llama's model catalog:
-
-1. Open Llama
-2. Select **LFM 2.5 24B-A2B** from the recommended models (listed when it fits your computer's memory)
-3. Wait for the download to finish
-
-On a Mac, you can also install it from its [page on llama.app](https://llama.app/models/lfm-2-5), or install any LFM GGUF repository with a link, for example:
+To install LFM3-1.7B, open this link in your browser:
 
 ```
-llama://install?repo=LiquidAI/LFM2.5-1.2B-Instruct-GGUF
+llama://install?repo=LiquidAI/LFM3-1.7B-GGUF
 ```
 
-See the [Models page](/lfm/models/complete-library) for all available GGUF models.
+Llama picks a quantization that fits your computer's memory. The link works for any LFM GGUF repository: replace the repository name. See the [Models page](/lfm/models/complete-library) for all available GGUF models.
 
 ## Using the Chat Interface
 
@@ -50,7 +44,7 @@ Get the model IDs before sending requests:
 curl http://localhost:9931/v1/models
 ```
 
-IDs take the form `org/repo:QUANT`, for example `ggml-org/LFM2.5-24B-A2B-GGUF:Q4_K_M`.
+IDs take the form `org/repo:QUANT`, for example `LiquidAI/LFM3-1.7B-GGUF:Q4_K_M`.
 
 Use the OpenAI Python client:
 
@@ -63,13 +57,13 @@ client = OpenAI(
 )
 
 response = client.chat.completions.create(
-    model="ggml-org/LFM2.5-24B-A2B-GGUF:Q4_K_M",
+    model="LiquidAI/LFM3-1.7B-GGUF:Q4_K_M",
     messages=[
         {"role": "user", "content": "What is machine learning?"}
     ],
     temperature=0.1,
-    max_tokens=512,
-    extra_body={"top_k": 50, "repeat_penalty": 1.05},
+    max_tokens=2048,
+    extra_body={"top_k": 50, "repeat_penalty": 1.1},
 )
 print(response.choices[0].message.content)
 ```
@@ -78,7 +72,7 @@ print(response.choices[0].message.content)
 
 ```python
 stream = client.chat.completions.create(
-    model="ggml-org/LFM2.5-24B-A2B-GGUF:Q4_K_M",
+    model="LiquidAI/LFM3-1.7B-GGUF:Q4_K_M",
     messages=[
         {"role": "user", "content": "Tell me a story."}
     ],
@@ -97,15 +91,15 @@ You can also use curl to interact with the server:
   curl http://localhost:9931/v1/chat/completions \
     -H "Content-Type: application/json" \
     -d '{
-      "model": "ggml-org/LFM2.5-24B-A2B-GGUF:Q4_K_M",
+      "model": "LiquidAI/LFM3-1.7B-GGUF:Q4_K_M",
       "messages": [{"role": "user", "content": "Hello!"}],
       "temperature": 0.1,
       "top_k": 50,
-      "repeat_penalty": 1.05
+      "repeat_penalty": 1.1
     }'
   ```
 </Accordion>
 
 ## Using with Agents
 
-LFM2.5-24B-A2B is trained for agentic work and tool calling. To run it in an agent harness such as Pi or Hermes Agent, follow [Run local agents with LFMs](/examples/agent-harnesses) and point the harness at `http://localhost:9931/v1`.
+LFM3-1.7B is post-trained for agent harnesses such as Pi, Hermes Agent, and OpenClaw. To run it, follow [Run local agents with LFMs](/examples/agent-harnesses) and point the harness at `http://localhost:9931/v1`. For harder tasks, use [LFM2.5-24B-A2B](/lfm/models/lfm25-24b-a2b) from Llama's catalog.
