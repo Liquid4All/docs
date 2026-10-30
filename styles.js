@@ -91,9 +91,11 @@
     }
 
     /* Page body - em-based prose spacing scales with this. Tabs and Accordions wrap
-       their content in a nested .prose, which resets font-size to 1rem, so target it too */
+       their content in a nested .prose, which resets font-size to 1rem, so target them
+       too. Scoped by component so callouts and card content keep their smaller sizes */
     #content.mdx-content,
-    .mdx-content .prose {
+    .mdx-content [data-component-part="tab-content"],
+    .mdx-content [data-component-part="accordion-content"] {
       font-size: var(--lfm-fs-base) !important;
       line-height: 1.65 !important;
     }
