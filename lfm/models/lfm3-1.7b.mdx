@@ -97,6 +97,35 @@ LFM3-1.7B is designed for local agents, tool calling, structured outputs, and do
   <Tab title="SGLang">
     <TextSglang modelId="LiquidAI/LFM3-1.7B" samplingParams={'temperature=0.1,\n    extra_body={"top_k": 50, "repetition_penalty": 1.1},'}></TextSglang>
   </Tab>
+  <Tab title="zml/llmd">
+    Run LFM3 with zml/llmd on apple metal, NVIDIA CUDA, AMD ROCm, Intel oneAPI, or Google TPU. On Apple Silicon:
+    **On Mac:**
+
+    ```bash
+    brew install zml/zml/llmd
+    llmd --model=hf://LiquidAI/LFM3-1.7B-FP8 --batch-size=4
+    ```
+
+    Serves at `http://localhost:8000/v1`.
+
+    **Other platforms:**
+
+    On Linux, use the Docker image for your accelerator. For example, on NVIDIA with Docker and NVIDIA Container Toolkit configured:
+
+    ```bash
+    docker run -p 8000:8000 --shm-size=256GB --gpus=all -e HF_TOKEN -it zmlai/llmd:cuda \
+      --model=hf://LiquidAI/LFM3-1.7B-FP8
+    ```
+
+    | Platform | Docker image |
+    | --- | --- |
+    | NVIDIA CUDA | `zmlai/llmd:cuda` |
+    | AMD ROCm | `zmlai/llmd:rocm` |
+    | Intel oneAPI | `zmlai/llmd:oneapi` |
+    | Google TPU | `zmlai/llmd:tpu` |
+
+    Each platform requires its own device flags, see the [zml/llmd guide](/deployment/gpu-inference/zml-llmd#start-the-server).
+  </Tab>
 </Tabs>
 
 For local agent setup, see the [Agent Harnesses guide](/examples/agent-harnesses).
@@ -113,4 +142,4 @@ LFM3-1.7B supports deferred tools, so tool definitions stay out of the prompt un
 
 ## FP8 and NVFP4 Checkpoints
 
-[LFM3-1.7B-FP8](https://huggingface.co/LiquidAI/LFM3-1.7B-FP8) and [LFM3-1.7B-NVFP4](https://huggingface.co/LiquidAI/LFM3-1.7B-NVFP4) are FP8 and 4-bit floating-point versions of LFM3-1.7B for GPU inference with SGLang. To use one, replace the model ID in the SGLang example above.
+[LFM3-1.7B-FP8](https://huggingface.co/LiquidAI/LFM3-1.7B-FP8) and [LFM3-1.7B-NVFP4](https://huggingface.co/LiquidAI/LFM3-1.7B-NVFP4) are FP8 and 4-bit floating-point versions of LFM3-1.7B for inference with SGLang and [zml/llmd](/deployment/gpu-inference/zml-llmd). To use one with SGLang, replace the model ID in the example above.

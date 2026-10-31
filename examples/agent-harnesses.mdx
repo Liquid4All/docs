@@ -16,7 +16,7 @@ local URL yours prints. You point your harness at that URL.
 
 <Note>
   Each backend uses its own default port, so your endpoint depends on which one you run.
-  llama.cpp and MLX use `8080`, vLLM uses `8000`, SGLang uses `30000`, LM Studio uses `1234`, and Atomic Chat uses `1337`.
+  llama.cpp and MLX use `8080`, vLLM and zml/llmd use `8000`, SGLang uses `30000`, LM Studio uses `1234`, and Atomic Chat uses `1337`.
   The examples in this guide use `http://localhost:8080/v1`. When you configure a harness,
   replace the port with your server's.
 </Note>
@@ -45,8 +45,8 @@ vLLM and SGLang run the full-precision weights on GPU.
 **Need more capability?** [LFM2.5-24B-A2B](/lfm/models/lfm25-24b-a2b) is a 24B-parameter
 reasoning model with only 2B active parameters per token, post-trained inside Hermes Agent,
 OpenClaw, Pi, and OpenCode. It thinks before it answers, so it handles longer, multi-step
-agent tasks more reliably, at the cost of more memory. Every command in this guide works with it
-if you swap the model id.
+agent tasks more reliably, at the cost of more memory. The LFM2.5 backend examples below work with it
+if you swap the model id; the zml/llmd example uses LFM3-1.7B instead.
 
 **Context length**. Agents consume context quickly. If you hit truncation or context-overflow errors mid-run, raise the served
 context or trim the agent's history.
@@ -179,6 +179,34 @@ Install one backend and start it with tool calling enabled.
     ```
     Serves at `http://localhost:30000/v1`.
   </Tab>
+  <Tab title="zml/llmd">
+    **On Mac:**
+
+    ```bash
+    brew install zml/zml/llmd
+    llmd --model=hf://LiquidAI/LFM3-1.7B-FP8 --batch-size=4
+    ```
+
+    Serves at `http://localhost:8000/v1`.
+
+    **Other platforms:**
+
+    On Linux, use the Docker image for your accelerator. For example, on NVIDIA with Docker and NVIDIA Container Toolkit configured:
+
+    ```bash
+    docker run -p 8000:8000 --shm-size=256GB --gpus=all -e HF_TOKEN -it zmlai/llmd:cuda \
+      --model=hf://LiquidAI/LFM3-1.7B-FP8
+    ```
+
+    | Platform | Docker image |
+    | --- | --- |
+    | NVIDIA CUDA | `zmlai/llmd:cuda` |
+    | AMD ROCm | `zmlai/llmd:rocm` |
+    | Intel oneAPI | `zmlai/llmd:oneapi` |
+    | Google TPU | `zmlai/llmd:tpu` |
+
+    Each platform requires its own device flags, see the [zml/llmd guide](/deployment/gpu-inference/zml-llmd#start-the-server).
+  </Tab>
 </Tabs>
 
 Check that the model is loaded and reachable (replace `8080` with your server's port):
@@ -191,7 +219,7 @@ curl http://localhost:8080/v1/models
 
 Every harness connects the same way: install it, point it at your local server, then run.
 The examples below use `http://localhost:8080/v1` and model id `LFM2.5-2.6B`. Replace the
-port with the one your server prints. Only the exact commands differ per harness.
+port with the one your server prints and the model ID with the one returned by `/v1/models`. For the zml/llmd examples above, use `http://localhost:8000/v1` and `LFM3-1.7B-FP8`. Only the exact commands differ per harness.
 
 <Tabs>
   <Tab title="Hermes Agent">
@@ -337,6 +365,7 @@ Now, you have your agent harness running fully locally on your machine.
 - [llama.cpp deployment](/deployment/on-device/llama-cpp)
 - [vLLM deployment](/deployment/gpu-inference/vllm)
 - [SGLang deployment](/deployment/gpu-inference/sglang)
+- [zml/llmd deployment](/deployment/gpu-inference/zml-llmd)
 - [Hermes Agent documentation](https://hermes-agent.nousresearch.com/docs/)
 - [OpenClaw documentation](https://docs.openclaw.ai/)
 - [Pi documentation](https://pi.dev/docs/)
