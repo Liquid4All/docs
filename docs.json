@@ -29,6 +29,9 @@
     "light": "#864bc4",
     "dark": "#4f46e5"
   },
+  "fonts": {
+    "family": "Inter"
+  },
   "styling": {
     "codeblocks": {
       "theme": {
