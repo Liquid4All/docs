@@ -9,7 +9,7 @@ description: "Fine-tune LFM2-VL to identify car makers from images using structu
 
 A step by step guide on fine tuning a Vision Language Model for image identification tasks. The task we solve in this example is to identify the car maker from an image, but the learnings transfer to any other image classification task you might be interested in.
 
-![](/images/examples/customize-models/assets/images/task-01484227e78d02da63eeb840de314523.png)
+![Car maker classification: a car photo and the question about its maker go into a vision language model, which answers Audi](/images/examples/customize-models/assets/images/task-01484227e78d02da63eeb840de314523.png)
 
 ## This is what you will learn[​](#this-is-what-you-will-learn "Direct link to This is what you will learn")
 
@@ -290,7 +290,7 @@ However, before blaming it on the model, let's dig deeper into the model predict
 
 If you look at the confusion matrix of the 3B model, you will see that even though the model works okeyish overall, it sometimes fails terribly too, and generates output that does not correspond to any car maker name.
 
-![](/images/examples/customize-models/assets/images/confusion_matrix_lfm2_3b_raw_generation-2b4949c6ff212ebbb275982abf4784fb.png)
+![Confusion matrix for LFM2-VL-3B with raw generation, showing outputs that are not valid car maker names](/images/examples/customize-models/assets/images/confusion_matrix_lfm2_3b_raw_generation-2b4949c6ff212ebbb275982abf4784fb.png)
 
 This problem is not limited to the 3B model. If you look at the confusion matrix of the 450M and 1.6B models, you will see the same pattern.
 
@@ -308,7 +308,7 @@ Structured generation is a technique that allows us to “force” the Language 
   Structured generation techniques "intervene" at each step of the decoding process, by masking tokens that are not compatible with the structured output we want to generate.
 </Note>
 
-![](/images/examples/customize-models/assets/images/structured_generation-7f71325a54f868284e9b80abf22f1a8b.webp)
+![Token-by-token decoding of a JSON class prediction, illustrating how structured generation constrains each step](/images/examples/customize-models/assets/images/structured_generation-7f71325a54f868284e9b80abf22f1a8b.webp)
 
 For structured generation in Python apps we recommend the [Outlines](https://github.com/dottxt-ai/outlines) library because it is easy to use, robust and well-documented.
 
@@ -361,7 +361,7 @@ make evaluate config=eval_lfm_3B_structured_generation.yaml
 
 If you inspect the confusion matrix of the 3B model, you will see that the model only outputs valid car maker names, and no other text. Great!
 
-![](/images/examples/customize-models/assets/images/confusion_matrix_lfm2_3b_structured_generation-f93ecf885ff6ee370009f1c97873de1b.png)
+![Confusion matrix for LFM2-VL-3B with structured generation, showing only valid car maker names](/images/examples/customize-models/assets/images/confusion_matrix_lfm2_3b_structured_generation-f93ecf885ff6ee370009f1c97873de1b.png)
 
 At this point you need to decide if the performance is good enough for your use case. If it is, you are done. Otherwis, it is time to fine-tune the model.
 
@@ -369,7 +369,7 @@ At this point you need to decide if the performance is good enough for your use 
 
 To fine-tune the model, we will use the LoRA technique. LoRA is a parameter-efficient fine-tuning technique that allows us to fine-tune the model by adding and tuning a small number of parameters.
 
-![](/images/examples/customize-models/assets/images/lora-a398107b31f6809c153dc5da650dfea8.webp)
+![Weight updates in regular fine-tuning versus LoRA, which replaces the full update with two small matrices A and B](/images/examples/customize-models/assets/images/lora-a398107b31f6809c153dc5da650dfea8.webp)
 
 You can fine-tune each of the 3 LFM2-VL models with LoRA as follows:
 
@@ -384,7 +384,7 @@ The train loss curves for the 3 models stabilize around very different loss valu
 * the LFM2-VL-3B model has the lowest loss, and
 * the LFM2-VL-450M model has the highest loss.
 
-![](/images/examples/customize-models/assets/images/train_loss-c2adea66041f33f2a8b76c4aeb3b6d01.png)
+![Training loss curves comparing LFM2-VL-3B, LFM2-VL-1.6B, and LFM2-VL-450M](/images/examples/customize-models/assets/images/train_loss-c2adea66041f33f2a8b76c4aeb3b6d01.png)
 
 At this stage we know that for the same training dataset, the LFM2-VL-3B model is able to fit the data better than the other two models.
 
@@ -392,7 +392,7 @@ Apart from this, the train loss curves do not tell us much about the actual mode
 
 So, to get a better understanding of the model performance, we need to evaluate the model on a held-out dataset. This is what the evaluation loss curve tells us.
 
-![](/images/examples/customize-models/assets/images/eval_loss-dc36b175d7b477b1a872968ee044c8f6.png)
+![Evaluation loss curves on held-out data for the fine-tuned LFM2-VL models](/images/examples/customize-models/assets/images/eval_loss-dc36b175d7b477b1a872968ee044c8f6.png)
 
 Again LFM2-VL-3B is able to fit the data better than the other two models. When you look at its evaluation loss curve, you can see that it is stricly decreasing, meaning the model is learning epoch by epoch and still has not gotten to the point of overfitting.
 
@@ -431,7 +431,7 @@ make evaluate config=eval_lfm_3B_checkpoint_1000.yaml
 
 The confusion matrix for the fine-tuned model is the following:
 
-![](/images/examples/customize-models/assets/images/confusion_matrix_lfm2_3b_checkpoint_1000-1a88130657b75f5ad0934c2456f71ca5.png)
+![Confusion matrix for LFM2-VL-3B fine-tuned to checkpoint 1000, reaching 82% accuracy](/images/examples/customize-models/assets/images/confusion_matrix_lfm2_3b_checkpoint_1000-1a88130657b75f5ad0934c2456f71ca5.png)
 
 ## What's next?[​](#whats-next "Direct link to What's next?")
 
