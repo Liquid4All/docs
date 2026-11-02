@@ -128,7 +128,7 @@ d1-2B is designed for any pipeline step that needs a decision: routing and triag
     **Start the server:**
 
     ```bash
-    llama-server -hf LiquidAI/d1-2B-GGUF:Q8_0 -b 8192 -ub 8192
+    llama serve -hf LiquidAI/d1-2B-GGUF:Q8_0 -b 8192 -ub 8192
     ```
 
     A question is read in one batch, so `-b` and `-ub` must hold its state and media. A picture takes at most half of `-ub`: 8192 keeps the full budget of 4096 tokens per picture.
@@ -136,7 +136,7 @@ d1-2B is designed for any pipeline step that needs a decision: routing and triag
     **Text input:**
 
     ```bash
-    curl http://127.0.0.1:8080/v1/systemone -H "Content-Type: application/json" -d '{
+    curl http://127.0.0.1:9931/v1/systemone -H "Content-Type: application/json" -d '{
       "state": "I was charged twice this month, please refund one of them.",
       "questions": {
         "refund":  {"type": "noul", "instructions": "Is the customer asking for a refund?"},
@@ -154,7 +154,7 @@ d1-2B is designed for any pipeline step that needs a decision: routing and triag
     ```bash
     curl -sL -o cats.jpg http://images.cocodataset.org/val2017/000000039769.jpg
 
-    curl http://127.0.0.1:8080/v1/systemone -H "Content-Type: application/json" -d @- <<JSON
+    curl http://127.0.0.1:9931/v1/systemone -H "Content-Type: application/json" -d @- <<JSON
     {
       "state": null,
       "images": ["data:image/jpeg;base64,$(base64 < cats.jpg | tr -d '\n')"],
@@ -171,7 +171,7 @@ d1-2B is designed for any pipeline step that needs a decision: routing and triag
     ```bash
     curl -sL -o reading.mp4 https://huggingface.co/datasets/raushan-testing-hf/videos-test/resolve/4cba700bd771f44d72b549253da025c32e944d42/sample_demo_1.mp4
 
-    curl http://127.0.0.1:8080/v1/systemone -H "Content-Type: application/json" -d @- <<JSON
+    curl http://127.0.0.1:9931/v1/systemone -H "Content-Type: application/json" -d @- <<JSON
     {
       "state": null,
       "files": ["data:video/mp4;base64,$(base64 < reading.mp4 | tr -d '\n')"],
