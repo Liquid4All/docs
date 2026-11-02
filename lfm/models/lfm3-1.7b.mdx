@@ -87,9 +87,19 @@ LFM3-1.7B is designed for local agents, tool calling, structured outputs, and do
     ```
   </Tab>
   <Tab title="llama.cpp">
-    Requires a llama.cpp build with LFM3 support. Use a GGUF with the current chat template, or load the template with `--chat-template-file`.
+    To run it without the command line, use the [Llama app](/deployment/on-device/llama).
 
-    <TextLlamacpp ggufRepo="LiquidAI/LFM3-1.7B-GGUF" samplingFlags="--temp 0.1 --top-k 50 --repeat-penalty 1.1"></TextLlamacpp>
+    Requires llama.cpp 0.8.0 (b11960) or later. Add a quantization tag to pick a file.
+
+    <TextLlamacpp ggufRepo="LiquidAI/LFM3-1.7B-GGUF:Q4_K_M"></TextLlamacpp>
+
+    The recommended sampling parameters are stored in the GGUF, so no sampling flags are needed. For math and science, override them with `--temp 1.0 --top-p 0.95 --top-k 20 --repeat-penalty 1.0`.
+
+    **QAD Q4_0 checkpoint:** the Q4_0 build in the GGUF repository is the Quantization-Aware Distillation (QAD) checkpoint, trained to recover the accuracy lost to Q4_0 quantization. The `:Q4_0` tag selects it.
+
+    ```bash
+    llama cli -hf LiquidAI/LFM3-1.7B-GGUF:Q4_0
+    ```
   </Tab>
   <Tab title="vLLM">
     <TextVllm modelId="LiquidAI/LFM3-1.7B" samplingParams="temperature=0.1, top_k=50, repetition_penalty=1.1, " maxTokens="8192"></TextVllm>
