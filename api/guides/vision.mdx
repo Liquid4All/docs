@@ -1,0 +1,128 @@
+---
+title: "Vision"
+description: "Send images to vision models alongside your prompt."
+---
+
+Vision models read images sent in a chat message, so they can describe a photo, read a screenshot or chart, or answer questions about a document page. Send images to `lfm3-vl-2b` or `lfm3-omni-2b` through [chat completions](/api/guides/text-generation), as `image_url` parts of a user message, the same way as OpenAI.
+
+<CodeGroup>
+
+```python Python
+import os
+
+from openai import OpenAI
+
+client = OpenAI(api_key=os.environ["LIQUID_API_KEY"], base_url="https://api.liquid.ai/openai/v1")
+
+completion = client.chat.completions.create(
+    model="lfm3-vl-2b",
+    messages=[
+        {
+            "role": "user",
+            "content": [
+                {"type": "text", "text": "What is in this image?"},
+                {
+                    "type": "image_url",
+                    "image_url": {"url": "https://upload.wikimedia.org/wikipedia/commons/3/3a/Cat03.jpg"},
+                },
+            ],
+        }
+    ],
+    temperature=0.1,
+    extra_body={"top_k": 50, "repetition_penalty": 1.1},
+)
+print(completion.choices[0].message.content)
+```
+
+```javascript JavaScript
+import OpenAI from "openai";
+
+const client = new OpenAI({
+  apiKey: process.env.LIQUID_API_KEY,
+  baseURL: "https://api.liquid.ai/openai/v1",
+});
+
+const completion = await client.chat.completions.create({
+  model: "lfm3-vl-2b",
+  messages: [
+    {
+      role: "user",
+      content: [
+        { type: "text", text: "What is in this image?" },
+        {
+          type: "image_url",
+          image_url: { url: "https://upload.wikimedia.org/wikipedia/commons/3/3a/Cat03.jpg" },
+        },
+      ],
+    },
+  ],
+  temperature: 0.1,
+  // top_k and repetition_penalty are Liquid extensions to the OpenAI API
+  top_k: 50,
+  repetition_penalty: 1.1,
+});
+console.log(completion.choices[0].message.content);
+```
+
+```bash cURL
+curl https://api.liquid.ai/openai/v1/chat/completions \
+  -H "Authorization: Bearer $LIQUID_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "lfm3-vl-2b",
+    "messages": [{
+      "role": "user",
+      "content": [
+        {"type": "text", "text": "What is in this image?"},
+        {"type": "image_url", "image_url": {"url": "https://upload.wikimedia.org/wikipedia/commons/3/3a/Cat03.jpg"}}
+      ]
+    }],
+    "temperature": 0.1,
+    "top_k": 50,
+    "repetition_penalty": 1.1
+  }'
+```
+
+</CodeGroup>
+
+## Send an image
+
+An `image_url` part takes either an http(s) URL or a base64 `data:` URL. Prefer URLs for large images: a request body may be up to 4 MB, and base64 makes an image about a third larger.
+
+```python
+import base64
+
+with open("receipt.png", "rb") as f:
+    image = base64.b64encode(f.read()).decode()
+
+completion = client.chat.completions.create(
+    model="lfm3-vl-2b",
+    messages=[
+        {
+            "role": "user",
+            "content": [
+                {"type": "text", "text": "What is the total on this receipt?"},
+                {"type": "image_url", "image_url": {"url": f"data:image/png;base64,{image}"}},
+            ],
+        }
+    ],
+    temperature=0.1,
+    extra_body={"top_k": 50, "repetition_penalty": 1.1},
+)
+```
+
+A message can carry several images. Models that don't take images return `400`. See [Models](/api/models) for which models do.
+
+## Related
+
+<CardGroup cols={2}>
+
+<Card title="Decisions with images" icon="scale-balanced" href="/api/guides/decisions">
+  Decision models also take images, in the request's `images` field.
+</Card>
+
+<Card title="Vision capabilities" icon="eye" href="/lfm/key-concepts/vision-capabilities">
+  What LFM vision models are good at.
+</Card>
+
+</CardGroup>

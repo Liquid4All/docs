@@ -1,0 +1,125 @@
+---
+title: "Liquid API"
+sidebarTitle: "Overview"
+description: "Call Liquid's hosted models through an OpenAI-compatible API, plus native endpoints for decision models and batch jobs."
+---
+
+## Developer quickstart
+
+Make your first request in minutes. The API speaks OpenAI's protocol, so the official OpenAI SDKs work with a new base URL.
+
+<CardGroup cols={2}>
+
+<Card title="Get started" icon="rocket" href="/api/quickstart">
+  Create a key, install the SDK, and make your first call.
+</Card>
+
+<Card title="Create API key" icon="key" href="https://console.liquid.ai/dashboard/api-keys">
+  Create and manage keys in Liquid Console.
+</Card>
+
+</CardGroup>
+
+<CodeGroup>
+
+```python Python
+import os
+
+from openai import OpenAI
+
+client = OpenAI(api_key=os.environ["LIQUID_API_KEY"], base_url="https://api.liquid.ai/openai/v1")
+
+completion = client.chat.completions.create(
+    model="lfm3-1.7b",
+    messages=[{"role": "user", "content": "Write a one-sentence bedtime story about a unicorn."}],
+    temperature=0.1,
+    extra_body={"top_k": 50, "repetition_penalty": 1.1},
+)
+print(completion.choices[0].message.content)
+```
+
+```javascript JavaScript
+import OpenAI from "openai";
+
+const client = new OpenAI({
+  apiKey: process.env.LIQUID_API_KEY,
+  baseURL: "https://api.liquid.ai/openai/v1",
+});
+
+const completion = await client.chat.completions.create({
+  model: "lfm3-1.7b",
+  messages: [{ role: "user", content: "Write a one-sentence bedtime story about a unicorn." }],
+  temperature: 0.1,
+  // top_k and repetition_penalty are Liquid extensions to the OpenAI API
+  top_k: 50,
+  repetition_penalty: 1.1,
+});
+console.log(completion.choices[0].message.content);
+```
+
+```bash cURL
+curl https://api.liquid.ai/openai/v1/chat/completions \
+  -H "Authorization: Bearer $LIQUID_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "lfm3-1.7b",
+    "messages": [{"role": "user", "content": "Write a one-sentence bedtime story about a unicorn."}],
+    "temperature": 0.1,
+    "top_k": 50,
+    "repetition_penalty": 1.1
+  }'
+```
+
+</CodeGroup>
+
+## Start building
+
+<CardGroup cols={2}>
+
+<Card title="Generate text" icon="pen" href="/api/guides/text-generation">
+  Prompt a model, stream replies, call tools, and get structured output.
+</Card>
+
+<Card title="Understand images" icon="image" href="/api/guides/vision">
+  Send images to vision models alongside your prompt.
+</Card>
+
+<Card title="Build with audio" icon="microphone" href="/api/guides/audio">
+  Transcribe speech and get spoken replies.
+</Card>
+
+<Card title="Make decisions" icon="scale-balanced" href="/api/guides/decisions">
+  Classify, route, and score with calibrated probabilities.
+</Card>
+
+<Card title="Run batch jobs" icon="layer-group" href="/api/guides/batch">
+  Process large request files asynchronously.
+</Card>
+
+</CardGroup>
+
+## Resources
+
+<CardGroup cols={2}>
+
+<Card title="API reference" icon="code" href="/api/reference/overview">
+  Every endpoint, with request and response schemas.
+</Card>
+
+<Card title="Models" icon="cubes" href="/api/models">
+  Compare inputs, outputs, and context windows.
+</Card>
+
+<Card title="Liquid Console" icon="gauge" href="https://console.liquid.ai">
+  Manage API keys, models, usage, and billing.
+</Card>
+
+<Card title="Cookbook" icon="book-open" href="https://github.com/Liquid4All/cookbook">
+  Open-source examples and guides.
+</Card>
+
+<Card title="Discord" icon="discord" href="https://discord.gg/DFU3WQeaYD">
+  Ask questions and talk with other developers.
+</Card>
+
+</CardGroup>

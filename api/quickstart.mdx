@@ -1,0 +1,158 @@
+---
+title: "Developer quickstart"
+sidebarTitle: "Quickstart"
+description: "Take your first steps with the Liquid API."
+---
+
+The Liquid API gives you hosted access to Liquid models for text generation, vision, audio, and decisions. Chat models speak the OpenAI API, so the official OpenAI SDKs work with a new base URL. Get started by creating an API key and running your first API call.
+
+<Steps>
+  <Step title="Create and export an API key" titleSize="h2">
+    Create an API key on the [API keys](https://console.liquid.ai/dashboard/api-keys) page of Liquid Console. If you don't have an account yet, sign up and join an organization first. The key is shown once, so store it somewhere safe. Keys belong to your organization and can be revoked at any time.
+
+    Export the key as an environment variable. Every example in these docs reads it from `LIQUID_API_KEY`.
+
+    <Tabs>
+      <Tab title="macOS / Linux">
+        ```bash
+        export LIQUID_API_KEY="liquid_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+        ```
+      </Tab>
+      <Tab title="Windows">
+        ```powershell
+        setx LIQUID_API_KEY "liquid_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+        ```
+      </Tab>
+    </Tabs>
+
+    Requests carry the key as a bearer token. Check that it works by listing the models your organization can call:
+
+    ```bash
+    curl https://api.liquid.ai/openai/v1/models \
+      -H "Authorization: Bearer $LIQUID_API_KEY"
+    ```
+  </Step>
+  <Step title="Install the OpenAI SDK and make an API call" titleSize="h2">
+    Point the official OpenAI SDK at the Liquid API's base URL, `https://api.liquid.ai/openai/v1`.
+
+    <Tabs>
+      <Tab title="Python">
+        Install the SDK with pip:
+
+        ```bash
+        pip install openai
+        ```
+
+        Create a file called `example.py`, copy the example into it, and run it with `python example.py`:
+
+        ```python highlight={7}
+        import os
+
+        from openai import OpenAI
+
+        client = OpenAI(
+            api_key=os.environ["LIQUID_API_KEY"],
+            base_url="https://api.liquid.ai/openai/v1",
+        )
+
+        completion = client.chat.completions.create(
+            model="lfm3-1.7b",
+            messages=[{"role": "user", "content": "Write a one-sentence bedtime story about a unicorn."}],
+            temperature=0.1,
+            extra_body={"top_k": 50, "repetition_penalty": 1.1},
+        )
+        print(completion.choices[0].message.content)
+        ```
+      </Tab>
+      <Tab title="JavaScript">
+        Install the SDK with npm:
+
+        ```bash
+        npm install openai
+        ```
+
+        Create a file called `example.mjs`, copy the example into it, and run it with `node example.mjs`:
+
+        ```javascript highlight={5}
+        import OpenAI from "openai";
+
+        const client = new OpenAI({
+          apiKey: process.env.LIQUID_API_KEY,
+          baseURL: "https://api.liquid.ai/openai/v1",
+        });
+
+        const completion = await client.chat.completions.create({
+          model: "lfm3-1.7b",
+          messages: [{ role: "user", content: "Write a one-sentence bedtime story about a unicorn." }],
+          temperature: 0.1,
+          // top_k and repetition_penalty are Liquid extensions to the OpenAI API
+          top_k: 50,
+          repetition_penalty: 1.1,
+        });
+        console.log(completion.choices[0].message.content);
+        ```
+      </Tab>
+      <Tab title="cURL">
+        ```bash
+        curl https://api.liquid.ai/openai/v1/chat/completions \
+          -H "Authorization: Bearer $LIQUID_API_KEY" \
+          -H "Content-Type: application/json" \
+          -d '{
+            "model": "lfm3-1.7b",
+            "messages": [{"role": "user", "content": "Write a one-sentence bedtime story about a unicorn."}],
+            "temperature": 0.1,
+            "top_k": 50,
+            "repetition_penalty": 1.1
+          }'
+        ```
+      </Tab>
+    </Tabs>
+
+    In a few moments you should see the model's reply. Replace `lfm3-1.7b` with any model id from the [Models](/api/models) page.
+  </Step>
+  <Step title="Ask a decision model" titleSize="h2">
+    Decision models answer typed questions about a state with calibrated probabilities instead of generated text. They have their own endpoint, which implements TypeSafe's System One API, so the official TypeSafe SDKs work with the base URL `https://api.liquid.ai/decisions`.
+
+    ```bash
+    curl https://api.liquid.ai/decisions/v1/systemone \
+      -H "Authorization: Bearer $LIQUID_API_KEY" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "model": "d1.1",
+        "state": "Help! My payouts have been failing for 3 days.",
+        "questions": {
+          "department": {
+            "type": "choice",
+            "instructions": "Which team should handle this?",
+            "criteria": { "billing": "Payments", "technical": "Bugs, outages", "sales": "Pricing" }
+          },
+          "is_urgent": { "type": "noul", "instructions": "Does this convey urgency?" }
+        }
+      }'
+    ```
+
+    See [Decisions](/api/guides/decisions) for the SDKs and every question type.
+  </Step>
+</Steps>
+
+## Keep building
+
+<CardGroup cols={2}>
+
+<Card title="Text generation" icon="pen" href="/api/guides/text-generation">
+  Stream replies, call tools, and get structured output.
+</Card>
+
+<Card title="Vision" icon="image" href="/api/guides/vision">
+  Send images to vision models.
+</Card>
+
+<Card title="Audio and speech" icon="microphone" href="/api/guides/audio">
+  Transcribe speech and get spoken replies.
+</Card>
+
+<Card title="Batch" icon="layer-group" href="/api/guides/batch">
+  Process large request files asynchronously.
+</Card>
+
+</CardGroup>

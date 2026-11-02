@@ -1,0 +1,113 @@
+---
+title: "Decisions"
+description: "Classify, route, and score with calibrated probabilities from decision models."
+---
+
+Decision models answer typed questions about a state with calibrated probabilities instead of generated text. One request can ask several questions, and the model answers them all in a single forward pass with no generated tokens. Use them for classification, routing, scoring, and yes/no gates.
+
+The endpoint, [`POST /decisions/v1/systemone`](/api/reference/decision-models/make-decisions), implements [TypeSafe's System One API](https://docs.typesafe.ai/api), so the official TypeSafe SDKs work with the base URL `https://api.liquid.ai/decisions`.
+
+<CodeGroup>
+
+```python Python
+# pip install typesafe-sdk
+import os
+
+from typesafe_sdk import Choice, Noul, TypeSafeClient
+
+client = TypeSafeClient(
+    api_key=os.environ["LIQUID_API_KEY"],
+    base_url="https://api.liquid.ai/decisions",
+    model="d1.1",
+)
+
+response = client.system_one(
+    state="Help! My payouts have been failing for 3 days.",
+    questions={
+        "department": Choice(
+            instructions="Which team should handle this?",
+            criteria={"billing": "Payments", "technical": "Bugs, outages", "sales": "Pricing"},
+        ),
+        "is_urgent": Noul(instructions="Does this convey urgency?"),
+    },
+)
+
+print(response.answers["department"].choice, response.answers["is_urgent"].noul)
+```
+
+```typescript TypeScript
+// npm install @typesafe-ai/sdk
+import { TypeSafeClient, choice, noul } from "@typesafe-ai/sdk";
+
+const client = new TypeSafeClient({
+  apiKey: process.env.LIQUID_API_KEY,
+  baseURL: "https://api.liquid.ai/decisions",
+  defaultModel: "d1.1",
+  compression: false, // the API doesn't accept zstd-compressed request bodies
+});
+
+const { answers } = await client.systemOne({
+  state: "Help! My payouts have been failing for 3 days.",
+  questions: {
+    department: choice("Which team should handle this?", {
+      billing: "Payments",
+      technical: "Bugs, outages",
+      sales: "Pricing",
+    }),
+    is_urgent: noul("Does this convey urgency?"),
+  },
+});
+
+console.log(answers.department.choice, answers.department.confidence, answers.is_urgent.noul);
+```
+
+```bash cURL
+curl https://api.liquid.ai/decisions/v1/systemone \
+  -H "Authorization: Bearer $LIQUID_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "d1.1",
+    "state": "Help! My payouts have been failing for 3 days.",
+    "questions": {
+      "department": {
+        "type": "choice",
+        "instructions": "Which team should handle this?",
+        "criteria": { "billing": "Payments", "technical": "Bugs, outages", "sales": "Pricing" }
+      },
+      "is_urgent": { "type": "noul", "instructions": "Does this convey urgency?" }
+    }
+  }'
+```
+
+</CodeGroup>
+
+## Question types
+
+| Type | Answers | Use it for |
+| ---- | ------- | ---------- |
+| Noul | One probability that the answer is yes. | Yes/no gates, moderation, flags. |
+| Choice | The most likely option, its confidence, and the full distribution over options. | Classification and routing. |
+| Score | The most likely level, its confidence, and the full distribution over ordered levels. | Rating and prioritization. |
+
+## Models
+
+| Model | Input | Use it for |
+| ----- | ----- | ---------- |
+| `d1-ultra` | Text, images | Harder decisions. |
+| `d1.1` | Text, images | The default decision model. |
+
+Both are billed on input tokens only; output is free. Requests may be up to 4.5 MB, and validation errors return `422`.
+
+## Learn more
+
+<CardGroup cols={2}>
+
+<Card title="d1" icon="scale-balanced" href="/lfm/models/d1">
+  Every question type in depth, image inputs, image token usage, and pricing.
+</Card>
+
+<Card title="Decision models" icon="cubes" href="/lfm/models/decision-models">
+  The open-weight decision models you can run yourself.
+</Card>
+
+</CardGroup>

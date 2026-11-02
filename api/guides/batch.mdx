@@ -1,0 +1,82 @@
+---
+title: "Batch"
+description: "Process large files of requests asynchronously with the Batch API."
+---
+
+The Batch API runs a file of requests asynchronously, for work that doesn't need an immediate answer: classifying a catalog or generating descriptions. You upload a JSONL file with one request per line, create a batch, and download a results file when it completes, within 24 hours. It follows OpenAI's Batch API.
+
+<Note>
+  The Batch API is enabled per organization, and each model must support it. Until it is enabled, creating a batch returns `403` with code `batch_api_not_enabled`. [Contact us](https://www.liquid.ai/connect) to request access.
+</Note>
+
+<Steps>
+  <Step title="Prepare the input file" titleSize="h2">
+    Each line of the file is one request, with a `custom_id` you choose to match results to requests, the `method`, the endpoint `url`, and the request `body`. Every line must target the same endpoint and the same model. Supported endpoints are `/v1/chat/completions` and `/v1/completions`.
+
+    ```json batch_input.jsonl
+    {"custom_id": "request-1", "method": "POST", "url": "/v1/chat/completions", "body": {"model": "lfm3-1.7b", "messages": [{"role": "user", "content": "Describe a red ceramic mug in one sentence."}], "temperature": 0.1, "top_k": 50, "repetition_penalty": 1.1}}
+    {"custom_id": "request-2", "method": "POST", "url": "/v1/chat/completions", "body": {"model": "lfm3-1.7b", "messages": [{"role": "user", "content": "Describe a walnut desk in one sentence."}], "temperature": 0.1, "top_k": 50, "repetition_penalty": 1.1}}
+    ```
+
+    Input files may be up to 200 MB.
+  </Step>
+  <Step title="Upload the file" titleSize="h2">
+    Request bodies are capped at 4.5 MB, so files are uploaded straight to storage through a presigned URL:
+
+    1. Call [`POST /v1/files`](/api/reference/large-uploads/create-upload-url) with the file's `purpose`, `filename`, and size in `bytes`. No file bytes are sent in this call. It returns a file id and a short-lived `upload_url`.
+    2. `PUT` the file to the `upload_url`. The URL is already signed, so this call carries no API key.
+
+    ```bash
+    # Request a presigned upload URL
+    curl -X POST https://api.liquid.ai/v1/files \
+      -H "Authorization: Bearer $LIQUID_API_KEY" \
+      -H "Content-Type: application/json" \
+      -d '{"purpose":"batch","filename":"batch_input.jsonl","bytes":137587646}'
+    # => { "id": "file_abc", "upload_url": "https://...", "upload_expires_at": 1750000000 }
+
+    # Upload the file to the upload_url from the response
+    curl -X PUT "$UPLOAD_URL" --upload-file batch_input.jsonl
+    ```
+  </Step>
+  <Step title="Create the batch" titleSize="h2">
+    Call [`POST /openai/v1/batches`](/api/reference/batches/create-batch) with the uploaded file's id:
+
+    ```bash
+    curl -X POST https://api.liquid.ai/openai/v1/batches \
+      -H "Authorization: Bearer $LIQUID_API_KEY" \
+      -H "Content-Type: application/json" \
+      -d '{"input_file_id":"file_abc","endpoint":"/v1/chat/completions","completion_window":"24h"}'
+    ```
+
+    As in OpenAI's API, problems in the file's contents don't fail this request. The batch is created and lands in status `failed` with an `errors` list, for example when lines use different models (`model_mismatch`) or a model you can't call.
+  </Step>
+  <Step title="Check the status" titleSize="h2">
+    Poll [`GET /openai/v1/batches/{id}`](/api/reference/batches/retrieve-batch) until the batch finishes. `request_counts` shows the `total`, `completed`, and `failed` requests so far.
+
+    ```mermaid
+    stateDiagram-v2
+        direction LR
+        [*] --> validating
+        validating --> failed
+        validating --> in_progress
+        in_progress --> finalizing
+        in_progress --> cancelling: cancel
+        cancelling --> finalizing
+        finalizing --> completed
+        finalizing --> cancelled
+        finalizing --> expired: past 24h
+    ```
+
+    A batch that fails validation ends as `failed`. Cancel a running batch with [`POST /openai/v1/batches/{id}/cancel`](/api/reference/batches/cancel-batch). A batch still running after its 24-hour window ends as `expired`. Expired and cancelled batches still return the results of the requests that finished.
+  </Step>
+  <Step title="Download the results" titleSize="h2">
+    A completed batch has an `output_file_id`, and an `error_file_id` if any requests failed. Download each with [`GET /openai/v1/files/{id}/content`](/api/reference/files/retrieve-file-content). Each line of the output is one result, with the `custom_id` of its request, so match results to requests by `custom_id`.
+
+    ```bash
+    curl https://api.liquid.ai/openai/v1/files/$OUTPUT_FILE_ID/content \
+      -H "Authorization: Bearer $LIQUID_API_KEY" > batch_output.jsonl
+    ```
+
+    You can also follow batches and download their files on the [Batches](https://console.liquid.ai/dashboard/batches) page of Liquid Console.
+  </Step>
+</Steps>
