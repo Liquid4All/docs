@@ -219,12 +219,12 @@ The LFM3 models run with `mlx_vlm.generate`:
 ```bash
 # LFM3-1.7B: text
 python -m mlx_vlm.generate --model LiquidAI/LFM3-1.7B-MLX-4bit \
-  --prompt "What is the capital of Australia?" \
+  --prompt "What is the capital of Australia?" --enable-thinking \
   --temperature 0.1 --top-k 50 --repetition-penalty 1.1 --max-tokens 16384
 
 # LFM3-VL-2B: image
 python -m mlx_vlm.generate --model LiquidAI/LFM3-VL-2B-MLX-4bit \
-  --image /path/to/image.jpg --prompt "Describe this image." \
+  --image /path/to/image.jpg --prompt "Describe this image." --enable-thinking \
   --temperature 0.1 --top-p 1.0 --top-k 50 --min-p 0.0 --repetition-penalty 1.1 \
   --max-tokens 16384
 
