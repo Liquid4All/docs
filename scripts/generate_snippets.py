@@ -95,8 +95,13 @@ SNIPPET_CONFIG = {
             {"type": "code_block", "language": "bash",
              "code": "brew install llama.cpp"},
             {"type": "label", "text": "Run:"},
-            {"type": "code_block", "language": "bash",
-             "code": "llama-cli -hf ${ggufRepo} \\\n    ${samplingFlags}"},
+            # samplingFlags is optional: LFM3 GGUFs store their sampling defaults
+            {"type": "raw_html",
+             "html": '<CodeBlock language="bash">\n{samplingFlags ? `llama cli -hf ${ggufRepo} \\\\\n    ${samplingFlags}` : `llama cli -hf ${ggufRepo}`}\n</CodeBlock>'},
+            {"type": "raw_html",
+             "html": '<p><strong>Web chat UI and OpenAI-compatible API</strong> at <code>http://localhost:9931</code>:</p>'},
+            {"type": "raw_html",
+             "html": '<CodeBlock language="bash">\n{samplingFlags ? `llama serve -hf ${ggufRepo} \\\\\n    ${samplingFlags}` : `llama serve -hf ${ggufRepo}`}\n</CodeBlock>'},
             {"type": "raw_html",
              "html": '<p>The <code>-hf</code> flag downloads the model directly from Hugging Face. For other installation methods and advanced usage, see the <a href="/deployment/on-device/llama-cpp">llama.cpp guide</a>.</p>'},
         ],
@@ -157,12 +162,88 @@ SNIPPET_CONFIG = {
             {"type": "raw_html",
              "html": '<p>Or download pre-built binaries from <a href="https://github.com/ggml-org/llama.cpp/releases">llama.cpp releases</a>.</p>'},
             {"type": "label", "text": "Run:"},
-            {"type": "code_block", "language": "bash",
-             "code": "llama-cli \\\n    -hf ${ggufRepo}:Q4_0 \\\n    --image test_image.jpg \\\n    -p \"What's in this image?\" \\\n    -n 128 \\\n    ${samplingFlags}"},
+            # samplingFlags is optional: LFM3 GGUFs store their sampling defaults
             {"type": "raw_html",
-             "html": '<p>The <code>-hf</code> flag downloads the model directly from Hugging Face. Use <code>--image-max-tokens</code> to control image token budget.</p>'},
+             "html": '<CodeBlock language="bash">\n{`llama cli \\\\\n    -hf ${ggufRepo}:Q4_0 \\\\\n    --image test_image.jpg \\\\\n    -p "What\'s in this image?"${samplingFlags ? ` \\\\\n    ${samplingFlags}` : ""}`}\n</CodeBlock>'},
             {"type": "raw_html",
-             "html": '<p>For server deployment and advanced usage, see the <a href="/deployment/on-device/llama-cpp#vision-models">llama.cpp guide</a>.</p>'},
+             "html": '<p><strong>Web chat UI and OpenAI-compatible API</strong> at <code>http://localhost:9931</code>:</p>'},
+            {"type": "raw_html",
+             "html": '<CodeBlock language="bash">\n{samplingFlags ? `llama serve -hf ${ggufRepo}:Q4_0 \\\\\n    ${samplingFlags}` : `llama serve -hf ${ggufRepo}:Q4_0`}\n</CodeBlock>'},
+            {"type": "raw_html",
+             "html": '<p>The <code>-hf</code> flag downloads the model and its vision projector directly from Hugging Face. Use <code>--image-max-tokens</code> to control image token budget.</p>'},
+            {"type": "raw_html",
+             "html": '<p>For advanced usage, see the <a href="/deployment/on-device/llama-cpp#vision-models">llama.cpp guide</a>.</p>'},
+        ],
+    },
+    "audio-llamacpp": {
+        "component_name": "AudioLlamacpp",
+        "props": "{ ggufRepo, serveFlags, ttsFlags, asrAutoLanguage = false }",
+        "source": "config",
+        "preamble": 'const modelName = ggufRepo.split("/")[1].replace(/-GGUF$/, "");',
+        "sections": [
+            {"type": "raw_html",
+             "html": '<p>Requires llama.cpp 0.8.0 (b11960) or later. Add a quantization tag to pick a file; with <code>-hf</code>, llama.cpp also downloads the projector.</p>'},
+            {"type": "raw_html",
+             "html": '<p><strong>Web chat and API server:</strong></p>'},
+            {"type": "raw_html",
+             "html": '<p>Start a web chat UI and an OpenAI-compatible API at <code>http://localhost:9931</code>:</p>'},
+            {"type": "raw_html",
+             "html": '<CodeBlock language="bash">\n{`llama serve -hf ${ggufRepo}:Q4_K_M${serveFlags ? ` ${serveFlags}` : ""}`}\n</CodeBlock>'},
+            {"type": "raw_html",
+             "html": '<p>The server also handles real-time voice conversations, including tool calls, on its <code>/v1/realtime</code> WebSocket API. The recommended sampling parameters are stored in the GGUF, so no sampling flags are needed. To ask one question from the command line, use <code>llama cli</code>.</p>'},
+            {"type": "raw_html",
+             "html": '<p><strong>ASR (Audio to Text):</strong></p>'},
+            {"type": "raw_html",
+             "html": '<p>Use the system prompt <code>Perform ASR in &lt;language&gt;.</code>{asrAutoLanguage ? <>, or <code>Perform ASR.</code> to let the model infer the language.</> : null} Pass it with <code>-sys</code>: as a regular prompt, the model describes the audio instead of transcribing it.</p>'},
+            {"type": "raw_html",
+             "html": '<CodeBlock language="bash">\n{`llama cli -hf ${ggufRepo}:Q4_K_M \\\\\n  --audio speech.wav -sys "Perform ASR in English." -p "<__media__>"`}\n</CodeBlock>'},
+            {"type": "raw_html",
+             "html": '<p><strong>TTS (Text to Audio):</strong></p>'},
+            {"type": "raw_html",
+             "html": '<p><code>--tts-lang</code> takes a language code (default <code>en</code>) and <code>--tts-voice</code> is <code>female</code> (default) or <code>male</code>. The audio sampling parameters from the model card are stored in the GGUF.</p>'},
+            {"type": "raw_html",
+             "html": '<CodeBlock language="bash">\n{`hf download ${ggufRepo} ${modelName}-Q4_K_M.gguf mmproj-${modelName}-Q8_0.gguf --local-dir .\n\nllama-tts -m ${modelName}-Q4_K_M.gguf -mm mmproj-${modelName}-Q8_0.gguf \\\\\n  -p "Hello world"${ttsFlags ? ` ${ttsFlags}` : ""} -o out.wav`}\n</CodeBlock>'},
+            {"type": "raw_html",
+             "html": '<p>For more options, see the <a href="/deployment/on-device/llama-cpp#audio-and-omni-models">llama.cpp guide</a>.</p>'},
+        ],
+    },
+    "omni-llamacpp": {
+        "component_name": "OmniLlamacpp",
+        "props": "{ ggufRepo, serveFlags, ttsFlags }",
+        "source": "config",
+        "preamble": 'const modelName = ggufRepo.split("/")[1].replace(/-GGUF$/, "");',
+        "sections": [
+            {"type": "raw_html",
+             "html": '<p>Requires llama.cpp 0.8.0 (b11960) or later. Add a quantization tag to pick a file; with <code>-hf</code>, llama.cpp also downloads the vision and audio projector.</p>'},
+            {"type": "raw_html",
+             "html": '<p><strong>Web chat and API server:</strong></p>'},
+            {"type": "raw_html",
+             "html": '<p>Start a web chat UI and an OpenAI-compatible API at <code>http://localhost:9931</code>:</p>'},
+            {"type": "raw_html",
+             "html": '<CodeBlock language="bash">\n{`llama serve -hf ${ggufRepo}:Q4_K_M${serveFlags ? ` ${serveFlags}` : ""}`}\n</CodeBlock>'},
+            {"type": "raw_html",
+             "html": '<p>The server also handles real-time voice conversations, including tool calls, on its <code>/v1/realtime</code> WebSocket API. The recommended sampling parameters are stored in the GGUF, so no sampling flags are needed. To ask one question from the command line, use <code>llama cli</code>.</p>'},
+            {"type": "raw_html",
+             "html": '<p><strong>ASR (Audio to Text):</strong></p>'},
+            {"type": "raw_html",
+             "html": '<p>Use the system prompt <code>Perform ASR in &lt;language&gt;.</code> Pass it with <code>-sys</code>: as a regular prompt, the model describes the audio instead of transcribing it.</p>'},
+            {"type": "raw_html",
+             "html": '<CodeBlock language="bash">\n{`llama cli -hf ${ggufRepo}:Q4_K_M \\\\\n  --audio speech.wav -sys "Perform ASR in English." -p "<__media__>"`}\n</CodeBlock>'},
+            {"type": "label", "text": "Image understanding:"},
+            {"type": "raw_html",
+             "html": '<CodeBlock language="bash">\n{`llama cli -hf ${ggufRepo}:Q4_K_M \\\\\n  --image photo.png -p "Describe this image."`}\n</CodeBlock>'},
+            {"type": "raw_html",
+             "html": '<p><strong>Video understanding:</strong> the model sees the frames and hears the soundtrack of the video. Use the system prompt <code>Answer questions about the video using what you see and hear.</code> Video input needs <code>ffmpeg</code> in <code>PATH</code>.</p>'},
+            {"type": "raw_html",
+             "html": '<CodeBlock language="bash">\n{`curl -sL -o reading.mp4 https://huggingface.co/datasets/raushan-testing-hf/videos-test/resolve/4cba700bd771f44d72b549253da025c32e944d42/sample_demo_1.mp4  # a child reading a book\n\nllama cli -hf ${ggufRepo}:Q4_K_M \\\\\n  --video reading.mp4 -sys "Answer questions about the video using what you see and hear." \\\\\n  -p "What happens here, and what can you hear?"`}\n</CodeBlock>'},
+            {"type": "raw_html",
+             "html": '<p><strong>TTS (Text to Audio):</strong></p>'},
+            {"type": "raw_html",
+             "html": '<p><code>--tts-lang</code> takes a language code (default <code>en</code>) and <code>--tts-voice</code> is <code>female</code> (default) or <code>male</code>. The audio sampling parameters from the model card are stored in the GGUF.</p>'},
+            {"type": "raw_html",
+             "html": '<CodeBlock language="bash">\n{`hf download ${ggufRepo} ${modelName}-Q4_K_M.gguf mmproj-${modelName}-Q8_0.gguf --local-dir .\n\nllama-tts -m ${modelName}-Q4_K_M.gguf -mm mmproj-${modelName}-Q8_0.gguf \\\\\n  -p "Hello world"${ttsFlags ? ` ${ttsFlags}` : ""} -o out.wav`}\n</CodeBlock>'},
+            {"type": "raw_html",
+             "html": '<p>For more options, see the <a href="/deployment/on-device/llama-cpp#audio-and-omni-models">llama.cpp guide</a>.</p>'},
         ],
     },
 }
@@ -242,7 +323,7 @@ def render_section(section, notebook_code=None):
 
 
 def generate_snippet(name, config, notebook_cells):
-    group = config["replacement_group"]
+    group = config.get("replacement_group")
     notebook_code = None
 
     if config["source"] == "notebook":
@@ -264,6 +345,9 @@ def generate_snippet(name, config, notebook_cells):
     component_name = config["component_name"]
     props = config["props"]
 
+    preamble = config.get("preamble")
+    if preamble:
+        return f"export const {component_name} = ({props}) => {{\n{preamble}\nreturn (\n<div>\n{body}\n</div>\n);\n}};\n"
     return f"export const {component_name} = ({props}) => (\n<div>\n{body}\n</div>\n);\n"
 
 
