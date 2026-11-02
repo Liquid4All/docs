@@ -4,6 +4,9 @@
 (function() {
   const style = document.createElement('style');
   style.textContent = `
+    /* Liquid AI brand mono font (body/heading font is set via \`fonts\` in docs.json) */
+    @import url("https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&display=swap");
+
     /* Discord navbar link styling - dim the icon to match GitHub */
     /* The icon uses SVG with mask-image, color is set via background */
     a[href*="discord.gg"] svg,
@@ -58,6 +61,107 @@
     .mdx-content {
       contain: none !important;
       overflow: visible !important;
+    }
+
+    /* Code font - Liquid AI brand mono */
+    code,
+    pre,
+    kbd,
+    samp {
+      font-family: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace !important;
+    }
+
+    /* Typography scale - the only font sizes used across the site */
+    :root {
+      --lfm-fs-xs: 12px;
+      --lfm-fs-sm: 13px;
+      --lfm-fs-base: 15px;
+      --lfm-fs-lg: 16px;
+      --lfm-fs-xl: 20px;
+      --lfm-fs-2xl: 28px;
+    }
+
+    /* Page header - title, description, section eyebrow */
+    #page-title {
+      font-size: var(--lfm-fs-2xl) !important;
+      line-height: 1.25 !important;
+    }
+
+    #header .prose {
+      font-size: var(--lfm-fs-lg) !important;
+      line-height: 1.5 !important;
+    }
+
+    .eyebrow {
+      font-size: var(--lfm-fs-sm) !important;
+    }
+
+    /* Page body - em-based prose spacing scales with this. Tabs and Accordions wrap
+       their content in a nested .prose, which resets font-size to 1rem, so target them
+       too. Scoped by component so callouts and card content keep their smaller sizes */
+    #content.mdx-content,
+    .mdx-content [data-component-part="tab-content"],
+    .mdx-content [data-component-part="accordion-content"] {
+      font-size: var(--lfm-fs-base) !important;
+      line-height: 1.65 !important;
+    }
+
+    .mdx-content h2 {
+      font-size: var(--lfm-fs-xl) !important;
+      line-height: 1.3 !important;
+    }
+
+    .mdx-content h3 {
+      font-size: var(--lfm-fs-lg) !important;
+      line-height: 1.3 !important;
+    }
+
+    /* Inline code - slightly smaller than surrounding text (~14px in body copy) */
+    .mdx-content code:not(pre code) {
+      font-size: 0.93em !important;
+    }
+
+    /* Code blocks */
+    pre {
+      font-size: var(--lfm-fs-sm) !important;
+      line-height: 1.6 !important;
+    }
+
+    /* Cards - scoped to .mdx-content to outrank the h2 rule (card titles are h2s) */
+    .mdx-content [data-component-part="card-title"] {
+      font-size: var(--lfm-fs-base) !important;
+    }
+
+    .mdx-content [data-component-part="card-content"] {
+      font-size: var(--lfm-fs-sm) !important;
+      line-height: 1.5 !important;
+    }
+
+    /* Left sidebar - collapsible groups (e.g. "Liquid Foundation Models") are buttons, not links */
+    #navigation-items a,
+    .sidebar-group button {
+      font-size: var(--lfm-fs-sm) !important;
+      line-height: 1.4 !important;
+    }
+
+    .sidebar-group-header {
+      font-size: var(--lfm-fs-xs) !important;
+    }
+
+    /* Top navbar - tabs and links */
+    .nav-tabs-item,
+    .navbar-link a {
+      font-size: var(--lfm-fs-sm) !important;
+    }
+
+    /* Right TOC */
+    #table-of-contents {
+      font-size: var(--lfm-fs-sm) !important;
+      line-height: 1.5 !important;
+    }
+
+    #table-of-contents nav > h2 {
+      font-size: var(--lfm-fs-xs) !important;
     }
 
     [class*="overflow-x-clip"],
