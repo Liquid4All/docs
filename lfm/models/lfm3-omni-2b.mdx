@@ -164,3 +164,11 @@ LFM3-Omni-2B is Liquid AI's first omni model: a single end-to-end model that und
     ```
   </Tab>
 </Tabs>
+
+## Video Frame Rate and Frame Limit
+
+By default, LFM3-Omni-2B samples video at 2 fps, with at least 4 and at most 384 frames per video. Both are configurable: each frame adds vision tokens, so a lower frame rate or frame limit uses less context and memory and lowers latency, while a higher one preserves more detail. Set them according to your latency and quality requirements. These settings do not change the soundtrack: the model always hears all of it.
+
+- **Transformers:** set the frame rate per call with `processor.apply_chat_template(..., processor_kwargs={"fps": 1})`. With the soundtrack, use `processor_kwargs={"use_audio_in_video": True, "fps": 1}`. Set the frame limit when you load the processor: `AutoProcessor.from_pretrained(model_id, trust_remote_code=True, max_frames=128)`.
+- **SGLang:** change `fps`, `min_frames`, and `max_frames` under `video_processor` in `processor_config.json` in a local copy of the checkpoint.
+- **llama.cpp:** always uses 2 fps and 4 to 384 frames for this model. `--video-fps` has no effect.
