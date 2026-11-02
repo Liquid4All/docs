@@ -82,8 +82,8 @@
     }
 
     /* Card icons - purple accent color in light mode (default state) */
-    /* Only target the main icon, not the arrow icon (which contains "arrow" in class) */
-    :root:not(.dark) .card-group a[class*="block"] svg:not([class*="arrow"]) {
+    /* Only target the main icon, not the arrow icon (which contains "arrow" in class, or uses Mintlify's ExternalLink symbol) */
+    :root:not(.dark) .card-group a[class*="block"] svg:not([class*="arrow"]):not(:has(use[href*="ExternalLink"])) {
       background-color: #864bc4 !important;
     }
 
@@ -92,8 +92,8 @@
        buttons don't match. Their <a> has `dark:bg-codeblock/50` (substring "block") and
        `border-standard` (substring "border"), which would otherwise satisfy
        a[class*="block"][class*="border"] and turn their icons into purple squares. */
-    :root:not(.dark) .mdx-content [class*="card"] svg:not([class*="arrow"]),
-    :root:not(.dark) .mdx-content a[class*="block"][class*="border"] svg:not([class*="arrow"]) {
+    :root:not(.dark) .mdx-content [class*="card"] svg:not([class*="arrow"]):not(:has(use[href*="ExternalLink"])),
+    :root:not(.dark) .mdx-content a[class*="block"][class*="border"] svg:not([class*="arrow"]):not(:has(use[href*="ExternalLink"])) {
       background-color: #864bc4 !important;
     }
 
