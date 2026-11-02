@@ -242,7 +242,7 @@
                     "usage": {
                       "type": "object",
                       "additionalProperties": true,
-                      "description": "Token counts: { prompt_tokens, completion_tokens, total_tokens }, plus `cost` in USD when the model is priced. Audio models also report OpenAI's `prompt_tokens_details` and `completion_tokens_details`, whose `audio_tokens` say how much of each total was audio. Streaming responses report it on the final usage chunk."
+                      "description": "Token counts: { prompt_tokens, completion_tokens, total_tokens }, plus `cost` in USD when the model is priced. Audio models also report OpenAI's `prompt_tokens_details` and `completion_tokens_details`, whose `audio_tokens` say how much of each total was audio. Some vision models bill each image as a multiple of its tokens, counted in `prompt_tokens` as OpenAI does. Streaming responses report it on the final usage chunk."
                     }
                   }
                 }
