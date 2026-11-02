@@ -10,6 +10,7 @@ d1-2B is a 1.92B parameter decision model for text, pictures, and video, built o
 <div style={{display: 'flex', gap: '0.5rem', margin: '0.5rem 0 1.5rem 0'}}>
   <a href="https://huggingface.co/LiquidAI/d1-2B" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#fbbf24'}}><span style={{color: '#000'}}>HF</span></a>
   <a href="https://huggingface.co/LiquidAI/d1-2B-GGUF" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#60a5fa'}}><span style={{color: '#000'}}>GGUF</span></a>
+  <a href="https://huggingface.co/LiquidAI/d1-2B-MLX-8bit" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#c4b5fd'}}><span style={{color: '#000'}}>MLX</span></a>
 </div>
 
 ## Specifications
@@ -123,7 +124,7 @@ d1-2B is designed for any pipeline step that needs a decision: routing and triag
     ```
   </Tab>
   <Tab title="llama.cpp">
-    Requires llama.cpp 0.8.0 (b11960) or later. llama.cpp supports Noul, Choice, and Score questions over text, pictures, and video; for multiple choice and typed answers, use Transformers.
+    Requires llama.cpp 0.8.0 (b11960) or later. llama.cpp supports Noul, Choice, and Score questions over text, pictures, and video; for multiple choice and typed answers, use Transformers or mlx-vlm.
 
     **Start the server:**
 
@@ -198,4 +199,8 @@ Besides Noul, Choice, and Score, d1-2B answers typed questions. Each question in
 
 A value or a box is missing when `found` is under 0.5, and it is then `None`. Calibrate any decision threshold on data from your own use. See [Typed Answers](/lfm/models/decision-models#typed-answers) for every question and answer field.
 
-Typed answers run in Transformers. llama.cpp supports Noul, Choice, and Score questions only.
+Typed answers run in Transformers and mlx-vlm. llama.cpp supports Noul, Choice, and Score questions only.
+
+## Other Formats
+
+- **MLX**: [d1-2B-MLX-8bit](https://huggingface.co/LiquidAI/d1-2B-MLX-8bit), [d1-2B-MLX-4bit](https://huggingface.co/LiquidAI/d1-2B-MLX-4bit), and [d1-2B-MLX-fp16](https://huggingface.co/LiquidAI/d1-2B-MLX-fp16) run on Apple Silicon with [mlx-vlm](https://github.com/Blaizzy/mlx-vlm). They require mlx-vlm 0.7.11 or later, installed with `pip install -U "mlx-vlm>=0.7.11"`. See the [MLX guide](/deployment/on-device/mlx#lfm3-and-d1-models) and the model cards for Python and CLI usage.
