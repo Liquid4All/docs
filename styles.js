@@ -169,8 +169,8 @@
 
     /* Fix GitHub icon visibility in light mode for standalone Cards (not in card-groups) */
     /* Scoped to .mdx-content so the page-footer "Suggest edits" / "Raise issue" toolbar
-       buttons don't match. Their <a> has `dark:bg-codeblock/50` (substring "block") and
-       `border-standard` (substring "border"), which would otherwise satisfy
+       buttons don't match. Their <a> has \`dark:bg-codeblock/50\` (substring "block") and
+       \`border-standard\` (substring "border"), which would otherwise satisfy
        a[class*="block"][class*="border"] and turn their icons into purple squares. */
     :root:not(.dark) .mdx-content [class*="card"] svg:not([class*="arrow"]),
     :root:not(.dark) .mdx-content a[class*="block"][class*="border"] svg:not([class*="arrow"]) {
