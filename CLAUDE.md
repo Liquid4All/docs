@@ -65,7 +65,7 @@ Always use proper opening/closing tag pairs for Mintlify components:
 - `style.css` - Static CSS loaded by Mintlify
 - `styles.js` - JavaScript-injected CSS for dev mode (some styles only work via JS injection)
 
-Both files should have the same styles for consistency between dev and production.
+Both files should have the same styles for consistency between dev and production. `styles.js` holds a full copy of `style.css` (escape backticks, backslashes and `${` inside the template literal), followed by a few dev-only fixes at the end. After editing `style.css`, copy the change into `styles.js` and run `node --check styles.js`.
 
 ### Card Border Fix
 
@@ -123,17 +123,26 @@ Mintlify supports these badge colors:
 </CardGroup>
 ```
 
-### Accent Color
+### Colors
 
-The purple accent color used throughout: `#864bc4`
+The palette follows liquid.ai: one violet accent on a zinc neutral scale. `docs.json` sets the Mintlify theme (`primary` `#7c3aed`, `light` `#ac8dff`, `dark` `#7c3aed`), and custom CSS uses the `--lfm-*` tokens defined at the top of `style.css`. Never hard-code hex values in CSS rules. Colors inside page content (badges, format buttons) are left to the page authors. The tokens switch under `.dark`, so one rule usually covers both modes.
+
+| Token | Light | Dark | Use |
+|---|---|---|---|
+| `--lfm-accent` | `#7c3aed` | `#ac8dff` | Links, hover, active text, borders |
+| `--lfm-accent-wash` | `#f2ecff` | `#2a1d4a` | Active/hover backgrounds, table headers |
+| `--lfm-fg` | `#18181b` | `#fafafa` | Text |
+| `--lfm-muted` | `#71717a` | `#a1a1aa` | Secondary text, icons |
+| `--lfm-surface` | `#f4f4f5` | `#27272a` | Tiles, sub-section rows |
+| `--lfm-subtle` | `#fafafa` | `#18181b` | Code backgrounds |
+| `--lfm-border` / `--lfm-border-strong` | `#00000014` / `#0000001a` | `#ffffff21` / `#ffffff26` | Borders |
+| `--lfm-success` / `--lfm-success-strong` | `#22c55e` / `#16a34a` | `#4ade80` / `#86efac` | Table checkmarks |
 
 ```css
-/* For backgrounds */
-background-color: rgba(134, 75, 196, 0.1);
-
-/* For text/borders */
-color: #864bc4;
-border-color: #864bc4;
+.selector:hover {
+  color: var(--lfm-accent) !important;
+  background-color: var(--lfm-accent-wash) !important;
+}
 ```
 
 ## Sampling Parameters
