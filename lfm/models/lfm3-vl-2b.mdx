@@ -202,3 +202,12 @@ LFM3-VL-2B thinks in a `<think>` block before it answers. Reasoning can be long,
 ## Video Input
 
 Images and videos are processed at their native resolution, and every 2×2 block of patches is merged into one language token. Videos are sampled at 2 fps, consecutive frames are paired, and each frame is prefixed with its timestamp. See [Vision Capabilities](/lfm/key-concepts/vision-capabilities#video-understanding) for a video example.
+
+### Frame Rate and Frame Limit
+
+By default, LFM3-VL-2B samples video at 2 fps, with at least 4 and at most 768 frames per video. Both are configurable: each frame adds vision tokens, so a lower frame rate or frame limit uses less context and memory and lowers latency, while a higher one preserves more detail. Set them according to your latency and quality requirements.
+
+- **Transformers:** set the frame rate per call with `processor.apply_chat_template(..., processor_kwargs={"fps": 1})`. Set the frame limit when you load the processor: `AutoProcessor.from_pretrained(model_id, trust_remote_code=True, max_frames=128)`.
+- **vLLM:** set a server default in `--media-io-kwargs`, for example `'{"video": {"video_backend": "qwen3_vl", "fps": 1, "max_frames": 128}}'`. Override it per request with `extra_body={"media_io_kwargs": {"video": {"fps": 1, "max_frames": 128}}}`.
+- **SGLang:** change `fps`, `min_frames`, and `max_frames` under `video_processor` in `processor_config.json` in a local copy of the checkpoint.
+- **llama.cpp:** always uses 2 fps and 4 to 768 frames for this model. `--video-fps` has no effect.
