@@ -51,6 +51,34 @@
       --lfm-fs-2xl: 28px;
     }
 
+    /* Color tokens - liquid.ai palette: one violet accent on a zinc neutral scale.
+       Use these instead of raw hex; .dark switches every token to its dark-mode value */
+    :root {
+      --lfm-accent: #7c3aed;
+      --lfm-accent-wash: #f2ecff;
+      --lfm-fg: #18181b;
+      --lfm-muted: #71717a;
+      --lfm-surface: #f4f4f5;
+      --lfm-subtle: #fafafa;
+      --lfm-border: #00000014;
+      --lfm-border-strong: #0000001a;
+      --lfm-success: #22c55e;
+      --lfm-success-strong: #16a34a;
+    }
+
+    :root.dark {
+      --lfm-accent: #ac8dff;
+      --lfm-accent-wash: #2a1d4a;
+      --lfm-fg: #fafafa;
+      --lfm-muted: #a1a1aa;
+      --lfm-surface: #27272a;
+      --lfm-subtle: #18181b;
+      --lfm-border: #ffffff21;
+      --lfm-border-strong: #ffffff26;
+      --lfm-success: #4ade80;
+      --lfm-success-strong: #86efac;
+    }
+
     /* Page header - title, description, section eyebrow */
     #page-title {
       font-size: var(--lfm-fs-2xl) !important;

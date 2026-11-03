@@ -25,9 +25,15 @@
     }
   },
   "colors": {
-    "primary": "#5603ad",
-    "light": "#864bc4",
-    "dark": "#4f46e5"
+    "primary": "#7c3aed",
+    "light": "#ac8dff",
+    "dark": "#7c3aed"
+  },
+  "background": {
+    "color": {
+      "light": "#ffffff",
+      "dark": "#0a0a0a"
+    }
   },
   "fonts": {
     "family": "Inter"
