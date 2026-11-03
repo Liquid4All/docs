@@ -89,6 +89,8 @@ curl https://api.liquid.ai/openai/v1/chat/completions \
 
 An `image_url` part takes either an http(s) URL or a base64 `data:` URL. Prefer URLs for large images: a request body may be up to 4 MB, and base64 makes an image about a third larger.
 
+Liquid downloads linked images itself before the request reaches the model, so each URL must be publicly reachable. A request may link up to 8 images, each a PNG, JPEG, WebP, or GIF of at most 10 MB, and 20 MB together. An image that can't be downloaded or isn't one of those formats returns `400`.
+
 ```python
 import base64
 

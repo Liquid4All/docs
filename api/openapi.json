@@ -338,7 +338,7 @@
                   "messages": {
                     "type": "array",
                     "items": {},
-                    "description": "The conversation so far. Messages follow OpenAI role-specific content requirements. User messages may include `image_url` parts for models that take images and `input_audio` parts (base64 WAV, `format: \"wav\"`) for models that take audio; other models return 400."
+                    "description": "The conversation so far. Messages follow OpenAI role-specific content requirements. User messages may include `image_url` parts for models that take images, each a base64 `data:` URL or an http(s) URL, and `input_audio` parts (base64 WAV, `format: \"wav\"`) for models that take audio; other models return 400. Liquid downloads linked images itself before the request reaches the model, from public addresses only, and returns 400 when one cannot be downloaded or is not a PNG, JPEG, WebP, or GIF image; a request may link up to 8 images, of at most 10 MB each and 20 MB together."
                   },
                   "stream": {
                     "type": "boolean",
