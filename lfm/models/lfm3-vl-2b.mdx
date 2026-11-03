@@ -3,6 +3,8 @@ title: "LFM3-VL-2B"
 description: "2B vision-language model with video understanding, thinking, and spatial reasoning for on-device deployment"
 ---
 
+import { VlLlamacpp } from "/snippets/quickstart/vl-llamacpp.mdx";
+
 <a href="/lfm/models/vision-models" className="back-button">← Back to Vision Models</a>
 
 LFM3-VL-2B is a vision-language model in the LFM3 family designed for on-device deployment. It processes text, images, and videos at their native resolution, and pairs the LFM3 language backbone with a new in-house Liquid hybrid convolution/attention vision encoder. It is the first LFM vision model to take video as input, and it reasons step by step before answering.
@@ -173,26 +175,23 @@ LFM3-VL-2B is a vision-language model in the LFM3 family designed for on-device 
     ```
   </Tab>
   <Tab title="llama.cpp">
-    Requires a llama.cpp build with LFM3-VL support.
+    To run it without the command line, use the [Llama app](/deployment/on-device/llama), with image and video input.
 
-    **Install:**
+    Requires llama.cpp 0.8.0 (b11960) or later. The `:Q4_0` tag selects the Quantization-Aware Distillation (QAD) checkpoint.
+
+    <VlLlamacpp ggufRepo="LiquidAI/LFM3-VL-2B-GGUF" samplingFlags="--top-p 1.0 --min-p 0.0 --no-reasoning-preserve"></VlLlamacpp>
+
+    The GGUF stores the recommended temperature, top-k, and repetition penalty. `--top-p 1.0 --min-p 0.0` sets the two recommended values it doesn't store, and `--no-reasoning-preserve` keeps earlier reasoning out of the conversation history. The server is OpenAI-compatible, so you can query it with the vLLM example above by changing `base_url` to `http://localhost:9931/v1`.
+
+    **Video understanding:** video input needs `ffmpeg` in `PATH`.
 
     ```bash
-    brew install llama.cpp
+    curl -sL -o reading.mp4 https://huggingface.co/datasets/raushan-testing-hf/videos-test/resolve/4cba700bd771f44d72b549253da025c32e944d42/sample_demo_1.mp4  # a child reading a book
+
+    llama cli -hf LiquidAI/LFM3-VL-2B-GGUF:Q4_0 \
+      --video reading.mp4 -p "What is the child doing in this video?" \
+      --top-p 1.0 --min-p 0.0 --no-reasoning-preserve
     ```
-
-    **Start the server:**
-
-    ```bash
-    llama-server \
-      -hf LiquidAI/LFM3-VL-2B-GGUF:Q4_0 \
-      --temp 0.1 --top-p 1.0 --top-k 50 --min-p 0.0 --repeat-penalty 1.1 \
-      --no-reasoning-preserve --port 8080
-    ```
-
-    With `-hf`, llama.cpp downloads the model and the matching vision projector (mmproj). The server is OpenAI-compatible, so you can query it with the vLLM example above by changing `base_url` to `http://localhost:8080/v1`. To chat in the terminal, use `llama-cli` with the same flags, then type `/image <path>` to add an image to the chat.
-
-    For advanced usage, see the [llama.cpp guide](/deployment/on-device/llama-cpp#vision-models).
   </Tab>
 </Tabs>
 

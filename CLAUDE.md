@@ -165,15 +165,16 @@ Every inference example must use the correct sampling params from the upstream H
 
 ### Engine-specific field names
 
-- **Transformers, vLLM, llama-server, MLX**: `repetition_penalty`
-- **Ollama, LM Studio**: `repeat_penalty`
+- **Transformers, vLLM, MLX**: `repetition_penalty`
+- **llama.cpp server (`llama serve` / `llama-server`), Llama app, Ollama, LM Studio**: `repeat_penalty`. The llama.cpp server silently ignores `repetition_penalty`.
 
 ### OpenAI Python client
 
 Non-standard params (`top_k`, `min_p`, `repetition_penalty`/`repeat_penalty`) must go in `extra_body`, not as direct kwargs:
 
 ```python
-extra_body={"top_k": 50, "repetition_penalty": 1.05}
+extra_body={"top_k": 50, "repetition_penalty": 1.05}  # vLLM
+extra_body={"top_k": 50, "repeat_penalty": 1.05}      # llama.cpp server, Llama app
 ```
 
 ## Debugging

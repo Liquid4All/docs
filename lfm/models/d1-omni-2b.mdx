@@ -123,7 +123,7 @@ d1-omni-2B is designed for decisions that depend on what is heard, such as call 
     **Start the server:**
 
     ```bash
-    llama-server -hf LiquidAI/d1-Omni-2B-GGUF:Q8_0 -b 8192 -ub 8192
+    llama serve -hf LiquidAI/d1-Omni-2B-GGUF:Q8_0 -b 8192 -ub 8192
     ```
 
     A question is read in one batch, so `-b` and `-ub` must hold its state and media. A picture takes at most half of `-ub`: 8192 keeps the full budget of 4096 tokens per picture.
@@ -131,7 +131,7 @@ d1-omni-2B is designed for decisions that depend on what is heard, such as call 
     **Text input:**
 
     ```bash
-    curl http://127.0.0.1:8080/v1/systemone -H "Content-Type: application/json" -d '{
+    curl http://127.0.0.1:9931/v1/systemone -H "Content-Type: application/json" -d '{
       "state": "I was charged twice this month, please refund one of them.",
       "questions": {
         "refund":  {"type": "noul", "instructions": "Is the customer asking for a refund?"},
@@ -149,7 +149,7 @@ d1-omni-2B is designed for decisions that depend on what is heard, such as call 
     ```bash
     curl -sL -o cats.jpg http://images.cocodataset.org/val2017/000000039769.jpg
 
-    curl http://127.0.0.1:8080/v1/systemone -H "Content-Type: application/json" -d @- <<JSON
+    curl http://127.0.0.1:9931/v1/systemone -H "Content-Type: application/json" -d @- <<JSON
     {
       "state": null,
       "images": ["data:image/jpeg;base64,$(base64 < cats.jpg | tr -d '\n')"],
@@ -164,7 +164,7 @@ d1-omni-2B is designed for decisions that depend on what is heard, such as call 
     **Audio input:**
 
     ```bash
-    curl http://127.0.0.1:8080/v1/systemone -H "Content-Type: application/json" -d @- <<JSON
+    curl http://127.0.0.1:9931/v1/systemone -H "Content-Type: application/json" -d @- <<JSON
     {
       "state": null,
       "files": ["data:audio/wav;base64,$(base64 < command.wav | tr -d '\n')"],
@@ -181,7 +181,7 @@ d1-omni-2B is designed for decisions that depend on what is heard, such as call 
     **Spoken question** (the `instructions` are an `input_audio` part):
 
     ```bash
-    curl http://127.0.0.1:8080/v1/systemone -H "Content-Type: application/json" -d @- <<JSON
+    curl http://127.0.0.1:9931/v1/systemone -H "Content-Type: application/json" -d @- <<JSON
     {
       "state": "I was charged twice this month, please refund one of them.",
       "questions": {
