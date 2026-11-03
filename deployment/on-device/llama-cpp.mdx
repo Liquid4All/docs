@@ -106,6 +106,10 @@ For GPU-accelerated inference at scale, consider using [vLLM](/deployment/gpu-in
   </Tab>
 </Tabs>
 
+<Note>
+  This guide uses llama.cpp [v0.8.0](https://github.com/ggml-org/llama.cpp/releases/tag/v0.8.0) (b11960) or later, which LFM3 models require.
+</Note>
+
 ## Downloading GGUF Models
 
 llama.cpp uses the GGUF format, which stores quantized model weights for efficient inference. All LFM models are available in GGUF format on Hugging Face. See the [Models page](/lfm/models/complete-library) for all available GGUF models.
@@ -128,37 +132,37 @@ hf download LiquidAI/LFM2.5-1.2B-Instruct-GGUF lfm2.5-1.2b-instruct-q4_k_m.gguf 
 
 ## Basic Usage
 
-llama.cpp offers two main interfaces for running inference: `llama-server` (OpenAI-compatible server) and `llama-cli` (interactive CLI).
+llama.cpp offers two main interfaces for running inference: `llama serve` (web chat UI and OpenAI-compatible server) and `llama cli` (interactive CLI).
 
 <Tabs>
-  <Tab title="llama-server">
-    llama-server provides an OpenAI-compatible API for serving models locally.
+  <Tab title="llama serve">
+    `llama serve` starts a web chat UI and an OpenAI-compatible API for serving models locally.
 
     **Starting the Server:**
     ```bash
-    llama-server -hf LiquidAI/LFM2.5-1.2B-Instruct-GGUF -c 4096 --port 8080
+    llama serve -hf LiquidAI/LFM2.5-1.2B-Instruct-GGUF -c 4096
     ```
 
     The `-hf` flag downloads the model directly from Hugging Face. Alternatively, use a local model file:
     ```bash
-    llama-server -m lfm2.5-1.2b-instruct-q4_k_m.gguf -c 4096 --port 8080
+    llama serve -m lfm2.5-1.2b-instruct-q4_k_m.gguf -c 4096
     ```
 
     Key parameters:
     * `-hf`: Hugging Face model ID (downloads automatically)
     * `-m`: Path to local GGUF model file
     * `-c`: Context length (default: 4096)
-    * `--port`: Server port (default: 8080)
+    * `--port`: Server port (default: 9931)
     * `-ngl 99`: Offload layers to GPU (if available)
 
     **Using the Server:**
 
-    Once running at `http://localhost:8080`, use the OpenAI Python client:
+    Open `http://localhost:9931` in your browser to chat, or use the OpenAI Python client:
     ```python
     from openai import OpenAI
 
     client = OpenAI(
-        base_url="http://localhost:8080/v1",
+        base_url="http://localhost:9931/v1",
         api_key="not-needed"
     )
 
@@ -169,36 +173,36 @@ llama.cpp offers two main interfaces for running inference: `llama-server` (Open
         ],
         temperature=0.1,
         max_tokens=512,
-        extra_body={"top_k": 50, "repetition_penalty": 1.05},
+        extra_body={"top_k": 50, "repeat_penalty": 1.05},
     )
     print(response.choices[0].message.content)
     ```
 
     **Using curl:**
     ```bash
-    curl http://localhost:8080/v1/chat/completions \
+    curl http://localhost:9931/v1/chat/completions \
       -H "Content-Type: application/json" \
       -d '{
         "model": "lfm2.5-1.2b-instruct",
         "messages": [{"role": "user", "content": "Hello!"}],
         "temperature": 0.1,
         "top_k": 50,
-        "repetition_penalty": 1.05
+        "repeat_penalty": 1.05
       }'
     ```
   </Tab>
 
-  <Tab title="llama-cli">
-    llama-cli provides an interactive terminal interface for chatting with models.
+  <Tab title="llama cli">
+    `llama cli` provides an interactive terminal interface for chatting with models.
 
     ```bash
-    llama-cli -hf LiquidAI/LFM2.5-1.2B-Instruct-GGUF -c 4096 --color -i \
+    llama cli -hf LiquidAI/LFM2.5-1.2B-Instruct-GGUF -c 4096 \
         --temp 0.1 --top-k 50 --repeat-penalty 1.05
     ```
 
     The `-hf` flag downloads the model directly from Hugging Face. Alternatively, use a local model file:
     ```bash
-    llama-cli -m lfm2.5-1.2b-instruct-q4_k_m.gguf -c 4096 --color -i \
+    llama cli -m lfm2.5-1.2b-instruct-q4_k_m.gguf -c 4096 \
         --temp 0.1 --top-k 50 --repeat-penalty 1.05
     ```
 
@@ -206,8 +210,7 @@ llama.cpp offers two main interfaces for running inference: `llama-server` (Open
     * `-hf`: Hugging Face model ID (downloads automatically)
     * `-m`: Path to local GGUF model file
     * `-c`: Context length
-    * `--color`: Colored output
-    * `-i`: Interactive mode
+    * `-p`: Prompt to start with. Add `-st` (`--single-turn`) to answer once and exit.
     * `-ngl 99`: Offload layers to GPU (if available)
 
     Press Ctrl+C to exit.
@@ -223,16 +226,16 @@ Control text generation behavior using parameters in the OpenAI-compatible API o
 * **`top_k`** (`int`): Limits to top-k most probable tokens. Typical range: 1-100
 * **`min_p`** (`float`): Filters tokens below `min_p * max_probability`. Typical range: 0.05-0.3
 * **`max_tokens`** / **`--n-predict`** (`int`): Maximum number of tokens to generate
-* **`repetition_penalty`** / **`--repeat-penalty`** (`float`): Penalty for repeating tokens (>1.0 = discourage repetition). Typical range: 1.0-1.5
+* **`repeat_penalty`** / **`--repeat-penalty`** (`float`): Penalty for repeating tokens (>1.0 = discourage repetition). Typical range: 1.0-1.5. The server ignores the `repetition_penalty` name used by vLLM and Transformers.
 * **`stop`** (`str` or `list[str]`): Strings that terminate generation when encountered
 
-<Accordion title="llama-server (OpenAI-compatible API) example">
+<Accordion title="llama serve (OpenAI-compatible API) example">
 
   ```python
   from openai import OpenAI
 
   client = OpenAI(
-      base_url="http://localhost:8080/v1",
+      base_url="http://localhost:9931/v1",
       api_key="not-needed"
   )
 
@@ -241,134 +244,140 @@ Control text generation behavior using parameters in the OpenAI-compatible API o
       messages=[{"role": "user", "content": "What is machine learning?"}],
       temperature=0.1,
       max_tokens=512,
-      extra_body={"top_k": 50, "repetition_penalty": 1.05},
+      extra_body={"top_k": 50, "repeat_penalty": 1.05},
   )
   print(response.choices[0].message.content)
   ```
 </Accordion>
 
-For command-line tools (`llama-cli`), use flags like `--temp`, `--top-p`, `--top-k`, `--min-p`, `--repeat-penalty`, and `--n-predict`.
+For `llama cli`, use flags like `--temp`, `--top-p`, `--top-k`, `--min-p`, `--repeat-penalty`, and `--n-predict`.
 
 ## Vision Models
 
-LFM2-VL GGUF models can be used for multimodal inference with llama.cpp.
+LFM vision models (LFM3-VL and LFM2.5-VL) take images, and LFM3-VL also takes video. With `-hf`, llama.cpp downloads the matching vision projector (`mmproj`) automatically. The examples below use [LFM3-VL-2B](/lfm/models/lfm3-vl-2b); the `:Q4_0` tag selects its Quantization-Aware Distillation (QAD) checkpoint.
 
-### Quick Start with llama-cli
-
-Download llama.cpp binaries and run vision inference directly:
+### Command Line
 
 ```bash
-wget https://github.com/ggml-org/llama.cpp/releases/download/b7633/llama-b7633-bin-ubuntu-x64.tar.gz
-tar -xzf llama-b7633-bin-ubuntu-x64.tar.gz
+llama cli -hf LiquidAI/LFM3-VL-2B-GGUF:Q4_0 \
+  --image photo.jpg -p "Describe this image." \
+  --top-p 1.0 --min-p 0.0 --no-reasoning-preserve
 ```
 
-Download a test image:
+For video, use `--video clip.mp4` instead of `--image`. Video input needs `ffmpeg` in `PATH`. Use `--image-max-tokens` to cap the number of tokens per image (lower is faster, coarser).
+
+### Server
+
+```bash
+llama serve -hf LiquidAI/LFM3-VL-2B-GGUF:Q4_0 \
+  --top-p 1.0 --min-p 0.0 --no-reasoning-preserve
+```
+
+Send images as OpenAI `image_url` content parts, either a `data:` URI with base64 bytes or a public URL:
 
 ```python
-import requests
+import base64
+from openai import OpenAI
 
-image_url = "https://cdn.britannica.com/61/93061-050-99147DCE/Statue-of-Liberty-Island-New-York-Bay.jpg"
-img_data = requests.get(image_url).content
-with open("test_image.jpg", "wb") as f:
-    f.write(img_data)
+client = OpenAI(base_url="http://localhost:9931/v1", api_key="not-needed")
+
+with open("photo.jpg", "rb") as f:
+    image_b64 = base64.b64encode(f.read()).decode()
+
+response = client.chat.completions.create(
+    model="LiquidAI/LFM3-VL-2B-GGUF:Q4_0",
+    messages=[
+        {
+            "role": "user",
+            "content": [
+                {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{image_b64}"}},
+                {"type": "text", "text": "What's in this image?"},
+            ],
+        }
+    ],
+)
+print(response.choices[0].message.content)
 ```
 
-Run inference (works on CPU):
+The LFM3 GGUFs store their recommended sampling parameters, so the request needs none. For LFM2.5-VL, see the sampling parameters on its [model page](/lfm/models/lfm25-vl-1.6b).
 
-```bash
-llama-b7633/llama-cli \
-    -hf LiquidAI/LFM2.5-VL-1.6B-GGUF:Q4_0 \
-    --image test_image.jpg \
-    --image-max-tokens 64 \
-    -p "What's in this image?" \
-    -n 128 \
-    --temp 0.1 --min-p 0.15 --repeat-penalty 1.05
-```
-
-The `-hf` flag downloads the model directly from Hugging Face. Use `--image-max-tokens` to control image token budget.
-
-### Alternative: Manual Model Download
-
-If you prefer to download models manually:
-
-```bash
-uv pip install huggingface-hub
-hf download LiquidAI/LFM2-VL-1.6B-GGUF LFM2-VL-1.6B-Q8_0.gguf --local-dir .
-hf download LiquidAI/LFM2-VL-1.6B-GGUF mmproj-LFM2-VL-1.6B-Q8_0.gguf --local-dir .
-```
-
-<Accordion title="Using llama-mtmd-cli">
-  Run inference directly from the command line:
+<Accordion title="Using local model files">
+  Download the model and the projector, then pass both:
 
   ```bash
-  llama-mtmd-cli \
-    -m LFM2-VL-1.6B-Q8_0.gguf \
-    --mmproj mmproj-LFM2-VL-1.6B-Q8_0.gguf \
-    --image image.jpg \
-    -p "What is in this image?" \
-    -ngl 99
+  hf download LiquidAI/LFM3-VL-2B-GGUF LFM3-VL-2B-QAD-Q4_0.gguf mmproj-LFM3-VL-2B-Q8_0.gguf --local-dir .
+
+  llama serve -m LFM3-VL-2B-QAD-Q4_0.gguf --mmproj mmproj-LFM3-VL-2B-Q8_0.gguf \
+    --top-p 1.0 --min-p 0.0 --no-reasoning-preserve
   ```
 </Accordion>
 
-<Accordion title="Using llama-server">
-  Start a vision model server with both the model and mmproj files:
+## Audio and Omni Models
 
-  ```bash
-  llama-server \
-    -m LFM2-VL-1.6B-Q8_0.gguf \
-    --mmproj mmproj-LFM2-VL-1.6B-Q8_0.gguf \
-    -c 4096 \
-    --port 8080 \
-    -ngl 99
-  ```
+[LFM3-Audio-2B](/lfm/models/lfm3-audio-2b) and [LFM3-Omni-2B](/lfm/models/lfm3-omni-2b) take audio input, and LFM3-Omni-2B also takes images and video. With `-hf`, llama.cpp downloads the audio and vision projector automatically.
 
-  Use with the OpenAI Python client:
+### Speech Recognition
 
-  ```python
-  from openai import OpenAI
-  import base64
+Pass `Perform ASR in <language>.` as a system prompt with `-sys`, and mark where the audio goes with `-p "<__media__>"`. As a regular prompt, the model describes the audio instead of transcribing it.
 
-  client = OpenAI(
-      base_url="http://localhost:8080/v1",  # The hosted llama-server
-      api_key="not-needed"
-  )
+```bash
+llama cli -hf LiquidAI/LFM3-Audio-2B-GGUF:Q4_K_M \
+  --audio speech.wav -sys "Perform ASR in English." -p "<__media__>"
+```
 
-  # Encode image to base64
-  with open("image.jpg", "rb") as image_file:
-      image_data = base64.b64encode(image_file.read()).decode("utf-8")
+To ask a question about a recording instead, drop the system prompt and put your question in `-p`.
 
-  response = client.chat.completions.create(
-      model="lfm2.5-vl-1.6b",  # Model name should match your server configuration
-      messages=[
-          {
-              "role": "user",
-              "content": [
-                  {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{image_data}"}},
-                  {"type": "text", "text": "What's in this image?"}
-              ]
-          }
-      ],
-      temperature=0.1,
-      max_tokens=256,
-      extra_body={"min_p": 0.15, "repetition_penalty": 1.05},
-  )
-  print(response.choices[0].message.content)
-  ```
-</Accordion>
+### Server
 
-<Info>
-For a complete working example with step-by-step instructions, see the [llama.cpp Vision Model Colab notebook](https://colab.research.google.com/drive/1q2PjE6O_AahakRlkTNJGYL32MsdUcj7b?usp=sharing).
-</Info>
+```bash
+llama serve -hf LiquidAI/LFM3-Audio-2B-GGUF:Q4_K_M
+```
+
+For LFM3-Omni-2B, add `--reasoning off`. Send audio as OpenAI `input_audio` content parts (WAV, MP3, or FLAC):
+
+```python
+import base64
+from openai import OpenAI
+
+client = OpenAI(base_url="http://localhost:9931/v1", api_key="not-needed")
+
+with open("speech.wav", "rb") as f:
+    audio_b64 = base64.b64encode(f.read()).decode()
+
+response = client.chat.completions.create(
+    model="LiquidAI/LFM3-Audio-2B-GGUF:Q4_K_M",
+    messages=[
+        {"role": "system", "content": "Perform ASR in English."},
+        {"role": "user", "content": [{"type": "input_audio", "input_audio": {"data": audio_b64, "format": "wav"}}]},
+    ],
+)
+print(response.choices[0].message.content)
+```
+
+To try it with your microphone, record a clip first, for example with `arecord -f S16_LE -r 16000 -c 1 -d 5 speech.wav` on Linux. For live audio, the server also handles real-time voice conversations, including tool calls, on its `/v1/realtime` WebSocket API.
+
+### Speech Synthesis
+
+The `llama` command has no TTS subcommand, so speech synthesis uses the separate `llama-tts` program, which ships with llama.cpp:
+
+```bash
+hf download LiquidAI/LFM3-Audio-2B-GGUF LFM3-Audio-2B-Q4_K_M.gguf mmproj-LFM3-Audio-2B-Q8_0.gguf --local-dir .
+
+llama-tts -m LFM3-Audio-2B-Q4_K_M.gguf -mm mmproj-LFM3-Audio-2B-Q8_0.gguf \
+  -p "Hello world" --tts-voice male -o out.wav
+```
+
+`llama serve` also exposes a `POST /tts` endpoint. See the [LFM3-Audio-2B](/lfm/models/lfm3-audio-2b) and [LFM3-Omni-2B](/lfm/models/lfm3-omni-2b) pages for more examples, including image and video input with LFM3-Omni-2B.
 
 ## Speculative Decoding
 
 Some LFM2.5 models have DSpark draft models that make generation faster without changing the output. In llama.cpp, the drafter is a GGUF sidecar that you load next to the target with `-hfd` (or `-md` for a local file):
 
 ```bash
-llama-server -hf LiquidAI/LFM2.5-1.2B-Instruct-GGUF:F16 \
+llama serve -hf LiquidAI/LFM2.5-1.2B-Instruct-GGUF:F16 \
   -hfd LiquidAI/LFM2.5-1.2B-Instruct-DSpark-GGUF:F16 \
   --spec-type draft-dspark --spec-draft-n-max 10 --spec-draft-n-min 0 \
-  -ngl 99 -ngld 99 -fa on --port 8080
+  -ngl 99 -ngld 99 -fa on
 ```
 
 The sidecar cannot run on its own. Speedups are largest with a 16-bit target. Each response's `timings` report `draft_n` and `draft_n_accepted`. See [Speculative Decoding](/lfm/key-concepts/speculative-decoding) for which models have drafters.
@@ -390,7 +399,7 @@ Use `--outtype` to specify the quantization level (e.g., `q4_0`, `q4_k_m`, `q5_k
 
 ## Building Applications
 
-The guides below cover embedding llama.cpp in your own software — from a mobile app calling the C API to a desktop app driving `llama-server`:
+The guides below cover embedding llama.cpp in your own software — from a mobile app calling the C API to a desktop app driving the llama.cpp server:
 
 <CardGroup cols={2}>
   <Card title="iOS & Android" icon="mobile" href="/deployment/on-device/llama-cpp/mobile">
@@ -409,7 +418,7 @@ The guides below cover embedding llama.cpp in your own software — from a mobil
     JSON schema and GBNF grammar constrained generation.
   </Card>
   <Card title="Vision & Audio" icon="image" href="/deployment/on-device/llama-cpp/multimodal">
-    LFM2.5-VL and LFM2.5-Audio on llama.cpp.
+    LFM2.5-VL and LFM2.5-Audio in your own apps.
   </Card>
 </CardGroup>
 
