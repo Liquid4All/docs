@@ -48,6 +48,22 @@
       filter: brightness(0) saturate(100%) invert(63%) sepia(5%) saturate(6230%) hue-rotate(208deg) brightness(94%) contrast(148%);
     }
 
+    /* Top banner - lavender wash with foreground text instead of the solid accent fill.
+       Mintlify forces the text white with a layered !important utility (text-white/95!), which
+       unlayered CSS can't beat, so remap Tailwind's white to the foreground inside the banner */
+    #banner {
+      --color-white: var(--lfm-fg);
+      background-color: var(--lfm-accent-wash) !important;
+    }
+
+    #banner a {
+      text-decoration-color: color-mix(in srgb, var(--lfm-fg) 40%, transparent) !important;
+    }
+
+    #banner button:hover {
+      background-color: color-mix(in srgb, var(--lfm-fg) 8%, transparent) !important;
+    }
+
     /* Navbar "Try our API" button - foreground fill with inverse text, accent on hover (liquid.ai primary button) */
     #topbar-cta-button a > span[class*="bg-primary"] {
       background-color: var(--lfm-fg) !important;
