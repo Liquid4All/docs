@@ -812,10 +812,10 @@
       background-color: var(--lfm-accent) !important;
     }
 
-    /* TOC (Table of Contents) - accent for the active section */
+    /* TOC (Table of Contents) - foreground for the active section, not the accent */
     /* Active TOC links have the text-primary class */
     .toc-item a[class*="text-primary"] {
-      color: var(--lfm-accent) !important;
+      color: var(--lfm-fg) !important;
     }
 
     /* Format buttons for model pages */
