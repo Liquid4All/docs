@@ -358,9 +358,9 @@
       transform: translate(2px, -2px) !important;
     }
 
-    /* Section header (eyebrow) - accent in both modes */
+    /* Section header (eyebrow) - muted, not accent, in both modes */
     .eyebrow {
-      color: var(--lfm-accent) !important;
+      color: var(--lfm-muted) !important;
     }
 
     /* Use-case cards - compact 2x2 tiles on the zinc surface, no border */
