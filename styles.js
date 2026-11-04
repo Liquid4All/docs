@@ -423,9 +423,9 @@
 
     /* Global content links - accent underline with hover effect */
     /* Scope to main content area only, exclude navigation/sidebar/tables */
-    article a:not([class*="block"]):not([aria-label="Navigate to header"]):not(table a),
-    [role="main"] a:not([class*="block"]):not([aria-label="Navigate to header"]):not(table a),
-    .prose a:not([class*="block"]):not([aria-label="Navigate to header"]):not(table a) {
+    article a:not([class*="block"]):not([aria-label="Navigate to header"]):not(table a):not(.back-button),
+    [role="main"] a:not([class*="block"]):not([aria-label="Navigate to header"]):not(table a):not(.back-button),
+    .prose a:not([class*="block"]):not([aria-label="Navigate to header"]):not(table a):not(.back-button) {
       text-decoration: none !important;
       color: inherit !important;
       font-weight: 600 !important;
@@ -437,9 +437,9 @@
       transition: color 0.15s ease, background-size 0.15s ease !important;
     }
 
-    article a:not([class*="block"]):not([aria-label="Navigate to header"]):not(table a):hover,
-    [role="main"] a:not([class*="block"]):not([aria-label="Navigate to header"]):not(table a):hover,
-    .prose a:not([class*="block"]):not([aria-label="Navigate to header"]):not(table a):hover {
+    article a:not([class*="block"]):not([aria-label="Navigate to header"]):not(table a):not(.back-button):hover,
+    [role="main"] a:not([class*="block"]):not([aria-label="Navigate to header"]):not(table a):not(.back-button):hover,
+    .prose a:not([class*="block"]):not([aria-label="Navigate to header"]):not(table a):not(.back-button):hover {
       color: var(--lfm-accent) !important;
       background-size: 100% 1.5px !important;
     }
@@ -829,6 +829,7 @@
       color: var(--lfm-muted) !important;
       text-decoration: none !important;
       background-image: none !important;
+      border-bottom: 0 !important;
     }
 
     .back-button:hover {
