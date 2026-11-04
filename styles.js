@@ -193,6 +193,8 @@
       --lfm-border-strong: #0000001a;
       --lfm-success: #22c55e;
       --lfm-success-strong: #16a34a;
+      /* liquid.ai link color: 42% foreground mixed into the accent (resolves per mode) */
+      --lfm-link: color-mix(in srgb, var(--lfm-fg) 42%, var(--lfm-accent));
     }
 
     :root.dark {
@@ -328,14 +330,11 @@
     .panel li a {
       color: inherit !important;
       font-weight: inherit !important;
-      text-decoration-line: underline !important;
-      text-decoration-color: color-mix(in srgb, currentColor 40%, transparent) !important;
-      text-decoration-thickness: 1px !important;
-      text-underline-offset: 5px !important;
+      text-decoration: none !important;
       background-image: none !important;
       border-bottom: 0 !important;
       padding-bottom: 0 !important;
-      transition: color 0.2s ease, text-decoration-color 0.2s ease !important;
+      transition: color 0.2s ease !important;
     }
 
     /* Arrow icon - grey by default */
@@ -348,10 +347,9 @@
       display: inline-block !important;
     }
 
-    /* Hover: text, underline and arrow turn accent, arrow jumps */
+    /* Hover: text and arrow turn accent, arrow jumps */
     .panel li a:hover {
       color: var(--lfm-accent) !important;
-      text-decoration-color: color-mix(in srgb, var(--lfm-accent) 40%, transparent) !important;
     }
 
     .panel li a:hover::after {
@@ -440,30 +438,27 @@
       color: inherit !important;
     }
 
-    /* Global content links - liquid.ai style: body text with a 40% text-color underline, accent on hover.
+    /* Global content links - liquid.ai's text-link: violet-tinted text (42% foreground into the accent),
+       medium weight, no underline, accent on hover.
        Mintlify's .link adds its own accent border-bottom, so remove it. Inline-styled buttons
        (format buttons on model pages) keep their own look */
     /* Scope to main content area only, exclude navigation/sidebar/tables */
     article a:not([class*="block"]):not([aria-label="Navigate to header"]):not(table a):not(.back-button):not([style*="background"]),
     [role="main"] a:not([class*="block"]):not([aria-label="Navigate to header"]):not(table a):not(.back-button):not([style*="background"]),
     .prose a:not([class*="block"]):not([aria-label="Navigate to header"]):not(table a):not(.back-button):not([style*="background"]) {
-      color: inherit !important;
-      font-weight: inherit !important;
-      text-decoration-line: underline !important;
-      text-decoration-color: color-mix(in srgb, currentColor 40%, transparent) !important;
-      text-decoration-thickness: 1px !important;
-      text-underline-offset: 5px !important;
+      color: var(--lfm-link) !important;
+      font-weight: 500 !important;
+      text-decoration: none !important;
       background-image: none !important;
       border-bottom: 0 !important;
       padding-bottom: 0 !important;
-      transition: color 0.2s ease, text-decoration-color 0.2s ease !important;
+      transition: color 0.2s ease !important;
     }
 
     article a:not([class*="block"]):not([aria-label="Navigate to header"]):not(table a):not(.back-button):not([style*="background"]):hover,
     [role="main"] a:not([class*="block"]):not([aria-label="Navigate to header"]):not(table a):not(.back-button):not([style*="background"]):hover,
     .prose a:not([class*="block"]):not([aria-label="Navigate to header"]):not(table a):not(.back-button):not([style*="background"]):hover {
       color: var(--lfm-accent) !important;
-      text-decoration-color: color-mix(in srgb, var(--lfm-accent) 40%, transparent) !important;
     }
 
     /* Inline-styled buttons (format buttons on model pages) - drop Mintlify's .link accent border */
@@ -698,24 +693,20 @@
 
     /* Normal table links - same treatment as content links, not green checkmarks. */
     table:not(:has(thead th:nth-child(6))) a {
-      color: inherit !important;
-      font-weight: inherit !important;
-      text-decoration-line: underline !important;
-      text-decoration-color: color-mix(in srgb, currentColor 40%, transparent) !important;
-      text-decoration-thickness: 1px !important;
-      text-underline-offset: 5px !important;
+      color: var(--lfm-link) !important;
+      font-weight: 500 !important;
+      text-decoration: none !important;
       background-image: none !important;
       border-bottom: 0 !important;
       padding-bottom: 0 !important;
       background-color: transparent !important;
       box-shadow: none !important;
       padding: 0 !important;
-      transition: color 0.2s ease, text-decoration-color 0.2s ease !important;
+      transition: color 0.2s ease !important;
     }
 
     table:not(:has(thead th:nth-child(6))) a:hover {
       color: var(--lfm-accent) !important;
-      text-decoration-color: color-mix(in srgb, var(--lfm-accent) 40%, transparent) !important;
       background-color: transparent !important;
     }
 
