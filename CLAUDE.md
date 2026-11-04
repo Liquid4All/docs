@@ -125,27 +125,7 @@ Mintlify supports these badge colors:
 
 ### Colors
 
-The palette follows liquid.ai: one violet accent on a zinc neutral scale. `docs.json` sets the Mintlify theme (`primary` `#7c3aed`, `light` `#ac8dff`, `dark` `#7c3aed`), and custom CSS uses the `--lfm-*` tokens defined at the top of `style.css`. Never hard-code hex values in CSS rules. Colors inside page content (badges, format buttons) are left to the page authors. The tokens switch under `.dark`, so one rule usually covers both modes.
-
-| Token | Light | Dark | Use |
-|---|---|---|---|
-| `--lfm-accent` | `#7c3aed` | `#ac8dff` | Links, hover, active text, borders |
-| `--lfm-link` / `--lfm-link-hover` | `#7c3aed` / `#5b1ccc` | `#ac8dff` / `#d4c0ff` | Link text (no underline) |
-| `--lfm-accent-wash` | `#f2ecff` | `#2a1d4a` | Active/hover backgrounds, table headers |
-| `--lfm-fg` | `#18181b` | `#fafafa` | Text |
-| `--lfm-fg-inverse` | `#fafafa` | `#0a0a0a` | Text on `--lfm-fg` fills (navbar button) |
-| `--lfm-muted` | `#71717a` | `#a1a1aa` | Secondary text, icons |
-| `--lfm-surface` | `#f4f4f5` | `#27272a` | Tiles, sub-section rows |
-| `--lfm-subtle` | `#fafafa` | `#18181b` | Code backgrounds |
-| `--lfm-border` / `--lfm-border-strong` | `#00000014` / `#0000001a` | `#ffffff21` / `#ffffff26` | Borders |
-| `--lfm-success` / `--lfm-success-strong` | `#22c55e` / `#16a34a` | `#4ade80` / `#86efac` | Table checkmarks |
-
-```css
-.selector:hover {
-  color: var(--lfm-accent) !important;
-  background-color: var(--lfm-accent-wash) !important;
-}
-```
+Custom CSS uses the `--lfm-*` color tokens defined at the top of `style.css` (they switch under `.dark`). Don't hard-code hex values in CSS rules.
 
 ## Sampling Parameters
 

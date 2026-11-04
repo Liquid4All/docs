@@ -202,18 +202,18 @@
     /* Color tokens - liquid.ai palette: one violet accent on a zinc neutral scale.
        Use these instead of raw hex; .dark switches every token to its dark-mode value */
     :root {
-      --lfm-accent: #7c3aed;
-      --lfm-accent-wash: #f2ecff;
-      --lfm-fg: #18181b;
-      --lfm-fg-inverse: #fafafa;
-      --lfm-muted: #71717a;
-      --lfm-surface: #f4f4f5;
-      --lfm-subtle: #fafafa;
+      --lfm-accent: #7c3aed;          /* hover, active borders, icons */
+      --lfm-accent-wash: #f2ecff;     /* accent-tinted backgrounds (table headers, hover) */
+      --lfm-fg: #18181b;              /* text, and fills such as the banner and navbar button */
+      --lfm-fg-inverse: #fafafa;      /* text on --lfm-fg fills */
+      --lfm-muted: #71717a;           /* secondary text and icons */
+      --lfm-surface: #f4f4f5;         /* tiles, sidebar active item, sub-section rows */
+      --lfm-subtle: #fafafa;          /* code backgrounds */
       --lfm-border: #00000014;
       --lfm-border-strong: #0000001a;
-      --lfm-success: #22c55e;
+      --lfm-success: #22c55e;         /* table checkmarks */
       --lfm-success-strong: #16a34a;
-      --lfm-link: #7c3aed;
+      --lfm-link: #7c3aed;            /* link text */
       --lfm-link-hover: #5b1ccc;
     }
 
