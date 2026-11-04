@@ -119,21 +119,21 @@ a[href*="discord.gg"] svg[class*="arrow"] {
   display: none !important;
 }
 
-/* LEFT sidebar - selected item: accent on the lavender wash, both modes */
+/* LEFT sidebar - selected item: foreground on the zinc surface, not the accent, both modes */
 /* Target links with bg-primary-light class (Mintlify's active state), and group buttons that are
    themselves the current page (e.g. "Liquid Foundation Models" on complete-library) */
 a[class*="bg-primary-light"],
 a[class*="bg-background-light"],
 #sidebar-content button[data-active-nav-item="true"] {
-  color: var(--lfm-accent) !important;
-  background-color: var(--lfm-accent-wash) !important;
+  color: var(--lfm-fg) !important;
+  background-color: var(--lfm-surface) !important;
 }
 
 /* Icon in selected sidebar item - use mask-image coloring */
 a[class*="bg-primary-light"] svg,
 a[class*="bg-background-light"] svg,
 #sidebar-content button[data-active-nav-item="true"] svg {
-  color: var(--lfm-accent) !important;
+  color: var(--lfm-fg) !important;
 }
 
 /* For mask-image based icons, set background color */
@@ -141,13 +141,13 @@ a[class*="bg-primary-light"] [class*="mask-"],
 a[class*="bg-background-light"] [class*="mask-"],
 a[class*="bg-primary-light"] [style*="mask-image"],
 a[class*="bg-background-light"] [style*="mask-image"] {
-  background-color: var(--lfm-accent) !important;
+  background-color: var(--lfm-fg) !important;
 }
 
-/* Sidebar links and section rows: accent on hover */
+/* Sidebar links and section rows: foreground on hover */
 #sidebar-content li > a:hover,
 #sidebar-content li > button:hover {
-  color: var(--lfm-accent) !important;
+  color: var(--lfm-fg) !important;
 }
 
 /* Fix container clipping issues */
