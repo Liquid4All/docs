@@ -223,6 +223,15 @@ samp {
   font-size: var(--lfm-fs-sm) !important;
 }
 
+/* Page body text in the foreground color (Mintlify's prose-gray renders it grey). Also set the prose
+   variables so nested .prose blocks (tabs, accordions) follow */
+#content.mdx-content,
+.mdx-content .prose {
+  --tw-prose-body: var(--lfm-fg);
+  --tw-prose-invert-body: var(--lfm-fg);
+  color: var(--lfm-fg) !important;
+}
+
 /* Page body - em-based prose spacing scales with this. Tabs and Accordions wrap
    their content in a nested .prose, which resets font-size to 1rem, so target them
    too. Scoped by component so callouts and card content keep their smaller sizes */
@@ -262,6 +271,14 @@ pre {
 .mdx-content [data-component-part="card-content"] {
   font-size: var(--lfm-fs-sm) !important;
   line-height: 1.5 !important;
+}
+
+/* Card descriptions are secondary text - keep them muted, not the body foreground */
+.mdx-content [data-component-part="card-content"],
+.mdx-content [data-component-part="card-content"] .prose {
+  --tw-prose-body: var(--lfm-muted);
+  --tw-prose-invert-body: var(--lfm-muted);
+  color: var(--lfm-muted) !important;
 }
 
 /* Left sidebar - collapsible groups (e.g. "Liquid Foundation Models") are buttons, not links */
