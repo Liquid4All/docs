@@ -130,7 +130,7 @@ The palette follows liquid.ai: one violet accent on a zinc neutral scale. `docs.
 | Token | Light | Dark | Use |
 |---|---|---|---|
 | `--lfm-accent` | `#7c3aed` | `#ac8dff` | Links, hover, active text, borders |
-| `--lfm-link` | 42% `--lfm-fg` into `--lfm-accent` | same mix | Link text (no underline; hover goes to `--lfm-accent`) |
+| `--lfm-link` / `--lfm-link-hover` | `#7c3aed` / `#5b1ccc` | `#ac8dff` / `#d4c0ff` | Link text (no underline) |
 | `--lfm-accent-wash` | `#f2ecff` | `#2a1d4a` | Active/hover backgrounds, table headers |
 | `--lfm-fg` | `#18181b` | `#fafafa` | Text |
 | `--lfm-fg-inverse` | `#fafafa` | `#0a0a0a` | Text on `--lfm-fg` fills (navbar button) |

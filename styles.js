@@ -193,8 +193,8 @@
       --lfm-border-strong: #0000001a;
       --lfm-success: #22c55e;
       --lfm-success-strong: #16a34a;
-      /* liquid.ai link color: 42% foreground mixed into the accent (resolves per mode) */
-      --lfm-link: color-mix(in srgb, var(--lfm-fg) 42%, var(--lfm-accent));
+      --lfm-link: #7c3aed;
+      --lfm-link-hover: #5b1ccc;
     }
 
     :root.dark {
@@ -209,6 +209,8 @@
       --lfm-border-strong: #ffffff26;
       --lfm-success: #4ade80;
       --lfm-success-strong: #86efac;
+      --lfm-link: #ac8dff;
+      --lfm-link-hover: #d4c0ff;
     }
 
     /* Page header - title, description, section eyebrow */
@@ -438,8 +440,8 @@
       color: inherit !important;
     }
 
-    /* Global content links - liquid.ai's text-link: violet-tinted text (42% foreground into the accent),
-       medium weight, no underline, accent on hover.
+    /* Global content links - accent text, medium weight, no underline; deeper (light) / paler (dark)
+       accent on hover.
        Mintlify's .link adds its own accent border-bottom, so remove it. Inline-styled buttons
        (format buttons on model pages) keep their own look */
     /* Scope to main content area only, exclude navigation/sidebar/tables */
@@ -458,7 +460,7 @@
     article a:not([class*="block"]):not([aria-label="Navigate to header"]):not(table a):not(.back-button):not([style*="background"]):hover,
     [role="main"] a:not([class*="block"]):not([aria-label="Navigate to header"]):not(table a):not(.back-button):not([style*="background"]):hover,
     .prose a:not([class*="block"]):not([aria-label="Navigate to header"]):not(table a):not(.back-button):not([style*="background"]):hover {
-      color: var(--lfm-accent) !important;
+      color: var(--lfm-link-hover) !important;
     }
 
     /* Inline-styled buttons (format buttons on model pages) - drop Mintlify's .link accent border */
@@ -706,7 +708,7 @@
     }
 
     table:not(:has(thead th:nth-child(6))) a:hover {
-      color: var(--lfm-accent) !important;
+      color: var(--lfm-link-hover) !important;
       background-color: transparent !important;
     }
 
