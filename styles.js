@@ -48,6 +48,22 @@
       filter: brightness(0) saturate(100%) invert(63%) sepia(5%) saturate(6230%) hue-rotate(208deg) brightness(94%) contrast(148%);
     }
 
+    /* Navbar "Try our API" button - foreground fill with inverse text, accent on hover (liquid.ai primary button) */
+    #topbar-cta-button a > span[class*="bg-primary"] {
+      background-color: var(--lfm-fg) !important;
+      opacity: 1 !important;
+      transition: background-color 0.15s ease !important;
+    }
+
+    #topbar-cta-button a:hover > span[class*="bg-primary"] {
+      background-color: var(--lfm-accent) !important;
+    }
+
+    #topbar-cta-button a .text-white,
+    #topbar-cta-button a svg {
+      color: var(--lfm-fg-inverse) !important;
+    }
+
     /* Hide the "Ask Assistant" box in the desktop header. The assistant stays on:
        it opens with Cmd/Ctrl+I, and the mobile header keeps its icon. */
     #assistant-entry {
@@ -169,6 +185,7 @@
       --lfm-accent: #7c3aed;
       --lfm-accent-wash: #f2ecff;
       --lfm-fg: #18181b;
+      --lfm-fg-inverse: #fafafa;
       --lfm-muted: #71717a;
       --lfm-surface: #f4f4f5;
       --lfm-subtle: #fafafa;
@@ -182,6 +199,7 @@
       --lfm-accent: #ac8dff;
       --lfm-accent-wash: #2a1d4a;
       --lfm-fg: #fafafa;
+      --lfm-fg-inverse: #0a0a0a;
       --lfm-muted: #a1a1aa;
       --lfm-surface: #27272a;
       --lfm-subtle: #18181b;

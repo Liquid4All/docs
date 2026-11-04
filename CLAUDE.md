@@ -132,6 +132,7 @@ The palette follows liquid.ai: one violet accent on a zinc neutral scale. `docs.
 | `--lfm-accent` | `#7c3aed` | `#ac8dff` | Links, hover, active text, borders |
 | `--lfm-accent-wash` | `#f2ecff` | `#2a1d4a` | Active/hover backgrounds, table headers |
 | `--lfm-fg` | `#18181b` | `#fafafa` | Text |
+| `--lfm-fg-inverse` | `#fafafa` | `#0a0a0a` | Text on `--lfm-fg` fills (navbar button) |
 | `--lfm-muted` | `#71717a` | `#a1a1aa` | Secondary text, icons |
 | `--lfm-surface` | `#f4f4f5` | `#27272a` | Tiles, sub-section rows |
 | `--lfm-subtle` | `#fafafa` | `#18181b` | Code backgrounds |
