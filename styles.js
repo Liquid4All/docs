@@ -326,15 +326,16 @@
     }
 
     .panel li a {
-      text-decoration: none !important;
       color: inherit !important;
-      font-weight: 600 !important;
-      background-image: linear-gradient(var(--lfm-accent), var(--lfm-accent)) !important;
-      background-size: calc(100% - 1.1em) 1px !important;
-      background-position: left top 100% !important;
-      background-repeat: no-repeat !important;
-      padding-bottom: 3px !important;
-      transition: color 0.15s ease, background-size 0.15s ease !important;
+      font-weight: inherit !important;
+      text-decoration-line: underline !important;
+      text-decoration-color: color-mix(in srgb, currentColor 40%, transparent) !important;
+      text-decoration-thickness: 1px !important;
+      text-underline-offset: 5px !important;
+      background-image: none !important;
+      border-bottom: 0 !important;
+      padding-bottom: 0 !important;
+      transition: color 0.2s ease, text-decoration-color 0.2s ease !important;
     }
 
     /* Arrow icon - grey by default */
@@ -347,10 +348,10 @@
       display: inline-block !important;
     }
 
-    /* Hover: text turns purple, underline thickens, arrow turns purple and jumps */
+    /* Hover: text, underline and arrow turn accent, arrow jumps */
     .panel li a:hover {
       color: var(--lfm-accent) !important;
-      background-size: calc(100% - 1.1em) 1.5px !important;
+      text-decoration-color: color-mix(in srgb, var(--lfm-accent) 40%, transparent) !important;
     }
 
     .panel li a:hover::after {
@@ -439,27 +440,35 @@
       color: inherit !important;
     }
 
-    /* Global content links - accent underline with hover effect */
+    /* Global content links - liquid.ai style: body text with a 40% text-color underline, accent on hover.
+       Mintlify's .link adds its own accent border-bottom, so remove it. Inline-styled buttons
+       (format buttons on model pages) keep their own look */
     /* Scope to main content area only, exclude navigation/sidebar/tables */
-    article a:not([class*="block"]):not([aria-label="Navigate to header"]):not(table a):not(.back-button),
-    [role="main"] a:not([class*="block"]):not([aria-label="Navigate to header"]):not(table a):not(.back-button),
-    .prose a:not([class*="block"]):not([aria-label="Navigate to header"]):not(table a):not(.back-button) {
-      text-decoration: none !important;
+    article a:not([class*="block"]):not([aria-label="Navigate to header"]):not(table a):not(.back-button):not([style*="background"]),
+    [role="main"] a:not([class*="block"]):not([aria-label="Navigate to header"]):not(table a):not(.back-button):not([style*="background"]),
+    .prose a:not([class*="block"]):not([aria-label="Navigate to header"]):not(table a):not(.back-button):not([style*="background"]) {
       color: inherit !important;
-      font-weight: 600 !important;
-      background-image: linear-gradient(var(--lfm-accent), var(--lfm-accent)) !important;
-      background-size: 100% 1px !important;
-      background-position: left top 100% !important;
-      background-repeat: no-repeat !important;
-      padding-bottom: 3px !important;
-      transition: color 0.15s ease, background-size 0.15s ease !important;
+      font-weight: inherit !important;
+      text-decoration-line: underline !important;
+      text-decoration-color: color-mix(in srgb, currentColor 40%, transparent) !important;
+      text-decoration-thickness: 1px !important;
+      text-underline-offset: 5px !important;
+      background-image: none !important;
+      border-bottom: 0 !important;
+      padding-bottom: 0 !important;
+      transition: color 0.2s ease, text-decoration-color 0.2s ease !important;
     }
 
-    article a:not([class*="block"]):not([aria-label="Navigate to header"]):not(table a):not(.back-button):hover,
-    [role="main"] a:not([class*="block"]):not([aria-label="Navigate to header"]):not(table a):not(.back-button):hover,
-    .prose a:not([class*="block"]):not([aria-label="Navigate to header"]):not(table a):not(.back-button):hover {
+    article a:not([class*="block"]):not([aria-label="Navigate to header"]):not(table a):not(.back-button):not([style*="background"]):hover,
+    [role="main"] a:not([class*="block"]):not([aria-label="Navigate to header"]):not(table a):not(.back-button):not([style*="background"]):hover,
+    .prose a:not([class*="block"]):not([aria-label="Navigate to header"]):not(table a):not(.back-button):not([style*="background"]):hover {
       color: var(--lfm-accent) !important;
-      background-size: 100% 1.5px !important;
+      text-decoration-color: color-mix(in srgb, var(--lfm-accent) 40%, transparent) !important;
+    }
+
+    /* Inline-styled buttons (format buttons on model pages) - drop Mintlify's .link accent border */
+    .mdx-content a[style*="background"] {
+      border-bottom: 0 !important;
     }
 
     /* Heading permalink icons should not inherit prose-link underlines */
@@ -687,29 +696,27 @@
       background-image: none !important;
     }
 
-    /* Normal table links - match model-name link treatment, not green checkmarks. */
+    /* Normal table links - same treatment as content links, not green checkmarks. */
     table:not(:has(thead th:nth-child(6))) a {
-      display: inline-block !important;
       color: inherit !important;
-      font-weight: 500 !important;
-      line-height: 1.25 !important;
-      padding: 0.2rem 0.35rem !important;
-      margin: 0.05rem 0.1rem 0.05rem -0.35rem !important;
-      border-radius: 4px !important;
+      font-weight: inherit !important;
+      text-decoration-line: underline !important;
+      text-decoration-color: color-mix(in srgb, currentColor 40%, transparent) !important;
+      text-decoration-thickness: 1px !important;
+      text-underline-offset: 5px !important;
       background-image: none !important;
-      background-color: transparent !important;
       border-bottom: 0 !important;
-      box-shadow: 0 1px 0 var(--lfm-accent) !important;
-      text-decoration: none !important;
-      text-decoration-line: none !important;
-      transition: background-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease !important;
+      padding-bottom: 0 !important;
+      background-color: transparent !important;
+      box-shadow: none !important;
+      padding: 0 !important;
+      transition: color 0.2s ease, text-decoration-color 0.2s ease !important;
     }
 
     table:not(:has(thead th:nth-child(6))) a:hover {
       color: var(--lfm-accent) !important;
-      background-color: var(--lfm-accent-wash) !important;
-      background-image: none !important;
-      box-shadow: 0 1.5px 0 var(--lfm-accent) !important;
+      text-decoration-color: color-mix(in srgb, var(--lfm-accent) 40%, transparent) !important;
+      background-color: transparent !important;
     }
 
     /* Code block styling - ensure visible background contrast */
