@@ -3,6 +3,18 @@
 # To intentionally retire a URL without a redirect, move it from `active` to
 # `deleted`. The CI check skips entries listed under `deleted`.
 active:
+  - /api/guides/audio
+  - /api/guides/batch
+  - /api/guides/decisions
+  - /api/guides/text-generation
+  - /api/guides/vision
+  - /api/guides/your-data
+  - /api/models
+  - /api/overview
+  - /api/quickstart
+  - /api/reference/error-codes
+  - /api/reference/overview
+  - /api/reference/rate-limits
   - /customization/finetuning-frameworks/datasets
   - /customization/finetuning-frameworks/leap-finetune
   - /customization/finetuning-frameworks/trl

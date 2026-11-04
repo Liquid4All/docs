@@ -173,6 +173,60 @@
         ]
       },
       {
+        "tab": "API",
+        "groups": [
+          {
+            "group": "Get started",
+            "icon": "rocket",
+            "pages": [
+              "api/overview",
+              "api/quickstart",
+              "api/models"
+            ]
+          },
+          {
+            "group": "Capabilities",
+            "icon": "wand-magic-sparkles",
+            "pages": [
+              "api/guides/text-generation",
+              "api/guides/vision",
+              "api/guides/audio",
+              "api/guides/decisions"
+            ]
+          },
+          {
+            "group": "Platform",
+            "icon": "server",
+            "pages": [
+              "api/guides/batch",
+              "api/guides/your-data"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "API reference",
+        "groups": [
+          {
+            "group": "API reference",
+            "icon": "code",
+            "pages": [
+              "api/reference/overview",
+              "api/reference/rate-limits",
+              "api/reference/error-codes",
+              {
+                "group": "Endpoints",
+                "expanded": true,
+                "openapi": {
+                  "source": "api/openapi.json",
+                  "directory": "api/reference"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
         "tab": "Examples",
         "groups": [
           {

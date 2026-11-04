@@ -1,0 +1,119 @@
+---
+title: "Audio and speech"
+sidebarTitle: "Audio and speech"
+description: "Transcribe and translate speech with the Liquid API, and get text or spoken replies from Liquid audio models in the same request."
+---
+
+## Models
+
+| Model | Input | Output |
+| ----- | ----- | ------ |
+| `lfm3-audio-2b` | Text, audio | Text, speech |
+| `lfm3-omni-2b` | Text, audio, images | Text, speech |
+
+Both models answer in text by default. Ask for `modalities` `["text", "audio"]` to get speech as well. Requests to these models may be up to 16 MB, room for a few minutes of audio.
+
+## Send audio
+
+Add an `input_audio` part to a user message, with a WAV file as base64 and `format` `wav`. Other formats, including OpenAI's `mp3`, return 400, and audio URLs are not accepted. The models hear at 16 kHz, so 16 kHz mono WAV is the smallest upload that loses nothing; other rates are resampled. This example transcribes a recording:
+
+```bash
+# Audio in, text out. -w0 keeps the base64 on one line (GNU coreutils;
+# on macOS use: base64 -i question.wav).
+AUDIO=$(base64 -w0 question.wav)
+curl https://api.liquid.ai/openai/v1/chat/completions \
+  -H "Authorization: Bearer $LIQUID_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d @- <<EOF
+{
+  "model": "lfm3-audio-2b",
+  "messages": [
+    {"role": "system", "content": "Perform ASR in English."},
+    {"role": "user", "content": [
+      {"type": "input_audio", "input_audio": {"data": "$AUDIO", "format": "wav"}}
+    ]}
+  ]
+}
+EOF
+```
+
+LFM3-Omni also takes `image_url` parts, so a spoken question can be about a photo sent in the same message.
+
+## Get a spoken reply
+
+Ask as you would OpenAI: `modalities` `["text", "audio"]` and `audio` `{"voice": "alloy", "format": "pcm16"}`. The reply comes back in OpenAI's shape, so code written for the OpenAI SDK works unchanged. Streamed, each `delta.audio` carries base64 audio in `data` and the spoken words in `transcript`; `delta.content` stays empty. Without streaming, the whole reply is in `message.audio`.
+
+The format is `pcm16`, headerless 16-bit PCM at 24 kHz mono (what OpenAI requires for streaming), or `wav`, where each streamed chunk is a complete WAV file that plays on its own. OpenAI's other formats, such as `mp3` and `opus`, return 400.
+
+```python expandable
+import base64
+import os
+import wave
+
+from openai import OpenAI
+
+client = OpenAI(api_key=os.environ["LIQUID_API_KEY"], base_url="https://api.liquid.ai/openai/v1")
+
+with open("question.wav", "rb") as f:
+    question = base64.b64encode(f.read()).decode()
+
+stream = client.chat.completions.create(
+    model="lfm3-audio-2b",
+    modalities=["text", "audio"],
+    # The OpenAI SDK requires a voice; any value works and the model's default
+    # voice speaks. Pick a voice in the system prompt instead.
+    audio={"voice": "alloy", "format": "pcm16"},
+    stream=True,
+    messages=[
+        {
+            "role": "user",
+            "content": [
+                {"type": "input_audio", "input_audio": {"data": question, "format": "wav"}}
+            ],
+        }
+    ],
+)
+
+transcript, pcm = "", bytearray()
+for chunk in stream:
+    if not chunk.choices:
+        continue
+    audio = chunk.choices[0].delta.model_dump().get("audio") or {}
+    transcript += audio.get("transcript") or ""
+    if audio.get("data"):
+        # 16-bit PCM, 24 kHz, mono: play it as it arrives, or keep it as here.
+        pcm += base64.b64decode(audio["data"])
+
+with wave.open("reply.wav", "wb") as out:
+    out.setnchannels(1)
+    out.setsampwidth(2)
+    out.setframerate(24_000)
+    out.writeframes(bytes(pcm))
+print(transcript)
+```
+
+For a follow-up turn, send the reply back as an assistant message with its `audio.transcript` as `content`. A message that refers to an earlier reply only by its `audio.id` returns 400.
+
+## Tasks and voices
+
+A system prompt picks the task. These come from the models' cards; swap in your own languages.
+
+| Task | System prompt |
+| ---- | ------------- |
+| Transcribe speech | `Perform ASR in English.` |
+| Translate speech to text | `Translate the following speech from French to English in text form.` |
+| Read text aloud in a chosen voice | `Perform TTS in British English using a male voice.` |
+| Answer in text only | `Respond with text.` |
+
+The voice is chosen in the system prompt too, as a speech language and a female or male voice: American English, British English, Arabic, Chinese, Danish, Dutch, Finnish, French, German, Greek, Hebrew, Italian, Japanese, Korean, Polish, Portuguese, Spanish, Swedish, Turkish. OpenAI's `audio.voice` is accepted, since the SDK requires it, but does not change the voice.
+
+## Usage and billing
+
+`usage` follows OpenAI: `prompt_tokens` and `completion_tokens` include audio, and `prompt_tokens_details.audio_tokens` and `completion_tokens_details.audio_tokens` say how much of each was audio. Audio takes about 12.5 tokens a second each way: every clip in the conversation counts toward the prompt on every turn, and the spoken reply toward the completion. Audio tokens are billed at the model's audio prices where it has them, and text tokens at its text prices.
+
+## Not supported yet
+
+<Note>
+  - The `/audio/transcriptions`, `/audio/speech`, and `/realtime` endpoints. Use chat completions for transcription and speech.
+  - Video input, which LFM3-Omni can understand but the API does not accept yet.
+</Note>
