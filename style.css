@@ -661,8 +661,8 @@ table a:hover {
   background-color: color-mix(in srgb, var(--lfm-success) 15%, transparent) !important;
 }
 
-/* Checkmark cells in model tables - drop Mintlify's accent link underline under the green mark */
-table:has(thead th:nth-child(6)) td:not(:first-child) a {
+/* Model tables - drop Mintlify's accent link underline (model names and checkmarks) */
+table:has(thead th:nth-child(6)) td a {
   border-bottom: 0 !important;
 }
 
