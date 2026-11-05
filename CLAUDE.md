@@ -65,7 +65,7 @@ Always use proper opening/closing tag pairs for Mintlify components:
 - `style.css` - Static CSS loaded by Mintlify
 - `styles.js` - JavaScript-injected CSS for dev mode (some styles only work via JS injection)
 
-Both files should have the same styles for consistency between dev and production.
+Both files should have the same styles for consistency between dev and production. `styles.js` holds a full copy of `style.css` (escape backticks, backslashes and `${` inside the template literal), followed by a few dev-only fixes at the end. After editing `style.css`, copy the change into `styles.js` and run `node --check styles.js`.
 
 ### Card Border Fix
 
@@ -123,18 +123,9 @@ Mintlify supports these badge colors:
 </CardGroup>
 ```
 
-### Accent Color
+### Colors
 
-The purple accent color used throughout: `#864bc4`
-
-```css
-/* For backgrounds */
-background-color: rgba(134, 75, 196, 0.1);
-
-/* For text/borders */
-color: #864bc4;
-border-color: #864bc4;
-```
+Custom CSS uses the `--lfm-*` color tokens defined at the top of `style.css` (they switch under `.dark`). Don't hard-code hex values in CSS rules.
 
 ## Sampling Parameters
 
