@@ -179,7 +179,7 @@
         ]
       },
       {
-        "tab": "API",
+        "tab": "Hosted API",
         "groups": [
           {
             "group": "Get started",
@@ -207,12 +207,7 @@
               "api/guides/batch",
               "api/guides/your-data"
             ]
-          }
-        ]
-      },
-      {
-        "tab": "API reference",
-        "groups": [
+          },
           {
             "group": "API reference",
             "icon": "code",
