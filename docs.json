@@ -185,6 +185,13 @@
               "deployment/gpu-inference/baseten",
               "deployment/gpu-inference/fal"
             ]
+          },
+          {
+            "group": "Agents",
+            "icon": "robot",
+            "pages": [
+              "examples/agent-harnesses"
+            ]
           }
         ]
       },
@@ -244,9 +251,7 @@
             "group": "Getting Started",
             "icon": "rocket",
             "pages": [
-              "examples/index",
-              "examples/connect-ai-tools",
-              "examples/agent-harnesses"
+              "examples/index"
             ]
           },
           {
@@ -312,6 +317,10 @@
     },
     {
       "source": "/lfm/getting-started/connect-ai-tools",
+      "destination": "/lfm/help/connect-ai-tools"
+    },
+    {
+      "source": "/examples/connect-ai-tools",
       "destination": "/lfm/help/connect-ai-tools"
     },
     {
