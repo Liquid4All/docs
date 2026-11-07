@@ -83,7 +83,7 @@
   "navigation": {
     "tabs": [
       {
-        "tab": "LFM",
+        "tab": "Models",
         "groups": [
           {
             "group": "Models",
@@ -112,6 +112,33 @@
             ]
           },
           {
+            "group": "Guides",
+            "icon": "book-open",
+            "pages": [
+              "guides/hardware-evaluation",
+              "guides/use-case-evaluation",
+              "guides/migration-guide",
+              "guides/decision-model-guide"
+            ]
+          },
+          {
+            "group": "Help",
+            "icon": "book",
+            "pages": [
+              "lfm/help/faqs",
+              "lfm/help/troubleshooting",
+              "lfm/help/deprecations",
+              "lfm/help/contributing",
+              "lfm/help/connect-ai-tools",
+              "lfm/help/model-license"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Fine-tune",
+        "groups": [
+          {
             "group": "Fine-tuning",
             "icon": "sliders",
             "pages": [
@@ -121,7 +148,12 @@
               "lfm/fine-tuning/trl",
               "lfm/fine-tuning/unsloth"
             ]
-          },
+          }
+        ]
+      },
+      {
+        "tab": "Deploy",
+        "groups": [
           {
             "group": "Edge Inference",
             "icon": "mobile",
@@ -152,28 +184,6 @@
               "deployment/gpu-inference/modal",
               "deployment/gpu-inference/baseten",
               "deployment/gpu-inference/fal"
-            ]
-          },
-          {
-            "group": "Guides",
-            "icon": "book-open",
-            "pages": [
-              "guides/hardware-evaluation",
-              "guides/use-case-evaluation",
-              "guides/migration-guide",
-              "guides/decision-model-guide"
-            ]
-          },
-          {
-            "group": "Help",
-            "icon": "book",
-            "pages": [
-              "lfm/help/faqs",
-              "lfm/help/troubleshooting",
-              "lfm/help/deprecations",
-              "lfm/help/contributing",
-              "lfm/help/connect-ai-tools",
-              "lfm/help/model-license"
             ]
           }
         ]
