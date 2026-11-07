@@ -238,7 +238,7 @@
         ]
       },
       {
-        "tab": "Examples",
+        "tab": "Tutorials",
         "groups": [
           {
             "group": "Getting Started",
@@ -250,7 +250,7 @@
             ]
           },
           {
-            "group": "Laptop Examples",
+            "group": "Laptop",
             "icon": "laptop",
             "pages": [
               "examples/laptop-examples/invoice-extractor-tool-with-liquid-nanos",
@@ -264,7 +264,7 @@
             ]
           },
           {
-            "group": "Android Examples",
+            "group": "Android",
             "icon": "robot",
             "pages": [
               "examples/android/slogan-generator",
@@ -275,7 +275,7 @@
             ]
           },
           {
-            "group": "Web Examples",
+            "group": "Web",
             "icon": "globe",
             "pages": [
               "examples/web/vl-webgpu-demo",
@@ -284,7 +284,7 @@
             ]
           },
           {
-            "group": "Model Customization",
+            "group": "Fine-tuning",
             "icon": "sliders",
             "pages": [
               "examples/customize-models/car-maker-identification",
