@@ -52,80 +52,21 @@ Always use proper opening/closing tag pairs for Mintlify components:
 </CardGroup>
 ```
 
-## Styling Approach
+## Styling Files
 
-### Priority Order
-
-1. **Use Mintlify's native components first** - CardGroup, Card, Badge, Tabs, Accordion, etc.
-2. **Use Mintlify's built-in props** - icons, colors, columns
-3. **Fall back to custom CSS only when native options don't work**
+Design rules (components, badges, model cards, format buttons, icons, color and corner tokens, CSS patterns) are in [DESIGN.md](DESIGN.md).
 
 ### Custom Style Files
 
 - `style.css` - Static CSS loaded by Mintlify
 - `styles.js` - JavaScript-injected CSS for dev mode (some styles only work via JS injection)
+- `feedback-ack.js` - shows a two-second tick after a feedback click, using Mintlify's documented button IDs and navigation event; leaves native voting in control.
 
-Both files should have the same styles for consistency between dev and production. `styles.js` holds a full copy of `style.css` (escape backticks, backslashes and `${` inside the template literal), followed by a few dev-only fixes at the end. After editing `style.css`, copy the change into `styles.js` and run `node --check styles.js`.
+`style.css` and `styles.js` should have the same styles for consistency between dev and production. `styles.js` holds a full copy of `style.css` (escape backticks, backslashes and `${` inside the template literal), followed by a few dev-only fixes at the end. After editing `style.css`, copy the change into `styles.js` and run `node --check styles.js`.
 
-### Card Border Fix
+### Stray files
 
-Cards have overflow clipping issues. The fix requires:
-
-```css
-.card-group {
-  overflow: visible !important;
-  contain: none !important;
-  padding: 4px !important;
-  margin: -4px !important;
-}
-
-.mdx-content {
-  contain: none !important;
-  overflow: visible !important;
-}
-```
-
-### Light/Dark Mode Targeting
-
-```css
-/* Light mode only */
-:root:not(.dark) .selector { }
-
-/* Dark mode only */
-.dark .selector { }
-```
-
-## Available Badge Colors
-
-Mintlify supports these badge colors:
-- `green`, `red`, `blue`, `yellow`, `orange`, `purple`, `cyan`
-
-```mdx
-<Badge shape="pill" color="green">Recommended</Badge>
-<Badge shape="rounded" icon="circle-check" color="green" size="lg">Latest</Badge>
-```
-
-## Common Patterns
-
-### Model Card Layout
-
-```mdx
-## Section Title &nbsp;&nbsp;<Badge shape="rounded" color="green">Label</Badge>
-
-<CardGroup cols={2}>
-
-<Card title="Model Name" href="https://huggingface.co/...">
-  1.2B · <Badge shape="pill" color="green">Recommended</Badge>
-
-  Short description of the model.
-</Card>
-
-</CardGroup>
-```
-
-### Colors
-
-Custom CSS uses the `--lfm-*` color tokens defined at the top of `style.css` (they switch under `.dark`). Don't hard-code hex values in CSS rules.
+Never save extra `.css` or `.js` files anywhere in the repo, including `.context/`: Mintlify loads every one it finds. Rename them (e.g. `.js.txt`) or keep them outside the repo.
 
 ## Sampling Parameters
 
@@ -182,16 +123,13 @@ If you get MDX parsing errors:
 grep -r '/>' --include="*.mdx" --include="*.md" .
 ```
 
-### Style Not Applying
-
-1. Check if the selector is specific enough
-2. Try adding `!important`
-3. Check if you need to target light/dark mode specifically
-4. For icons using mask-image, set `background-color` instead of `color`
-
 ## Liquid API Reference
 
 `api/openapi.json` generates the endpoint pages of the API reference tab. Never edit it by hand: it is exported from the console repository's endpoint registry (`apps/web/lib/api/docs.ts`) with `bun run openapi:export`. Change the endpoint docs there and re-export. See the README's "Liquid API Reference" section.
+
+## Sidebar Navigation
+
+Each tab in `docs.json` has one wrapper group named after the tab (`{"group": "LFM", "pages": [...]}`). Add new sections inside the wrapper's `pages` as nested groups with `"expanded": false`, not as new top-level groups.
 
 ## Link Snapshot Contract
 
