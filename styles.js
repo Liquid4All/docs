@@ -1208,6 +1208,101 @@
       text-decoration-line: underline !important;
     }
 
+    /* Complete model matrix: keep the desktop layout; adapt only on mobile. */
+    .model-matrix-scroll-hint {
+      display: none;
+    }
+
+    @media (max-width: 767px) {
+      .model-matrix {
+        container-type: inline-size;
+        min-width: 0;
+        max-width: 100%;
+      }
+
+      .model-matrix [data-table-wrapper] {
+        --page-padding: 0px;
+      }
+
+      .model-matrix [data-component-part="scroll-area-viewport"] {
+        overscroll-behavior-x: contain;
+        scroll-padding-left: calc(12rem + var(--page-padding, 0px));
+        scroll-padding-right: var(--page-padding, 0px);
+      }
+
+      .model-matrix table:has(thead th:nth-child(7):not(:nth-child(8))) {
+        min-width: 48rem !important;
+        border-collapse: separate !important;
+      }
+
+      .model-matrix table:has(thead th:nth-child(7):not(:nth-child(8))) th,
+      .model-matrix table:has(thead th:nth-child(7):not(:nth-child(8))) td {
+        min-width: 0 !important;
+        width: auto !important;
+        overflow: visible !important;
+        text-overflow: clip !important;
+        white-space: normal !important;
+        overflow-wrap: anywhere;
+        text-align: center !important;
+        padding: 0.5rem !important;
+        background: var(--lfm-bg);
+      }
+
+      .model-matrix table:has(thead th:nth-child(7):not(:nth-child(8))) tbody td {
+        padding: 0 0.5rem !important;
+        border-bottom: 1px solid var(--lfm-border);
+      }
+
+      .model-matrix table:has(thead th:nth-child(7):not(:nth-child(8))) th:first-child,
+      .model-matrix table:has(thead th:nth-child(7):not(:nth-child(8))) td:first-child {
+        position: sticky;
+        left: var(--page-padding, 0px);
+        z-index: 20;
+        width: 12rem !important;
+        padding: 0.75rem 1rem !important;
+        text-align: left !important;
+        border-right: 1px solid var(--lfm-border);
+      }
+
+      .model-matrix table:has(thead th:nth-child(7):not(:nth-child(8))) tbody td:first-child {
+        padding: 0 1rem !important;
+      }
+
+      .model-matrix table:has(thead th:nth-child(7):not(:nth-child(8))) th:nth-child(n+2):nth-child(-n+6),
+      .model-matrix table:has(thead th:nth-child(7):not(:nth-child(8))) td:nth-child(n+2):nth-child(-n+6) {
+        width: 4rem !important;
+      }
+
+      .model-matrix table:has(thead th:nth-child(7):not(:nth-child(8))) td:nth-child(n+2):nth-child(-n+6) a {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 44px;
+        min-height: 44px;
+        padding: 0 !important;
+      }
+
+      .model-matrix table:has(thead th:nth-child(7):not(:nth-child(8))) tbody tr:has(td:first-child strong) td {
+        padding: 0.5rem 1rem !important;
+        background: var(--lfm-surface);
+      }
+
+      /* Keep training text beside the pinned column on narrow screens. */
+      @container (max-width: 28rem) {
+        .model-matrix table:has(thead th:nth-child(7):not(:nth-child(8))) th:last-child,
+        .model-matrix table:has(thead th:nth-child(7):not(:nth-child(8))) td:last-child {
+          padding-left: max(0.5rem, calc(28rem - 100cqw)) !important;
+        }
+      }
+
+      .model-matrix-scroll-hint {
+        display: block;
+        color: var(--lfm-muted);
+        font-size: var(--lfm-fs-sm);
+      }
+    }
+
+
     /* Code block styling - ensure visible background contrast */
     /* Inline code */
     /* Inline code */
