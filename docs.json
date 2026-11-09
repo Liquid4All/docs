@@ -1,7 +1,7 @@
 {
   "$schema": "https://mintlify.com/docs.json",
   "banner": {
-    "content": "🚀 New: LFM3 — text, vision, audio, omni, and decision models on one new backbone! [Learn more →](/lfm/models/complete-library)",
+    "content": "\ud83d\ude80 New: LFM3 \u2014 text, vision, audio, omni, and decision models on one new backbone! [Learn more \u2192](/lfm/models/complete-library)",
     "dismissible": true
   },
   "theme": "mint",
@@ -87,50 +87,58 @@
         "groups": [
           {
             "group": "Models",
-            "icon": "brain",
             "pages": [
               {
-                "group": "Liquid Foundation Models",
-                "root": "lfm/models/complete-library",
-                "expanded": false,
+                "group": "Models",
+                "icon": "brain",
                 "pages": [
-                  "lfm/models/text-models",
-                  "lfm/models/vision-models",
-                  "lfm/models/audio-models",
-                  "lfm/models/omni-models",
-                  "lfm/models/decision-models",
-                  "lfm/models/liquid-nanos"
-                ]
+                  {
+                    "group": "Liquid Foundation Models",
+                    "root": "lfm/models/complete-library",
+                    "expanded": false,
+                    "pages": [
+                      "lfm/models/text-models",
+                      "lfm/models/vision-models",
+                      "lfm/models/audio-models",
+                      "lfm/models/omni-models",
+                      "lfm/models/decision-models",
+                      "lfm/models/liquid-nanos"
+                    ]
+                  },
+                  "lfm/key-concepts/chat-template",
+                  "lfm/key-concepts/text-generation-and-prompting",
+                  "lfm/key-concepts/tool-use",
+                  "lfm/key-concepts/vision-capabilities",
+                  "lfm/key-concepts/audio-capabilities",
+                  "lfm/key-concepts/omni-capabilities",
+                  "lfm/key-concepts/speculative-decoding"
+                ],
+                "expanded": false
               },
-              "lfm/key-concepts/chat-template",
-              "lfm/key-concepts/text-generation-and-prompting",
-              "lfm/key-concepts/tool-use",
-              "lfm/key-concepts/vision-capabilities",
-              "lfm/key-concepts/audio-capabilities",
-              "lfm/key-concepts/omni-capabilities",
-              "lfm/key-concepts/speculative-decoding"
-            ]
-          },
-          {
-            "group": "Guides",
-            "icon": "book-open",
-            "pages": [
-              "guides/hardware-evaluation",
-              "guides/use-case-evaluation",
-              "guides/migration-guide",
-              "guides/decision-model-guide"
-            ]
-          },
-          {
-            "group": "Help",
-            "icon": "book",
-            "pages": [
-              "lfm/help/faqs",
-              "lfm/help/troubleshooting",
-              "lfm/help/deprecations",
-              "lfm/help/contributing",
-              "lfm/help/connect-ai-tools",
-              "lfm/help/model-license"
+              {
+                "group": "Guides",
+                "icon": "book-open",
+                "pages": [
+                  "guides/hardware-evaluation",
+                  "guides/use-case-evaluation",
+                  "guides/migration-guide",
+                  "guides/decision-model-guide"
+                ],
+                "expanded": false
+              },
+              {
+                "group": "Help",
+                "icon": "book",
+                "pages": [
+                  "lfm/help/faqs",
+                  "lfm/help/troubleshooting",
+                  "lfm/help/deprecations",
+                  "lfm/help/contributing",
+                  "lfm/help/connect-ai-tools",
+                  "lfm/help/model-license"
+                ],
+                "expanded": false
+              }
             ]
           }
         ]
@@ -139,14 +147,20 @@
         "tab": "Fine-tune",
         "groups": [
           {
-            "group": "Fine-tuning",
-            "icon": "sliders",
+            "group": "Fine-tune",
             "pages": [
-              "lfm/fine-tuning/overview",
-              "lfm/fine-tuning/liquid-finetune",
-              "lfm/fine-tuning/datasets",
-              "lfm/fine-tuning/trl",
-              "lfm/fine-tuning/unsloth"
+              {
+                "group": "Fine-tuning",
+                "icon": "sliders",
+                "pages": [
+                  "lfm/fine-tuning/overview",
+                  "lfm/fine-tuning/liquid-finetune",
+                  "lfm/fine-tuning/datasets",
+                  "lfm/fine-tuning/trl",
+                  "lfm/fine-tuning/unsloth"
+                ],
+                "expanded": false
+              }
             ]
           }
         ]
@@ -155,42 +169,51 @@
         "tab": "Deploy",
         "groups": [
           {
-            "group": "Edge Inference",
-            "icon": "mobile",
+            "group": "Deploy",
             "pages": [
-              "deployment/on-device/llama-cpp",
-              "deployment/on-device/llama-cpp/mobile",
-              "deployment/on-device/lm-studio",
-              "deployment/on-device/mlx",
-              "deployment/on-device/onnx",
-              "deployment/on-device/ollama",
-              "deployment/on-device/atomic-chat",
-              "deployment/on-device/llama"
-            ]
-          },
-          {
-            "group": "GPU Inference",
-            "icon": "microchip",
-            "pages": [
-              "deployment/gpu-inference/transformers",
-              "deployment/gpu-inference/sglang",
-              "deployment/gpu-inference/vllm"
-            ]
-          },
-          {
-            "group": "Cloud Inference",
-            "icon": "cloud",
-            "pages": [
-              "deployment/gpu-inference/modal",
-              "deployment/gpu-inference/baseten",
-              "deployment/gpu-inference/fal"
-            ]
-          },
-          {
-            "group": "Agents",
-            "icon": "robot",
-            "pages": [
-              "examples/agent-harnesses"
+              {
+                "group": "Edge Inference",
+                "icon": "mobile",
+                "pages": [
+                  "deployment/on-device/llama-cpp",
+                  "deployment/on-device/llama-cpp/mobile",
+                  "deployment/on-device/lm-studio",
+                  "deployment/on-device/mlx",
+                  "deployment/on-device/onnx",
+                  "deployment/on-device/ollama",
+                  "deployment/on-device/atomic-chat",
+                  "deployment/on-device/llama"
+                ],
+                "expanded": false
+              },
+              {
+                "group": "GPU Inference",
+                "icon": "microchip",
+                "pages": [
+                  "deployment/gpu-inference/transformers",
+                  "deployment/gpu-inference/sglang",
+                  "deployment/gpu-inference/vllm"
+                ],
+                "expanded": false
+              },
+              {
+                "group": "Cloud Inference",
+                "icon": "cloud",
+                "pages": [
+                  "deployment/gpu-inference/modal",
+                  "deployment/gpu-inference/baseten",
+                  "deployment/gpu-inference/fal"
+                ],
+                "expanded": false
+              },
+              {
+                "group": "Agents",
+                "icon": "robot",
+                "pages": [
+                  "examples/agent-harnesses"
+                ],
+                "expanded": false
+              }
             ]
           }
         ]
@@ -199,46 +222,55 @@
         "tab": "Hosted API",
         "groups": [
           {
-            "group": "Get started",
-            "icon": "rocket",
+            "group": "Hosted API",
             "pages": [
-              "api/overview",
-              "api/quickstart",
-              "api/models"
-            ]
-          },
-          {
-            "group": "Capabilities",
-            "icon": "wand-magic-sparkles",
-            "pages": [
-              "api/guides/text-generation",
-              "api/guides/vision",
-              "api/guides/audio",
-              "api/guides/decisions"
-            ]
-          },
-          {
-            "group": "Platform",
-            "icon": "server",
-            "pages": [
-              "api/guides/batch",
-              "api/guides/your-data"
-            ]
-          },
-          {
-            "group": "API reference",
-            "icon": "code",
-            "pages": [
-              "api/reference/overview",
-              "api/reference/rate-limits",
-              "api/reference/error-codes",
               {
-                "group": "Endpoints",
-                "expanded": true,
-                "openapi": {
-                  "source": "api/openapi.json",
-                  "directory": "api/reference"
-                }
+                "group": "Get started",
+                "icon": "rocket",
+                "pages": [
+                  "api/overview",
+                  "api/quickstart",
+                  "api/models"
+                ],
+                "expanded": false
+              },
+              {
+                "group": "Capabilities",
+                "icon": "wand-magic-sparkles",
+                "pages": [
+                  "api/guides/text-generation",
+                  "api/guides/vision",
+                  "api/guides/audio",
+                  "api/guides/decisions"
+                ],
+                "expanded": false
+              },
+              {
+                "group": "Platform",
+                "icon": "server",
+                "pages": [
+                  "api/guides/batch",
+                  "api/guides/your-data"
+                ],
+                "expanded": false
+              },
+              {
+                "group": "API reference",
+                "icon": "code",
+                "pages": [
+                  "api/reference/overview",
+                  "api/reference/rate-limits",
+                  "api/reference/error-codes",
+                  {
+                    "group": "Endpoints",
+                    "expanded": true,
+                    "openapi": {
+                      "source": "api/openapi.json",
+                      "directory": "api/reference"
+                    }
+                  }
+                ],
+                "expanded": false
               }
             ]
           }
@@ -248,54 +280,64 @@
         "tab": "Tutorials",
         "groups": [
           {
-            "group": "Getting Started",
-            "icon": "rocket",
+            "group": "Tutorials",
             "pages": [
-              "examples/index"
-            ]
-          },
-          {
-            "group": "Laptop",
-            "icon": "laptop",
-            "pages": [
-              "examples/laptop-examples/invoice-extractor-tool-with-liquid-nanos",
-              "examples/laptop-examples/build-a-game-with-decision-models",
-              "examples/laptop-examples/audio-to-text-in-real-time",
-              "examples/laptop-examples/lfm2-english-to-korean",
-              "examples/laptop-examples/flight-search-assistant",
-              "examples/laptop-examples/audio-car-cockpit",
-              "examples/laptop-examples/meeting-summarization",
-              "examples/laptop-examples/browser-control"
-            ]
-          },
-          {
-            "group": "Android",
-            "icon": "robot",
-            "pages": [
-              "examples/android/slogan-generator",
-              "examples/android/web-content-summarizer",
-              "examples/android/recipe-generator-constrained-output",
-              "examples/android/vision-language-model-example",
-              "examples/android/leap-koog-agent"
-            ]
-          },
-          {
-            "group": "Web",
-            "icon": "globe",
-            "pages": [
-              "examples/web/vl-webgpu-demo",
-              "examples/web/audio-webgpu-demo",
-              "examples/web/hand-voice-racer"
-            ]
-          },
-          {
-            "group": "Fine-tuning",
-            "icon": "sliders",
-            "pages": [
-              "examples/customize-models/car-maker-identification",
-              "examples/customize-models/home-assistant",
-              "examples/customize-models/satellite-vlm",
-              "examples/customize-models/wildfire-prevention"
+              {
+                "group": "Getting Started",
+                "icon": "rocket",
+                "pages": [
+                  "examples/index"
+                ],
+                "expanded": false
+              },
+              {
+                "group": "Laptop",
+                "icon": "laptop",
+                "pages": [
+                  "examples/laptop-examples/invoice-extractor-tool-with-liquid-nanos",
+                  "examples/laptop-examples/build-a-game-with-decision-models",
+                  "examples/laptop-examples/audio-to-text-in-real-time",
+                  "examples/laptop-examples/lfm2-english-to-korean",
+                  "examples/laptop-examples/flight-search-assistant",
+                  "examples/laptop-examples/audio-car-cockpit",
+                  "examples/laptop-examples/meeting-summarization",
+                  "examples/laptop-examples/browser-control"
+                ],
+                "expanded": false
+              },
+              {
+                "group": "Android",
+                "icon": "robot",
+                "pages": [
+                  "examples/android/slogan-generator",
+                  "examples/android/web-content-summarizer",
+                  "examples/android/recipe-generator-constrained-output",
+                  "examples/android/vision-language-model-example",
+                  "examples/android/leap-koog-agent"
+                ],
+                "expanded": false
+              },
+              {
+                "group": "Web",
+                "icon": "globe",
+                "pages": [
+                  "examples/web/vl-webgpu-demo",
+                  "examples/web/audio-webgpu-demo",
+                  "examples/web/hand-voice-racer"
+                ],
+                "expanded": false
+              },
+              {
+                "group": "Fine-tuning",
+                "icon": "sliders",
+                "pages": [
+                  "examples/customize-models/car-maker-identification",
+                  "examples/customize-models/home-assistant",
+                  "examples/customize-models/satellite-vlm",
+                  "examples/customize-models/wildfire-prevention"
+                ],
+                "expanded": false
+              }
             ]
           }
         ]
