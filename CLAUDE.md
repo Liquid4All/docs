@@ -125,7 +125,7 @@ grep -r '/>' --include="*.mdx" --include="*.md" .
 
 ## Liquid API Reference
 
-`api/openapi.json` generates the endpoint pages of the API reference tab. Never edit it by hand: it is exported from the console repository's endpoint registry (`apps/web/lib/api/docs.ts`) with `bun run openapi:export`. Change the endpoint docs there and re-export. See the README's "Liquid API Reference" section.
+`api/openapi.json` generates the endpoint pages under API reference in the Hosted API tab. Never edit it by hand: it is exported from the console repository's endpoint registry (`apps/web/lib/api/docs.ts`) with `bun run openapi:export`. Change the endpoint docs there and re-export. See the README's "Liquid API Reference" section.
 
 ## Sidebar Navigation
 
