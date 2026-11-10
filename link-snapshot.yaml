@@ -30,6 +30,7 @@ active:
   - /deployment/gpu-inference/sglang
   - /deployment/gpu-inference/transformers
   - /deployment/gpu-inference/vllm
+  - /deployment/gpu-inference/zml-llmd
   - /deployment/on-device/android/advanced-features
   - /deployment/on-device/android/ai-agent-usage-guide
   - /deployment/on-device/android/android-quick-start-guide

@@ -16,41 +16,40 @@ local URL yours prints. You point your harness at that URL.
 
 <Note>
   Each backend uses its own default port, so your endpoint depends on which one you run.
-  llama.cpp and MLX use `8080`, vLLM uses `8000`, SGLang uses `30000`, LM Studio uses `1234`, and Atomic Chat uses `1337`.
+  llama.cpp and MLX use `8080`, vLLM and zml/llmd use `8000`, SGLang uses `30000`, LM Studio uses `1234`, and Atomic Chat uses `1337`.
   The examples in this guide use `http://localhost:8080/v1`. When you configure a harness,
   replace the port with your server's.
 </Note>
 
 ### Model configuration
 
-[LFM2.5-2.6B](/lfm/models/lfm25-2.6b) is a dense 2.6B-parameter model built for on-device deployment. It runs fast on
-consumer hardware and supports tool calling, which makes it a good fit for agentic workloads.
+[LFM3-1.7B](/lfm/models/lfm3-1.7b) is a 1.7B-parameter text model post-trained for agent harnesses such as Hermes Agent,
+OpenClaw, and Pi. It runs fast on consumer hardware and supports native tool calling, which makes it a good fit for agentic workloads.
 
 The two settings worth choosing up front are the quantization and the context length. Both
 trade memory for quality or capacity, so pick them to fit your hardware.
 
-**Quantization.** Because LFM2.5-2.6B is small, you have room to trade size for quality.
+**Quantization.** Because LFM3-1.7B is small, you have room to trade size for quality.
 For the GGUF quants, which cover llama.cpp and LM Studio, we recommend starting with `Q4_K_M` and stepping up to `Q8_0` or `BF16` depending on your available memory.
 
 | Quant    | Size    | Notes                                                    |
 | -------- | ------- | -------------------------------------------------------- |
-| `Q4_K_M` | 1.67 GB | Best balance of size and quality (recommended)           |
-| `Q6_K`   | 2.22 GB | Better quality                                           |
-| `Q8_0`   | 2.87 GB | Near-lossless and a safe choice for tool-heavy agentic work |
-| `BF16`   | 5.4 GB  | Full precision for maximum fidelity and benchmarking       |
+| `Q4_K_M` | 1.1 GB  | Best balance of size and quality (recommended)           |
+| `Q6_K`   | 1.43 GB | Better quality                                           |
+| `Q8_0`   | 1.85 GB | Near-lossless and a safe choice for tool-heavy agentic work |
+| `BF16`   | 3.47 GB | Full precision for maximum fidelity and benchmarking       |
 
-MLX uses its own quantization. Pick the 4-bit, 6-bit, 8-bit, or bf16 build from the MLX repo.
-vLLM and SGLang run the full-precision weights on GPU.
+MLX uses its own quantization. Pick the [4-bit](https://huggingface.co/LiquidAI/LFM3-1.7B-MLX-4bit) or [bf16](https://huggingface.co/LiquidAI/LFM3-1.7B-MLX-bf16) build.
+vLLM and SGLang run the full-precision weights on GPU, and zml/llmd runs the [FP8](https://huggingface.co/LiquidAI/LFM3-1.7B-FP8) weights.
 
 **Need more capability?** [LFM2.5-24B-A2B](/lfm/models/lfm25-24b-a2b) is a 24B-parameter
 reasoning model with only 2B active parameters per token, post-trained inside Hermes Agent,
-OpenClaw, Pi, and OpenCode. It thinks before it answers, so it handles longer, multi-step
-agent tasks more reliably, at the cost of more memory. Every command in this guide works with it
-if you swap the model id.
+OpenClaw, Pi, and OpenCode. It handles longer, multi-step agent tasks and agentic coding more
+reliably, at the cost of more memory. The backend examples below, except zml/llmd, work with it if you swap the model ID.
 
 **Context length**. Agents consume context quickly. If you hit truncation or context-overflow errors mid-run, raise the served
 context or trim the agent's history.
-LFM2.5-2.6B supports up to 128K tokens. The examples serve the full window, but if you're
+LFM3-1.7B supports up to 256K tokens. The examples serve the full window, but if you're
 memory-constrained, serve a smaller window such as 32K tokens, which is usually plenty for a single agent task.
 
 
@@ -66,17 +65,17 @@ Install one backend and start it with tool calling enabled.
     brew install llama.cpp        # macOS
     winget install llama.cpp      # Windows
     ```
-    For Linux and build-from-source options, see the [llama.cpp guide](/deployment/on-device/llama-cpp).
+    LFM3 requires llama.cpp [b11960](https://github.com/ggml-org/llama.cpp/releases/tag/b11960) or newer. For Linux and build-from-source options, see the [llama.cpp guide](/deployment/on-device/llama-cpp).
 
     **Run:**
 
     The `-hf` flag auto-downloads the GGUF. 
 
     ```bash
-    llama-server -hf LiquidAI/LFM2.5-2.6B-GGUF:Q4_K_M \
+    llama-server -hf LiquidAI/LFM3-1.7B-GGUF:Q4_K_M \
       --jinja \
       --port 8080 \
-      -c 131072 \
+      -c 262144 \
       -fa on \
       -ngl 99 \
       --temp 0.1 \
@@ -87,14 +86,14 @@ Install one backend and start it with tool calling enabled.
     | Flag       | Meaning                                           |
     | ---------- | ------------------------------------------------- |
     | `--jinja`  | **Enables tool calling** via the model's template |
-    | `-c 131072` | Context window (128K)                            |
+    | `-c 262144` | Context window (256K)                            |
     | `-fa on`   | Flash attention (needs a Metal or CUDA build)     |
     | `-ngl 99`  | Offload all layers to GPU                         |
   </Tab>
   <Tab title="LM Studio">
     **Install:**
 
-    Download and install [LM Studio](https://lmstudio.ai), then search for **LFM2.5-2.6B** in
+    Download and install [LM Studio](https://lmstudio.ai) with llama.cpp engine 2.65.1 or newer, then search for **LFM3-1.7B** in
     the model catalog and download the `Q4_K_M` GGUF. See the
     [LM Studio guide](/deployment/on-device/lm-studio).
 
@@ -102,7 +101,7 @@ Install one backend and start it with tool calling enabled.
 
     Open the **Developer / Local Server** tab, then:
 
-    1. Load the **LFM2.5-2.6B** model.
+    1. Load the **LFM3-1.7B** model.
     2. Enable **tool use** in the model settings.
     3. Set the context length in the model settings.
     4. Click **Start Server**. It serves at `http://localhost:1234`.
@@ -110,13 +109,13 @@ Install one backend and start it with tool calling enabled.
   <Tab title="Atomic Chat">
     **Install:**
 
-    Download and install [Atomic Chat](https://atomic.chat), then search for **LFM2.5-2.6B** in
+    Download and install [Atomic Chat](https://atomic.chat), then search for **LFM3-1.7B** in
     the model library and download the `Q4_K_M` GGUF. See the
     [Atomic Chat guide](/deployment/on-device/atomic-chat).
 
     **Run:**
 
-    1. Load **LFM2.5-2.6B** in a chat.
+    1. Load **LFM3-1.7B** in a chat.
     2. Open the **Integrations** tab.
     3. Click **Start Server**. It serves the loaded model at `http://localhost:1337` by default; use the port shown in the app.
 
@@ -135,7 +134,7 @@ Install one backend and start it with tool calling enabled.
     `mlx_lm.server` exposes an OpenAI-compatible endpoint:
 
     ```bash
-    mlx_lm.server --model LiquidAI/LFM2.5-2.6B-MLX --port 8080
+    mlx_lm.server --model LiquidAI/LFM3-1.7B-MLX-4bit --port 8080
     ```
     Confirm your `mlx-lm` version forwards tools to the chat template.
   </Tab>
@@ -152,9 +151,10 @@ Install one backend and start it with tool calling enabled.
     Tool calling requires explicit flags:
 
     ```bash
-    vllm serve LiquidAI/LFM2.5-2.6B \
+    vllm serve LiquidAI/LFM3-1.7B \
+      --reasoning-parser qwen3 \
       --enable-auto-tool-choice \
-      --tool-call-parser lfm2
+      --tool-call-parser qwen3_coder
     ```
     Serves at `http://localhost:8000/v1`.
   </Tab>
@@ -172,12 +172,41 @@ Install one backend and start it with tool calling enabled.
 
     ```bash
     sglang serve \
-      --model-path LiquidAI/LFM2.5-2.6B \
+      --model-path LiquidAI/LFM3-1.7B \
       --host 0.0.0.0 \
       --port 30000 \
-      --tool-call-parser lfm2
+      --reasoning-parser qwen3-thinking \
+      --tool-call-parser qwen3_coder
     ```
     Serves at `http://localhost:30000/v1`.
+  </Tab>
+  <Tab title="zml/llmd">
+    **On Mac:**
+
+    ```bash
+    brew install zml/zml/llmd
+    llmd --model=hf://LiquidAI/LFM3-1.7B-FP8 --batch-size=4
+    ```
+
+    Serves at `http://localhost:8000/v1`.
+
+    **Other platforms:**
+
+    On Linux, use the Docker image for your accelerator. For example, on NVIDIA with Docker and NVIDIA Container Toolkit configured:
+
+    ```bash
+    docker run -p 8000:8000 --shm-size=256GB --gpus=all -e HF_TOKEN -it zmlai/llmd:cuda \
+      --model=hf://LiquidAI/LFM3-1.7B-FP8
+    ```
+
+    | Platform | Docker image |
+    | --- | --- |
+    | NVIDIA CUDA | `zmlai/llmd:cuda` |
+    | AMD ROCm | `zmlai/llmd:rocm` |
+    | Intel oneAPI | `zmlai/llmd:oneapi` |
+    | Google TPU | `zmlai/llmd:tpu` |
+
+    Each platform requires its own device flags, see the [zml/llmd guide](/deployment/gpu-inference/zml-llmd#start-the-server).
   </Tab>
 </Tabs>
 
@@ -190,8 +219,8 @@ curl http://localhost:8080/v1/models
 ## Connect your agent harness
 
 Every harness connects the same way: install it, point it at your local server, then run.
-The examples below use `http://localhost:8080/v1` and model id `LFM2.5-2.6B`. Replace the
-port with the one your server prints. Only the exact commands differ per harness.
+The examples below use `http://localhost:8080/v1` and model ID `LFM3-1.7B`. Replace the
+port with the one your server prints and the model ID with the one returned by `/v1/models`. For zml/llmd, use `http://localhost:8000/v1` and `LFM3-1.7B-FP8`. Only the exact commands differ per harness.
 
 <Tabs>
   <Tab title="Hermes Agent">
@@ -213,7 +242,7 @@ port with the one your server prints. Only the exact commands differ per harness
     # choose "Custom endpoint (self-hosted / vLLM / etc.)"
     # API base URL: http://localhost:8080/v1
     # API key:      (leave empty for local)
-    # Model name:   LFM2.5-2.6B
+    # Model name:   LFM3-1.7B
     ```
 
     Or set it directly, then **enable tool-use enforcement** (without it, the model tends to
@@ -222,8 +251,8 @@ port with the one your server prints. Only the exact commands differ per harness
     ```bash
     hermes config set model.provider custom
     hermes config set model.base_url http://localhost:8080/v1
-    hermes config set model.default LFM2.5-2.6B
-    hermes config set model.context_length 131072
+    hermes config set model.default LFM3-1.7B
+    hermes config set model.context_length 262144
     hermes config set model.api_mode chat_completions
     hermes config set agent.tool_use_enforcement true
     ```
@@ -262,10 +291,10 @@ port with the one your server prints. Only the exact commands differ per harness
             api: "openai-completions",
             models: [
               {
-                id: "LFM2.5-2.6B",
-                name: "LFM2.5-2.6B",
+                id: "LFM3-1.7B",
+                name: "LFM3-1.7B",
                 input: ["text"],
-                contextWindow: 131072,
+                contextWindow: 262144,
                 maxTokens: 8192,
                 cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
               },
@@ -279,7 +308,7 @@ port with the one your server prints. Only the exact commands differ per harness
     Select it as the active model:
 
     ```json5
-    { agents: { defaults: { model: { primary: "local/LFM2.5-2.6B" } } } }
+    { agents: { defaults: { model: { primary: "local/LFM3-1.7B" } } } }
     ```
 
     **Run:**
@@ -311,7 +340,7 @@ port with the one your server prints. Only the exact commands differ per harness
           "baseUrl": "http://localhost:8080/v1",
           "api": "openai-completions",
           "apiKey": "local",
-          "models": [{ "id": "LFM2.5-2.6B" }]
+          "models": [{ "id": "LFM3-1.7B" }]
         }
       }
     }
@@ -333,10 +362,11 @@ Now, you have your agent harness running fully locally on your machine.
 
 ## References
 
-- [LFM2.5-2.6B](/lfm/models/lfm25-2.6b)
+- [LFM3-1.7B](/lfm/models/lfm3-1.7b)
 - [llama.cpp deployment](/deployment/on-device/llama-cpp)
 - [vLLM deployment](/deployment/gpu-inference/vllm)
 - [SGLang deployment](/deployment/gpu-inference/sglang)
+- [zml/llmd deployment](/deployment/gpu-inference/zml-llmd)
 - [Hermes Agent documentation](https://hermes-agent.nousresearch.com/docs/)
 - [OpenClaw documentation](https://docs.openclaw.ai/)
 - [Pi documentation](https://pi.dev/docs/)

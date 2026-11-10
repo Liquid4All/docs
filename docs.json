@@ -150,7 +150,8 @@
                 "pages": [
                   "deployment/gpu-inference/transformers",
                   "deployment/gpu-inference/sglang",
-                  "deployment/gpu-inference/vllm"
+                  "deployment/gpu-inference/vllm",
+                  "deployment/gpu-inference/zml-llmd"
                 ]
               },
               {

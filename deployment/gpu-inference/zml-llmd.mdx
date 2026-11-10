@@ -1,0 +1,126 @@
+---
+title: "zml/llmd"
+description: "Run LFM3 locally with zml/llmd on Apple Metal, NVIDIA, AMD, Intel, and Google TPU."
+---
+
+[zml/llmd](https://zml.ai/llmd/) is an inference server built on [zml](https://github.com/zml/zml) that runs LFM3 across Apple Metal, NVIDIA CUDA, AMD ROCm, Intel oneAPI, and Google TPU. zml/llmd serves models exclusively through an OpenAI-compatible API.
+
+<Tip>
+  Use zml/llmd for high-throughput serving and batch processing with minimal setup, no Python dependencies, and fast startup across all supported platforms.
+</Tip>
+
+## Quickstart
+
+LFM3 support is available in **zml/llmd 20261029.0** and later. The examples below use FP8 weights on NVIDIA, AMD, and Apple Metal, and BF16 weights on Intel and Google TPU.
+
+### Start the server
+
+Choose your platform to start the server:
+
+<Tabs>
+  <Tab title="NVIDIA">
+    ### Prerequisites
+
+    A Linux host with an NVIDIA GPU, Docker, the NVIDIA driver, and NVIDIA Container Toolkit configured for GPU access.
+
+    ### Run
+
+    ```bash
+    docker run -p 8000:8000 --shm-size=256GB --gpus=all -e HF_TOKEN -it zmlai/llmd:cuda \
+        --model=hf://LiquidAI/LFM3-1.7B-FP8
+    ```
+  </Tab>
+  <Tab title="AMD">
+    ### Prerequisites
+
+    A Linux host with a supported AMD GPU, Docker, and ROCm-compatible drivers. The GPU devices must be available at `/dev/kfd` and `/dev/dri`.
+
+    ### Run
+
+    ```bash
+    docker run -p 8000:8000 --shm-size=256GB --device=/dev/kfd --device=/dev/dri -e HF_TOKEN -it zmlai/llmd:rocm \
+        --model=hf://LiquidAI/LFM3-1.7B-FP8
+    ```
+  </Tab>
+  <Tab title="Intel">
+    ### Prerequisites
+
+    A Linux host with a supported Intel GPU, Docker, and Intel GPU drivers. The GPU device must be available at `/dev/dri`.
+
+    ### Run
+
+    ```bash
+    docker run -p 8000:8000 --device=/dev/dri -e HF_TOKEN -it zmlai/llmd:oneapi \
+        --model=hf://LiquidAI/LFM3-1.7B
+    ```
+  </Tab>
+  <Tab title="Google TPU">
+    ### Prerequisites
+
+    A Google TPU instance with Docker and the TPU runtime configured. Run the command on the TPU host.
+
+    ### Run
+
+    ```bash
+    docker run --net=host --privileged -e HF_TOKEN -it zmlai/llmd:tpu \
+        --model=hf://LiquidAI/LFM3-1.7B
+    ```
+  </Tab>
+  <Tab title="Apple Metal">
+    ### Prerequisites
+
+    An Apple Silicon Mac with Homebrew installed. zml/llmd runs directly on macOS with Metal GPU acceleration.
+
+    Install zml/llmd:
+
+    ```bash
+    brew install zml/zml/llmd
+    ```
+
+    ### Run
+
+    ```bash
+    llmd --model=hf://LiquidAI/LFM3-1.7B-FP8 --batch-size=4
+    ```
+  </Tab>
+</Tabs>
+
+zml/llmd loads weights directly from Hugging Face through the `hf://` model path. Once the server is ready, check the loaded model:
+
+```bash
+curl http://localhost:8000/v1/models
+```
+
+Send your first request with curl to the OpenAI-compatible chat completions endpoint:
+
+```bash
+curl http://localhost:8000/v1/chat/completions \
+    -H 'Content-Type: application/json' \
+    -d '{
+        "model": "LFM3-1.7B-FP8",
+        "messages": [{"role": "user", "content": "What is the best restaurant in Paris?"}],
+        "temperature": 0.1
+    }'
+```
+
+## Use local model weights
+
+If you have already downloaded the model, pass the local directory to `--model` instead of an `hf://` URL. The directory must contain the complete Hugging Face checkpoint, including configuration, tokenizer files, and safetensors weights.
+
+On Apple Silicon:
+
+```bash
+llmd --model=/absolute/path/to/LFM3-1.7B-FP8 --batch-size=4
+```
+
+With Docker, mount the directory into the container and use the container path. For example, on NVIDIA:
+
+```bash
+docker run -p 8000:8000 --shm-size=256GB --gpus=all \
+    --mount type=bind,source=/absolute/path/to/LFM3-1.7B-FP8,target=/model,readonly \
+    -it zmlai/llmd:cuda --model=/model
+```
+
+## Model formats
+
+zml/llmd supports LFM3 text checkpoints in BF16, FP8, and NVFP4.
