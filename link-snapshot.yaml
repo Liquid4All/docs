@@ -152,6 +152,7 @@ active:
   - /lfm/help/contributing
   - /lfm/help/deprecations
   - /lfm/help/faqs
+  - /lfm/help/model-documentation
   - /lfm/help/model-license
   - /lfm/help/troubleshooting
   - /lfm/inference

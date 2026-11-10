@@ -183,7 +183,8 @@
                   "lfm/help/deprecations",
                   "lfm/help/contributing",
                   "lfm/help/connect-ai-tools",
-                  "lfm/help/model-license"
+                  "lfm/help/model-license",
+                  "lfm/help/model-documentation"
                 ]
               }
             ]
