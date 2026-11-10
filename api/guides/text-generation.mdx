@@ -76,10 +76,6 @@ See [Chat template](/lfm/key-concepts/chat-template) and [Text generation and pr
 
 The API forwards OpenAI's chat parameters, such as `temperature`, `max_tokens`, and `stop`, to the model. It also forwards `top_k` and `repetition_penalty`, which are not part of OpenAI's API: in the Python SDK, pass them in `extra_body`.
 
-<Warning>
-  `top_p` is not supported and returns `400`.
-</Warning>
-
 ## Streaming
 
 Set `stream` to `true` to receive the reply as server-sent events while the model generates it. Each chunk carries the next piece of text in `choices[0].delta.content`, and the final usage chunk carries `usage`.
