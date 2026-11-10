@@ -1,6 +1,6 @@
 ---
 title: "Vision Models"
-description: "Liquid's LFM vision models pair our lightweight LFM text backbones with SigLIP2 image encoders, delivering fast multimodal inference on-device while matching larger VLMs in quality."
+description: "Liquid's LFM vision models pair LFM language backbones with efficient vision encoders for fast image and video understanding on-device."
 icon: "eye"
 ---
 
@@ -26,28 +26,58 @@ icon: "eye"
 </CardGroup>
 </div>
 
-<h2>LFM2.5 Models &nbsp;&nbsp;<Badge shape="rounded" icon="circle-check" color="green" size="lg">Latest release</Badge></h2>
+<h2>LFM3 Models &nbsp;&nbsp;<Badge shape="rounded" icon="circle-check" color="green" size="lg">Latest release</Badge></h2>
 
-<Info>LFM2.5-VL builds on LFM2-VL with extended reinforcment learning training for higher performance while maintaining the same architecture and deployment footprint.</Info>
+<Info>LFM3-VL pairs the LFM3 language backbone with a new in-house vision encoder that combines convolution and attention. It brings video understanding to LFM vision models for the first time, and reasons step by step before answering.</Info>
 
-<CardGroup cols={3}>
+<div className="model-cards">
+<CardGroup cols={2}>
+
+<Card title="LFM3-VL-2B" href="/lfm/models/lfm3-vl-2b">
+  2B <Badge shape="pill" color="green">Recommended</Badge>
+
+  Video understanding, thinking, and spatial and embodied reasoning.
+</Card>
+
+</CardGroup>
+</div>
+
+## LFM2.5 Models
+
+<Info>LFM2.5-VL models are refreshed versions of LFM2-VL, built on new LFM2.5 language backbones (LFM2.5-350M, LFM2.5-1.2B-Base, and LFM2.5-2.6B) with SigLIP2 NaFlex vision encoders. They improve instruction following and multilingual vision understanding, and support function calling.</Info>
+
+<div className="model-cards">
+<CardGroup cols={2}>
 
 <Card title="LFM2.5-VL-3B" href="/lfm/models/lfm25-vl-3b">
-  3B · <Badge shape="pill" color="purple">Most capable</Badge>
+  3B <Badge shape="pill" color="purple">Most capable</Badge>
 
-  Strongest grounding, screen understanding, and function calling.
+  Grounding, screen and document understanding, and function calling.
 </Card>
 
 <Card title="LFM2.5-VL-1.6B" href="/lfm/models/lfm25-vl-1.6b">
-  1.6B · <Badge shape="pill" color="green">Recommended</Badge>
+  1.6B <Badge shape="pill" color="blue">Balanced</Badge>
 
-  Best vision model for most use cases. Fast and accurate.
+  Balance of speed and quality for most use cases.
 </Card>
 
 <Card title="LFM2.5-VL-450M" href="/lfm/models/lfm25-vl-450m">
-  450M · <Badge shape="pill" color="yellow">Fastest</Badge>
+  450M <Badge shape="pill" color="yellow">Fastest</Badge>
 
   Compact vision model for edge deployment and fast inference.
+</Card>
+
+</CardGroup>
+</div>
+
+## Guides
+
+Learn how to use these models in your application:
+
+<CardGroup cols={2}>
+
+<Card title="Vision Capabilities" icon="eye" href="/lfm/key-concepts/vision-capabilities">
+  Image and video understanding, multi-image prompts, OCR, layout annotations, pointing, grounding, and vision-guided tool calling.
 </Card>
 
 </CardGroup>
@@ -59,9 +89,9 @@ Explore practical implementations using vision models:
 <CardGroup cols={2}>
 
 <Card title="Image Understanding with Vision Language Models" href="/examples/android/vision-language-model-example">
-  Analyze images, answer visual questions, and generate descriptions using LFM2-VL-1.6B on Android with Jetpack Compose and Coil.
+  Analyze images, answer visual questions, and generate descriptions using LFM2.5-VL-1.6B on Android with Jetpack Compose and Coil.
 
-  **Platform:** Android · **Uses:** LFM2-VL-1.6B
+  **Platform:** Android · **Uses:** LFM2.5-VL-1.6B
 </Card>
 
 <Card title="Invoice Extractor Tool" href="/examples/laptop-examples/invoice-extractor-tool-with-liquid-nanos">
@@ -86,6 +116,6 @@ Explore practical implementations using vision models:
 
 <Panel>
   - [Liquid Playground](https://playground.liquid.ai/chat?model=cmk0wefde000204jp2knb2qr8)
-  - [HuggingFace Collections](https://huggingface.co/LiquidAI/collections)
+  - [Hugging Face Collections](https://huggingface.co/LiquidAI/collections)
   - [OpenRouter API](https://openrouter.ai/liquid)
 </Panel>

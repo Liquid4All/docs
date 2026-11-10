@@ -1,0 +1,195 @@
+---
+title: "Text generation"
+description: "Generate text with the Liquid API: prompt a model, stream its reply, call tools, and get structured JSON output in a few lines of code."
+---
+
+Generate text with [`POST /openai/v1/chat/completions`](/api/reference/chat/chat-completions). It follows OpenAI's chat completions API, so the official OpenAI SDKs and most OpenAI-compatible frameworks work with the base URL `https://api.liquid.ai/openai/v1`.
+
+<CodeGroup>
+
+```python Python
+import os
+
+from openai import OpenAI
+
+client = OpenAI(api_key=os.environ["LIQUID_API_KEY"], base_url="https://api.liquid.ai/openai/v1")
+
+completion = client.chat.completions.create(
+    model="lfm3-1.7b",
+    messages=[
+        {"role": "system", "content": "You are a concise assistant."},
+        {"role": "user", "content": "Explain what a liquid neural network is in two sentences."},
+    ],
+    temperature=0.1,
+    extra_body={"top_k": 50, "repetition_penalty": 1.1},
+)
+print(completion.choices[0].message.content)
+```
+
+```javascript JavaScript
+import OpenAI from "openai";
+
+const client = new OpenAI({
+  apiKey: process.env.LIQUID_API_KEY,
+  baseURL: "https://api.liquid.ai/openai/v1",
+});
+
+const completion = await client.chat.completions.create({
+  model: "lfm3-1.7b",
+  messages: [
+    { role: "system", content: "You are a concise assistant." },
+    { role: "user", content: "Explain what a liquid neural network is in two sentences." },
+  ],
+  temperature: 0.1,
+  // top_k and repetition_penalty are Liquid extensions to the OpenAI API
+  top_k: 50,
+  repetition_penalty: 1.1,
+});
+console.log(completion.choices[0].message.content);
+```
+
+```bash cURL
+curl https://api.liquid.ai/openai/v1/chat/completions \
+  -H "Authorization: Bearer $LIQUID_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "lfm3-1.7b",
+    "messages": [
+      {"role": "system", "content": "You are a concise assistant."},
+      {"role": "user", "content": "Explain what a liquid neural network is in two sentences."}
+    ],
+    "temperature": 0.1,
+    "top_k": 50,
+    "repetition_penalty": 1.1
+  }'
+```
+
+</CodeGroup>
+
+## Messages and roles
+
+`messages` is the conversation so far. A `system` message sets the model's behavior, `user` messages carry the prompts, and `assistant` messages carry the model's earlier replies. To continue a conversation, send the whole history again with the new user message at the end. The API keeps no conversation state between requests.
+
+See [Chat template](/lfm/key-concepts/chat-template) and [Text generation and prompting](/lfm/key-concepts/text-generation-and-prompting) for how LFMs read a conversation and how to prompt them.
+
+## Sampling parameters
+
+The API forwards OpenAI's chat parameters, such as `temperature`, `max_tokens`, and `stop`, to the model. It also forwards `top_k` and `repetition_penalty`, which are not part of OpenAI's API: in the Python SDK, pass them in `extra_body`.
+
+<Warning>
+  `top_p` is not supported and returns `400`.
+</Warning>
+
+## Streaming
+
+Set `stream` to `true` to receive the reply as server-sent events while the model generates it. Each chunk carries the next piece of text in `choices[0].delta.content`, and the final usage chunk carries `usage`.
+
+<CodeGroup>
+
+```python Python
+stream = client.chat.completions.create(
+    model="lfm3-1.7b",
+    messages=[{"role": "user", "content": "Write a haiku about the ocean."}],
+    temperature=0.1,
+    extra_body={"top_k": 50, "repetition_penalty": 1.1},
+    stream=True,
+)
+for chunk in stream:
+    if chunk.choices:
+        print(chunk.choices[0].delta.content or "", end="", flush=True)
+```
+
+```javascript JavaScript
+const stream = await client.chat.completions.create({
+  model: "lfm3-1.7b",
+  messages: [{ role: "user", content: "Write a haiku about the ocean." }],
+  temperature: 0.1,
+  // top_k and repetition_penalty are Liquid extensions to the OpenAI API
+  top_k: 50,
+  repetition_penalty: 1.1,
+  stream: true,
+});
+for await (const chunk of stream) {
+  process.stdout.write(chunk.choices[0]?.delta?.content ?? "");
+}
+```
+
+```bash cURL
+curl https://api.liquid.ai/openai/v1/chat/completions \
+  -H "Authorization: Bearer $LIQUID_API_KEY" \
+  -H "Content-Type: application/json" \
+  -N \
+  -d '{
+    "model": "lfm3-1.7b",
+    "messages": [{"role": "user", "content": "Write a haiku about the ocean."}],
+    "temperature": 0.1,
+    "top_k": 50,
+    "repetition_penalty": 1.1,
+    "stream": true
+  }'
+```
+
+</CodeGroup>
+
+## Tool calling
+
+Pass OpenAI-style `tools` to let the model call functions you define. The model returns `tool_calls` in its message; run the functions yourself, send their results back as `tool` messages, and call the model again for its final answer. See [Tool use](/lfm/key-concepts/tool-use) for how LFMs format tool calls.
+
+```python
+tools = [
+    {
+        "type": "function",
+        "function": {
+            "name": "get_weather",
+            "description": "Get the current weather for a city.",
+            "parameters": {
+                "type": "object",
+                "properties": {"city": {"type": "string"}},
+                "required": ["city"],
+            },
+        },
+    }
+]
+
+completion = client.chat.completions.create(
+    model="lfm3-1.7b",
+    messages=[{"role": "user", "content": "What's the weather in Boston?"}],
+    tools=tools,
+    temperature=0.1,
+    extra_body={"top_k": 50, "repetition_penalty": 1.1},
+)
+print(completion.choices[0].message.tool_calls)
+```
+
+## Structured output
+
+Set `response_format` to a JSON schema to constrain the reply to JSON that matches it:
+
+```python
+completion = client.chat.completions.create(
+    model="lfm3-1.7b",
+    messages=[{"role": "user", "content": "Extract the city and date: I land in Paris on May 3."}],
+    response_format={
+        "type": "json_schema",
+        "json_schema": {
+            "name": "trip",
+            "schema": {
+                "type": "object",
+                "properties": {"city": {"type": "string"}, "date": {"type": "string"}},
+                "required": ["city", "date"],
+            },
+        },
+    },
+    temperature=0.1,
+    extra_body={"top_k": 50, "repetition_penalty": 1.1},
+)
+print(completion.choices[0].message.content)
+```
+
+The schema is checked before generation starts: keywords the model's grammar can't enforce return `400` instead of failing mid-stream.
+
+## Usage
+
+Every response reports `usage`: `prompt_tokens`, `completion_tokens`, and `total_tokens`, plus `cost` in USD when the model is priced. Requests count toward your organization's [rate limits](/api/reference/rate-limits).
+
+A request body may be up to 4 MB (16 MB for [audio models](/api/guides/audio)). For images, send URLs rather than inline base64 to stay under the limit.

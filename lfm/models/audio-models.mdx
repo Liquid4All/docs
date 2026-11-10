@@ -1,6 +1,6 @@
 ---
 title: "Audio Models"
-description: "Liquid's LFM audio models are among the smallest fully interleaved audio/text-in, audio/text-out models with a complete reasoning backbone — eliminating the need to combine separate TTS/ASR encoders with a standalone language model."
+description: "Liquid's LFM audio models are among the smallest fully interleaved audio and text models, so one model replaces separate ASR, TTS, and language models."
 icon: "headphones"
 ---
 
@@ -8,11 +8,11 @@ icon: "headphones"
 <CardGroup cols={2}>
 
 <Card title="Text-to-Speech" icon="volume-high">
-  Natural speech synthesis with multiple voice styles and personalities.
+  Natural speech synthesis in 18 languages, with female and male voices.
 </Card>
 
 <Card title="Speech Recognition" icon="ear-listen">
-  Multilingual automatic speech recognition and transcription.
+  Multilingual speech recognition, transcription, and translation.
 </Card>
 
 <Card title="Audio-to-Audio" icon="waveform">
@@ -26,34 +26,46 @@ icon: "headphones"
 </CardGroup>
 </div>
 
-<h2>LFM2.5 Models &nbsp;&nbsp;<Badge shape="rounded" icon="circle-check" color="green" size="lg">Latest release</Badge></h2>
+<h2>LFM3 Models &nbsp;&nbsp;<Badge shape="rounded" icon="circle-check" color="green" size="lg">Latest release</Badge></h2>
+
+<Info>LFM3-Audio uses a new architecture with an audio encoder and codec developed in-house. It improves speech quality over LFM2.5-Audio, supports 18 languages, and adds audio understanding, general-purpose audio reasoning, and tool calling.</Info>
+
+<div className="model-cards">
+<CardGroup cols={2}>
+
+<Card title="LFM3-Audio-2B" href="/lfm/models/lfm3-audio-2b">
+  2B <Badge shape="pill" color="green">Recommended</Badge>
+
+  Multilingual audio model for ASR, TTS, voice chat, and audio understanding.
+</Card>
+
+</CardGroup>
+</div>
+
+## LFM2.5 Models
 
 <Info>LFM2.5-Audio adds a custom LFM-based audio detokenizer, llama.cpp-compatible GGUFs for CPU inference, and improved ASR and TTS performance over LFM2-Audio.</Info>
 
+<div className="model-cards">
 <CardGroup cols={2}>
 
-<Card title="LFM2.5-Audio-1.5B" href="/lfm/models/lfm25-audio-1.5b">
-  1.5B · <Badge shape="pill" color="green">Recommended</Badge>
-
-  Best audio model for most use cases. Fast, accurate, and CPU-friendly.
-</Card>
-
 <Card title="LFM2.5-Audio-1.5B-JP" href="/lfm/models/lfm25-audio-1.5b-jp">
-  1.5B · <Badge shape="pill" color="blue">Japanese</Badge>
+  1.5B <Badge shape="pill" color="blue">Japanese</Badge>
 
   Japanese-focused audio model for ASR, TTS, and interleaved voice chat.
 </Card>
 
 </CardGroup>
+</div>
 
-## LFM2 Models
+## Guides
+
+Learn how to use these models in your application:
 
 <CardGroup cols={2}>
 
-<Card title="LFM2-Audio-1.5B" href="/lfm/models/lfm2-audio-1.5b">
-  1.5B · <Badge shape="pill" color="gray">Deprecated</Badge>
-
-  Use the new LFM2.5-Audio-1.5B checkpoint instead.
+<Card title="Audio Capabilities" icon="headphones" href="/lfm/key-concepts/audio-capabilities">
+  Speech recognition, speech synthesis, voice chat, translation, audio understanding, and spoken tool calling.
 </Card>
 
 </CardGroup>
@@ -65,9 +77,9 @@ Explore practical implementations using audio models:
 <CardGroup cols={2}>
 
 <Card title="Real-Time Audio Transcription CLI" href="/examples/laptop-examples/audio-to-text-in-real-time">
-  Transcribe audio files locally in real-time using LFM2-Audio-1.5B with llama.cpp for 100% private, on-device processing.
+  Transcribe audio files locally in real-time using LFM2.5-Audio-1.5B with llama.cpp for 100% private, on-device processing.
 
-  **Platform:** Desktop · **Uses:** LFM2-Audio-1.5B
+  **Platform:** Desktop · **Uses:** LFM2.5-Audio-1.5B
 </Card>
 
 <Card title="Browser Audio Demo with WebGPU" href="/examples/web/audio-webgpu-demo">
@@ -80,6 +92,6 @@ Explore practical implementations using audio models:
 
 <Panel>
   - [Liquid Playground](https://playground.liquid.ai/chat?model=cmk0wefde000204jp2knb2qr8)
-  - [HuggingFace Collections](https://huggingface.co/LiquidAI/collections)
+  - [Hugging Face Collections](https://huggingface.co/LiquidAI/collections)
   - [OpenRouter API](https://openrouter.ai/liquid)
 </Panel>

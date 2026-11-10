@@ -1,0 +1,48 @@
+---
+title: "Rate limits"
+description: "How Liquid API rate limits work per organization and model, how to read the rate limit headers, and what to do when a request is limited."
+---
+
+Inference requests ([chat completions](/api/reference/chat/chat-completions) and [decisions](/api/reference/decision-models/make-decisions)) count toward a limit for your organization and the model you call.
+
+## Your limits
+
+Each model's limit is shared by all of your organization's API keys and console sessions. Your organization's limits for each model are listed on the [Models](https://console.liquid.ai/dashboard/models) page of Liquid Console. To request a higher limit, [contact us](https://www.liquid.ai/connect).
+
+A model may limit requests per minute and per second, and also estimated tokens per minute (TPM) and per second (TPS). Tokens for rate limiting are estimated at four characters of request text per token plus 1,500 per image, then corrected by the response's reported output tokens, so they can differ from billed usage.
+
+<Info>
+  Invalid, unauthorized, unknown-model, and unavailable-model requests do not consume quota.
+</Info>
+
+## Rate limit headers
+
+As in OpenAI's API, locally checked responses carry headers that describe your limit:
+
+| Header | Description |
+| ------ | ----------- |
+| `x-ratelimit-limit-requests` | Maximum requests per minute (per second when only that limit is set), when a request limit applies. |
+| `x-ratelimit-remaining-requests` | Requests remaining in that window. |
+| `x-ratelimit-reset-requests` | Rounded-up duration until that window resets, such as `42s` or `1m0s`. |
+| `x-ratelimit-limit-tokens` | Estimated tokens per minute (per second when only that limit is set), when a token limit applies. |
+| `x-ratelimit-remaining-tokens` | Estimated tokens remaining in that window. |
+| `x-ratelimit-reset-tokens` | Rounded-up duration until that window resets, such as `42s` or `1m0s`. |
+
+## Limited requests
+
+A request over your organization's limit returns `429` with a `Retry-After` header, in integral seconds:
+
+```json
+{
+  "error": {
+    "message": "Rate limit exceeded for model `lfm3-1.7b`. To request a higher limit, contact us at https://www.liquid.ai/connect.",
+    "type": "rate_limit_error",
+    "param": null,
+    "code": "rate_limit_exceeded"
+  }
+}
+```
+
+<Tip>
+  The official OpenAI SDKs retry it automatically. If you call the API directly, wait for `Retry-After` before retrying.
+</Tip>

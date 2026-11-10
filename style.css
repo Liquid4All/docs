@@ -1,5 +1,10 @@
 /* Custom styles for Liquid AI Documentation */
 
+/* Liquid AI brand mono font (body/heading font is set via `fonts` in docs.json) */
+@import url("https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&display=swap");
+/* Newsreader: fallback for the page-title serif */
+@import url("https://fonts.googleapis.com/css2?family=Newsreader:wght@400&display=swap");
+
 /* Fix Tabs component layout - ensure tabpanel appears below tablist */
 .tabs,
 .tab-container {
@@ -9,11 +14,11 @@
 /* Global text color adjustments */
 /* Mintlify uses a div.antialiased wrapper with text-gray-500/dark:text-gray-400 */
 :root:not(.dark) body > div.antialiased {
-  color: #1f2937 !important;
+  color: var(--lfm-fg) !important;
 }
 
 .dark body > div.antialiased {
-  color: #e5e7eb !important;
+  color: var(--lfm-fg) !important;
 }
 
 /* Discord navbar link styling - make icon less bright to match GitHub */
@@ -25,44 +30,200 @@ a[href*="discord.gg"] img {
 /* Hover state - turn purple accent color for both icon and text */
 .navbar-link a[href*="discord"]:hover,
 a[href*="discord.gg"]:hover {
-  color: #864bc4 !important;
+  color: var(--lfm-accent) !important;
 }
 
+/* The icon is an <img>, so tint it to the accent with a filter (#7c3aed light, #ac8dff dark) */
 .navbar-link a[href*="discord"]:hover img,
 a[href*="discord.gg"]:hover img {
   opacity: 1;
-  filter: brightness(0) saturate(100%) invert(32%) sepia(89%) saturate(1500%) hue-rotate(258deg) brightness(87%) contrast(95%);
+  filter: brightness(0) saturate(100%) invert(23%) sepia(69%) saturate(7402%) hue-rotate(259deg) brightness(104%) contrast(86%);
 }
 
-/* Fix card border - consistent 2.5px border on all sides */
+.dark .navbar-link a[href*="discord"]:hover img,
+.dark a[href*="discord.gg"]:hover img {
+  filter: brightness(0) saturate(100%) invert(63%) sepia(5%) saturate(6230%) hue-rotate(208deg) brightness(94%) contrast(148%);
+}
+
+/* Top banner - foreground fill with inverse text (like the "Try our API" button), not the accent.
+   Mintlify forces the text white with a layered !important utility (text-white/95!), which
+   unlayered CSS can't beat, so remap Tailwind's white to the inverse foreground inside the banner */
+#banner {
+  --color-white: var(--lfm-fg-inverse);
+  background-color: var(--lfm-fg) !important;
+}
+
+#banner a {
+  text-decoration-color: color-mix(in srgb, var(--lfm-fg-inverse) 50%, transparent) !important;
+}
+
+#banner a:hover {
+  text-decoration-color: var(--lfm-fg-inverse) !important;
+}
+
+#banner button:hover {
+  background-color: color-mix(in srgb, var(--lfm-fg-inverse) 12%, transparent) !important;
+}
+
+/* Navbar Discord + Cookbook: icons only, no star count */
+#navbar li.navbar-link a {
+  padding: 6px !important;
+}
+
+#navbar li.navbar-link a > span.truncate {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  margin: -1px !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+#navbar li.navbar-link a[href^="https://github.com/"] > span:not(.truncate) {
+  display: none !important;
+}
+
+/* Navbar icons follow the link color */
+#navbar li.navbar-link a {
+  color: var(--lfm-muted) !important;
+}
+
+#navbar li.navbar-link a:hover {
+  color: var(--lfm-accent) !important;
+}
+
+#navbar li.navbar-link a svg[style*="mask-image"] {
+  background-color: currentColor !important;
+}
+
+/* Navbar "Try our API" button - foreground fill with inverse text, accent on hover (liquid.ai primary button) */
+#topbar-cta-button a > span[class*="bg-primary"] {
+  background-color: var(--lfm-fg) !important;
+  opacity: 1 !important;
+  transition: background-color 0.15s ease !important;
+}
+
+#topbar-cta-button a:hover > span[class*="bg-primary"] {
+  background-color: var(--lfm-accent) !important;
+}
+
+#topbar-cta-button a .text-white,
+#topbar-cta-button a svg {
+  color: var(--lfm-fg-inverse) !important;
+}
+
+/* Hide the "Ask Assistant" box in the desktop header. The assistant stays on:
+   it opens with Cmd/Ctrl+I, and the mobile header keeps its icon. */
+#assistant-entry {
+  display: none !important;
+}
+
+/* Mobile drawer: reuse Mintlify's close button inside the header.
+   No dedicated close-button hook is exposed; its accessible label is the fallback. */
+#mobile-nav > button[aria-label="Close navigation"] {
+  left: auto !important;
+  right: 1rem !important;
+  margin-left: 0 !important;
+  width: 2.75rem !important;
+  height: 2.75rem !important;
+}
+
+/* Leave Mintlify's closing-state visibility in control during dismissal. */
+#mobile-nav:not([data-ending-style]) > button[aria-label="Close navigation"] {
+  opacity: 1 !important;
+  pointer-events: auto !important;
+}
+
+/* Reserve the close target plus an 8px gap beside the theme switcher.
+   Keep the header with the close button while the navigation scrolls. */
+#mobile-nav [data-component-part="scroll-area-viewport"] {
+  padding-top: 0 !important;
+}
+
+/* Identify the header by the documented logo hook, not Tailwind class names. */
+#mobile-nav div:has(> a > .nav-logo) {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.5rem;
+  min-height: 3.75rem;
+  padding-top: 1rem;
+  padding-right: 3.25rem;
+  background-color: var(--lfm-bg);
+}
+
+/* Let the logo fit alongside both controls on narrow phones. */
+#mobile-nav .nav-logo {
+  max-width: 100% !important;
+  max-height: 26px;
+  height: auto !important;
+}
+
+/* Feedback click acknowledgement: a temporary tick, keeping the native label. */
+:is(#feedback-thumbs-up, #feedback-thumbs-down)[data-lfm-feedback-acknowledged] {
+  color: var(--lfm-fg) !important;
+  border-color: var(--lfm-fg) !important;
+  background-color: var(--lfm-surface) !important;
+}
+
+:is(#feedback-thumbs-up, #feedback-thumbs-down)[data-lfm-feedback-acknowledged] > svg {
+  display: none !important;
+}
+
+:is(#feedback-thumbs-up, #feedback-thumbs-down)[data-lfm-feedback-acknowledged]::before {
+  content: "";
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
+  background-color: currentColor;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='m5 12 4 4L19 6' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+
+/* Card border clipping fix */
 .card-group {
   overflow: visible !important;
   contain: none !important;
   padding: 4px !important;
 }
 
-/* Card border styling */
+/* Card border: hairline */
 [class*="block"][class*="rounded"][class*="border"]:not(.use-cases *) {
-  border-width: 2.5px !important;
+  border-width: 1px !important;
   border-style: solid !important;
 }
 
-/* Purple accent border and arrow on HOVER only in light mode */
-/* Target both card-group cards AND standalone cards */
-:root:not(.dark) .card-group a[class*="block"][class*="border"]:hover,
-:root:not(.dark) a[class*="block"][class*="border"]:hover {
-  border-color: #864bc4 !important;
+/* Card hover: foreground border, title and arrow */
+@layer utilities {
+  .mdx-content .card:not(.use-cases *):hover[class] {
+    border-color: var(--lfm-fg) !important;
+  }
 }
 
-:root:not(.dark) .card-group a[class*="block"]:hover svg,
-:root:not(.dark) a[class*="block"]:hover svg {
-  color: #864bc4 !important;
+.mdx-content .card:not(.use-cases *):hover [data-component-part="card-title"],
+.mdx-content .card:not(.use-cases *):hover h2.not-prose {
+  color: var(--lfm-fg) !important;
+}
+
+/* External cards: always show the ↗ arrow */
+.mdx-content .card a[href^="http"] div:has(> svg > use[href*="ExternalLink"]) {
+  display: block !important;
+  color: var(--lfm-muted) !important;
+}
+
+/* Card corner arrow */
+.mdx-content .card:not(.use-cases *):hover svg:not([data-component-part="card-icon"] svg) {
+  color: var(--lfm-fg) !important;
 }
 
 /* Card icons - purple accent color in light mode (default state) */
-/* Only target the main icon, not the arrow icon (which contains "arrow" in class) */
-:root:not(.dark) .card-group a[class*="block"] svg:not([class*="arrow"]) {
-  background-color: #864bc4 !important;
+/* Only target the main icon, not the arrow icon (which contains "arrow" in class, or uses Mintlify's ExternalLink symbol) */
+:root:not(.dark) .card-group a[class*="block"] svg:not([class*="arrow"]):not(:has(use[href*="ExternalLink"])) {
+  background-color: var(--lfm-accent) !important;
 }
 
 /* Fix GitHub icon visibility in light mode for standalone Cards (not in card-groups) */
@@ -70,50 +231,498 @@ a[href*="discord.gg"]:hover img {
    buttons don't match. Their <a> has `dark:bg-codeblock/50` (substring "block") and
    `border-standard` (substring "border"), which would otherwise satisfy
    a[class*="block"][class*="border"] and turn their icons into purple squares. */
-:root:not(.dark) .mdx-content [class*="card"] svg:not([class*="arrow"]),
-:root:not(.dark) .mdx-content a[class*="block"][class*="border"] svg:not([class*="arrow"]) {
-  background-color: #864bc4 !important;
+:root:not(.dark) .mdx-content [class*="card"] svg:not([class*="arrow"]):not(:has(use[href*="ExternalLink"])),
+:root:not(.dark) .mdx-content a[class*="block"][class*="border"] svg:not([class*="arrow"]):not(:has(use[href*="ExternalLink"])) {
+  background-color: var(--lfm-accent) !important;
 }
 
 /* For mask-image based icons, also set the color property as fallback */
 :root:not(.dark) .mdx-content [class*="card"] [style*="mask-image"],
 :root:not(.dark) .mdx-content a[class*="block"][class*="border"] [style*="mask-image"] {
-  background-color: #864bc4 !important;
-  color: #864bc4 !important;
+  background-color: var(--lfm-accent) !important;
+  color: var(--lfm-accent) !important;
 }
 
-/* Hide external link arrow on Discord card */
-a[href*="discord"] svg[class*="arrow"],
-a[href*="discord.gg"] svg[class*="arrow"] {
-  display: none !important;
+/* Sidebar: current page (the deepest active item) - foreground on the zinc surface */
+:is(#sidebar-content, #mobile-nav) li[data-active]:not(:has(li[data-active])) > :is(a, button) {
+  color: var(--lfm-fg) !important;
+  background-color: var(--lfm-surface) !important;
 }
 
-/* Light mode LEFT sidebar - selected item styling */
-/* Target links with bg-primary-light class (Mintlify's active state) */
-:root:not(.dark) a[class*="bg-primary-light"],
-:root:not(.dark) a[class*="bg-background-light"] {
-  color: #864bc4 !important;
-  background-color: rgba(134, 75, 196, 0.1) !important;
+/* Icon in the current sidebar item */
+:is(#sidebar-content, #mobile-nav) li[data-active]:not(:has(li[data-active])) > :is(a, button) svg {
+  color: var(--lfm-fg) !important;
 }
 
-/* Icon in selected sidebar item - use mask-image coloring */
-:root:not(.dark) a[class*="bg-primary-light"] svg,
-:root:not(.dark) a[class*="bg-background-light"] svg {
-  color: #864bc4 !important;
+/* Mask-image icon in the current sidebar item */
+:is(#sidebar-content, #mobile-nav) li[data-active]:not(:has(li[data-active])) > :is(a, button) [style*="mask-image"] {
+  background-color: var(--lfm-fg) !important;
 }
 
-/* For mask-image based icons, set background color */
-:root:not(.dark) a[class*="bg-primary-light"] [class*="mask-"],
-:root:not(.dark) a[class*="bg-background-light"] [class*="mask-"],
-:root:not(.dark) a[class*="bg-primary-light"] [style*="mask-image"],
-:root:not(.dark) a[class*="bg-background-light"] [style*="mask-image"] {
-  background-color: #864bc4 !important;
+/* Sidebar links and section rows: foreground on hover */
+#sidebar-content li > a:hover,
+#sidebar-content li > button:hover {
+  color: var(--lfm-fg) !important;
 }
 
 /* Fix container clipping issues */
 .mdx-content {
   contain: none !important;
   overflow: visible !important;
+}
+
+/* Code font - Liquid AI brand mono */
+code,
+pre,
+kbd,
+samp {
+  font-family: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace !important;
+}
+
+/* Typography scale - the only font sizes used across the site */
+:root {
+  --lfm-fs-xs: 12px;
+  --lfm-fs-sm: 13px;
+  --lfm-fs-base: 15px;
+  --lfm-fs-lg: 16px;
+  --lfm-fs-xl: 20px;
+  --lfm-fs-2xl: 32px;
+  /* Serif for page titles and model names */
+  --lfm-font-serif: "Iowan Old Style", "Iowan Old Style BT", "ITC Iowan Old Style", "Newsreader", "Palatino", Georgia,
+    ui-serif, serif;
+}
+
+/* Corner radius: square corners everywhere */
+:root {
+  --lfm-radius: 2px;
+}
+
+/* Color tokens - liquid.ai palette: one violet accent on a zinc neutral scale.
+   Use these instead of raw hex; .dark switches every token to its dark-mode value */
+:root {
+  --lfm-accent: #7c3aed;          /* hover, active borders, icons */
+  --lfm-accent-wash: #f2ecff;     /* accent-tinted backgrounds (table headers, hover) */
+  --lfm-bg: #ffffff;              /* page background */
+  --lfm-title: #000000;           /* article title */
+  --lfm-fg: #18181b;              /* text, and fills such as the banner and navbar button */
+  --lfm-fg-inverse: #fafafa;      /* text on --lfm-fg fills */
+  --lfm-muted: #71717a;           /* secondary text and icons */
+  --lfm-faint: #a1a1aa;           /* eyebrow, Copy page */
+  --lfm-surface: #f4f4f5;         /* tiles, sidebar active item, sub-section rows */
+  --lfm-subtle: #f4f4f5;          /* code block background */
+  --lfm-border: #00000014;
+  --lfm-border-strong: #0000001a;
+  --lfm-success: #22c55e;         /* table checkmarks */
+  --lfm-success-strong: #16a34a;
+  /* in-page links */
+  --lfm-link: color-mix(in srgb, var(--lfm-fg) 42%, var(--lfm-accent));
+  --lfm-link-hover: var(--lfm-accent);
+  --lfm-ring: var(--lfm-fg);      /* keyboard focus outline */
+}
+
+:root.dark {
+  --lfm-accent: #ac8dff;
+  --lfm-accent-wash: #2a1d4a;
+  --lfm-bg: #0a0a0a;
+  --lfm-title: #ffffff;
+  --lfm-fg: #fafafa;
+  --lfm-fg-inverse: #0a0a0a;
+  --lfm-muted: #a1a1aa;
+  --lfm-faint: #71717a;
+  --lfm-surface: #27272a;
+  --lfm-subtle: #27272a;
+  --lfm-border: #ffffff21;
+  --lfm-border-strong: #ffffff26;
+  --lfm-success: #4ade80;
+  --lfm-success-strong: #86efac;
+  --lfm-link: color-mix(in srgb, var(--lfm-fg) 42%, var(--lfm-accent));
+  --lfm-link-hover: var(--lfm-accent);
+  --lfm-ring: var(--lfm-fg);
+}
+
+/* Keyboard focus ring */
+:focus-visible {
+  outline-color: var(--lfm-ring) !important;
+}
+
+/* Corners: square by default */
+*,
+*::before,
+*::after {
+  border-radius: var(--lfm-radius) !important;
+}
+
+/* Keep Mintlify's round step numbers and scrollbar handles. */
+[data-component-part="step-indicator"],
+[data-component-part="scroll-area-thumb"] {
+  border-radius: revert-layer !important;
+}
+
+/* Code block radius (tabbed code groups force rounded-xt!) */
+@layer utilities {
+  .code-block-background[data-component-part="code-block-root"][class] {
+    border-radius: var(--lfm-radius) !important;
+  }
+}
+
+/* Badge colors: green = highlight, others neutral */
+[data-badge] {
+  --color-bg: transparent !important;
+  --color-text: var(--lfm-fg) !important;
+  outline: 1px solid var(--lfm-border) !important;
+  outline-offset: -1px !important;
+}
+
+[data-badge][data-color="green"] {
+  --color-bg: var(--lfm-accent-wash) !important;
+  --color-text: var(--lfm-accent) !important;
+  outline-color: transparent !important;
+}
+
+/* Page header - title, description, section eyebrow */
+#page-title {
+  color: var(--lfm-title) !important;
+  font-size: var(--lfm-fs-2xl) !important;
+  line-height: 1.2 !important;
+  /* Page title: serif */
+  font-family: var(--lfm-font-serif) !important;
+  font-weight: 400 !important;
+  letter-spacing: -0.023em !important;
+}
+
+/* Copy page menu: small, muted */
+#page-context-menu button {
+  height: 24px !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  color: var(--lfm-faint) !important;
+  background-color: transparent !important;
+  border-color: var(--lfm-border) !important;
+  font-size: var(--lfm-fs-xs) !important;
+  transition: color 0.15s ease !important;
+}
+
+#page-context-menu-button {
+  padding-left: 8px !important;
+  padding-right: 8px !important;
+}
+
+#page-context-menu-button > div {
+  gap: 6px !important;
+  font-size: var(--lfm-fs-xs) !important;
+  font-weight: 500 !important;
+  line-height: 1 !important;
+}
+
+#page-context-menu button svg {
+  width: 13px !important;
+  height: 13px !important;
+}
+
+#page-context-menu button[aria-haspopup="menu"] {
+  width: 24px !important;
+  justify-content: center !important;
+}
+
+#page-context-menu button:hover,
+#page-context-menu button[aria-expanded="true"] {
+  color: var(--lfm-fg) !important;
+}
+
+/* Copy page: top right, on the eyebrow line */
+#header:has(.eyebrow) > div:first-child > div:has(> #page-context-menu) {
+  position: static !important;
+}
+
+#header:has(.eyebrow) > div:first-child #page-context-menu {
+  position: absolute !important;
+  top: 0 !important;
+  right: 0 !important;
+}
+
+/* Copy page: keep top right down to a 400px header */
+@container page-header (min-width: 400px) {
+  #header:has(.eyebrow) > div:first-child #page-context-menu {
+    display: flex !important;
+  }
+
+  #header:has(.eyebrow) > #page-context-menu {
+    display: none !important;
+  }
+}
+
+/* Copy page menu items */
+[data-base-ui-portal] [role="menu"] [role="menuitem"]:has(.text-xs) .font-medium {
+  font-size: var(--lfm-fs-sm) !important;
+  font-weight: 400 !important;
+}
+
+#header .prose {
+  font-size: var(--lfm-fs-lg) !important;
+  line-height: 1.5 !important;
+}
+
+/* Eyebrow + Copy page label style */
+.eyebrow {
+  font-size: var(--lfm-fs-xs) !important;
+  font-weight: 500 !important;
+}
+
+/* Page header spacing */
+#header .eyebrow {
+  margin-bottom: 14px !important;
+}
+
+/* Align the first lines of sidebar, article and right column */
+@media (min-width: 1024px) {
+  #header:has(.eyebrow) {
+    margin-top: -5px !important;
+  }
+
+  /* Pages without an eyebrow: keep the title at the same height */
+  #header:not(:has(.eyebrow)) {
+    margin-top: 29px !important;
+  }
+}
+
+/* Right column aligned with the page title */
+:root {
+  --lfm-rail-offset: 40px;
+}
+
+/* TOC offset inside its scroll area */
+#table-of-contents {
+  top: -1.5px !important;
+}
+
+#table-of-contents > [data-component-part="scroll-area-viewport"] {
+  padding-top: calc(2.5rem + var(--lfm-rail-offset)) !important;
+}
+
+.panel {
+  position: relative !important;
+  top: calc(var(--lfm-rail-offset) - 2px) !important;
+}
+
+#header .text-lg.prose {
+  margin-top: 16px !important;
+}
+
+/* Space between header and content (#content only, not API pages) */
+#content-area #content.mdx-content {
+  margin-top: 40px !important;
+}
+
+/* Page body text in the foreground color (Mintlify's prose-gray renders it grey). Also set the prose
+   variables so nested .prose blocks (tabs, accordions) follow */
+#content.mdx-content,
+.mdx-content .prose {
+  --tw-prose-body: var(--lfm-fg);
+  --tw-prose-invert-body: var(--lfm-fg);
+  color: var(--lfm-fg) !important;
+}
+
+/* Page body text size, incl. tabs, accordions and steps */
+#content.mdx-content,
+.mdx-content [data-component-part="tab-content"],
+.mdx-content [data-component-part="accordion-content"],
+.mdx-content [data-component-part="step-content"] {
+  font-size: var(--lfm-fs-base) !important;
+  line-height: 1.65 !important;
+}
+
+/* Accordion content top padding */
+.mdx-content [data-component-part="accordion-content"] {
+  padding-top: 8px !important;
+}
+
+.mdx-content h2 {
+  font-size: var(--lfm-fs-xl) !important;
+  line-height: 1.3 !important;
+}
+
+/* Space above section headings */
+.mdx-content > h2:not(:first-child) {
+  margin-top: 40px !important;
+}
+
+.mdx-content h3 {
+  font-size: var(--lfm-fs-lg) !important;
+  line-height: 1.3 !important;
+}
+
+/* Inline code - slightly smaller than surrounding text (~14px in body copy) */
+.mdx-content code:not(pre code) {
+  font-size: 0.93em !important;
+}
+
+/* Code blocks */
+pre {
+  font-size: var(--lfm-fs-sm) !important;
+  line-height: 1.6 !important;
+}
+
+/* Cards - scoped to .mdx-content to outrank the h2 rule (card titles are h2s) */
+.mdx-content [data-component-part="card-title"] {
+  font-size: var(--lfm-fs-base) !important;
+}
+
+.mdx-content [data-component-part="card-content"] {
+  font-size: var(--lfm-fs-sm) !important;
+  line-height: 1.5 !important;
+}
+
+/* Card descriptions are secondary text - keep them muted, not the body foreground */
+.mdx-content [data-component-part="card-content"],
+.mdx-content [data-component-part="card-content"] .prose {
+  --tw-prose-body: var(--lfm-muted);
+  --tw-prose-invert-body: var(--lfm-muted);
+  color: var(--lfm-muted) !important;
+}
+
+/* Model cards: label row (size + badge), serif name */
+.model-cards .card div:has(> [data-component-part="card-title"]) {
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.model-cards [data-component-part="card-content"] {
+  display: contents !important;
+}
+
+.model-cards [data-component-part="card-content"] > :first-child {
+  order: -1;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 0.5rem !important;
+  margin: 0 0 0.75rem !important;
+  font-family: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace !important;
+  font-size: var(--lfm-fs-xs) !important;
+  letter-spacing: 0.04em !important;
+  text-transform: uppercase !important;
+  color: var(--lfm-muted) !important;
+}
+
+/* Model card badge: body font */
+.model-cards [data-component-part="card-content"] > :first-child > span {
+  font-family: Inter, -apple-system, system-ui, sans-serif !important;
+  letter-spacing: normal !important;
+  text-transform: none !important;
+}
+
+.model-cards [data-component-part="card-title"] {
+  font-family: var(--lfm-font-serif) !important;
+  font-size: var(--lfm-fs-xl) !important;
+  font-weight: 400 !important;
+  line-height: 1.2 !important;
+  letter-spacing: -0.015em !important;
+}
+
+.model-cards [data-component-part="card-content"] > :last-child {
+  margin: 0.375rem 0 0 !important;
+}
+
+/* Left sidebar - collapsible groups (e.g. "Liquid Foundation Models") are buttons, not links */
+.sidebar-group a,
+.sidebar-group button {
+  font-size: var(--lfm-fs-sm) !important;
+  line-height: 1.4 !important;
+}
+
+.sidebar-group-header {
+  font-size: var(--lfm-fs-xs) !important;
+}
+
+/* Sidebar: hide the per-tab wrapper group header */
+#sidebar-content .sidebar-group-header,
+#mobile-nav .sidebar-group-header {
+  display: none !important;
+}
+
+/* Sidebar section rows */
+.sidebar-group > li[data-title] > button {
+  color: var(--lfm-fg) !important;
+  font-weight: 500 !important;
+}
+
+/* Sidebar: space between sections */
+.sidebar-group > li + li {
+  margin-top: 6px !important;
+}
+
+/* Sidebar: child indent under section labels */
+.sidebar-group > li[data-title] > ul {
+  padding-left: 16px !important;
+}
+
+/* Top navbar - tabs and links */
+.nav-tabs-item,
+.navbar-link a {
+  font-size: var(--lfm-fs-sm) !important;
+}
+
+/* No line under the navbar */
+#navbar-transition {
+  border-bottom-width: 0 !important;
+}
+
+
+/* API reference: narrower examples column (24rem) */
+@media (min-width: 1280px) {
+  #content-container:has(#api-playground-2-operation-page) [data-layout-item="side-panel"] {
+    max-width: 24rem !important;
+  }
+
+  /* examples panel width */
+  #content-container:has(#api-playground-2-operation-page) [data-layout-item="side-panel"] > div {
+    width: 24rem !important;
+  }
+
+  /* API reference: examples panel level with Copy page */
+  #content-container:has(#api-playground-2-operation-page) [data-layout-item="side-panel"] {
+    margin-top: -5px !important;
+    top: calc(9.5rem - 5px) !important;
+  }
+
+  html[data-banner-state="visible"] #content-container:has(#api-playground-2-operation-page) [data-layout-item="side-panel"] {
+    top: calc(12rem - 5px) !important;
+  }
+
+  #content-container:has(#api-playground-2-operation-page) #content-area {
+    width: calc(100% - 24rem) !important;
+  }
+}
+
+/* Right TOC */
+#table-of-contents {
+  font-size: var(--lfm-fs-sm) !important;
+  line-height: 1.5 !important;
+}
+
+/* Right column (TOC) width and gap */
+#table-of-contents-layout {
+  width: 17rem !important;
+  padding-left: 4rem !important;
+}
+
+#table-of-contents {
+  width: 13rem !important;
+}
+
+#table-of-contents nav > h2 {
+  font-size: var(--lfm-fs-xs) !important;
+}
+
+/* TOC rows */
+#table-of-contents .toc-item a {
+  line-height: 20px !important;
+  padding-top: 3px !important;
+  padding-bottom: 3px !important;
+}
+
+#table-of-contents-content {
+  margin-top: 10px !important;
 }
 
 .lg\:overflow-x-clip {
@@ -125,7 +734,7 @@ body > div.antialiased {
   overflow: visible !important;
 }
 
-/* Panel styling - right-side custom TOC replacement (matches TOC width) */
+/* Panel (custom right column) width */
 /* Hide panel on mobile/tablet where the right sidebar isn't visible */
 @media (max-width: 1279px) {
   .panel {
@@ -134,7 +743,10 @@ body > div.antialiased {
 }
 
 .panel {
-  width: 16.5rem !important;
+  width: 13rem !important;
+  /* panel gap */
+  margin-left: 1.5rem !important;
+  font-size: var(--lfm-fs-sm) !important;
 }
 
 /* Panel links - spacing and clickable styling */
@@ -149,44 +761,41 @@ body > div.antialiased {
 }
 
 .panel li a {
-  text-decoration: none !important;
   color: inherit !important;
-  font-weight: 600 !important;
-  background-image: linear-gradient(#864bc4, #864bc4) !important;
-  background-size: calc(100% - 1.1em) 1px !important;
-  background-position: left top 100% !important;
-  background-repeat: no-repeat !important;
-  padding-bottom: 3px !important;
-  transition: color 0.15s ease, background-size 0.15s ease !important;
+  font-weight: inherit !important;
+  text-decoration: none !important;
+  background-image: none !important;
+  border-bottom: 0 !important;
+  padding-bottom: 0 !important;
+  transition: color 0.2s ease !important;
 }
 
 /* Arrow icon - grey by default */
 .panel li a::after {
   content: "↗" !important;
   font-size: 0.85em !important;
-  color: #9ca3af !important;
+  color: var(--lfm-muted) !important;
   margin-left: 0.35em !important;
   transition: transform 0.15s ease, color 0.15s ease !important;
   display: inline-block !important;
 }
 
-/* Hover: text turns purple, underline thickens, arrow turns purple and jumps */
+/* Hover: text and arrow turn accent, arrow jumps */
 .panel li a:hover {
-  color: #864bc4 !important;
-  background-size: calc(100% - 1.1em) 1.5px !important;
+  color: var(--lfm-accent) !important;
 }
 
 .panel li a:hover::after {
-  color: #864bc4 !important;
+  color: var(--lfm-accent) !important;
   transform: translate(2px, -2px) !important;
 }
 
-/* Section header (eyebrow) - purple accent in light mode to match dark mode */
-:root:not(.dark) .eyebrow {
-  color: #864bc4 !important;
+/* Eyebrow color */
+.eyebrow {
+  color: var(--lfm-faint) !important;
 }
 
-/* Use-case cards - compact 2x2 tiles with grey background, no border */
+/* Use-case cards - compact 2x2 tiles on the zinc surface, no border */
 .use-cases .card-group {
   padding: 0 !important;
   row-gap: 0.5rem !important;
@@ -199,8 +808,8 @@ body > div.antialiased {
   border: none !important;
   border-color: transparent !important;
   border-width: 0 !important;
-  border-radius: 6px !important;
-  background-color: #f3f4f6 !important;
+  border-radius: var(--lfm-radius) !important;
+  background-color: var(--lfm-surface) !important;
   overflow: visible !important;
   --tw-ring-color: transparent !important;
   --tw-ring-offset-color: transparent !important;
@@ -209,9 +818,9 @@ body > div.antialiased {
   outline: none !important;
 }
 
-/* Override internal card padding and layout - icon inline with title */
+/* Tile padding, icon inline with title */
 .use-cases [data-component-part="card-content-container"] {
-  padding: 0.7rem 0.9rem !important;
+  padding: 1rem 0.9rem !important;
   display: grid !important;
   grid-template-columns: auto 1fr !important;
   align-items: start !important;
@@ -219,47 +828,36 @@ body > div.antialiased {
   row-gap: 0 !important;
 }
 
-/* Icon sizing - scale down from native h-6 w-6 to prevent mask clipping */
+/* Tile icon size and alignment */
+.use-cases {
+  --lfm-tile-title-lh: calc(var(--lfm-fs-base) * 1.3);
+}
+
 .use-cases [data-component-part="card-icon"] {
+  display: flex !important;
+  align-items: center !important;
+  height: var(--lfm-tile-title-lh) !important;
   transform: scale(0.7) !important;
   transform-origin: left center !important;
   margin-right: -0.35rem !important;
 }
 
 .use-cases [data-component-part="card-icon"] svg {
-  background-color: #4b5563 !important;
+  background-color: var(--lfm-muted) !important;
 }
 
-/* Title inline with icon */
+/* Tile title */
 .use-cases [data-component-part="card-title"] {
   margin-top: 0 !important;
-  font-size: 0.9rem !important;
-  color: #374151 !important;
+  line-height: var(--lfm-tile-title-lh) !important;
+  color: var(--lfm-fg) !important;
 }
 
 /* Description text */
 .use-cases [data-component-part="card-content"] {
   margin-top: 0.25rem !important;
-  font-size: 0.85rem !important;
-  color: #4b5563 !important;
+  color: var(--lfm-muted) !important;
   line-height: 1.35 !important;
-}
-
-/* Dark mode use-case cards */
-.dark .use-cases .card {
-  background-color: #2b2e35 !important;
-}
-
-.dark .use-cases [data-component-part="card-title"] {
-  color: #f3f4f6 !important;
-}
-
-.dark .use-cases [data-component-part="card-content"] {
-  color: #b8bfc8 !important;
-}
-
-.dark .use-cases [data-component-part="card-icon"] svg {
-  background-color: #c9cdd4 !important;
 }
 
 /* Capabilities section - tighter spacing, uniform text color */
@@ -281,27 +879,72 @@ body > div.antialiased {
   color: inherit !important;
 }
 
-/* Global content links - purple underline with hover effect */
-/* Scope to main content area only, exclude navigation/sidebar/tables */
-article a:not([class*="block"]):not([aria-label="Navigate to header"]):not(table a),
-[role="main"] a:not([class*="block"]):not([aria-label="Navigate to header"]):not(table a),
-.prose a:not([class*="block"]):not([aria-label="Navigate to header"]):not(table a) {
-  text-decoration: none !important;
-  color: inherit !important;
-  font-weight: 600 !important;
-  background-image: linear-gradient(#864bc4, #864bc4) !important;
-  background-size: 100% 1px !important;
-  background-position: left top 100% !important;
-  background-repeat: no-repeat !important;
-  padding-bottom: 3px !important;
-  transition: color 0.15s ease, background-size 0.15s ease !important;
+/* Callouts: flat Tip/Note/Info/Check; Warning/Danger keep their color */
+.callout {
+  border-width: 1px !important;
 }
 
-article a:not([class*="block"]):not([aria-label="Navigate to header"]):not(table a):hover,
-[role="main"] a:not([class*="block"]):not([aria-label="Navigate to header"]):not(table a):hover,
-.prose a:not([class*="block"]):not([aria-label="Navigate to header"]):not(table a):hover {
-  color: #864bc4 !important;
-  background-size: 100% 1.5px !important;
+.callout[data-callout-type="tip"],
+.callout[data-callout-type="note"],
+.callout[data-callout-type="info"],
+.callout[data-callout-type="check"] {
+  background-color: var(--lfm-surface) !important;
+  border-color: transparent !important;
+}
+
+.callout[data-callout-type="tip"] [data-component-part="callout-content"],
+.callout[data-callout-type="note"] [data-component-part="callout-content"],
+.callout[data-callout-type="info"] [data-component-part="callout-content"],
+.callout[data-callout-type="check"] [data-component-part="callout-content"] {
+  color: var(--lfm-fg) !important;
+}
+
+.callout[data-callout-type="tip"] [data-component-part="callout-icon"] svg,
+.callout[data-callout-type="note"] [data-component-part="callout-icon"] svg,
+.callout[data-callout-type="info"] [data-component-part="callout-icon"] svg {
+  color: var(--lfm-accent) !important;
+}
+
+/* Code blocks inside callouts: page background */
+.callout .code-block {
+  --lfm-subtle: var(--lfm-bg);
+}
+
+/* Callout links */
+.callout [data-component-part="callout-content"] a {
+  -webkit-text-fill-color: var(--lfm-link) !important;
+}
+
+.callout [data-component-part="callout-content"] a:hover {
+  -webkit-text-fill-color: var(--lfm-link-hover) !important;
+}
+
+/* Content links: underline on hover */
+/* Scope to main content area only, exclude navigation/sidebar/tables */
+article a:not([class*="block"]):not([aria-label="Navigate to header"]):not(table a):not(.back-button):not([style*="background"]):not(.colab-link a),
+[role="main"] a:not([class*="block"]):not([aria-label="Navigate to header"]):not(table a):not(.back-button):not([style*="background"]):not(.colab-link a),
+.prose a:not([class*="block"]):not([aria-label="Navigate to header"]):not(table a):not(.back-button):not([style*="background"]):not(.colab-link a) {
+  color: var(--lfm-link) !important;
+  font-weight: 400 !important;
+  text-decoration: none !important;
+  background-image: none !important;
+  border-bottom: 0 !important;
+  padding-bottom: 0 !important;
+  text-decoration-thickness: 1px !important;
+  text-underline-offset: 5px !important;
+  transition: color 0.2s ease, text-decoration-color 0.2s ease !important;
+}
+
+article a:not([class*="block"]):not([aria-label="Navigate to header"]):not(table a):not(.back-button):not([style*="background"]):not(.colab-link a):hover,
+[role="main"] a:not([class*="block"]):not([aria-label="Navigate to header"]):not(table a):not(.back-button):not([style*="background"]):not(.colab-link a):hover,
+.prose a:not([class*="block"]):not([aria-label="Navigate to header"]):not(table a):not(.back-button):not([style*="background"]):not(.colab-link a):hover {
+  color: var(--lfm-link-hover) !important;
+  text-decoration-line: underline !important;
+}
+
+/* Format buttons: no link border */
+.mdx-content a[style*="background"] {
+  border-bottom: 0 !important;
 }
 
 /* Heading permalink icons should not inherit prose-link underlines */
@@ -319,6 +962,7 @@ article a[href^="#"][aria-label*="link" i],
 
 /* Default table styling - applies to all tables */
 table {
+  font-size: var(--lfm-fs-sm) !important;
   border-collapse: collapse !important;
   border-spacing: 0 !important;
   width: 100% !important;
@@ -339,7 +983,7 @@ table tbody td {
 }
 
 table tbody tr {
-  border-bottom: 1px solid #e5e7eb !important;
+  border-bottom: 1px solid var(--lfm-border) !important;
 }
 
 /* API Spec tables (5 columns: Name, Type, Required, Default, Description) - ensure auto layout and proper spacing */
@@ -356,14 +1000,12 @@ table:not(:has(thead th:nth-child(6))) th {
 
 table:not(:has(thead th:nth-child(6))) {
   table-layout: auto !important;
-  font-size: inherit !important;
 }
 
 /* Model table styling - only for tables with 6 columns (Model, HF, GGUF, MLX, ONNX, Trainable?) */
 
 table:has(thead th:nth-child(6):not(:nth-child(7))) {
   table-layout: fixed !important;
-  font-size: 0.8rem !important;
   margin: 0 !important;
 }
 
@@ -399,42 +1041,41 @@ table:has(thead th:nth-child(6):not(:nth-child(7))) th:nth-child(6) {
   white-space: nowrap !important;
 }
 
-/* Table header - purple gradient with top border (only for 6-column tables) */
+/* Table header: neutral */
 table:has(thead th:nth-child(6):not(:nth-child(7))) thead tr {
-  background: linear-gradient(135deg, #e9d5f5 0%, #d4c4e3 100%) !important;
-  border-top: 3px solid #864bc4 !important;
+  background: transparent !important;
+  border-top: 0 !important;
 }
 
 table:has(thead th:nth-child(6):not(:nth-child(7))) thead th {
-  color: #1f2937 !important;
+  color: var(--lfm-fg) !important;
 }
 
-/* Section header rows with bold text - purple gradient like header (only for 6-column tables) */
+/* Table section rows */
 table:has(thead th:nth-child(6):not(:nth-child(7))) tbody tr:has(td:first-child strong) {
-  background: linear-gradient(135deg, #e9d5f5 0%, #d4c4e3 100%) !important;
+  background: var(--lfm-surface) !important;
 }
 
-/* Sub-section rows (LFM2.5 Models, LFM2 Models labels) - light green background (only for 6-column tables) */
+/* Sub-section rows (LFM2.5 Models, LFM2 Models labels) - zinc surface, muted label (only for 6-column tables) */
 table:has(thead th:nth-child(6):not(:nth-child(7))) tbody tr:has(td:nth-child(2):empty):not(:has(strong)) {
-  background-color: #dcfce7 !important;
+  background-color: var(--lfm-surface) !important;
 }
 
 table:has(thead th:nth-child(6):not(:nth-child(7))) tbody tr:has(td:nth-child(2):empty):not(:has(strong)) td {
-  background-color: #dcfce7 !important;
+  background-color: var(--lfm-surface) !important;
   padding: 0.35rem 0.5rem !important;
 }
 
 table:has(thead th:nth-child(6):not(:nth-child(7))) tbody tr:has(td:nth-child(2):empty):not(:has(strong)) td:first-child {
   text-align: left !important;
-  font-size: 0.75rem !important;
-  color: #166534 !important;
+  font-size: var(--lfm-fs-xs) !important;
+  color: var(--lfm-muted) !important;
   padding-left: 1rem !important;
 }
 
 /* Model overview table with Family column - only for 7-column tables */
 table:has(thead th:nth-child(7):not(:nth-child(8))) {
   table-layout: fixed !important;
-  font-size: 0.8rem !important;
   margin: 0 !important;
 }
 
@@ -476,34 +1117,48 @@ table:has(thead th:nth-child(7):not(:nth-child(8))) th:nth-child(7) {
 }
 
 table:has(thead th:nth-child(7):not(:nth-child(8))) thead tr {
-  background: linear-gradient(135deg, #e9d5f5 0%, #d4c4e3 100%) !important;
-  border-top: 3px solid #864bc4 !important;
+  background: transparent !important;
+  border-top: 0 !important;
 }
 
 table:has(thead th:nth-child(7):not(:nth-child(8))) thead th {
-  color: #1f2937 !important;
+  color: var(--lfm-fg) !important;
 }
 
 table:has(thead th:nth-child(7):not(:nth-child(8))) tbody tr:has(td:first-child strong) {
-  background: linear-gradient(135deg, #e9d5f5 0%, #d4c4e3 100%) !important;
+  background: var(--lfm-surface) !important;
 }
 
-/* Table links (checkmarks) - green, no underline */
+/* Table checkmarks: green */
 table a {
   text-decoration: none !important;
   background-image: none !important;
   font-weight: normal !important;
   padding-bottom: 0 !important;
-  color: #22c55e !important;
+  color: var(--lfm-success) !important;
   padding: 0.35rem 0.5rem !important;
-  border-radius: 6px !important;
+  border-radius: var(--lfm-radius) !important;
   transition: background-color 0.15s ease !important;
 }
 
 table a:hover {
-  color: #16a34a !important;
+  color: var(--lfm-success-strong) !important;
   background-image: none !important;
-  background-color: rgba(134, 75, 196, 0.15) !important;
+  background-color: color-mix(in srgb, var(--lfm-success) 15%, transparent) !important;
+}
+
+/* Table links to docs pages */
+table:has(thead th:nth-child(6)) td:nth-child(2) a[href^="/"] {
+  color: var(--lfm-link) !important;
+}
+
+table:has(thead th:nth-child(6)) td:nth-child(2) a[href^="/"]:hover {
+  color: var(--lfm-link-hover) !important;
+}
+
+/* Model tables - drop Mintlify's accent link underline (model names and checkmarks) */
+table:has(thead th:nth-child(6)) td a {
+  border-bottom: 0 !important;
 }
 
 /* Model name links (first column) - subtle text, no underline, just hover effect */
@@ -513,7 +1168,7 @@ table:has(thead th:nth-child(7):not(:nth-child(8))) td:first-child a {
   font-weight: 500 !important;
   padding: 0.25rem 0.4rem !important;
   margin: -0.25rem -0.4rem !important;
-  border-radius: 4px !important;
+  border-radius: var(--lfm-radius) !important;
   background-image: none !important;
   text-decoration: none !important;
   transition: background-color 0.15s ease, color 0.15s ease !important;
@@ -521,152 +1176,228 @@ table:has(thead th:nth-child(7):not(:nth-child(8))) td:first-child a {
 
 table:has(thead th:nth-child(6):not(:nth-child(7))) td:first-child a:hover,
 table:has(thead th:nth-child(7):not(:nth-child(8))) td:first-child a:hover {
-  color: #864bc4 !important;
-  background-color: rgba(134, 75, 196, 0.1) !important;
+  color: var(--lfm-accent) !important;
+  background-color: var(--lfm-accent-wash) !important;
   background-image: none !important;
 }
 
-.dark table:has(thead th:nth-child(6):not(:nth-child(7))) td:first-child a,
-.dark table:has(thead th:nth-child(7):not(:nth-child(8))) td:first-child a {
-  color: inherit !important;
-}
-
-.dark table:has(thead th:nth-child(6):not(:nth-child(7))) td:first-child a:hover,
-.dark table:has(thead th:nth-child(7):not(:nth-child(8))) td:first-child a:hover {
-  color: #a78bfa !important;
-  background-color: rgba(167, 139, 250, 0.15) !important;
-}
-
-/* Dark mode table styling */
-.dark table thead tr {
-  background: linear-gradient(135deg, #4c1d95 0%, #5b21b6 100%) !important;
-}
-
-/* Dark mode - 6-column table header (override light mode :has() rule) */
-.dark table:has(thead th:nth-child(6):not(:nth-child(7))) thead tr {
-  background: linear-gradient(135deg, #4c1d95 0%, #5b21b6 100%) !important;
-}
-
-.dark table thead th {
-  color: #f3f4f6 !important;
-}
-
-.dark table:has(thead th:nth-child(6):not(:nth-child(7))) thead th {
-  color: #f3f4f6 !important;
-}
-
-.dark table tbody tr {
-  border-bottom: 1px solid #374151 !important;
-}
-
-/* Dark mode section header rows with bold text */
-.dark table tbody tr:has(td:first-child strong) {
-  background: linear-gradient(135deg, #4c1d95 0%, #5b21b6 100%) !important;
-}
-
-.dark table:has(thead th:nth-child(6):not(:nth-child(7))) tbody tr:has(td:first-child strong) {
-  background: linear-gradient(135deg, #4c1d95 0%, #5b21b6 100%) !important;
-}
-
-/* Dark mode sub-section rows (LFM2.5 Models, LFM2 Models labels) */
-.dark table tbody tr:has(td:nth-child(2):empty):not(:has(strong)) {
-  background-color: #14532d !important;
-}
-
-.dark table:has(thead th:nth-child(6):not(:nth-child(7))) tbody tr:has(td:nth-child(2):empty):not(:has(strong)) {
-  background-color: #14532d !important;
-}
-
-.dark table:has(thead th:nth-child(6):not(:nth-child(7))) tbody tr:has(td:nth-child(2):empty):not(:has(strong)) td {
-  background-color: #14532d !important;
-}
-
-.dark table tbody tr:has(td:nth-child(2):empty):not(:has(strong)) td:first-child {
-  color: #86efac !important;
-}
-
-.dark table:has(thead th:nth-child(6):not(:nth-child(7))) tbody tr:has(td:nth-child(2):empty):not(:has(strong)) td:first-child {
-  color: #86efac !important;
-}
-
-.dark table a {
-  color: #4ade80 !important;
-}
-
-.dark table a:hover {
-  color: #86efac !important;
-}
-
-/* Normal table links - match model-name link treatment, not green checkmarks. */
-:root:not(.dark) table:not(:has(thead th:nth-child(6))) a {
-  display: inline-block !important;
-  color: inherit !important;
-  font-weight: 500 !important;
-  line-height: 1.25 !important;
-  padding: 0.2rem 0.35rem !important;
-  margin: 0.05rem 0.1rem 0.05rem -0.35rem !important;
-  border-radius: 4px !important;
-  background-image: none !important;
-  background-color: transparent !important;
-  border-bottom: 0 !important;
-  box-shadow: 0 1px 0 #864bc4 !important;
+/* Normal table links - same treatment as content links, not green checkmarks. */
+table:not(:has(thead th:nth-child(6))) a {
+  color: var(--lfm-link) !important;
+  font-weight: 400 !important;
+  text-decoration-thickness: 1px !important;
+  text-underline-offset: 5px !important;
   text-decoration: none !important;
-  text-decoration-line: none !important;
-  transition: background-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease !important;
-}
-
-:root:not(.dark) table:not(:has(thead th:nth-child(6))) a:hover {
-  color: #864bc4 !important;
-  background-color: rgba(134, 75, 196, 0.1) !important;
   background-image: none !important;
-  box-shadow: 0 1.5px 0 #864bc4 !important;
-}
-
-.dark table:not(:has(thead th:nth-child(6))) a {
-  display: inline-block !important;
-  color: inherit !important;
-  font-weight: 500 !important;
-  line-height: 1.25 !important;
-  padding: 0.2rem 0.35rem !important;
-  margin: 0.05rem 0.1rem 0.05rem -0.35rem !important;
-  border-radius: 4px !important;
-  background-image: none !important;
-  background-color: transparent !important;
   border-bottom: 0 !important;
-  box-shadow: 0 1px 0 #a78bfa !important;
-  text-decoration: none !important;
-  text-decoration-line: none !important;
-  transition: background-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease !important;
+  padding-bottom: 0 !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  transition: color 0.2s ease !important;
 }
 
-.dark table:not(:has(thead th:nth-child(6))) a:hover {
-  color: #a78bfa !important;
-  background-color: rgba(167, 139, 250, 0.15) !important;
-  background-image: none !important;
-  box-shadow: 0 1.5px 0 #a78bfa !important;
+table:not(:has(thead th:nth-child(6))) a:hover {
+  color: var(--lfm-link-hover) !important;
+  background-color: transparent !important;
+  text-decoration-line: underline !important;
+}
+
+/* Complete model matrix: keep the desktop layout; adapt only on mobile. */
+.model-matrix-scroll-hint {
+  display: none;
+}
+
+@media (max-width: 767px) {
+  .model-matrix {
+    container-type: inline-size;
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .model-matrix [data-table-wrapper] {
+    --page-padding: 0px;
+  }
+
+  .model-matrix [data-component-part="scroll-area-viewport"] {
+    overscroll-behavior-x: contain;
+    scroll-padding-left: calc(12rem + var(--page-padding, 0px));
+    scroll-padding-right: var(--page-padding, 0px);
+  }
+
+  .model-matrix table:has(thead th:nth-child(7):not(:nth-child(8))) {
+    min-width: 48rem !important;
+    border-collapse: separate !important;
+  }
+
+  .model-matrix table:has(thead th:nth-child(7):not(:nth-child(8))) th,
+  .model-matrix table:has(thead th:nth-child(7):not(:nth-child(8))) td {
+    min-width: 0 !important;
+    width: auto !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+    white-space: normal !important;
+    overflow-wrap: anywhere;
+    text-align: center !important;
+    padding: 0.5rem !important;
+    background: var(--lfm-bg);
+  }
+
+  .model-matrix table:has(thead th:nth-child(7):not(:nth-child(8))) tbody td {
+    padding: 0 0.5rem !important;
+    border-bottom: 1px solid var(--lfm-border);
+  }
+
+  .model-matrix table:has(thead th:nth-child(7):not(:nth-child(8))) th:first-child,
+  .model-matrix table:has(thead th:nth-child(7):not(:nth-child(8))) td:first-child {
+    position: sticky;
+    left: var(--page-padding, 0px);
+    z-index: 20;
+    width: 12rem !important;
+    padding: 0.75rem 1rem !important;
+    text-align: left !important;
+    border-right: 1px solid var(--lfm-border);
+  }
+
+  .model-matrix table:has(thead th:nth-child(7):not(:nth-child(8))) tbody td:first-child {
+    padding: 0 1rem !important;
+  }
+
+  .model-matrix table:has(thead th:nth-child(7):not(:nth-child(8))) th:nth-child(n+2):nth-child(-n+6),
+  .model-matrix table:has(thead th:nth-child(7):not(:nth-child(8))) td:nth-child(n+2):nth-child(-n+6) {
+    width: 4rem !important;
+  }
+
+  .model-matrix table:has(thead th:nth-child(7):not(:nth-child(8))) td:nth-child(n+2):nth-child(-n+6) a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 44px;
+    min-height: 44px;
+    padding: 0 !important;
+  }
+
+  .model-matrix table:has(thead th:nth-child(7):not(:nth-child(8))) tbody tr:has(td:first-child strong) td {
+    padding: 0.5rem 1rem !important;
+    background: var(--lfm-surface);
+  }
+
+  /* Keep training text beside the pinned column on narrow screens. */
+  @container (max-width: 28rem) {
+    .model-matrix table:has(thead th:nth-child(7):not(:nth-child(8))) th:last-child,
+    .model-matrix table:has(thead th:nth-child(7):not(:nth-child(8))) td:last-child {
+      padding-left: max(0.5rem, calc(28rem - 100cqw)) !important;
+    }
+  }
+
+  .model-matrix-scroll-hint {
+    display: block;
+    color: var(--lfm-muted);
+    font-size: var(--lfm-fs-sm);
+  }
 }
 
 /* Code block styling - ensure visible background contrast */
 /* Inline code */
-:root:not(.dark) code:not(pre code) {
-  background-color: #f9fafb !important;
-  border: 1px solid #e5e7eb !important;
-  border-radius: 4px !important;
-  padding: 0.15em 0.4em !important;
-}
-
-.dark code:not(pre code) {
-  background-color: #374151 !important;
-  border: 1px solid #4b5563 !important;
-  border-radius: 4px !important;
+/* Inline code */
+code:not(pre code) {
+  color: var(--lfm-link) !important;
+  background-color: var(--lfm-accent-wash) !important;
+  border: 0 !important;
+  border-radius: var(--lfm-radius) !important;
   padding: 0.15em 0.4em !important;
 }
 
 /* Fenced code blocks */
 /* Target the code block wrapper container */
-:root:not(.dark) .code-block-background,
-:root:not(.dark) [class*="code-block"] > div {
-  background-color: #f9fafb !important;
+.code-block-background,
+[class*="code-block"] > div {
+  background-color: var(--lfm-subtle) !important;
+}
+
+/* Code blocks: flat, no border */
+.code-block,
+[class*="code-block"].group {
+  border-color: transparent !important;
+}
+
+/* API playground: neutral Try it button and method pills */
+.tryit-button {
+  background-color: var(--lfm-fg) !important;
+  color: var(--lfm-fg-inverse) !important;
+  font-size: var(--lfm-fs-sm) !important;
+  font-weight: 500 !important;
+  opacity: 1 !important;
+  transition: background-color 0.15s ease !important;
+}
+
+.tryit-button:hover {
+  background-color: var(--lfm-accent) !important;
+}
+
+.tryit-button * {
+  color: var(--lfm-fg-inverse) !important;
+}
+
+/* Try it play icon */
+.tryit-button svg {
+  background-color: var(--lfm-fg-inverse) !important;
+}
+
+.method-pill,
+.method-nav-pill > span {
+  background-color: transparent !important;
+  box-shadow: inset 0 0 0 1px var(--lfm-border-strong) !important;
+  color: var(--lfm-fg) !important;
+  font-family: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace !important;
+  font-weight: 500 !important;
+  letter-spacing: 0.02em !important;
+}
+
+.method-pill {
+  font-size: var(--lfm-fs-xs) !important;
+}
+
+/* API path parameters: accent */
+#api-playground-2-operation-page .font-mono > .border-2,
+[role="dialog"] .font-mono > .border-2 {
+  color: var(--lfm-accent) !important;
+  background-color: var(--lfm-accent-wash) !important;
+  border-color: transparent !important;
+}
+
+/* Code groups: flat, like code blocks */
+.code-group {
+  border-color: transparent !important;
+  background-color: var(--lfm-subtle) !important;
+  padding: 0 !important;
+}
+
+.code-group [data-component-part="code-group-tab-bar"] {
+  border-bottom: 1px solid var(--lfm-border) !important;
+}
+
+/* Copy-button room on the first code line only */
+.code-block:not(:has([data-component-part="code-block-root"].code-block-wrap)) {
+  --code-padding-right: 0px !important;
+}
+
+.code-block:not(:has([data-component-part="code-block-root"].code-block-wrap)) code > .line:first-child {
+  padding-right: var(--fade-width, 0px);
+}
+
+/* Copy-button fade: match the code block */
+.code-block [data-fade-overlay] {
+  --fade-color-light: var(--lfm-subtle) !important;
+  --fade-color-dark: var(--lfm-subtle) !important;
+  background-color: transparent !important;
+  border-top-right-radius: var(--lfm-radius) !important;
+  border-bottom-right-radius: var(--lfm-radius) !important;
+}
+
+/* Dark code block wrapper: neutral zinc */
+.dark [class*="code-block"] > div[class*="bg-codeblock"] {
+  background-color: var(--lfm-subtle) !important;
 }
 
 /* Hide the right-side fade gradient overlay in code blocks */
@@ -675,113 +1406,84 @@ table:has(thead th:nth-child(7):not(:nth-child(8))) td:first-child a:hover {
   display: none !important;
 }
 
-:root:not(.dark) pre,
-:root:not(.dark) pre.shiki,
-:root:not(.dark) .shiki {
-  background-color: #f9fafb !important;
-  border-radius: 8px !important;
+pre,
+pre.shiki,
+.shiki {
+  background-color: var(--lfm-subtle) !important;
+  border-radius: var(--lfm-radius) !important;
 }
 
-:root:not(.dark) pre code,
-:root:not(.dark) .shiki code {
+pre code,
+.shiki code {
   background-color: transparent !important;
   border: none !important;
-  color: #1f2937 !important;
+  color: var(--lfm-fg) !important;
 }
 
-.dark pre {
-  background-color: #374151 !important;
-  border-radius: 8px !important;
+/* Colab badges: keep the original artwork at a compact size. */
+.colab-link {
+  margin: 0.5rem 0 1.5rem 0 !important;
 }
 
-.dark pre code {
-  background-color: transparent !important;
-  border: none !important;
-  color: #e5e7eb !important;
-}
-
-/* Colab badge styling */
 .colab-link a {
+  display: inline-block !important;
   background-image: none !important;
+  border-bottom: 0 !important;
   padding-bottom: 0 !important;
 }
 
 .colab-link img {
-  height: 28px !important;
+  display: block !important;
+  height: 24px !important;
   width: auto !important;
+  margin: 0 !important;
 }
 
-/* Tab styling - purple accent underline for selected tabs in light mode */
+/* Tab styling - accent underline for selected tabs */
 /* The inner div uses text-primary with border-current, so we override the color */
-:root:not(.dark) [role="tab"][aria-selected="true"] > div {
-  color: #864bc4 !important;
+[role="tab"][aria-selected="true"] > div {
+  color: var(--lfm-accent) !important;
 }
 
-/* Main nav tabs - purple underline for active tab in light mode */
-/* The underline is an inner div with bg-primary (black) vs bg-primary-light (purple in dark mode) */
-:root:not(.dark) .nav-tabs-item > div[class*="bg-primary"] {
-  background-color: #864bc4 !important;
+/* Main nav tabs - accent underline for the active tab */
+/* The underline is an inner div with bg-primary (light mode) / bg-primary-light (dark mode) */
+.nav-tabs-item > div[class*="bg-primary"] {
+  background-color: var(--lfm-accent) !important;
 }
 
-/* TOC (Table of Contents) - purple accent for active section in light mode */
-/* Active TOC links have text-primary class which is dark in light mode, purple in dark mode */
-:root:not(.dark) .toc-item a[class*="text-primary"] {
-  color: #864bc4 !important;
+/* TOC (Table of Contents) - foreground for the active section, not the accent */
+.toc-item[data-active] > a {
+  color: var(--lfm-fg) !important;
 }
 
-/* Format buttons for model pages */
-.format-buttons {
-  display: flex !important;
-  gap: 0.5rem !important;
+/* Format buttons (model pages): their inline colors become one outlined chip */
+.mdx-content div[style*="display"]:has(> a[style*="background"]) {
   flex-wrap: wrap !important;
-  margin: 0.5rem 0 1.5rem 0 !important;
 }
 
-.format-buttons a {
+.mdx-content a[style*="background"] {
   display: inline-block !important;
-  padding: 0.35rem 0.7rem !important;
-  border-radius: 4px !important;
-  font-size: 0.85rem !important;
-  font-weight: 600 !important;
+  padding: 0.3rem 0.65rem !important;
+  border: 1px solid var(--lfm-border) !important;
+  border-radius: var(--lfm-radius) !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  color: var(--lfm-fg) !important;
+  font-size: var(--lfm-fs-sm) !important;
+  font-weight: 500 !important;
+  letter-spacing: 0.02em !important;
+  line-height: 1.4 !important;
   text-decoration: none !important;
-  background-image: none !important;
+  transition: color 0.15s ease, background-color 0.15s ease !important;
 }
 
-.format-buttons a:hover {
-  background-image: none !important;
-  filter: brightness(0.95) !important;
+.mdx-content a[style*="background"] span {
+  color: inherit !important;
 }
 
-/* HF button - orange */
-.format-buttons a.btn-hf,
-.format-buttons a.btn-hf:hover,
-.format-buttons a.btn-hf:visited {
-  background-color: #fbbf24 !important;
-  color: #000000 !important;
-}
-
-/* GGUF button - blue */
-.format-buttons a.btn-gguf,
-.format-buttons a.btn-gguf:hover,
-.format-buttons a.btn-gguf:visited {
-  background-color: #60a5fa !important;
-  color: #000000 !important;
-}
-
-/* MLX button - purple */
-.format-buttons a.btn-mlx,
-.format-buttons a.btn-mlx:hover,
-.format-buttons a.btn-mlx:visited {
-  background-color: #c4b5fd !important;
-  color: #000000 !important;
-}
-
-/* ONNX button - green */
-.format-buttons a.btn-onnx,
-.format-buttons a.btn-onnx:hover,
-.format-buttons a.btn-onnx:visited {
-  background-color: #86efac !important;
-  color: #000000 !important;
+.mdx-content a[style*="background"]:hover {
+  color: var(--lfm-accent) !important;
+  background-color: var(--lfm-surface) !important;
 }
 
 /* Back button for model pages */
@@ -790,44 +1492,16 @@ table:has(thead th:nth-child(7):not(:nth-child(8))) td:first-child a:hover {
   align-items: center !important;
   gap: 0.25rem !important;
   margin-bottom: 0.75rem !important;
-  font-size: 0.85rem !important;
+  font-size: var(--lfm-fs-sm) !important;
   font-weight: 500 !important;
-  color: #6b7280 !important;
+  color: var(--lfm-muted) !important;
   text-decoration: none !important;
   background-image: none !important;
+  border-bottom: 0 !important;
 }
 
 .back-button:hover {
-  color: #864bc4 !important;
+  color: var(--lfm-accent) !important;
   background-image: none !important;
 }
 
-/* Arrow icon for internal model card links - matches Mintlify's external link arrow */
-.card-group a[href^="/docs/models/"]:not([href*="text-models"]):not([href*="vision-models"]):not([href*="audio-models"]):not([href*="liquid-nanos"]):not([href*="complete-library"]) {
-  position: relative !important;
-}
-
-.card-group a[href^="/docs/models/"]:not([href*="text-models"]):not([href*="vision-models"]):not([href*="audio-models"]):not([href*="liquid-nanos"]):not([href*="complete-library"])::before {
-  content: "" !important;
-  position: absolute !important;
-  top: 0.875rem !important;
-  right: 0.875rem !important;
-  width: 0.875rem !important;
-  height: 0.875rem !important;
-  background-color: #9ca3af !important;
-  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke-width='2' stroke='currentColor'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M4.5 19.5l15-15m0 0H8.25m11.25 0v11.25'/%3E%3C/svg%3E") !important;
-  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke-width='2' stroke='currentColor'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M4.5 19.5l15-15m0 0H8.25m11.25 0v11.25'/%3E%3C/svg%3E") !important;
-  -webkit-mask-size: contain !important;
-  mask-size: contain !important;
-  -webkit-mask-repeat: no-repeat !important;
-  mask-repeat: no-repeat !important;
-  transition: background-color 0.15s ease !important;
-}
-
-:root:not(.dark) .card-group a[href^="/docs/models/"]:not([href*="text-models"]):not([href*="vision-models"]):not([href*="audio-models"]):not([href*="liquid-nanos"]):not([href*="complete-library"]):hover::before {
-  background-color: #864bc4 !important;
-}
-
-.dark .card-group a[href^="/docs/models/"]:not([href*="text-models"]):not([href*="vision-models"]):not([href*="audio-models"]):not([href*="liquid-nanos"]):not([href*="complete-library"])::before {
-  background-color: #9ca3af !important;
-}

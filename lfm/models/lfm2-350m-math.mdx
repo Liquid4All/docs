@@ -20,6 +20,7 @@ LFM2-350M-Math is a tiny reasoning model optimized for mathematical problem solv
 | Parameters | 350M |
 | Context Length | 32K tokens |
 | Task | Mathematical Reasoning |
+| Language | English |
 
 <div className="use-cases">
 <CardGroup cols={3}>
@@ -38,6 +39,14 @@ LFM2-350M-Math is a tiny reasoning model optimized for mathematical problem solv
 
 </CardGroup>
 </div>
+
+## Prompting Recipe
+
+<Warning>
+Use `temperature=0.6`, `top_p=0.95`, `min_p=0.1`, `repetition_penalty=1.05`. Do not use a system prompt. The model supports English only and is intended for single-turn conversations.
+</Warning>
+
+The model writes a reasoning trace before its final answer, so leave enough room for generation. The examples below use 4,096 new tokens, the edge-constrained budget used in Liquid AI's [math reasoning research](https://www.liquid.ai/research/lfm-1b-math-can-small-models-be-concise-reasoners).
 
 ## Quick Start
 
@@ -60,9 +69,17 @@ LFM2-350M-Math is a tiny reasoning model optimized for mathematical problem solv
         {"role": "user", "content": "If a train travels at 60 mph for 2.5 hours, how far does it travel?"}
     ]
 
-    inputs = tokenizer.apply_chat_template(messages, return_tensors="pt", return_dict=True).to(model.device)
-    outputs = model.generate(**inputs, max_new_tokens=256)
-    response = tokenizer.decode(outputs[0], skip_special_tokens=True)
+    inputs = tokenizer.apply_chat_template(messages, add_generation_prompt=True, return_tensors="pt", return_dict=True).to(model.device)
+    outputs = model.generate(
+        **inputs,
+        max_new_tokens=4096,
+        do_sample=True,
+        temperature=0.6,
+        top_p=0.95,
+        min_p=0.1,
+        repetition_penalty=1.05,
+    )
+    response = tokenizer.decode(outputs[0][inputs["input_ids"].shape[-1]:], skip_special_tokens=True)
     print(response)
     ```
   </Tab>
@@ -77,7 +94,9 @@ LFM2-350M-Math is a tiny reasoning model optimized for mathematical problem solv
     **Run:**
     ```bash
     llama-cli -m ./LFM2-350M-Math-GGUF/LFM2-350M-Math-Q4_K_M.gguf \
-      -p "Solve: 2x + 5 = 15"
+      -p "Solve: 2x + 5 = 15" \
+      -n 4096 \
+      --temp 0.6 --top-p 0.95 --min-p 0.1 --repeat-penalty 1.05
     ```
   </Tab>
 </Tabs>

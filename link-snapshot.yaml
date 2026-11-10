@@ -3,6 +3,18 @@
 # To intentionally retire a URL without a redirect, move it from `active` to
 # `deleted`. The CI check skips entries listed under `deleted`.
 active:
+  - /api/guides/audio
+  - /api/guides/batch
+  - /api/guides/decisions
+  - /api/guides/text-generation
+  - /api/guides/vision
+  - /api/guides/your-data
+  - /api/models
+  - /api/overview
+  - /api/quickstart
+  - /api/reference/error-codes
+  - /api/reference/overview
+  - /api/reference/rate-limits
   - /customization/finetuning-frameworks/datasets
   - /customization/finetuning-frameworks/leap-finetune
   - /customization/finetuning-frameworks/trl
@@ -44,6 +56,7 @@ active:
   - /deployment/on-device/ios/utilities
   - /deployment/on-device/ios/voice-assistant
   - /deployment/on-device/leap-sdk-changelog
+  - /deployment/on-device/llama
   - /deployment/on-device/llama-cpp
   - /deployment/on-device/llama-cpp/chat
   - /deployment/on-device/llama-cpp/desktop
@@ -112,6 +125,7 @@ active:
   - /examples/laptop-examples/audio-car-cockpit
   - /examples/laptop-examples/audio-to-text-in-real-time
   - /examples/laptop-examples/browser-control
+  - /examples/laptop-examples/build-a-game-with-decision-models
   - /examples/laptop-examples/flight-search-assistant
   - /examples/laptop-examples/invoice-extractor-tool-with-liquid-nanos
   - /examples/laptop-examples/lfm2-english-to-korean
@@ -119,6 +133,7 @@ active:
   - /examples/web/audio-webgpu-demo
   - /examples/web/hand-voice-racer
   - /examples/web/vl-webgpu-demo
+  - /guides/decision-model-guide
   - /guides/hardware-evaluation
   - /guides/migration-guide
   - /guides/use-case-evaluation
@@ -127,6 +142,7 @@ active:
   - /lfm/fine-tuning/datasets
   - /lfm/fine-tuning/halo
   - /lfm/fine-tuning/leap-finetune
+  - /lfm/fine-tuning/liquid-finetune
   - /lfm/fine-tuning/overview
   - /lfm/fine-tuning/trl
   - /lfm/fine-tuning/unsloth
@@ -146,12 +162,22 @@ active:
   - /lfm/inference/ollama
   - /lfm/inference/transformers
   - /lfm/inference/vllm
+  - /lfm/key-concepts/audio-capabilities
   - /lfm/key-concepts/chat-template
+  - /lfm/key-concepts/omni-capabilities
+  - /lfm/key-concepts/speculative-decoding
   - /lfm/key-concepts/text-generation-and-prompting
+  - /lfm/key-concepts/tool-search
   - /lfm/key-concepts/tool-use
   - /lfm/key-concepts/vision-capabilities
   - /lfm/models/audio-models
   - /lfm/models/complete-library
+  - /lfm/models/d1
+  - /lfm/models/d1-2b
+  - /lfm/models/d1-3b
+  - /lfm/models/d1-omni-2b
+  - /lfm/models/d1-omni-600m
+  - /lfm/models/decision-models
   - /lfm/models/lfm2-1.2b
   - /lfm/models/lfm2-1.2b-extract
   - /lfm/models/lfm2-1.2b-rag
@@ -174,9 +200,11 @@ active:
   - /lfm/models/lfm2-vl-450m
   - /lfm/models/lfm25-1.2b-instruct
   - /lfm/models/lfm25-1.2b-jp
+  - /lfm/models/lfm25-1.2b-jp-202606
   - /lfm/models/lfm25-1.2b-thinking
   - /lfm/models/lfm25-2.6b
   - /lfm/models/lfm25-230m
+  - /lfm/models/lfm25-24b-a2b
   - /lfm/models/lfm25-350m
   - /lfm/models/lfm25-8b-a1b
   - /lfm/models/lfm25-audio-1.5b
@@ -190,7 +218,12 @@ active:
   - /lfm/models/lfm25-vl-3b
   - /lfm/models/lfm25-vl-450m
   - /lfm/models/lfm25-vl-450m-extract
+  - /lfm/models/lfm3-1.7b
+  - /lfm/models/lfm3-audio-2b
+  - /lfm/models/lfm3-omni-2b
+  - /lfm/models/lfm3-vl-2b
   - /lfm/models/liquid-nanos
+  - /lfm/models/omni-models
   - /lfm/models/text-models
   - /lfm/models/vision-models
 # Examples of `deleted` entries (uncomment and adapt):

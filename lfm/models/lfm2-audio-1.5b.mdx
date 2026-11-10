@@ -20,10 +20,11 @@ LFM2-Audio-1.5B was the original fully interleaved audio/text model. It has been
 
 | Property | Value |
 |----------|-------|
-| Parameters | 1.5B (1.2B LM + 115M audio encoder) |
+| Parameters | 1.5B (1.2B LM + 115M audio encoder + 185M RQ-transformer for audio output) |
 | Context Length | 32K tokens |
 | Audio Output | 24kHz (Mimi codec) |
 | Supported Language | English |
+| License | [LFM Open License v1.0](/lfm/help/model-license) |
 
 ## Quick Start
 
@@ -31,10 +32,12 @@ LFM2-Audio-1.5B was the original fully interleaved audio/text model. It has been
   <Tab title="liquid-audio">
     **Install:**
     ```bash
-    pip install liquid-audio
+    pip install liquid-audio torchcodec
     pip install "liquid-audio[demo]"  # optional, for demo dependencies
     pip install flash-attn --no-build-isolation  # optional, for flash attention 2
     ```
+
+    `torchaudio` loads audio files through `torchcodec`, which needs FFmpeg installed on the system (for example `brew install ffmpeg` or `apt install ffmpeg`).
 
     **Gradio Demo:**
     ```bash

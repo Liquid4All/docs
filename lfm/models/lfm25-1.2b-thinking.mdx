@@ -58,6 +58,6 @@ LFM2.5-1.2B-Thinking is optimized for reasoning tasks, delivering strong perform
     <TextVllm modelId="LiquidAI/LFM2.5-1.2B-Thinking" samplingParams="temperature=0.05, top_k=50, repetition_penalty=1.05, "></TextVllm>
   </Tab>
   <Tab title="SGLang">
-    <TextSglang modelId="LiquidAI/LFM2.5-1.2B-Thinking" toolCallParser="lfm2" samplingParams={'temperature=0.05,\n    extra_body={"top_k": 50, "repetition_penalty": 1.05},'}></TextSglang>
+    <TextSglang modelId="LiquidAI/LFM2.5-1.2B-Thinking" reasoningParser="qwen3-thinking" toolCallParser="lfm2" samplingParams={'temperature=0.05,\n    extra_body={"top_k": 50, "repetition_penalty": 1.05},'}></TextSglang>
   </Tab>
 </Tabs>

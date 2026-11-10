@@ -52,89 +52,21 @@ Always use proper opening/closing tag pairs for Mintlify components:
 </CardGroup>
 ```
 
-## Styling Approach
+## Styling Files
 
-### Priority Order
-
-1. **Use Mintlify's native components first** - CardGroup, Card, Badge, Tabs, Accordion, etc.
-2. **Use Mintlify's built-in props** - icons, colors, columns
-3. **Fall back to custom CSS only when native options don't work**
+Design rules (components, badges, model cards, format buttons, icons, color and corner tokens, CSS patterns) are in [DESIGN.md](DESIGN.md).
 
 ### Custom Style Files
 
 - `style.css` - Static CSS loaded by Mintlify
 - `styles.js` - JavaScript-injected CSS for dev mode (some styles only work via JS injection)
+- `feedback-ack.js` - shows a two-second tick after a feedback click, using Mintlify's documented button IDs and navigation event; leaves native voting in control.
 
-Both files should have the same styles for consistency between dev and production.
+`style.css` and `styles.js` should have the same styles for consistency between dev and production. `styles.js` holds a full copy of `style.css` (escape backticks, backslashes and `${` inside the template literal), followed by a few dev-only fixes at the end. After editing `style.css`, copy the change into `styles.js` and run `node --check styles.js`.
 
-### Card Border Fix
+### Stray files
 
-Cards have overflow clipping issues. The fix requires:
-
-```css
-.card-group {
-  overflow: visible !important;
-  contain: none !important;
-  padding: 4px !important;
-  margin: -4px !important;
-}
-
-.mdx-content {
-  contain: none !important;
-  overflow: visible !important;
-}
-```
-
-### Light/Dark Mode Targeting
-
-```css
-/* Light mode only */
-:root:not(.dark) .selector { }
-
-/* Dark mode only */
-.dark .selector { }
-```
-
-## Available Badge Colors
-
-Mintlify supports these badge colors:
-- `green`, `red`, `blue`, `yellow`, `orange`, `purple`, `cyan`
-
-```mdx
-<Badge shape="pill" color="green">Recommended</Badge>
-<Badge shape="rounded" icon="circle-check" color="green" size="lg">Latest</Badge>
-```
-
-## Common Patterns
-
-### Model Card Layout
-
-```mdx
-## Section Title &nbsp;&nbsp;<Badge shape="rounded" color="green">Label</Badge>
-
-<CardGroup cols={2}>
-
-<Card title="Model Name" href="https://huggingface.co/...">
-  1.2B · <Badge shape="pill" color="green">Recommended</Badge>
-
-  Short description of the model.
-</Card>
-
-</CardGroup>
-```
-
-### Accent Color
-
-The purple accent color used throughout: `#864bc4`
-
-```css
-/* For backgrounds */
-background-color: rgba(134, 75, 196, 0.1);
-
-/* For text/borders */
-color: #864bc4;
-border-color: #864bc4;
-```
+Never save extra `.css` or `.js` files anywhere in the repo, including `.context/`: Mintlify loads every one it finds. Rename them (e.g. `.js.txt`) or keep them outside the repo.
 
 ## Sampling Parameters
 
@@ -142,24 +74,39 @@ Every inference example must use the correct sampling params from the upstream H
 
 | Model Family | temp | top_k | top_p | min_p | repeat_penalty |
 |---|---|---|---|---|---|
-| LFM2.5-1.2B-Instruct | 0.1 | 50 | — | — | 1.05 |
-| LFM2.5-1.2B-Thinking | 0.1 | 50 | 0.1 | — | 1.05 |
+| LFM3-1.7B (general) | 0.1 | 50 | — | — | 1.1 |
+| LFM3-1.7B (math & STEM) | 1.0 | 20 | 0.95 | — | 1.0 |
+| LFM3-VL-2B | 0.1 | 50 | — | — | 1.1 |
+| LFM3-Audio-2B (speech output) | audio_temperature=1.0 | audio_top_k=128 | — | — | audio_repetition_penalty=1.1, audio_repetition_window=4096 |
+| LFM3-Omni-2B (speech output) | audio_temperature=0.4 | — | — | — | audio_repetition_penalty=1.2, audio_repetition_window=64 |
+| LFM3-Omni-2B (text output) | 0 (greedy) | — | — | — | — |
+| d1-2B, d1-omni-2B | n/a (single forward pass) | — | — | — | — |
+| LFM2.5-1.2B-Instruct, LFM2.5-350M, LFM2.5-230M | 0.1 | 50 | — | — | 1.05 |
+| LFM2.5-1.2B-Thinking | 0.05 | 50 | — | — | 1.05 |
+| LFM2.5-1.2B-JP-202606 | 0.1 | 50 | — | — | 1.05 |
+| LFM2.5-2.6B | 0.1 | 50 | — | — | 1.1 |
 | LFM2.5-8B-A1B | 0.2 | 80 | — | — | 1.05 |
-| LFM2-24B-A2B | 0.1 | 50 | — | — | 1.05 |
-| LFM2 text + LFM2.5-JP | 0.3 | — | — | 0.15 | 1.05 |
-| All VL models | 0.1 | — | — | 0.15 | 1.05 |
+| LFM2.5-24B-A2B, LFM2-24B-A2B | 0.1 | 50 | — | — | 1.05 |
+| General-purpose LFM2 text + LFM2.5-1.2B-JP (deprecated) | 0.3 | — | — | 0.15 | 1.05 |
+| LFM2-350M-ENJP-MT | 0.5 | — | 1.0 | 0.1 | 1.05 |
+| LFM2-350M-Math | 0.6 | — | 0.95 | 0.1 | 1.05 |
+| LFM2 Extract, RAG, and PII Extract models | 0 (greedy) | — | — | — | — |
+| LFM2-2.6B-Transcript | 0.3 | — | — | — | — |
+| LFM2.5-VL-3B | 0.2 | 50 | — | — | 1.0 |
+| Other VL models (LFM2.5-VL-1.6B, LFM2.5-VL-450M, LFM2-VL) | 0.1 | — | — | 0.15 | 1.05 |
 
 ### Engine-specific field names
 
-- **Transformers, vLLM, llama-server, MLX**: `repetition_penalty`
-- **Ollama, LM Studio**: `repeat_penalty`
+- **Transformers, vLLM, MLX**: `repetition_penalty`
+- **llama.cpp server (`llama serve` / `llama-server`), Llama app, Ollama, LM Studio**: `repeat_penalty`. The llama.cpp server silently ignores `repetition_penalty`.
 
 ### OpenAI Python client
 
 Non-standard params (`top_k`, `min_p`, `repetition_penalty`/`repeat_penalty`) must go in `extra_body`, not as direct kwargs:
 
 ```python
-extra_body={"top_k": 50, "repetition_penalty": 1.05}
+extra_body={"top_k": 50, "repetition_penalty": 1.05}  # vLLM
+extra_body={"top_k": 50, "repeat_penalty": 1.05}      # llama.cpp server, Llama app
 ```
 
 ## Debugging
@@ -176,12 +123,13 @@ If you get MDX parsing errors:
 grep -r '/>' --include="*.mdx" --include="*.md" .
 ```
 
-### Style Not Applying
+## Liquid API Reference
 
-1. Check if the selector is specific enough
-2. Try adding `!important`
-3. Check if you need to target light/dark mode specifically
-4. For icons using mask-image, set `background-color` instead of `color`
+`api/openapi.json` generates the endpoint pages of the API reference tab. Never edit it by hand: it is exported from the console repository's endpoint registry (`apps/web/lib/api/docs.ts`) with `bun run openapi:export`. Change the endpoint docs there and re-export. See the README's "Liquid API Reference" section.
+
+## Sidebar Navigation
+
+Each tab in `docs.json` has one wrapper group named after the tab (`{"group": "LFM", "pages": [...]}`). Add new sections inside the wrapper's `pages` as nested groups with `"expanded": false`, not as new top-level groups.
 
 ## Link Snapshot Contract
 
@@ -189,7 +137,7 @@ grep -r '/>' --include="*.mdx" --include="*.md" .
 
 A URL in `active` resolves if any of these are true:
 1. It is in the `docs.json` navigation tree.
-2. A matching `.mdx`/`.md` file exists under `lfm/`, `leap/`, `examples/`, or `deployment/`.
+2. A matching `.mdx`/`.md` file exists under `lfm/`, `leap/`, `examples/`, `deployment/`, or `api/`.
 3. It matches a `redirects[*].source` (literal or `:slug*` prefix) whose destination itself resolves (recursive, max depth 5).
 
 When CI flags a URL, pick one (in order of preference):

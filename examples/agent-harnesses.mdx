@@ -42,6 +42,12 @@ For the GGUF quants, which cover llama.cpp and LM Studio, we recommend starting 
 MLX uses its own quantization. Pick the 4-bit, 6-bit, 8-bit, or bf16 build from the MLX repo.
 vLLM and SGLang run the full-precision weights on GPU.
 
+**Need more capability?** [LFM2.5-24B-A2B](/lfm/models/lfm25-24b-a2b) is a 24B-parameter
+reasoning model with only 2B active parameters per token, post-trained inside Hermes Agent,
+OpenClaw, Pi, and OpenCode. It thinks before it answers, so it handles longer, multi-step
+agent tasks more reliably, at the cost of more memory. Every command in this guide works with it
+if you swap the model id.
+
 **Context length**. Agents consume context quickly. If you hit truncation or context-overflow errors mid-run, raise the served
 context or trim the agent's history.
 LFM2.5-2.6B supports up to 128K tokens. The examples serve the full window, but if you're

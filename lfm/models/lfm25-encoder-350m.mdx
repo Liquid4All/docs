@@ -9,6 +9,7 @@ LFM2.5-Encoder-350M is a multilingual bidirectional encoder built on the LFM2 ar
 
 <div style={{display: 'flex', gap: '0.5rem', margin: '0.5rem 0 1.5rem 0'}}>
   <a href="https://huggingface.co/LiquidAI/LFM2.5-Encoder-350M" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#fbbf24'}}><span style={{color: '#000'}}>HF</span></a>
+  <a href="https://huggingface.co/LiquidAI/LFM2.5-Encoder-350M-GGUF" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#60a5fa'}}><span style={{color: '#000'}}>GGUF</span></a>
 </div>
 
 <Note>
@@ -49,14 +50,14 @@ For tighter latency and memory budgets or higher throughput, use [LFM2.5-Encoder
 
 <Note>
 This is a base encoder that produces general-purpose representations.
-For task outputs, fine-tune it with a task head for your use case. See the [fine-tuning overview](/lfm/fine-tuning/overview) to get started.
+For task outputs, fine-tune it with a task head for your use case. See [Fine-Tuning](#fine-tuning) below for recommended hyperparameters.
 </Note>
 
 <Tabs>
   <Tab title="Transformers">
     **Install:**
     ```bash
-    pip install -U transformers
+    pip install -U transformers torch
     ```
 
     **Run masked-token prediction:**
@@ -85,4 +86,39 @@ For task outputs, fine-tune it with a task head for your use case. See the [fine
     body = AutoModel.from_pretrained("LiquidAI/LFM2.5-Encoder-350M", trust_remote_code=True)
     ```
   </Tab>
+
+  <Tab title="llama.cpp">
+    The GGUF checkpoint serves per-token embeddings (hidden states) through `llama-server`.
+
+    **Start llama-server:**
+    ```bash
+    hf download LiquidAI/LFM2.5-Encoder-350M-GGUF LFM2.5-Encoder-350M-F16.gguf --local-dir .
+    llama-server -m LFM2.5-Encoder-350M-F16.gguf --embeddings --pooling none
+    ```
+
+    **Get per-token embeddings** (in a separate shell):
+    ```bash
+    curl -s http://localhost:8080/embedding -d '{"content": "hello world"}'
+    ```
+
+    **Run masked-token prediction** with the `fill-mask.py` client from the GGUF repository:
+    ```bash
+    hf download LiquidAI/LFM2.5-Encoder-350M-GGUF fill-mask.py --local-dir .
+    uv run fill-mask.py LFM2.5-Encoder-350M-F16.gguf "The capital of France is [MASK]."
+    ```
+  </Tab>
 </Tabs>
+
+## Fine-Tuning
+
+LFM2.5-Encoder-350M follows standard BERT-style fine-tuning: attach a task head to the encoder body (`AutoModel`) and train end-to-end. The model card suggests these starting points, to tune per task:
+
+| Hyperparameter | Suggested range |
+|---|---|
+| Learning rate | 1e-5 – 5e-5 |
+| Warmup ratio | 0.1 |
+| Weight decay | 0.1 |
+| Epochs | 3 – 20 (early stopping, patience 3) |
+| Precision | bf16 autocast (fp32 master weights) |
+
+If your GPU supports it, install Flash Attention 2 (`pip install flash-attn`) for higher efficiency. For examples of fine-tuned encoders, see [LFM2.5-Encoder-350M-PII-Detector](https://huggingface.co/LiquidAI/LFM2.5-Encoder-350M-PII-Detector), [LFM2.5-Encoder-350M-Prompt-Router](https://huggingface.co/LiquidAI/LFM2.5-Encoder-350M-Prompt-Router), [LFM2.5-Encoder-350M-Policy-Linter](https://huggingface.co/LiquidAI/LFM2.5-Encoder-350M-Policy-Linter), and [LFM2.5-Encoder-350M-Spellchecker](https://huggingface.co/LiquidAI/LFM2.5-Encoder-350M-Spellchecker).

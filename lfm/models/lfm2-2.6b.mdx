@@ -11,7 +11,7 @@ import { TextLlamacpp } from "/snippets/quickstart/text-llamacpp.mdx";
 <a href="/lfm/models/text-models" className="back-button">← Back to Text Models</a>
 
 <Warning>
-This model is deprecated. Use [LFM2.5-2.6B](/lfm/models/lfm25-2.6b) for improved agentic capabilities, 128K context, and native tool calling.
+This model is deprecated. Use [LFM2.5-2.6B](/lfm/models/lfm25-2.6b) for improved agentic capabilities and a 131K context window.
 </Warning>
 
 LFM2-2.6B is a versatile mid-sized model delivering strong performance across chat, reasoning, and tool-calling tasks. Optimized for deployment on consumer devices including phones and laptops.
@@ -62,6 +62,6 @@ LFM2-2.6B is a versatile mid-sized model delivering strong performance across ch
     <TextVllm modelId="LiquidAI/LFM2-2.6B" samplingParams="temperature=0.3, min_p=0.15, repetition_penalty=1.05, "></TextVllm>
   </Tab>
   <Tab title="SGLang">
-    <TextSglang modelId="LiquidAI/LFM2-2.6B" toolCallParser="lfm2"></TextSglang>
+    <TextSglang modelId="LiquidAI/LFM2-2.6B" toolCallParser="lfm2" samplingParams={'temperature=0.3,\n    extra_body={"min_p": 0.15, "repetition_penalty": 1.05},'}></TextSglang>
   </Tab>
 </Tabs>

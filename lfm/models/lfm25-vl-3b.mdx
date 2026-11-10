@@ -7,16 +7,20 @@ import { VlTransformers } from "/snippets/quickstart/vl-transformers.mdx";
 import { VlVllm } from "/snippets/quickstart/vl-vllm.mdx";
 import { VlSglang } from "/snippets/quickstart/vl-sglang.mdx";
 import { VlLlamacpp } from "/snippets/quickstart/vl-llamacpp.mdx";
+import { DsparkSglang } from "/snippets/quickstart/dspark-sglang.mdx";
+import { DsparkLlamacpp } from "/snippets/quickstart/dspark-llamacpp.mdx";
+import { DsparkMlxVlm } from "/snippets/quickstart/dspark-mlx-vlm.mdx";
 
 <a href="/lfm/models/vision-models" className="back-button">← Back to Vision Models</a>
 
-LFM2.5-VL-3B is Liquid AI's most capable vision-language model, with strong grounding, screen and document understanding, and function calling. It builds on the LFM2.5-2.6B backbone with a SigLIP2 NaFlex image encoder, and answers directly for low-latency inference on-device and in the cloud.
+LFM2.5-VL-3B is Liquid AI's most capable vision-language model, with grounding, screen and document understanding, and function calling. It builds on LFM2-VL-3B with further mid- and post-training, pairs the LFM2.5-2.6B language backbone with a SigLIP2 NaFlex shape-optimized 400M vision encoder, and answers directly without a reasoning trace for low-latency inference on-device and in the cloud.
 
 <div style={{display: 'flex', gap: '0.5rem', margin: '0.5rem 0 1.5rem 0'}}>
   <a href="https://huggingface.co/LiquidAI/LFM2.5-VL-3B" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#fbbf24'}}><span style={{color: '#000'}}>HF</span></a>
   <a href="https://huggingface.co/LiquidAI/LFM2.5-VL-3B-GGUF" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#60a5fa'}}><span style={{color: '#000'}}>GGUF</span></a>
   <a href="https://huggingface.co/LiquidAI/LFM2.5-VL-3B-MLX-8bit" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#c4b5fd'}}><span style={{color: '#000'}}>MLX</span></a>
   <a href="https://huggingface.co/LiquidAI/LFM2.5-VL-3B-ONNX" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#86efac'}}><span style={{color: '#000'}}>ONNX</span></a>
+  <a href="https://huggingface.co/LiquidAI/LFM2.5-VL-3B-DSpark" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#f9a8d4'}}><span style={{color: '#000'}}>DSpark</span></a>
 </div>
 
 ## Specifications
@@ -26,6 +30,8 @@ LFM2.5-VL-3B is Liquid AI's most capable vision-language model, with strong grou
 | Parameters | 3B |
 | Context Length | 32K tokens |
 | Architecture | LFM2.5-VL (Dense) |
+| Languages | English, Arabic, Chinese, French, German, Italian, Japanese, Korean, Portuguese, Spanish, Vietnamese, Thai, Indonesian, Hindi, Russian, Polish |
+| License | [LFM Open License v1.0](/lfm/help/model-license) |
 
 <div className="use-cases">
 <CardGroup cols={3}>
@@ -59,5 +65,19 @@ LFM2.5-VL-3B is Liquid AI's most capable vision-language model, with strong grou
   </Tab>
   <Tab title="llama.cpp">
     <VlLlamacpp ggufRepo="LiquidAI/LFM2.5-VL-3B-GGUF" samplingFlags="--temp 0.2 --top-k 50 --repeat-penalty 1.0"></VlLlamacpp>
+  </Tab>
+</Tabs>
+
+## Speculative Decoding
+
+<Tabs>
+  <Tab title="SGLang">
+    <DsparkSglang modelId="LiquidAI/LFM2.5-VL-3B" draftModelId="LiquidAI/LFM2.5-VL-3B-DSpark" vision={true} samplingParams={'temperature=0.2,\n    extra_body={"top_k": 50, "repetition_penalty": 1.0},'}></DsparkSglang>
+  </Tab>
+  <Tab title="llama.cpp">
+    <DsparkLlamacpp ggufRepo="LiquidAI/LFM2.5-VL-3B-GGUF" draftRepo="LiquidAI/LFM2.5-VL-3B-DSpark-GGUF" vision={true} samplingFlags="--temp 0.2 --top-k 50 --repeat-penalty 1.0"></DsparkLlamacpp>
+  </Tab>
+  <Tab title="MLX-VLM">
+    <DsparkMlxVlm modelId="LiquidAI/LFM2.5-VL-3B" draftModelId="LiquidAI/LFM2.5-VL-3B-DSpark"></DsparkMlxVlm>
   </Tab>
 </Tabs>
