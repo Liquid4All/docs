@@ -19,11 +19,11 @@ Choose your platform to start the server:
 
 <Tabs>
   <Tab title="NVIDIA">
-    #### Prerequisites
+    ### Prerequisites
 
     A Linux host with an NVIDIA GPU, Docker, the NVIDIA driver, and NVIDIA Container Toolkit configured for GPU access.
 
-    #### Run
+    ### Run
 
     ```bash
     docker run -p 8000:8000 --shm-size=256GB --gpus=all -e HF_TOKEN -it zmlai/llmd:cuda \
@@ -31,11 +31,11 @@ Choose your platform to start the server:
     ```
   </Tab>
   <Tab title="AMD">
-    #### Prerequisites
+    ### Prerequisites
 
     A Linux host with a supported AMD GPU, Docker, and ROCm-compatible drivers. The GPU devices must be available at `/dev/kfd` and `/dev/dri`.
 
-    #### Run
+    ### Run
 
     ```bash
     docker run -p 8000:8000 --shm-size=256GB --device=/dev/kfd --device=/dev/dri -e HF_TOKEN -it zmlai/llmd:rocm \
@@ -43,11 +43,11 @@ Choose your platform to start the server:
     ```
   </Tab>
   <Tab title="Intel">
-    #### Prerequisites
+    ### Prerequisites
 
     A Linux host with a supported Intel GPU, Docker, and Intel GPU drivers. The GPU device must be available at `/dev/dri`.
 
-    #### Run
+    ### Run
 
     ```bash
     docker run -p 8000:8000 --device=/dev/dri -e HF_TOKEN -it zmlai/llmd:oneapi \
@@ -55,11 +55,11 @@ Choose your platform to start the server:
     ```
   </Tab>
   <Tab title="Google TPU">
-    #### Prerequisites
+    ### Prerequisites
 
     A Google TPU instance with Docker and the TPU runtime configured. Run the command on the TPU host.
 
-    #### Run
+    ### Run
 
     ```bash
     docker run --net=host --privileged -e HF_TOKEN -it zmlai/llmd:tpu \
@@ -67,7 +67,7 @@ Choose your platform to start the server:
     ```
   </Tab>
   <Tab title="Apple Metal">
-    #### Prerequisites
+    ### Prerequisites
 
     An Apple Silicon Mac with Homebrew installed. zml/llmd runs directly on macOS with Metal GPU acceleration.
 
@@ -77,7 +77,7 @@ Choose your platform to start the server:
     brew install zml/zml/llmd
     ```
 
-    #### Run
+    ### Run
 
     ```bash
     llmd --model=hf://LiquidAI/LFM3-1.7B-FP8 --batch-size=4
@@ -123,8 +123,4 @@ docker run -p 8000:8000 --shm-size=256GB --gpus=all \
 
 ## Model formats
 
-zml/llmd supports LFM3 text checkpoints in BF16, FP8, and NVFP4. See the [LFM3 model page](/lfm/models/lfm3-1.7b) for model details and prompting guidance.
-
-<Card title="LFM3 with zml/llmd" icon="book-open" href="https://zml.ai/posts/llmd-20261029.0/#lfm-3">
-  Release notes and platform-specific launch commands for LFM3.
-</Card>
+zml/llmd supports LFM3 text checkpoints in BF16, FP8, and NVFP4.
