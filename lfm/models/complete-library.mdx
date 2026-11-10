@@ -9,7 +9,7 @@ Across the library:
 
 - Context length depends on the model: 32K tokens for most text, vision, audio, and omni models, 256K for LFM3-1.7B, 128K for LFM3-VL-2B, LFM2.5-8B-A1B, d1-2B, and d1-omni-2B, 131K for LFM2.5-24B-A2B, 8K for the LFM2.5 encoders, and 16K for d1-omni-600M. Each model page lists its exact limit.
 - Text and vision models run with [Transformers](/deployment/gpu-inference/transformers), [llama.cpp](/deployment/on-device/llama-cpp), [vLLM](/deployment/gpu-inference/vllm), [SGLang](/deployment/gpu-inference/sglang), [MLX](/deployment/on-device/mlx), [Ollama](/deployment/on-device/ollama), and [Atomic Chat](/deployment/on-device/atomic-chat). Audio, omni, retrieval, encoder, and decision models support fewer runtimes (d1-omni-600M: Transformers, llama.cpp, and mlx-vlm); check each model page.
-- Most open-weight models can be fine-tuned with [Liquid Finetune](/lfm/fine-tuning/liquid-finetune), [TRL](/lfm/fine-tuning/trl), or [Unsloth](/lfm/fine-tuning/unsloth). The **Trainable?** column in the matrix below lists the documented path for each model.
+- Most open-weight models can be fine-tuned with [Liquid Finetune](/lfm/fine-tuning/liquid-finetune), [TRL](/lfm/fine-tuning/trl), or [Unsloth](/lfm/fine-tuning/unsloth), and MoE models can be trained across GPUs with [Halo](/lfm/fine-tuning/halo). The **Trainable?** column in the matrix below lists the documented path for each model.
 
 </div>
 
@@ -65,7 +65,7 @@ Start with the model family that matches your input and output shape, then choos
 </Card>
 
 <Card title="Fine-Tuning" icon="sliders" href="/lfm/fine-tuning/liquid-finetune">
-  Start with [Liquid Finetune](/lfm/fine-tuning/liquid-finetune) for managed workflows, or use [TRL](/lfm/fine-tuning/trl) and [Unsloth](/lfm/fine-tuning/unsloth) for framework-level control.
+  Start with [Liquid Finetune](/lfm/fine-tuning/liquid-finetune) for managed workflows, or use [TRL](/lfm/fine-tuning/trl), [Unsloth](/lfm/fine-tuning/unsloth), and [Halo](/lfm/fine-tuning/halo) for framework-level control.
 </Card>
 
 <Card title="Model Repositories" icon="database" href="https://huggingface.co/LiquidAI/collections">

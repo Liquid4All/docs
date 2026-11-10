@@ -140,6 +140,7 @@ active:
   - /leap/edge-sdk/overview
   - /lfm/fine-tuning
   - /lfm/fine-tuning/datasets
+  - /lfm/fine-tuning/halo
   - /lfm/fine-tuning/leap-finetune
   - /lfm/fine-tuning/liquid-finetune
   - /lfm/fine-tuning/overview
