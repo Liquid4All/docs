@@ -1,6 +1,6 @@
 ---
 title: "Liquid Nanos"
-description: "A library of low-latency, task-specific models fine-tuned on Liquid's multimodal LFM base models. Nanos deliver high accuracy on narrow tasks while remaining small enough to deploy on-device or serve economically at high volume."
+description: "Liquid Nanos are task-specific LFMs for extraction, summarization, retrieval, and translation, small enough for local AI or high-volume serving."
 icon: "sparkles"
 ---
 
@@ -30,75 +30,79 @@ icon: "sparkles"
 
 <h2>LFM2.5 Nanos &nbsp;&nbsp;<Badge shape="rounded" icon="circle-check" color="green" size="lg">Latest release</Badge></h2>
 
+<div className="model-cards">
 <CardGroup cols={2}>
 
 <Card title="LFM2.5-Encoder-230M" href="/lfm/models/lfm25-encoder-230m">
-  230M · <Badge shape="pill" color="orange">Encoder</Badge>
+  230M <Badge shape="pill" color="orange">Encoder</Badge>
 
   Compact bidirectional encoder for the tightest latency and memory budgets.
 </Card>
 
 <Card title="LFM2.5-Encoder-350M" href="/lfm/models/lfm25-encoder-350m">
-  350M · <Badge shape="pill" color="orange">Encoder</Badge>
+  350M <Badge shape="pill" color="orange">Encoder</Badge>
 
   General-purpose bidirectional encoder to fine-tune for classification and more.
 </Card>
 
 <Card title="LFM2.5-Embedding-350M" href="/lfm/models/lfm25-embedding-350m">
-  350M · <Badge shape="pill" color="orange">Retrieval</Badge>
+  350M <Badge shape="pill" color="orange">Retrieval</Badge>
 
   Dense bi-encoder for the smallest, fastest multilingual vector index.
 </Card>
 
 <Card title="LFM2.5-ColBERT-350M" href="/lfm/models/lfm25-colbert-350m">
-  350M · <Badge shape="pill" color="orange">Retrieval</Badge>
+  350M <Badge shape="pill" color="orange">Retrieval</Badge>
 
   Late-interaction retriever for higher accuracy and reranking quality.
 </Card>
 
 <Card title="LFM2.5-VL-1.6B-Extract" href="/lfm/models/lfm25-vl-1.6b-extract">
-  1.6B · <Badge shape="pill" color="blue">Vision Extraction</Badge>
+  1.6B <Badge shape="pill" color="blue">Vision Extraction</Badge>
 
   Extract user-defined fields from images into structured JSON.
 </Card>
 
 <Card title="LFM2.5-VL-450M-Extract" href="/lfm/models/lfm25-vl-450m-extract">
-  450M · <Badge shape="pill" color="blue">Vision Extraction</Badge>
+  450M <Badge shape="pill" color="blue">Vision Extraction</Badge>
 
   Compact image-to-JSON extraction model for edge workflows.
 </Card>
 
 </CardGroup>
+</div>
 
 ## LFM2 Nanos
 
-<CardGroup cols={3}>
+<div className="model-cards">
+<CardGroup cols={2}>
 
 <Card title="LFM2-350M-PII-Extract-JP" href="/lfm/models/lfm2-350m-pii-extract-jp">
-  350M · <Badge shape="pill" color="blue">Extraction</Badge>
+  350M <Badge shape="pill" color="blue">Extraction</Badge>
 
   Japanese PII detection into structured JSON.
 </Card>
 
 <Card title="LFM2-2.6B-Transcript" href="/lfm/models/lfm2-2.6b-transcript">
-  2.6B · <Badge shape="pill" color="purple">Summarization</Badge>
+  2.6B <Badge shape="pill" color="purple">Summarization</Badge>
 
   Private, on-device meeting summarization from transcripts.
 </Card>
 
 <Card title="LFM2-350M-ENJP-MT" href="/lfm/models/lfm2-350m-enjp-mt">
-  350M · <Badge shape="pill" color="red">Translation</Badge>
+  350M <Badge shape="pill" color="red">Translation</Badge>
 
   Near real-time bidirectional Japanese/English translation.
 </Card>
 
 <Card title="LFM2-350M-Math" href="/lfm/models/lfm2-350m-math">
-  350M · <Badge shape="pill" color="yellow">Reasoning</Badge>
+  350M <Badge shape="pill" color="yellow">Reasoning</Badge>
 
   Tiny reasoning model for math problem solving.
 </Card>
 
 </CardGroup>
+</div>
 
 <Panel>
   - [Liquid Playground](https://playground.liquid.ai/chat?model=cmk0wefde000204jp2knb2qr8)

@@ -1,6 +1,6 @@
 ---
 title: "TRL"
-description: "TRL (Transformer Reinforcement Learning) is a library for fine-tuning and aligning language models using methods like Supervised Fine-Tuning (SFT), Reward Modeling, and Direct Preference Optimization (DPO)."
+description: "Fine-tune LFM models with Hugging Face's TRL library using Supervised Fine-Tuning (SFT), Direct Preference Optimization (DPO), and Low-Rank Adaptation (LoRA)."
 ---
 
 <Tip>
@@ -27,7 +27,11 @@ pip install trl>=0.9.0 transformers>=4.55.0 torch>=2.6 peft accelerate
 
 ## Supervised Fine-Tuning (SFT)[​](#supervised-fine-tuning-sft "Direct link to Supervised Fine-Tuning (SFT)")
 
-[![Colab link](/images/lfm/fine-tuning/production/uploads/61b8e2ba285851687028d395/vlOyMEjwHa_b_LXysEu2E.png)](https://colab.research.google.com/github/Liquid4All/docs/blob/main/notebooks/💧_LFM2_5_SFT_with_TRL.ipynb)
+<div className="colab-link">
+  <a href="https://colab.research.google.com/github/Liquid4All/docs/blob/main/notebooks/💧_LFM2_5_SFT_with_TRL.ipynb" target="_blank" rel="noreferrer">
+    <img src="/images/lfm/fine-tuning/production/uploads/61b8e2ba285851687028d395/vlOyMEjwHa_b_LXysEu2E.png" alt="Open in Colab"></img>
+  </a>
+</div>
 
 The `SFTTrainer` makes it easy to fine-tune LFM models on instruction-following or conversational datasets. It handles chat templates, packing, and dataset formatting automatically. SFT training requires [Instruction datasets](/lfm/fine-tuning/datasets#instruction-datasets-sft).
 
@@ -132,7 +136,11 @@ trainer.train()
 
 ## Vision Language Model Fine-Tuning (VLM-SFT)[​](#vision-language-model-fine-tuning-vlm-sft "Direct link to Vision Language Model Fine-Tuning (VLM-SFT)")
 
-[![Colab link](/images/lfm/fine-tuning/production/uploads/61b8e2ba285851687028d395/vlOyMEjwHa_b_LXysEu2E.png)](https://colab.research.google.com/github/Liquid4All/docs/blob/main/notebooks/💧_LFM2_5_VL_SFT_with_TRL.ipynb)
+<div className="colab-link">
+  <a href="https://colab.research.google.com/github/Liquid4All/docs/blob/main/notebooks/💧_LFM2_5_VL_SFT_with_TRL.ipynb" target="_blank" rel="noreferrer">
+    <img src="/images/lfm/fine-tuning/production/uploads/61b8e2ba285851687028d395/vlOyMEjwHa_b_LXysEu2E.png" alt="Open in Colab"></img>
+  </a>
+</div>
 
 The `SFTTrainer` also supports fine-tuning Vision Language Models like `LFM2.5-VL-1.6B` on image-text datasets. VLM fine-tuning requires [Vision datasets](/lfm/fine-tuning/datasets#vision-datasets-vlm-sft) and a few key differences from text-only SFT:
 
@@ -290,7 +298,11 @@ trainer.train()
 
 ## Direct Preference Optimization (DPO)[​](#direct-preference-optimization-dpo "Direct link to Direct Preference Optimization (DPO)")
 
-[![Colab link](/images/lfm/fine-tuning/production/uploads/61b8e2ba285851687028d395/vlOyMEjwHa_b_LXysEu2E.png)](https://colab.research.google.com/github/Liquid4All/docs/blob/main/notebooks/💧_LFM2_DPO_with_TRL.ipynb)
+<div className="colab-link">
+  <a href="https://colab.research.google.com/github/Liquid4All/docs/blob/main/notebooks/💧_LFM2_DPO_with_TRL.ipynb" target="_blank" rel="noreferrer">
+    <img src="/images/lfm/fine-tuning/production/uploads/61b8e2ba285851687028d395/vlOyMEjwHa_b_LXysEu2E.png" alt="Open in Colab"></img>
+  </a>
+</div>
 
 The `DPOTrainer` implements Direct Preference Optimization, a method to align models with human preferences without requiring a separate reward model. DPO training requires [Preference datasets](/lfm/fine-tuning/datasets#preference-datasets-dpo) with chosen and rejected response pairs.
 

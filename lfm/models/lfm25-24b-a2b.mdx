@@ -6,6 +6,8 @@ description: "24B parameter Mixture-of-Experts reasoning model with 2B active pa
 import { TextLlamacpp } from "/snippets/quickstart/text-llamacpp.mdx";
 import { TextVllm } from "/snippets/quickstart/text-vllm.mdx";
 import { TextSglang } from "/snippets/quickstart/text-sglang.mdx";
+import { DsparkSglang } from "/snippets/quickstart/dspark-sglang.mdx";
+import { DsparkLlamacpp } from "/snippets/quickstart/dspark-llamacpp.mdx";
 
 <a href="/lfm/models/text-models" className="back-button">← Back to Text Models</a>
 
@@ -18,6 +20,7 @@ LFM2.5-24B-A2B is the largest LFM2.5 model, a Mixture-of-Experts model combining
   <a href="https://huggingface.co/LiquidAI/LFM2.5-24B-A2B-MLX-8bit" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#c4b5fd'}}><span style={{color: '#000'}}>MLX</span></a>
   <a href="https://huggingface.co/LiquidAI/LFM2.5-24B-A2B-ONNX" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#86efac'}}><span style={{color: '#000'}}>ONNX</span></a>
   <a href="https://huggingface.co/LiquidAI/LFM2.5-24B-A2B-FP8" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#fca5a5'}}><span style={{color: '#000'}}>FP8</span></a>
+  <a href="https://huggingface.co/LiquidAI/LFM2.5-24B-A2B-DSpark" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#f9a8d4'}}><span style={{color: '#000'}}>DSpark</span></a>
 </div>
 
 ## Specifications
@@ -137,6 +140,19 @@ LFM2.5-24B-A2B is the largest LFM2.5 model, a Mixture-of-Experts model combining
   </Tab>
   <Tab title="SGLang">
     <TextSglang modelId="LiquidAI/LFM2.5-24B-A2B" reasoningParser="qwen3-thinking" toolCallParser="lfm2" samplingParams={'temperature=0.1,\n    extra_body={"top_k": 50, "repetition_penalty": 1.05},'}></TextSglang>
+  </Tab>
+</Tabs>
+
+## Speculative Decoding
+
+[LFM2.5-24B-A2B-DSpark](https://huggingface.co/LiquidAI/LFM2.5-24B-A2B-DSpark) is a 328M-parameter DSpark draft model for GPU serving. On an NVIDIA B300 with the FP8 target in SGLang, it averages 2.4× the output throughput of the target alone at concurrency 1 (up to 3.1×) and 1.7× at concurrency 256. See [Speculative Decoding](/lfm/key-concepts/speculative-decoding) for how it works.
+
+<Tabs>
+  <Tab title="SGLang">
+    <DsparkSglang modelId="LiquidAI/LFM2.5-24B-A2B-FP8" draftModelId="LiquidAI/LFM2.5-24B-A2B-DSpark" blockSize={9} radixCache={true} memFraction="0.8" nativeHfConfig={true} samplingParams={'temperature=0.1,\n    extra_body={"top_k": 50, "repetition_penalty": 1.05},'}></DsparkSglang>
+  </Tab>
+  <Tab title="llama.cpp">
+    <DsparkLlamacpp ggufRepo="LiquidAI/LFM2.5-24B-A2B-GGUF" draftRepo="LiquidAI/LFM2.5-24B-A2B-DSpark-GGUF" draftNMax="9" samplingFlags="--temp 0.1 --top-k 50 --repeat-penalty 1.05"></DsparkLlamacpp>
   </Tab>
 </Tabs>
 

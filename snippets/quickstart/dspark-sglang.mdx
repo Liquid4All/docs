@@ -1,8 +1,10 @@
-export const DsparkSglang = ({ modelId, draftModelId, vision = false, samplingParams }) => (
+export const DsparkSglang = ({ modelId, draftModelId, vision = false, samplingParams, blockSize, radixCache = false, memFraction, nativeHfConfig = false }) => (
 <div>
 <p><strong>Install:</strong></p>
 {vision ? (
 <p>Requires <a href="https://github.com/sgl-project/sglang/releases/tag/v0.5.19">SGLang v0.5.19</a> or newer.</p>
+) : nativeHfConfig ? (
+<p>Requires a build of SGLang with DSpark support for LFM2 and LFM2-MoE targets (<a href="https://github.com/sgl-project/sglang/pull/31041">PR #31041</a>) and native Hugging Face configuration support (<a href="https://github.com/sgl-project/sglang/pull/43939">PR #43939</a>).</p>
 ) : (
 <p>Requires a build of SGLang with DSpark support for LFM2 and LFM2-MoE targets (<a href="https://github.com/sgl-project/sglang/pull/31041">PR #31041</a>).</p>
 )}
@@ -13,8 +15,10 @@ export const DsparkSglang = ({ modelId, draftModelId, vision = false, samplingPa
     --speculative-algorithm DSPARK \\
     --speculative-draft-model-path ${draftModelId} \\
     --speculative-draft-attention-backend flashinfer \\${vision ? `
-    --speculative-dspark-block-size 9 \\` : ""}
-    --disable-radix-cache --mem-fraction-static ${vision ? "0.8" : "0.75"} --port 30000`}
+    --speculative-dspark-block-size 9 \\` : ""}${blockSize ? `
+    --speculative-dspark-block-size ${blockSize} \\
+    --speculative-num-draft-tokens ${blockSize + 1} \\` : ""}
+    ${radixCache ? "" : "--disable-radix-cache "}--mem-fraction-static ${memFraction || (vision ? "0.8" : "0.75")} --port 30000`}
 </CodeBlock>
 <p><strong>Query (OpenAI-compatible):</strong></p>
 <CodeBlock language="python">
@@ -43,10 +47,17 @@ print(response.choices[0].message.content)`}
 <li><code>--speculative-draft-attention-backend flashinfer</code>: the attention backend the drafter runs on.</li>
 {vision ? (
 <li><code>--speculative-dspark-block-size</code>: how many tokens the drafter proposes per step. Use 9, the block size the drafter was trained with.</li>
+) : blockSize ? (
+<li><code>--speculative-dspark-block-size</code>: how many tokens the drafter proposes per step. Use {blockSize}, the block size the drafter was trained with.</li>
 ) : (
 <li>Block size: read from the drafter's <code>config.json</code>, so you don't need to set it.</li>
 )}
+{blockSize ? (
+<li><code>--speculative-num-draft-tokens</code>: the tokens the target verifies per step, which is the drafted block plus one bonus token from the target.</li>
+) : null}
+{radixCache ? null : (
 <li><code>--disable-radix-cache</code>: turns off SGLang's prefix cache, as in the drafter's model card.</li>
+)}
 <li><code>--mem-fraction-static</code>: the share of GPU memory SGLang reserves for weights and the KV cache.</li>
 </ul>
 </div>

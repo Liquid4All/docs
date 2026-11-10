@@ -1,9 +1,13 @@
 ---
 title: "d1-3B"
-description: "3B parameter multimodal decision model for text and images, built on LFM2.5-VL-3B"
+description: "3B parameter multimodal decision model for text and images, built on LFM2.5-VL-3B (deprecated - use d1-2B instead)"
 ---
 
 <a href="/lfm/models/decision-models" className="back-button">← Back to Decision Models</a>
+
+<Warning>
+This model is deprecated. Use [d1-2B](/lfm/models/d1-2b) for improved accuracy with a third fewer parameters, plus typed answers.
+</Warning>
 
 d1-3B is a 3.1B parameter decision model built on [LFM2.5-VL-3B](/lfm/models/lfm25-vl-3b). It evaluates text, JSON, images, or a mix and returns calibrated Noul, Choice, and Score answers in one forward pass with zero output tokens.
 
@@ -138,5 +142,5 @@ d1-3B is a 3.1B parameter decision model built on [LFM2.5-VL-3B](/lfm/models/lfm
 
 ## Other Formats
 
-- **MLX**: [d1-3B-MLX-8bit](https://huggingface.co/LiquidAI/d1-3B-MLX-8bit), [d1-3B-MLX-4bit](https://huggingface.co/LiquidAI/d1-3B-MLX-4bit), and [d1-3B-MLX-fp16](https://huggingface.co/LiquidAI/d1-3B-MLX-fp16) run on Apple Silicon with [mlx-vlm](https://github.com/Blaizzy/mlx-vlm). d1 support landed after mlx-vlm 0.7.6, so install mlx-vlm from GitHub until the next release. See the model cards for Python, CLI, and server usage.
+- **MLX**: [d1-3B-MLX-8bit](https://huggingface.co/LiquidAI/d1-3B-MLX-8bit), [d1-3B-MLX-4bit](https://huggingface.co/LiquidAI/d1-3B-MLX-4bit), and [d1-3B-MLX-fp16](https://huggingface.co/LiquidAI/d1-3B-MLX-fp16) run on Apple Silicon with [mlx-vlm](https://github.com/Blaizzy/mlx-vlm). They require mlx-vlm 0.7.8 or later, installed with `pip install -U "mlx-vlm>=0.7.8"`. See the model cards for Python, CLI, and server usage.
 - **W8A8**: [d1-3B-w8a8](https://huggingface.co/LiquidAI/d1-3B-w8a8) is an INT8 (weights and activations) version for NVIDIA GPUs with INT8 tensor cores, from Ampere on, including Jetson devices. It needs `transformers>=5.19` and `torchao>=0.18`, and is 3.8 GB instead of 6.2 GB for the bf16 checkpoint. On other hardware, use d1-3B. See the [model card](https://huggingface.co/LiquidAI/d1-3B-w8a8) for setup.

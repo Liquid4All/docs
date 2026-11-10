@@ -18,6 +18,7 @@ LFM models are compatible with the frameworks below. Support varies by model (fo
 - [Transformers](/deployment/gpu-inference/transformers) - For research and development
 - [llama.cpp](/deployment/on-device/llama-cpp) - For efficient CPU inference, including [iOS and Android apps](/deployment/on-device/llama-cpp/mobile)
 - [vLLM](/deployment/gpu-inference/vllm) - For high-throughput production serving
+- [zml/llmd](/deployment/gpu-inference/zml-llmd) - For high-throughput and fast startup
 - [MLX](/deployment/on-device/mlx) - For Apple Silicon optimization
 - [Ollama](/deployment/on-device/ollama) - For easy local deployment
 </Accordion>
@@ -70,7 +71,7 @@ For most use cases, Q4_K_M or Q5_K_M provide good quality with significant size 
 ## Fine-tuning
 
 <Accordion title="Can I fine-tune LFM models?">
-Yes. Most open-weight LFM models support fine-tuning with [TRL](/lfm/fine-tuning/trl) and [Unsloth](/lfm/fine-tuning/unsloth); audio models use the [liquid-audio](https://github.com/Liquid4All/liquid-audio#finetuning) trainer. Check the [Model Library](/lfm/models/complete-library) for trainability information.
+Yes. Most open-weight LFM models support fine-tuning with [TRL](/lfm/fine-tuning/trl) and [Unsloth](/lfm/fine-tuning/unsloth), MoE models can be trained across GPUs with [Halo](/lfm/fine-tuning/halo), and audio models use the [liquid-audio](https://github.com/Liquid4All/liquid-audio#finetuning) trainer. Check the [Model Library](/lfm/models/complete-library) for trainability information.
 </Accordion>
 
 <Accordion title="What fine-tuning methods are supported?">

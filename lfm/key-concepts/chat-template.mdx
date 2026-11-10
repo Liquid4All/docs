@@ -1,19 +1,27 @@
 ---
 title: "Chat Template"
-description: "The chat template defines how conversations are structured using special tokens and roles. LFM2 uses a ChatML-like chat template to structure conversations as follows:"
+description: "The chat template defines how conversations are structured using special tokens and roles. LFM3 uses a ChatML-like chat template to structure conversations as follows:"
 ---
 
 import { ChatMLExample } from "/snippets/key-concepts/chatml-example.mdx";
 
-<ChatMLExample />
+```
+<|startoftext|><|im_start|>system
+You are a helpful assistant trained by Liquid AI.<|im_end|>
+<|im_start|>user
+Explain how a heat pump works.<|im_end|>
+<|im_start|>assistant
+<think>
+```
 
 Conversations are formatted using special tokens:
 
 * **`<|startoftext|>`** — Start of the conversation.
 * **`<|im_start|>`** — Start of the message. Always followed by the role name (`system`, `user`, `assistant`, or `tool`) and a line break.
 * **`<|im_end|>`** — End of the message.
+* **`<think>`** / **`</think>`** — Start and end of the model's reasoning, at the beginning of an assistant turn.
 
-LFM2 supports four conversation roles:
+LFM3 supports four conversation roles:
 
 * **`system`** — (Optional) Defines who the assistant is and how it should respond.
 * **`user`** — Messages from the user containing questions and instructions.
@@ -22,7 +30,113 @@ LFM2 supports four conversation roles:
 
 The complete chat template definition can be found in the `chat_template.jinja` file in each model's Hugging Face repository.
 
+<Note>
+Using LFM2 or LFM2.5? See [LFM2 and LFM2.5](#lfm2-and-lfm25) for their chat template.
+</Note>
+
 ## Text Models
+
+We recommend storing your conversation as a list of dictionaries as follows:
+
+```python
+messages = [
+    {"role": "system", "content": "You are a helpful assistant trained by Liquid AI."},
+    {"role": "user", "content": "Explain how a heat pump works."}
+]
+```
+
+You can then apply LFM3's chat template using the [`.apply_chat_template()`](https://huggingface.co/docs/transformers/main/en/chat_templating#using-applychattemplate) method from Transformers:
+
+```python
+from transformers import AutoTokenizer
+
+tokenizer = AutoTokenizer.from_pretrained("LiquidAI/LFM3-1.7B", trust_remote_code=True)
+
+# Apply chat template
+prompt = tokenizer.apply_chat_template(
+    messages,
+    tokenize=False,
+    add_generation_prompt=True
+)
+print(prompt)
+```
+
+Output:
+
+```
+<|startoftext|><|im_start|>system
+You are a helpful assistant trained by Liquid AI.<|im_end|>
+<|im_start|>user
+Explain how a heat pump works.<|im_end|>
+<|im_start|>assistant
+<think>
+```
+
+### Reasoning
+
+Reasoning is enabled by default, so the template opens every assistant turn with `<think>`. Set `enable_thinking=False` in `apply_chat_template()` for direct answers. Reasoning from turns before the latest user message is removed unless `preserve_thinking=True`.
+
+## Vision Models
+
+LFM3-VL models follow the same chat template with additional support for images and videos. Each image is rendered as `<|vision_start|><|image|><|vision_end|>` and each video as `<|vision_start|><|video|><|vision_end|>`. The processor's `.apply_chat_template()` method inserts these tokens automatically, so do not include them in your message content.
+
+```python
+from transformers import AutoProcessor
+
+processor = AutoProcessor.from_pretrained("LiquidAI/LFM3-VL-2B", trust_remote_code=True)
+
+messages = [
+    {"role": "system", "content": "You are a helpful assistant trained by Liquid AI."},
+    {
+        "role": "user",
+        "content": [
+            {"type": "image", "url": "http://images.cocodataset.org/val2017/000000039769.jpg"},
+            {"type": "text", "text": "What species is in this picture?"},
+        ],
+    },
+]
+
+# Apply chat template
+prompt = processor.apply_chat_template(
+    messages,
+    tokenize=False,
+    add_generation_prompt=True
+)
+print(prompt)
+```
+
+Output:
+
+```
+<|startoftext|><|im_start|>system
+You are a helpful assistant trained by Liquid AI.<|im_end|>
+<|im_start|>user
+<|vision_start|><|image|><|vision_end|>What species is in this picture?<|im_end|>
+<|im_start|>assistant
+<think>
+```
+
+## Audio and Omni Models
+
+LFM3-Omni follows the same chat template. Every input audio clip, image, and video sits inside a `<|vision_start|>` / `<|vision_end|>` span, which `apply_chat_template()` inserts for you. Audio clips render as `<|vision_start|><|audio|><|vision_end|>`.
+
+```
+<|startoftext|><|im_start|>system
+Perform ASR in English.<|im_end|>
+<|im_start|>user
+<|vision_start|><|audio|><|vision_end|><|im_end|>
+<|im_start|>assistant
+```
+
+In the answer, `<|audio_start|>` opens speech and `<|mixed_start|>` opens interleaved text and speech. LFM3-Omni-2B is a non-reasoning model: its template opens every assistant turn with an empty `<think></think>` block. See [LFM3-Audio-2B](/lfm/models/lfm3-audio-2b) and [LFM3-Omni-2B](/lfm/models/lfm3-omni-2b) for the recommended system prompts.
+
+## LFM2 and LFM2.5
+
+LFM2 and LFM2.5 use a ChatML-like chat template without the `<think>` prefill:
+
+<ChatMLExample />
+
+### LFM2 Text Models
 
 We recommend storing your conversation as a list of dictionaries as follows:
 
@@ -59,7 +173,7 @@ What is machine learning?<|im_end|>
 <|im_start|>assistant
 ```
 
-## Vision Models
+### LFM2 Vision Models
 
 LFM2-VL models follow the same chat template with additional support for images. When formatted, images are represented with a sentinel token (`<image>`), which is automatically replaced with image tokens by the processor.
 

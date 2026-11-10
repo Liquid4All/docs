@@ -1,6 +1,6 @@
 ---
 title: "LFM2.5-2.6B"
-description: "2.6B dense reasoning model trained for agentic workloads, with a 131K context window and native tool calling for on-device agents"
+description: "2.6B dense reasoning model trained for agentic workloads, with a 131K context window and native tool calling for on-device agents (deprecated - use LFM3-1.7B instead)"
 ---
 
 import { TextTransformers } from "/snippets/quickstart/text-transformers.mdx";
@@ -11,6 +11,10 @@ import { DsparkSglang } from "/snippets/quickstart/dspark-sglang.mdx";
 import { DsparkLlamacpp } from "/snippets/quickstart/dspark-llamacpp.mdx";
 
 <a href="/lfm/models/text-models" className="back-button">← Back to Text Models</a>
+
+<Warning>
+This model is deprecated. Use [LFM3-1.7B](/lfm/models/lfm3-1.7b), which reasons and calls tools natively with a 256K context window.
+</Warning>
 
 LFM2.5-2.6B is Liquid AI's 2.6B dense model built for agentic workloads with a 131K context window and native tool calling. It is a reasoning model that always thinks before it answers. It runs on edge devices and it is trained to work reliably inside agent harnesses like Hermes Agent, OpenClaw, and Pi.
 
