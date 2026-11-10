@@ -3,6 +3,8 @@ title: "LFM3-Omni-2B"
 description: "2B omni model that understands text, images, video, and audio, and answers in text, speech, or both"
 ---
 
+import { OmniLlamacpp } from "/snippets/quickstart/omni-llamacpp.mdx";
+
 <a href="/lfm/models/omni-models" className="back-button">← Back to Omni Models</a>
 
 LFM3-Omni-2B is Liquid AI's first omni model: a single end-to-end model that understands text, images, video, and audio, and answers in text, speech, or interleaved text and speech. It is built for on-device use, where one model replaces a separate ASR model, vision-language model, LLM, and TTS model. It is a non-reasoning model.
@@ -10,6 +12,7 @@ LFM3-Omni-2B is Liquid AI's first omni model: a single end-to-end model that und
 <div style={{display: 'flex', gap: '0.5rem', margin: '0.5rem 0 1.5rem 0'}}>
   <a href="https://huggingface.co/LiquidAI/LFM3-Omni-2B" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#fbbf24'}}><span style={{color: '#000'}}>HF</span></a>
   <a href="https://huggingface.co/LiquidAI/LFM3-Omni-2B-GGUF" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#60a5fa'}}><span style={{color: '#000'}}>GGUF</span></a>
+  <a href="https://huggingface.co/LiquidAI/LFM3-Omni-2B-MLX-8bit" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#c4b5fd'}}><span style={{color: '#000'}}>MLX</span></a>
 </div>
 
 ## Specifications
@@ -153,7 +156,11 @@ LFM3-Omni-2B is Liquid AI's first omni model: a single end-to-end model that und
   </Tab>
 
   <Tab title="llama.cpp">
-    Download the GGUF files and follow the llama.cpp instructions in the [LiquidAI/LFM3-Omni-2B-GGUF](https://huggingface.co/LiquidAI/LFM3-Omni-2B-GGUF) repository.
+    To run it without the command line, use the [Llama app](/deployment/on-device/llama), with image, audio, and video input.
+
+    LFM3-Omni-2B is a non-reasoning model, so the server command uses `--reasoning off`.
+
+    <OmniLlamacpp ggufRepo="LiquidAI/LFM3-Omni-2B-GGUF" serveFlags="--reasoning off"></OmniLlamacpp>
   </Tab>
 
   <Tab title="SGLang">

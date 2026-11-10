@@ -10,6 +10,7 @@ d1-omni-2B is a 2.17B parameter decision model for text, pictures, and audio, bu
 <div style={{display: 'flex', gap: '0.5rem', margin: '0.5rem 0 1.5rem 0'}}>
   <a href="https://huggingface.co/LiquidAI/d1-Omni-2B" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#fbbf24'}}><span style={{color: '#000'}}>HF</span></a>
   <a href="https://huggingface.co/LiquidAI/d1-Omni-2B-GGUF" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#60a5fa'}}><span style={{color: '#000'}}>GGUF</span></a>
+  <a href="https://huggingface.co/LiquidAI/d1-Omni-2B-MLX-8bit" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#c4b5fd'}}><span style={{color: '#000'}}>MLX</span></a>
 </div>
 
 ## Specifications
@@ -118,12 +119,12 @@ d1-omni-2B is designed for decisions that depend on what is heard, such as call 
     ```
   </Tab>
   <Tab title="llama.cpp">
-    Requires llama.cpp 0.8.0 (b11960) or later. llama.cpp supports Noul, Choice, and Score questions over text, pictures, audio, and spoken questions; for multiple choice and typed answers, use Transformers.
+    Requires llama.cpp 0.8.0 (b11960) or later. llama.cpp supports Noul, Choice, and Score questions over text, pictures, audio, and spoken questions; for multiple choice and typed answers, use Transformers or mlx-vlm.
 
     **Start the server:**
 
     ```bash
-    llama-server -hf LiquidAI/d1-Omni-2B-GGUF:Q8_0 -b 8192 -ub 8192
+    llama serve -hf LiquidAI/d1-Omni-2B-GGUF:Q8_0 -b 8192 -ub 8192
     ```
 
     A question is read in one batch, so `-b` and `-ub` must hold its state and media. A picture takes at most half of `-ub`: 8192 keeps the full budget of 4096 tokens per picture.
@@ -131,7 +132,7 @@ d1-omni-2B is designed for decisions that depend on what is heard, such as call 
     **Text input:**
 
     ```bash
-    curl http://127.0.0.1:8080/v1/systemone -H "Content-Type: application/json" -d '{
+    curl http://127.0.0.1:9931/v1/systemone -H "Content-Type: application/json" -d '{
       "state": "I was charged twice this month, please refund one of them.",
       "questions": {
         "refund":  {"type": "noul", "instructions": "Is the customer asking for a refund?"},
@@ -149,7 +150,7 @@ d1-omni-2B is designed for decisions that depend on what is heard, such as call 
     ```bash
     curl -sL -o cats.jpg http://images.cocodataset.org/val2017/000000039769.jpg
 
-    curl http://127.0.0.1:8080/v1/systemone -H "Content-Type: application/json" -d @- <<JSON
+    curl http://127.0.0.1:9931/v1/systemone -H "Content-Type: application/json" -d @- <<JSON
     {
       "state": null,
       "images": ["data:image/jpeg;base64,$(base64 < cats.jpg | tr -d '\n')"],
@@ -164,7 +165,7 @@ d1-omni-2B is designed for decisions that depend on what is heard, such as call 
     **Audio input:**
 
     ```bash
-    curl http://127.0.0.1:8080/v1/systemone -H "Content-Type: application/json" -d @- <<JSON
+    curl http://127.0.0.1:9931/v1/systemone -H "Content-Type: application/json" -d @- <<JSON
     {
       "state": null,
       "files": ["data:audio/wav;base64,$(base64 < command.wav | tr -d '\n')"],
@@ -181,7 +182,7 @@ d1-omni-2B is designed for decisions that depend on what is heard, such as call 
     **Spoken question** (the `instructions` are an `input_audio` part):
 
     ```bash
-    curl http://127.0.0.1:8080/v1/systemone -H "Content-Type: application/json" -d @- <<JSON
+    curl http://127.0.0.1:9931/v1/systemone -H "Content-Type: application/json" -d @- <<JSON
     {
       "state": "I was charged twice this month, please refund one of them.",
       "questions": {
@@ -207,4 +208,8 @@ Besides Noul, Choice, and Score, d1-omni-2B answers typed questions. Each questi
 
 A value or a box is missing when `found` is under 0.5, and it is then `None`. Calibrate any decision threshold on data from your own use. See [Typed Answers](/lfm/models/decision-models#typed-answers) for every question and answer field.
 
-Typed answers run in Transformers. llama.cpp supports Noul, Choice, and Score questions only.
+Typed answers run in Transformers and mlx-vlm. llama.cpp supports Noul, Choice, and Score questions only.
+
+## Other Formats
+
+- **MLX**: [d1-Omni-2B-MLX-8bit](https://huggingface.co/LiquidAI/d1-Omni-2B-MLX-8bit) and [d1-Omni-2B-MLX-fp16](https://huggingface.co/LiquidAI/d1-Omni-2B-MLX-fp16) run on Apple Silicon with [mlx-vlm](https://github.com/Blaizzy/mlx-vlm), including image and audio input. They require mlx-vlm 0.7.11 or later, installed with `pip install -U "mlx-vlm>=0.7.11"`. See the [MLX guide](/deployment/on-device/mlx#lfm3-and-d1-models) and the model cards for Python and CLI usage.

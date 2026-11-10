@@ -1,0 +1,31 @@
+---
+title: "Models"
+description: "Find the right Liquid model for your task. Compare the text, vision, audio, and decision models available through the Liquid API."
+---
+
+Pass a model's id as `model` in your request. Your organization's models, with their rate limits and prices, are listed on the [Models](https://console.liquid.ai/dashboard/models) page of Liquid Console, and [`GET /openai/v1/models`](/api/reference/models/list-models) returns the ones you can call. See the [Liquid AI pricing page](https://www.liquid.ai/pricing) for current prices.
+
+## Generation models
+
+Call these through [chat completions](/api/guides/text-generation).
+
+| Model | Input | Output | Context window | Best for |
+| ----- | ----- | ------ | -------------- | -------- |
+| `lfm3-1.7b` | Text | Text | 128,000 | Fast agents, tool use, and everyday chat. |
+| `lfm2.5-24b-a2b` | Text | Text | 128,000 | Our largest model: a reasoning mixture of experts (24B, 2B active) for harder tasks. |
+| `lfm3-vl-2b` | Text, images | Text | 128,000 | [Vision](/api/guides/vision): describing, reading, and reasoning about images. |
+| `lfm3-audio-2b` | Text, audio | Text, speech | 128,000 | [Audio](/api/guides/audio): transcription, translation, and spoken replies. |
+| `lfm3-omni-2b` | Text, audio, images | Text, speech | 128,000 | [Audio](/api/guides/audio) and images in one conversation. |
+
+## Decision models
+
+Call these through the [decisions endpoint](/api/guides/decisions). They answer typed questions with calibrated probabilities and never generate tokens.
+
+| Model | Input | Context window | Best for |
+| ----- | ----- | -------------- | -------- |
+| `d1-ultra` | Text, images | 32,768 | The most capable decision model, for harder decisions. |
+| `d1.1` | Text, images | 65,536 | The default decision model. |
+
+## Open-weight models
+
+Most of these models are also open-weight, so you can run them yourself on laptops, phones, and GPUs. See [Liquid Foundation Models](/lfm/models/complete-library) for every model and how to run it.

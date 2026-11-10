@@ -1,0 +1,44 @@
+---
+title: "Error codes"
+description: "Liquid API error codes and HTTP status codes: what each error means, what causes it, and which errors are safe to retry."
+---
+
+Errors use OpenAI's shape, so the official SDKs raise their usual exceptions and retry the same responses they retry for OpenAI:
+
+```json
+{
+  "error": {
+    "message": "The model `lfm-unknown` does not exist.",
+    "type": "not_found_error",
+    "param": null,
+    "code": null
+  }
+}
+```
+
+`message` explains the problem in words, `param` names the request field at fault when there is one, and `code` is a stable value to branch on.
+
+## HTTP status codes
+
+| Status | `type` | Cause | What to do |
+| ------ | ------ | ----- | ---------- |
+| `400` | `invalid_request_error` | The request body is invalid, for example a missing field, an unsupported parameter such as `top_p`, or an input type the model doesn't take. | Fix the field named in `param`. |
+| `401` | `authentication_error` | The API key is missing, invalid, or revoked (code `invalid_api_key`). | Send a valid key as `Authorization: Bearer $LIQUID_API_KEY`. |
+| `402` | `insufficient_quota` | Your organization is not being served: it has no credit left and no card on file, or a payment failed (code `insufficient_quota`). | Add a card or settle the balance on the [Billing](https://console.liquid.ai/dashboard/billing) page. |
+| `403` | `permission_error` | Your organization can't use this feature, for example the Batch API before it is enabled (code `batch_api_not_enabled`). | [Contact us](https://www.liquid.ai/connect) to request access. |
+| `404` | `not_found_error` | The model, file, or batch doesn't exist, or your organization can't call the model. | Check the id. [`GET /openai/v1/models`](/api/reference/models/list-models) lists the models you can call. |
+| `413` | `invalid_request_error` | The request body is too large (code `request_too_large`). | Stay under the limit for the endpoint: 4 MB for chat completions, 16 MB for audio models, 4.5 MB for decisions. Send images as URLs. |
+| `422` | `invalid_request_error` | A [decisions](/api/guides/decisions) request failed validation, for example a malformed question. | Fix the field named in `param`. |
+| `429` | `rate_limit_error` | Your organization exceeded its request or token limit for the model (code `rate_limit_exceeded`). | Wait for `Retry-After`. See [Rate limits](/api/reference/rate-limits). |
+| `499` | `api_error` | The client closed the connection before the response finished (code `client_closed_request`). | Nothing on our side; check your client's timeout. |
+| `502` | `api_error` | The model's backend returned an error. | Retry with backoff. |
+| `503` | `service_unavailable_error` | The model is at capacity or temporarily unavailable (code `server_is_overloaded`). | Wait for `Retry-After`, then retry. |
+| `504` | `api_error` | The model's backend timed out (code `upstream_timeout`). | Retry, or stream the response for long generations. |
+
+## Retrying
+
+The official OpenAI SDKs retry `429`, `5xx`, and connection errors with exponential backoff. If you call the API directly, retry the same responses and honor `Retry-After` when it is present.
+
+<Warning>
+  Don't retry other `4xx` errors: they fail the same way every time.
+</Warning>

@@ -1,0 +1,30 @@
+---
+title: "Overview"
+description: "The Liquid API reference: base URLs, authentication, rate limits, and request and response schemas for every endpoint."
+---
+
+The Liquid API is an OpenAI-compatible inference API plus native endpoints for decision models and large batch uploads. Every endpoint lives under one host:
+
+```text
+https://api.liquid.ai
+```
+
+| Prefix | Endpoints |
+| ------ | --------- |
+| `/openai/v1` | OpenAI-compatible models, chat completions, files, and batches. Point the official OpenAI clients here. |
+| `/decisions/v1` | Decision models, implementing [TypeSafe's System One API](https://docs.typesafe.ai/api). Point the TypeSafe clients at `/decisions`. |
+| `/v1` | Native endpoints, such as presigned [large batch uploads](/api/guides/batch). |
+
+## Authentication
+
+Every request needs an API key, sent as a bearer token: `Authorization: Bearer $LIQUID_API_KEY`. Create a key on the [API keys](https://console.liquid.ai/dashboard/api-keys) page of Liquid Console; it is shown once. See the [Quickstart](/api/quickstart#create-and-export-an-api-key). To send a request from a reference page, paste your key into its playground.
+
+Model ids in the examples appear as `$MODEL_ID` (and `$DECISION_MODEL_ID` for decision models). Replace them with a model id from the [Models](https://console.liquid.ai/dashboard/models) page or [`GET /openai/v1/models`](/api/reference/models/list-models).
+
+## Rate limits
+
+Inference requests count toward a limit for your organization and model. See [Rate limits](/api/reference/rate-limits).
+
+## Download
+
+The full reference as an [OpenAPI document](/api/openapi.json), for importing into Postman, Insomnia, and code generators.

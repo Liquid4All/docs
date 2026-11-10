@@ -30,39 +30,41 @@ Decision models are a new class of AI model purpose-built for structured decisio
 
 <h2>d1 Models &nbsp;&nbsp;<Badge shape="rounded" icon="circle-check" color="green" size="lg">Latest release</Badge></h2>
 
+<div className="model-cards">
 <CardGroup cols={2}>
 
 <Card title="d1-2B" href="/lfm/models/d1-2b">
-  1.9B · <Badge shape="pill" color="green">Recommended</Badge>
+  1.9B <Badge shape="pill" color="green">Recommended</Badge>
 
   Multimodal decision model (text + images or video) with typed answers, built on LFM3-VL-2B.
 </Card>
 
 <Card title="d1-omni-2B" href="/lfm/models/d1-omni-2b">
-  2.2B · <Badge shape="pill" color="cyan">Audio</Badge>
+  2.2B <Badge shape="pill" color="cyan">Audio</Badge>
 
   Multimodal decision model (text + images or audio) with typed answers, built on LFM3-Omni-2B.
 </Card>
 
 <Card title="d1-omni-600M" href="/lfm/models/d1-omni-600m">
-  587M · <Badge shape="pill" color="yellow">Smallest</Badge>
+  587M <Badge shape="pill" color="yellow">Smallest</Badge>
 
   Multimodal decision model (text + images or audio) built on LFM2.5-Encoder-350M.
 </Card>
 
 <Card title="d1.1" href="/lfm/models/d1">
-  Hosted · <Badge shape="pill" color="blue">API</Badge>
+  Hosted <Badge shape="pill" color="blue">API</Badge>
 
   Hosted decision model with Python and TypeScript SDKs via the Liquid API.
 </Card>
 
 <Card title="d1-ultra" href="/lfm/models/d1#models">
-  Hosted · <Badge shape="pill" color="purple">Most capable</Badge>
+  Hosted <Badge shape="pill" color="purple">Most capable</Badge>
 
   Multimodal decision model (text + images) via the Liquid API, built on a larger open-weight model.
 </Card>
 
 </CardGroup>
+</div>
 
 ## Which d1 Should I Use?
 
@@ -116,7 +118,7 @@ Every question you ask a decision model uses one of three core types:
 - **Estimates:** the model reads an estimate on at most 128 values between `low` and `high`. Estimates have no `found`. They are reliable on counts and scores, less so on free quantities.
 - **`at_least`:** `True` when every instance the model read was present, so the picture may hold more than `count`.
 - **Boxes need one picture:** a request with a `box` or `boxes` question must have exactly one picture in `media`.
-- **Runtimes:** typed answers run in Transformers. llama.cpp supports Noul, Choice, and Score only.
+- **Runtimes:** typed answers run in Transformers and mlx-vlm. llama.cpp supports Noul, Choice, and Score only.
 
 Calibrate any decision threshold on data from your own use.
 

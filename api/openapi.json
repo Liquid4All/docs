@@ -1,0 +1,1355 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Liquid inference API",
+    "version": "1.0.0",
+    "description": "OpenAI-compatible inference API plus native endpoints.\n\n**Authentication** — Every request needs an API key, sent as a bearer token: `Authorization: Bearer $LIQUID_API_KEY`. Create a key on the [API keys](https://console.liquid.ai/dashboard/api-keys) page of Liquid Console; it is shown once.\n\n**Batch uploads** — Batch input files are uploaded through a presigned URL from `POST /v1/files`; see the [Batch guide](https://docs.liquid.ai/api/guides/batch).\n\n**Decision models** — `POST /decisions/v1/systemone` implements TypeSafe's System One API for typed Choice, Score, and Noul decisions from decision models such as `d1.1` and `d1-ultra`."
+  },
+  "servers": [
+    {
+      "url": "https://api.liquid.ai"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Models"
+    },
+    {
+      "name": "Chat"
+    },
+    {
+      "name": "Decision models"
+    },
+    {
+      "name": "Files"
+    },
+    {
+      "name": "Batches"
+    },
+    {
+      "name": "Large uploads"
+    }
+  ],
+  "security": [
+    {
+      "apiKey": []
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "apiKey": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "A Liquid API key from the [API keys](https://console.liquid.ai/dashboard/api-keys) page of Liquid Console, sent as `Authorization: Bearer $LIQUID_API_KEY`."
+      }
+    }
+  },
+  "paths": {
+    "/openai/v1/models": {
+      "get": {
+        "operationId": "list-models",
+        "summary": "List models",
+        "description": "List the models your organization can access.",
+        "tags": [
+          "Models"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response.",
+            "content": {
+              "application/json": {
+                "example": {
+                  "object": "list",
+                  "data": [
+                    {
+                      "id": "$MODEL_ID",
+                      "object": "model",
+                      "created": 1730419200,
+                      "owned_by": "liquid"
+                    }
+                  ]
+                },
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "object": {
+                      "type": "string",
+                      "description": "Always \"list\"."
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "description": "The model id to pass as `model`."
+                          },
+                          "object": {
+                            "type": "string",
+                            "description": "Always \"model\"."
+                          },
+                          "created": {
+                            "type": "integer",
+                            "description": "Unix timestamp (seconds)."
+                          },
+                          "owned_by": {
+                            "type": "string",
+                            "description": "Always \"liquid\"."
+                          }
+                        }
+                      },
+                      "description": "The list of model objects."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "curl",
+            "label": "cURL",
+            "source": "curl https://api.liquid.ai/openai/v1/models \\\n  -H \"Authorization: Bearer $LIQUID_API_KEY\""
+          }
+        ]
+      }
+    },
+    "/openai/v1/models/{model}": {
+      "get": {
+        "operationId": "retrieve-model",
+        "summary": "Retrieve model",
+        "description": "Fetch a model your organization can access.",
+        "tags": [
+          "Models"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response.",
+            "content": {
+              "application/json": {
+                "example": {
+                  "id": "$MODEL_ID",
+                  "object": "model",
+                  "created": 1730419200,
+                  "owned_by": "liquid"
+                },
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "description": "The model id to pass as `model`."
+                    },
+                    "object": {
+                      "type": "string",
+                      "description": "Always \"model\"."
+                    },
+                    "created": {
+                      "type": "integer",
+                      "description": "Unix timestamp (seconds)."
+                    },
+                    "owned_by": {
+                      "type": "string",
+                      "description": "Always \"liquid\"."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "curl",
+            "label": "cURL",
+            "source": "curl https://api.liquid.ai/openai/v1/models/$MODEL_ID \\\n  -H \"Authorization: Bearer $LIQUID_API_KEY\""
+          }
+        ],
+        "parameters": [
+          {
+            "name": "model",
+            "in": "path",
+            "required": true,
+            "description": "The model id.",
+            "schema": {
+              "type": "string",
+              "example": "$MODEL_ID"
+            }
+          }
+        ]
+      }
+    },
+    "/openai/v1/chat/completions": {
+      "post": {
+        "operationId": "chat-completions",
+        "summary": "Chat completions",
+        "description": "Generate a model response for a chat conversation. See [Text generation](https://docs.liquid.ai/api/guides/text-generation).",
+        "tags": [
+          "Chat"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response.",
+            "content": {
+              "application/json": {
+                "example": {
+                  "id": "chatcmpl-abc123",
+                  "object": "chat.completion",
+                  "created": 1730419200,
+                  "model": "$MODEL_ID",
+                  "choices": [
+                    {
+                      "index": 0,
+                      "message": {
+                        "role": "assistant",
+                        "content": "Hello! How can I help you today?"
+                      },
+                      "finish_reason": "stop"
+                    }
+                  ],
+                  "usage": {
+                    "prompt_tokens": 19,
+                    "completion_tokens": 10,
+                    "total_tokens": 29
+                  }
+                },
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "description": "The completion id."
+                    },
+                    "object": {
+                      "type": "string",
+                      "description": "Always \"chat.completion\"."
+                    },
+                    "created": {
+                      "type": "integer",
+                      "description": "Unix timestamp (seconds)."
+                    },
+                    "model": {
+                      "type": "string",
+                      "description": "The model that generated the response."
+                    },
+                    "choices": {
+                      "type": "array",
+                      "items": {},
+                      "description": "The generated choices."
+                    },
+                    "usage": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "description": "Token counts: { prompt_tokens, completion_tokens, total_tokens }, plus `cost` in USD when the model is priced. Audio models also report OpenAI's `prompt_tokens_details` and `completion_tokens_details`, whose `audio_tokens` say how much of each total was audio. Some vision models bill each image as a multiple of its tokens, counted in `prompt_tokens` as OpenAI does. Streaming responses report it on the final usage chunk."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "The organization's request or token limit for the model was exceeded.",
+            "headers": {
+              "Retry-After": {
+                "description": "Integral seconds until the request can be retried.",
+                "schema": {
+                  "type": "integer",
+                  "minimum": 1
+                }
+              },
+              "x-ratelimit-limit-requests": {
+                "description": "Maximum requests per minute (per second when only that limit is set), when a request limit applies.",
+                "schema": {
+                  "type": "integer",
+                  "minimum": 1
+                }
+              },
+              "x-ratelimit-remaining-requests": {
+                "description": "Requests remaining in that window.",
+                "schema": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              },
+              "x-ratelimit-reset-requests": {
+                "description": "Rounded-up duration until that window resets, such as 42s or 1m0s.",
+                "schema": {
+                  "type": "string",
+                  "pattern": "^([1-9][0-9]*h)?([0-9]+m)?[0-9]+s$"
+                }
+              },
+              "x-ratelimit-limit-tokens": {
+                "description": "Estimated tokens per minute (per second when only that limit is set), when a token limit applies.",
+                "schema": {
+                  "type": "integer",
+                  "minimum": 1
+                }
+              },
+              "x-ratelimit-remaining-tokens": {
+                "description": "Estimated tokens remaining in that window.",
+                "schema": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              },
+              "x-ratelimit-reset-tokens": {
+                "description": "Rounded-up duration until that window resets, such as 42s or 1m0s.",
+                "schema": {
+                  "type": "string",
+                  "pattern": "^([1-9][0-9]*h)?([0-9]+m)?[0-9]+s$"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "message": "Rate limit exceeded for model `$MODEL_ID`. To request a higher limit, contact us at https://www.liquid.ai/connect.",
+                    "type": "rate_limit_error",
+                    "param": null,
+                    "code": "rate_limit_exceeded"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "curl",
+            "label": "cURL",
+            "source": "curl https://api.liquid.ai/openai/v1/chat/completions \\\n  -H \"Authorization: Bearer $LIQUID_API_KEY\" \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\n    \"model\": \"$MODEL_ID\",\n    \"messages\": [\n      {\"role\": \"system\", \"content\": \"You are a helpful assistant.\"},\n      {\"role\": \"user\", \"content\": \"Hello!\"}\n    ]\n  }'"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "model": {
+                    "type": "string",
+                    "description": "The model id to use.",
+                    "example": "$MODEL_ID"
+                  },
+                  "messages": {
+                    "type": "array",
+                    "items": {},
+                    "description": "The conversation so far. Messages follow OpenAI role-specific content requirements. User messages may include `image_url` parts for models that take images, each a base64 `data:` URL or an http(s) URL, and `input_audio` parts (base64 WAV, `format: \"wav\"`) for models that take audio; other models return 400. Liquid downloads linked images itself before the request reaches the model, from public addresses only, and returns 400 when one cannot be downloaded or is not a PNG, JPEG, WebP, or GIF image; a request may link up to 8 images, of at most 10 MB each and 20 MB together."
+                  },
+                  "stream": {
+                    "type": "boolean",
+                    "description": "When true, tokens stream back as server-sent events."
+                  },
+                  "modalities": {
+                    "type": "array",
+                    "items": {},
+                    "description": "Output types. [\"text\", \"audio\"] asks a model with speech output for a spoken reply, returned in `message.audio` (or streamed in `delta.audio`) beside the text. Defaults to [\"text\"]; models without speech output return 400."
+                  },
+                  "audio": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "description": "Spoken reply options when `modalities` includes \"audio\", as in OpenAI: `{ \"voice\", \"format\" }`. `format` is `pcm16` (headerless 16-bit PCM, 24 kHz mono), or `wav` (each streamed chunk a complete WAV file); other formats return 400. The reply arrives in `message.audio` or streamed `delta.audio`, with its words in `transcript`. `voice` is accepted but does not change the voice."
+                  }
+                },
+                "required": [
+                  "model",
+                  "messages"
+                ]
+              },
+              "example": {
+                "model": "$MODEL_ID",
+                "messages": [
+                  {
+                    "role": "system",
+                    "content": "You are a helpful assistant."
+                  },
+                  {
+                    "role": "user",
+                    "content": "Hello!"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/decisions/v1/systemone": {
+      "post": {
+        "operationId": "decisions",
+        "summary": "Make decisions",
+        "description": "Answer typed questions about a state with calibrated probabilities, using TypeSafe's System One API. See [Decisions](https://docs.liquid.ai/api/guides/decisions).",
+        "tags": [
+          "Decision models"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response.",
+            "content": {
+              "application/json": {
+                "example": {
+                  "model": "$DECISION_MODEL_ID",
+                  "answers": {
+                    "department": {
+                      "type": "choice",
+                      "choice": "technical",
+                      "probabilities": {
+                        "billing": 0.31,
+                        "technical": 0.67,
+                        "sales": 0.02
+                      },
+                      "confidence": 0.5
+                    },
+                    "is_urgent": {
+                      "type": "noul",
+                      "noul": 0.95
+                    },
+                    "frustration": {
+                      "type": "score",
+                      "score": 1.05,
+                      "legend": {
+                        "0": "Calm",
+                        "1": "Frustrated",
+                        "2": "Very angry"
+                      },
+                      "probabilities": {
+                        "0": 0,
+                        "1": 0.95,
+                        "2": 0.05
+                      },
+                      "confidence": 0.92
+                    }
+                  },
+                  "usage": {
+                    "input_tokens": 912,
+                    "output_tokens": 0
+                  }
+                },
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "model": {
+                      "type": "string",
+                      "description": "The model that answered."
+                    },
+                    "answers": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "description": "One answer per question id. Choice: `choice`, `probabilities` per option, `confidence`. Score: `score` (probability-weighted, may fall between levels), `legend`, `probabilities` per level, `confidence`. Noul: `noul`, the probability of yes. Confidence runs from 0 (probability spread evenly) to 1 (all on one answer); for a Score it also counts how far the probability sits from the most likely level, so a split between the two ends of the scale is 0."
+                    },
+                    "usage": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "description": "Token counts: { input_tokens, output_tokens }, plus `cost` in USD when the model is priced. `input_tokens` counts the state and images once and each question's own tokens. Output is always 0."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "The organization's request or token limit for the model was exceeded.",
+            "headers": {
+              "Retry-After": {
+                "description": "Integral seconds until the request can be retried.",
+                "schema": {
+                  "type": "integer",
+                  "minimum": 1
+                }
+              },
+              "x-ratelimit-limit-requests": {
+                "description": "Maximum requests per minute (per second when only that limit is set), when a request limit applies.",
+                "schema": {
+                  "type": "integer",
+                  "minimum": 1
+                }
+              },
+              "x-ratelimit-remaining-requests": {
+                "description": "Requests remaining in that window.",
+                "schema": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              },
+              "x-ratelimit-reset-requests": {
+                "description": "Rounded-up duration until that window resets, such as 42s or 1m0s.",
+                "schema": {
+                  "type": "string",
+                  "pattern": "^([1-9][0-9]*h)?([0-9]+m)?[0-9]+s$"
+                }
+              },
+              "x-ratelimit-limit-tokens": {
+                "description": "Estimated tokens per minute (per second when only that limit is set), when a token limit applies.",
+                "schema": {
+                  "type": "integer",
+                  "minimum": 1
+                }
+              },
+              "x-ratelimit-remaining-tokens": {
+                "description": "Estimated tokens remaining in that window.",
+                "schema": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              },
+              "x-ratelimit-reset-tokens": {
+                "description": "Rounded-up duration until that window resets, such as 42s or 1m0s.",
+                "schema": {
+                  "type": "string",
+                  "pattern": "^([1-9][0-9]*h)?([0-9]+m)?[0-9]+s$"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "message": "Rate limit exceeded for model `$MODEL_ID`. To request a higher limit, contact us at https://www.liquid.ai/connect.",
+                    "type": "rate_limit_error",
+                    "param": null,
+                    "code": "rate_limit_exceeded"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "curl",
+            "label": "cURL",
+            "source": "curl https://api.liquid.ai/decisions/v1/systemone \\\n  -H \"Authorization: Bearer $LIQUID_API_KEY\" \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\n    \"model\": \"$DECISION_MODEL_ID\",\n    \"state\": \"Help! My payouts have been failing for 3 days.\",\n    \"questions\": {\n      \"department\": {\n        \"type\": \"choice\",\n        \"instructions\": \"Which team should handle this?\",\n        \"criteria\": {\n          \"billing\": \"Payments, invoicing, refunds\",\n          \"technical\": \"Bugs, outages, integrations\",\n          \"sales\": \"Pricing, upgrades, new accounts\"\n        }\n      },\n      \"is_urgent\": { \"type\": \"noul\", \"instructions\": \"Does this convey urgency?\" },\n      \"frustration\": {\n        \"type\": \"score\",\n        \"instructions\": \"How frustrated is the customer?\",\n        \"criteria\": [\"Calm\", \"Frustrated\", \"Very angry\"]\n      }\n    }\n  }'"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "model": {
+                    "type": "string",
+                    "description": "The decision model id to use. `d1:latest` and `d1-ultra:latest` always point to the newest model of their family; pin an exact id such as `d1-ultra` to keep the same model.",
+                    "example": "$DECISION_MODEL_ID"
+                  },
+                  "state": {
+                    "description": "The content the questions are about: plain text, or structured JSON such as a chat log or record. Omit or send null when the questions stand alone. As in Perplexity's Decisions API, an array state may also hold images as OpenAI-style `{ \"type\": \"image_url\", \"image_url\": { \"url\": \"data:…\" } }` parts: they are taken out of the state and checked under the same rules as `images`, which the request must then leave out (sending both returns 422), and a single string left beside them becomes the text state."
+                  },
+                  "images": {
+                    "type": "array",
+                    "items": {},
+                    "description": "Up to 8 images the questions are about, for decision models that accept images: those listing `image` in `input_modalities` from GET /decisions/v1/models, such as `d1`. Other models return 422. Each is a base64 `data:image/…;base64,` URL or a `{ \"content_type\", \"base64\" }` object: JPEG, PNG, or WebP, 5 MB each, within the 4.5 MB request body limit. Remote image URLs are not accepted. Images come before the state in the prompt, in the order sent, and every question sees all of them. On `d1` and `d1-ultra`, an image costs 1.5 input tokens per 32×32-pixel patch that covers it (`ceil(width / 32) × ceil(height / 32)` patches), rounded up per image, and a request is billed its images once, however many questions it asks. The images of a request may cover at most 10,000 patches in all, and no image may be more than 100 times as long as it is wide; either returns 422. This is an extension to the System One API; omit it to stay TypeSafe-compatible."
+                  },
+                  "questions": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "description": "Up to 128 named questions; answers come back under the same keys. Each has a `type` (\"choice\", \"score\", or \"noul\") and `instructions` (a string or JSON). A Choice takes `criteria` mapping 2–255 option names to a description or null; a Score takes `criteria` as an ordered list of 2–10 level descriptions; a Noul takes optional `criteria` of `{ \"true\": …, \"false\": … }`, used only when both are given and say more than a bare yes and no. A request is billed its state and images once plus each question's own tokens, so asking a state several questions in one request costs far less than asking them in separate requests. Every question still reads the whole state, so the input limits apply to the state, images, and one question together: `d1` and `d1.1` allow 65,536 tokens and `d1-ultra` 32,768, and all three 250 KB of text, and they return 422 over either."
+                  }
+                },
+                "required": [
+                  "model",
+                  "questions"
+                ]
+              },
+              "example": {
+                "model": "$DECISION_MODEL_ID",
+                "state": "Help! My payouts have been failing for 3 days.",
+                "questions": {
+                  "department": {
+                    "type": "choice",
+                    "instructions": "Which team should handle this?",
+                    "criteria": {
+                      "billing": "Payments, invoicing, refunds",
+                      "technical": "Bugs, outages, integrations",
+                      "sales": "Pricing, upgrades, new accounts"
+                    }
+                  },
+                  "is_urgent": {
+                    "type": "noul",
+                    "instructions": "Does this convey urgency?"
+                  },
+                  "frustration": {
+                    "type": "score",
+                    "instructions": "How frustrated is the customer?",
+                    "criteria": [
+                      "Calm",
+                      "Frustrated",
+                      "Very angry"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/decisions/v1/models": {
+      "get": {
+        "operationId": "decision-models",
+        "summary": "List decision models",
+        "description": "List the decision models your organization can call.",
+        "tags": [
+          "Decision models"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response.",
+            "content": {
+              "application/json": {
+                "example": {
+                  "models": [
+                    {
+                      "name": "$DECISION_MODEL_ID",
+                      "description": "Fast, calibrated Choice, Score, and Noul decisions.",
+                      "release_date": "2026-09-22",
+                      "input_modalities": [
+                        "text"
+                      ]
+                    }
+                  ]
+                },
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "models": {
+                      "type": "array",
+                      "items": {},
+                      "description": "One entry per model: { name, description, release_date, input_modalities }. `input_modalities` is [\"text\"], or [\"text\", \"image\"] for a model that accepts `images`."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "curl",
+            "label": "cURL",
+            "source": "curl https://api.liquid.ai/decisions/v1/models \\\n  -H \"Authorization: Bearer $LIQUID_API_KEY\""
+          }
+        ]
+      }
+    },
+    "/openai/v1/files": {
+      "get": {
+        "operationId": "list-files",
+        "summary": "List files",
+        "description": "List the files your organization has uploaded.",
+        "tags": [
+          "Files"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response.",
+            "content": {
+              "application/json": {
+                "example": {
+                  "object": "list",
+                  "data": [
+                    {
+                      "id": "file_abc123",
+                      "object": "file",
+                      "bytes": 137587646,
+                      "created_at": 1730419200,
+                      "filename": "batch_input.jsonl",
+                      "purpose": "batch",
+                      "status": "processed"
+                    }
+                  ]
+                },
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "object": {
+                      "type": "string",
+                      "description": "Always \"list\"."
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {},
+                      "description": "The list of file objects."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "curl",
+            "label": "cURL",
+            "source": "curl https://api.liquid.ai/openai/v1/files \\\n  -H \"Authorization: Bearer $LIQUID_API_KEY\""
+          }
+        ]
+      }
+    },
+    "/openai/v1/files/{id}": {
+      "get": {
+        "operationId": "retrieve-file",
+        "summary": "Retrieve file",
+        "description": "Fetch metadata for a single file.",
+        "tags": [
+          "Files"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response.",
+            "content": {
+              "application/json": {
+                "example": {
+                  "id": "file_abc123",
+                  "object": "file",
+                  "bytes": 137587646,
+                  "created_at": 1730419200,
+                  "filename": "batch_input.jsonl",
+                  "purpose": "batch",
+                  "status": "processed"
+                },
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "description": "The file id, referenced when creating a batch."
+                    },
+                    "object": {
+                      "type": "string",
+                      "description": "Always \"file\"."
+                    },
+                    "bytes": {
+                      "type": "integer",
+                      "description": "Size of the file in bytes."
+                    },
+                    "created_at": {
+                      "type": "integer",
+                      "description": "Unix timestamp (seconds) of creation."
+                    },
+                    "filename": {
+                      "type": "string",
+                      "description": "The name the file was uploaded with."
+                    },
+                    "purpose": {
+                      "type": "string",
+                      "description": "Either \"batch\" (an input) or \"batch_output\" (a generated result/error file)."
+                    },
+                    "status": {
+                      "type": "string",
+                      "description": "Always \"processed\"; stored files are ready."
+                    },
+                    "expires_at": {
+                      "type": "integer",
+                      "description": "Unix timestamp (seconds) when the file expires, if set."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "curl",
+            "label": "cURL",
+            "source": "curl https://api.liquid.ai/openai/v1/files/file_abc123 \\\n  -H \"Authorization: Bearer $LIQUID_API_KEY\""
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "The file id.",
+            "schema": {
+              "type": "string",
+              "example": "file_abc123"
+            }
+          }
+        ]
+      }
+    },
+    "/openai/v1/files/{id}/content": {
+      "get": {
+        "operationId": "retrieve-file-content",
+        "summary": "Retrieve file content",
+        "description": "Download a file’s contents. Redirects to a short-lived presigned URL.",
+        "tags": [
+          "Files"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response.",
+            "content": {
+              "application/jsonl": {
+                "schema": {
+                  "type": "string"
+                },
+                "example": "{\"id\": \"batch_req_abc\", \"custom_id\": \"task-1\", \"response\": {\"status_code\": 200, \"body\": {\"id\": \"chatcmpl-1\", \"choices\": [{\"index\": 0, \"message\": {\"role\": \"assistant\", \"content\": \"Hi!\"}, \"finish_reason\": \"stop\"}]}}, \"error\": null}\n{\"id\": \"batch_req_def\", \"custom_id\": \"task-2\", \"response\": {\"status_code\": 200, \"body\": {\"id\": \"chatcmpl-2\", \"choices\": [{\"index\": 0, \"message\": {\"role\": \"assistant\", \"content\": \"Hello!\"}, \"finish_reason\": \"stop\"}]}}, \"error\": null}"
+              }
+            }
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "curl",
+            "label": "cURL",
+            "source": "curl -L https://api.liquid.ai/openai/v1/files/file_abc123/content \\\n  -H \"Authorization: Bearer $LIQUID_API_KEY\""
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "The file id.",
+            "schema": {
+              "type": "string",
+              "example": "file_abc123"
+            }
+          }
+        ]
+      }
+    },
+    "/openai/v1/batches": {
+      "post": {
+        "operationId": "create-batch",
+        "summary": "Create batch",
+        "description": "Create a batch from an uploaded JSONL file. See [Batch](https://docs.liquid.ai/api/guides/batch).",
+        "tags": [
+          "Batches"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response.",
+            "content": {
+              "application/json": {
+                "example": {
+                  "id": "batch_abc123",
+                  "object": "batch",
+                  "endpoint": "/v1/chat/completions",
+                  "input_file_id": "file_abc123",
+                  "completion_window": "24h",
+                  "status": "validating",
+                  "created_at": 1730419200,
+                  "expires_at": 1730505600,
+                  "request_counts": {
+                    "total": 0,
+                    "completed": 0,
+                    "failed": 0
+                  }
+                },
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "description": "The batch id."
+                    },
+                    "object": {
+                      "type": "string",
+                      "description": "Always \"batch\"."
+                    },
+                    "endpoint": {
+                      "type": "string",
+                      "description": "The endpoint each request targets."
+                    },
+                    "input_file_id": {
+                      "type": "string",
+                      "description": "The uploaded input file id."
+                    },
+                    "output_file_id": {
+                      "type": "string",
+                      "description": "Result file id, once completed."
+                    },
+                    "error_file_id": {
+                      "type": "string",
+                      "description": "Error file id, if any requests failed."
+                    },
+                    "status": {
+                      "type": "string",
+                      "description": "One of validating, in_progress, finalizing, completed, failed, expired, cancelling, cancelled."
+                    },
+                    "completion_window": {
+                      "type": "string",
+                      "description": "The requested completion window."
+                    },
+                    "request_counts": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "description": "Live counts: { total, completed, failed }."
+                    },
+                    "created_at": {
+                      "type": "integer",
+                      "description": "Unix timestamp (seconds) of creation."
+                    },
+                    "errors": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "description": "Present when the input failed validation: { object: \"list\", data: [...] }."
+                    },
+                    "metadata": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "description": "Any metadata supplied at creation."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "curl",
+            "label": "cURL",
+            "source": "curl https://api.liquid.ai/openai/v1/batches \\\n  -H \"Authorization: Bearer $LIQUID_API_KEY\" \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\n    \"input_file_id\": \"file_abc123\",\n    \"endpoint\": \"/v1/chat/completions\",\n    \"completion_window\": \"24h\"\n  }'"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "input_file_id": {
+                    "type": "string",
+                    "description": "The id of an uploaded file with purpose \"batch\" (see POST /v1/files)."
+                  },
+                  "endpoint": {
+                    "type": "string",
+                    "description": "The endpoint every line targets: /v1/chat/completions or /v1/completions."
+                  },
+                  "completion_window": {
+                    "type": "string",
+                    "description": "Time window for completion. Defaults to \"24h\"."
+                  },
+                  "metadata": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "description": "Arbitrary key-value pairs."
+                  }
+                },
+                "required": [
+                  "input_file_id",
+                  "endpoint"
+                ]
+              },
+              "example": {
+                "input_file_id": "file_abc123",
+                "endpoint": "/v1/chat/completions",
+                "completion_window": "24h"
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "operationId": "list-batches",
+        "summary": "List batches",
+        "description": "List your organization’s batches, newest first.",
+        "tags": [
+          "Batches"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response.",
+            "content": {
+              "application/json": {
+                "example": {
+                  "object": "list",
+                  "data": [
+                    {
+                      "id": "batch_abc123",
+                      "object": "batch",
+                      "endpoint": "/v1/chat/completions",
+                      "input_file_id": "file_abc123",
+                      "completion_window": "24h",
+                      "status": "validating",
+                      "created_at": 1730419200,
+                      "expires_at": 1730505600,
+                      "request_counts": {
+                        "total": 0,
+                        "completed": 0,
+                        "failed": 0
+                      }
+                    }
+                  ]
+                },
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "object": {
+                      "type": "string",
+                      "description": "Always \"list\"."
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {},
+                      "description": "The list of batch objects."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "curl",
+            "label": "cURL",
+            "source": "curl https://api.liquid.ai/openai/v1/batches \\\n  -H \"Authorization: Bearer $LIQUID_API_KEY\""
+          }
+        ]
+      }
+    },
+    "/openai/v1/batches/{id}": {
+      "get": {
+        "operationId": "retrieve-batch",
+        "summary": "Retrieve batch",
+        "description": "Fetch a batch, including its `status` and `request_counts`.",
+        "tags": [
+          "Batches"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response.",
+            "content": {
+              "application/json": {
+                "example": {
+                  "id": "batch_abc123",
+                  "object": "batch",
+                  "endpoint": "/v1/chat/completions",
+                  "input_file_id": "file_abc123",
+                  "output_file_id": "file_out456",
+                  "completion_window": "24h",
+                  "status": "completed",
+                  "created_at": 1730419200,
+                  "in_progress_at": 1730419260,
+                  "completed_at": 1730419800,
+                  "expires_at": 1730505600,
+                  "request_counts": {
+                    "total": 100,
+                    "completed": 100,
+                    "failed": 0
+                  }
+                },
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "description": "The batch id."
+                    },
+                    "object": {
+                      "type": "string",
+                      "description": "Always \"batch\"."
+                    },
+                    "endpoint": {
+                      "type": "string",
+                      "description": "The endpoint each request targets."
+                    },
+                    "input_file_id": {
+                      "type": "string",
+                      "description": "The uploaded input file id."
+                    },
+                    "output_file_id": {
+                      "type": "string",
+                      "description": "Result file id, once completed."
+                    },
+                    "error_file_id": {
+                      "type": "string",
+                      "description": "Error file id, if any requests failed."
+                    },
+                    "status": {
+                      "type": "string",
+                      "description": "One of validating, in_progress, finalizing, completed, failed, expired, cancelling, cancelled."
+                    },
+                    "completion_window": {
+                      "type": "string",
+                      "description": "The requested completion window."
+                    },
+                    "request_counts": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "description": "Live counts: { total, completed, failed }."
+                    },
+                    "created_at": {
+                      "type": "integer",
+                      "description": "Unix timestamp (seconds) of creation."
+                    },
+                    "errors": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "description": "Present when the input failed validation: { object: \"list\", data: [...] }."
+                    },
+                    "metadata": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "description": "Any metadata supplied at creation."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "curl",
+            "label": "cURL",
+            "source": "curl https://api.liquid.ai/openai/v1/batches/batch_abc123 \\\n  -H \"Authorization: Bearer $LIQUID_API_KEY\""
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "The batch id.",
+            "schema": {
+              "type": "string",
+              "example": "batch_abc123"
+            }
+          }
+        ]
+      }
+    },
+    "/openai/v1/batches/{id}/cancel": {
+      "post": {
+        "operationId": "cancel-batch",
+        "summary": "Cancel batch",
+        "description": "Cancel a running batch. Requests that already finished are still returned.",
+        "tags": [
+          "Batches"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response.",
+            "content": {
+              "application/json": {
+                "example": {
+                  "id": "batch_abc123",
+                  "object": "batch",
+                  "endpoint": "/v1/chat/completions",
+                  "input_file_id": "file_abc123",
+                  "completion_window": "24h",
+                  "status": "cancelling",
+                  "created_at": 1730419200,
+                  "expires_at": 1730505600,
+                  "request_counts": {
+                    "total": 100,
+                    "completed": 42,
+                    "failed": 0
+                  }
+                },
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "description": "The batch id."
+                    },
+                    "object": {
+                      "type": "string",
+                      "description": "Always \"batch\"."
+                    },
+                    "endpoint": {
+                      "type": "string",
+                      "description": "The endpoint each request targets."
+                    },
+                    "input_file_id": {
+                      "type": "string",
+                      "description": "The uploaded input file id."
+                    },
+                    "output_file_id": {
+                      "type": "string",
+                      "description": "Result file id, once completed."
+                    },
+                    "error_file_id": {
+                      "type": "string",
+                      "description": "Error file id, if any requests failed."
+                    },
+                    "status": {
+                      "type": "string",
+                      "description": "One of validating, in_progress, finalizing, completed, failed, expired, cancelling, cancelled."
+                    },
+                    "completion_window": {
+                      "type": "string",
+                      "description": "The requested completion window."
+                    },
+                    "request_counts": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "description": "Live counts: { total, completed, failed }."
+                    },
+                    "created_at": {
+                      "type": "integer",
+                      "description": "Unix timestamp (seconds) of creation."
+                    },
+                    "errors": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "description": "Present when the input failed validation: { object: \"list\", data: [...] }."
+                    },
+                    "metadata": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "description": "Any metadata supplied at creation."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "curl",
+            "label": "cURL",
+            "source": "curl -X POST https://api.liquid.ai/openai/v1/batches/batch_abc123/cancel \\\n  -H \"Authorization: Bearer $LIQUID_API_KEY\""
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "The batch id.",
+            "schema": {
+              "type": "string",
+              "example": "batch_abc123"
+            }
+          }
+        ]
+      }
+    },
+    "/v1/files": {
+      "post": {
+        "operationId": "create-upload-url",
+        "summary": "Create upload URL",
+        "description": "Get a presigned URL for uploading a batch input file. See [Batch](https://docs.liquid.ai/api/guides/batch).",
+        "tags": [
+          "Large uploads"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response.",
+            "content": {
+              "application/json": {
+                "example": {
+                  "id": "file_abc123",
+                  "object": "file",
+                  "bytes": 137587646,
+                  "created_at": 1730419200,
+                  "filename": "batch_input.jsonl",
+                  "purpose": "batch",
+                  "status": "processed",
+                  "upload_url": "https://storage.example.com/...",
+                  "upload_expires_at": 1730422800
+                },
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "description": "The file id, referenced when creating a batch."
+                    },
+                    "object": {
+                      "type": "string",
+                      "description": "Always \"file\"."
+                    },
+                    "bytes": {
+                      "type": "integer",
+                      "description": "Size of the file in bytes."
+                    },
+                    "created_at": {
+                      "type": "integer",
+                      "description": "Unix timestamp (seconds) of creation."
+                    },
+                    "filename": {
+                      "type": "string",
+                      "description": "The name the file was uploaded with."
+                    },
+                    "purpose": {
+                      "type": "string",
+                      "description": "Either \"batch\" (an input) or \"batch_output\" (a generated result/error file)."
+                    },
+                    "status": {
+                      "type": "string",
+                      "description": "Always \"processed\"; stored files are ready."
+                    },
+                    "expires_at": {
+                      "type": "integer",
+                      "description": "Unix timestamp (seconds) when the file expires, if set."
+                    },
+                    "upload_url": {
+                      "type": "string",
+                      "description": "A short-lived presigned URL. PUT the file bytes here."
+                    },
+                    "upload_expires_at": {
+                      "type": "integer",
+                      "description": "Unix timestamp (seconds) when the upload URL expires."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "curl",
+            "label": "cURL",
+            "source": "curl -X POST https://api.liquid.ai/v1/files \\\n  -H \"Authorization: Bearer $LIQUID_API_KEY\" \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\n    \"purpose\": \"batch\",\n    \"filename\": \"batch_input.jsonl\",\n    \"bytes\": 137587646\n  }'"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "purpose": {
+                    "type": "string",
+                    "description": "Must be \"batch\"."
+                  },
+                  "filename": {
+                    "type": "string",
+                    "description": "The file name (max 255 characters)."
+                  },
+                  "bytes": {
+                    "type": "integer",
+                    "description": "The file size in bytes. Rejected up front if over the 200 MB limit."
+                  },
+                  "mime_type": {
+                    "type": "string",
+                    "description": "Content type of the upload. Defaults to application/jsonl."
+                  }
+                },
+                "required": [
+                  "purpose",
+                  "filename",
+                  "bytes"
+                ]
+              },
+              "example": {
+                "purpose": "batch",
+                "filename": "batch_input.jsonl",
+                "bytes": 137587646
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,42 @@
+export const OmniLlamacpp = ({ ggufRepo, serveFlags, ttsFlags }) => {
+const modelName = ggufRepo.split("/")[1].replace(/-GGUF$/, "");
+return (
+<div>
+<p>Requires llama.cpp 0.8.0 (b11960) or later. Add a quantization tag to pick a file; with <code>-hf</code>, llama.cpp also downloads the vision and audio projector.</p>
+<p><strong>Web chat and API server:</strong></p>
+<p>Start a web chat UI and an OpenAI-compatible API at <code>http://localhost:9931</code>:</p>
+<CodeBlock language="bash">
+{`llama serve -hf ${ggufRepo}:Q4_K_M${serveFlags ? ` ${serveFlags}` : ""}`}
+</CodeBlock>
+<p>The server also handles real-time voice conversations, including tool calls, on its <code>/v1/realtime</code> WebSocket API. The recommended sampling parameters are stored in the GGUF, so no sampling flags are needed. To ask one question from the command line, use <code>llama cli</code>.</p>
+<p><strong>ASR (Audio to Text):</strong></p>
+<p>Use the system prompt <code>Perform ASR in &lt;language&gt;.</code> Pass it with <code>-sys</code>: as a regular prompt, the model describes the audio instead of transcribing it.</p>
+<CodeBlock language="bash">
+{`llama cli -hf ${ggufRepo}:Q4_K_M \\
+  --audio speech.wav -sys "Perform ASR in English." -p "<__media__>"`}
+</CodeBlock>
+<p><strong>Image understanding:</strong></p>
+<CodeBlock language="bash">
+{`llama cli -hf ${ggufRepo}:Q4_K_M \\
+  --image photo.png -p "Describe this image."`}
+</CodeBlock>
+<p><strong>Video understanding:</strong> the model sees the frames and hears the soundtrack of the video. Use the system prompt <code>Answer questions about the video using what you see and hear.</code> Video input needs <code>ffmpeg</code> in <code>PATH</code>.</p>
+<CodeBlock language="bash">
+{`curl -sL -o reading.mp4 https://huggingface.co/datasets/raushan-testing-hf/videos-test/resolve/4cba700bd771f44d72b549253da025c32e944d42/sample_demo_1.mp4  # a child reading a book
+
+llama cli -hf ${ggufRepo}:Q4_K_M \\
+  --video reading.mp4 -sys "Answer questions about the video using what you see and hear." \\
+  -p "What happens here, and what can you hear?"`}
+</CodeBlock>
+<p><strong>TTS (Text to Audio):</strong></p>
+<p><code>--tts-lang</code> takes a language code (default <code>en</code>) and <code>--tts-voice</code> is <code>female</code> (default) or <code>male</code>. The audio sampling parameters from the model card are stored in the GGUF.</p>
+<CodeBlock language="bash">
+{`hf download ${ggufRepo} ${modelName}-Q4_K_M.gguf mmproj-${modelName}-Q8_0.gguf --local-dir .
+
+llama-tts -m ${modelName}-Q4_K_M.gguf -mm mmproj-${modelName}-Q8_0.gguf \\
+  -p "Hello world"${ttsFlags ? ` ${ttsFlags}` : ""} -o out.wav`}
+</CodeBlock>
+<p>For more options, see the <a href="/deployment/on-device/llama-cpp#audio-and-omni-models">llama.cpp guide</a>.</p>
+</div>
+);
+};
