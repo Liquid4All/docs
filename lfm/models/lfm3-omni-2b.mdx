@@ -171,4 +171,4 @@ By default, LFM3-Omni-2B samples video at 2 fps, with at least 4 and at most 384
 
 - **Transformers:** set the frame rate per call with `processor.apply_chat_template(..., processor_kwargs={"fps": 1})`. With the audio track, use `processor_kwargs={"use_audio_in_video": True, "fps": 1}`. Set the frame limit when you load the processor: `AutoProcessor.from_pretrained(model_id, trust_remote_code=True, max_frames=128)`.
 - **SGLang:** change `fps`, `min_frames`, and `max_frames` under `video_processor` in `processor_config.json` in a local copy of the checkpoint.
-- **llama.cpp:** always uses 2 fps and 4 to 384 frames for this model. `--video-fps` has no effect.
+- **llama.cpp:** always uses 2 fps and 4 to 384 frames for this model. These values are fixed in llama.cpp itself, so `--video-fps` has no effect, and editing `processor_config.json` before conversion doesn't help either: the GGUF conversion rejects other values.
