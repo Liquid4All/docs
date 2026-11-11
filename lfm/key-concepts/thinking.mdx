@@ -239,7 +239,7 @@ To keep the reasoning from every earlier turn as well, set `preserve_thinking=Tr
 
 ## Switch thinking off
 
-Some thinking models can answer without reasoning; others always think. The [overview table](#thinking-models) shows which is which.
+Some thinking models can answer without reasoning; others always think. LFM3-1.7B accepts the switch, but it wasn't trained to answer without reasoning, so we don't recommend switching it off. The [overview table](#thinking-models) shows which is which.
 
 <Warning>
 We recommend leaving thinking on. With thinking off, a model answers faster but less accurately, especially on math, documents and other multi-step tasks. Test your task both ways before you switch it off.
@@ -341,7 +341,7 @@ To switch thinking off, set `enable_thinking=False`. The chat template then fill
 
 | Model | Default thinking | Can switch off | Thinking levels |
 | --- | --- | --- | --- |
-| [LFM3-1.7B](/lfm/models/lfm3-1.7b) | On | No | n/a |
+| [LFM3-1.7B](/lfm/models/lfm3-1.7b) | On | Yes (Not recommended) | n/a |
 | [LFM3-VL-2B](/lfm/models/lfm3-vl-2b) | On | Yes | n/a |
 | [LFM2.5-24B-A2B](/lfm/models/lfm25-24b-a2b) | On | No | n/a |
 | [LFM2.5-8B-A1B](/lfm/models/lfm25-8b-a1b) | On | No | n/a |
@@ -360,7 +360,7 @@ Models not listed here don't reason before they answer. If you don't want reason
 <AccordionGroup>
 
 <Accordion title="Why can't I switch thinking off on every model?">
-Models that always think are trained to answer after a reasoning trace. Setting `enable_thinking=False`, starting llama.cpp with `--reasoning off`, or filling in an empty `<think></think>` by hand isn't supported on them, and their answers get worse. If you need answers without reasoning, use a [model that doesn't think](#thinking-models).
+Models that always think are trained to answer after a reasoning trace. Setting `enable_thinking=False`, starting llama.cpp with `--reasoning off`, or filling in an empty `<think></think>` by hand isn't supported on them, and their answers get worse. Some models accept `enable_thinking=False`, but it weren't trained for this. In this case, we do not recommend to switch thinking off. If you need answers without reasoning, use a [model that doesn't think](#thinking-models).
 </Accordion>
 
 <Accordion title="Can I set a thinking budget or a reasoning effort?">
