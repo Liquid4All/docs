@@ -15,6 +15,10 @@ description: "Browser-based driving game controlled by hand gestures and voice c
   allowFullScreen
 ></iframe>
 
+<Note>
+This example uses LFM2.5-Audio-1.5B, which is deprecated. For new projects, use [LFM3-Audio-2B](/lfm/models/lfm3-audio-2b).
+</Note>
+
 **A browser driving game you control with your hands and voice, powered by models running fully local.**
 
 Steer by holding both hands up like a steering wheel. Speak commands to accelerate, brake, toggle headlights, and play music. No cloud calls, no server round-trips. Everything runs in your browser tab.
@@ -24,7 +28,7 @@ Steer by holding both hands up like a steering wheel. Speak commands to accelera
 Two models run in parallel, entirely client-side:
 
 - **[MediaPipe Hand Landmarker](https://ai.google.dev/edge/mediapipe/solutions/vision/hand_landmarker)** tracks your hand positions via webcam at ~30 fps. The angle between your two wrists drives the steering.
-- **[LFM2.5-Audio-1.5B](https://docs.liquid.ai/lfm/models/lfm25-audio-1.5b)** runs in a Web Worker with ONNX Runtime Web. It listens for speech via the [Silero VAD](https://github.com/snakers4/silero-vad) and transcribes each utterance on-device. Matched keywords control game state.
+- **[LFM2.5-Audio-1.5B](/lfm/models/lfm25-audio-1.5b)** runs in a Web Worker with ONNX Runtime Web. It listens for speech via the [Silero VAD](https://github.com/snakers4/silero-vad) and transcribes each utterance on-device. Matched keywords control game state.
 
 The audio model loads from Hugging Face and is cached in IndexedDB after the first run, so subsequent starts are instant.
 
