@@ -22,7 +22,7 @@ LFM3-Omni-2B is Liquid AI's first omni model: a single end-to-end model that und
 | Parameters | 2.17B |
 | Context Length | 32K tokens |
 | Architecture | LFM3 backbone, LFM3 vision encoder, LFM3 causal audio encoder, and LiquidCodec audio tokenizer |
-| Input | Text, images, video (with or without its soundtrack), audio |
+| Input | Text, images, video (with or without its audio track), audio |
 | Output | Text, speech, or interleaved text and speech (24kHz) |
 | Text Languages | English, Arabic, Chinese, French, German, Italian, Japanese, Korean, Portuguese, Spanish, Vietnamese, Thai, Indonesian, Hindi, Russian, Polish |
 | Speech Languages | Arabic, Danish, German, Greek, British English, American English, Finnish, French, Hebrew, Italian, Japanese, Korean, Dutch, Polish, Portuguese, Spanish, Swedish, Turkish, Chinese; female and male voices |
@@ -37,7 +37,7 @@ LFM3-Omni-2B is Liquid AI's first omni model: a single end-to-end model that und
 </Card>
 
 <Card title="Audio-Visual Video" icon="video">
-  Video frames and their soundtrack, interleaved in time
+  Video frames and their audio track, interleaved in time
 </Card>
 
 <Card title="Multimodal Tool Calling" icon="wrench">
@@ -135,7 +135,7 @@ LFM3-Omni-2B is Liquid AI's first omni model: a single end-to-end model that und
     ])
     ```
 
-    **Video with Soundtrack:**
+    **Video with Audio Track:**
 
     Set `load_audio_from_video=True` and `use_audio_in_video=True` to interleave the video's audio track with its frames. Without the two flags, only the frames are used.
 
@@ -164,10 +164,18 @@ LFM3-Omni-2B is Liquid AI's first omni model: a single end-to-end model that und
   </Tab>
 
   <Tab title="SGLang">
-    SGLang serves LFM3-Omni-2B with text output. Text, image, video (optionally with its soundtrack, via `use_audio_in_video`), and audio inputs are supported.
+    SGLang serves LFM3-Omni-2B with text output. Text, image, video (optionally with its audio track, via `use_audio_in_video`), and audio inputs are supported.
 
     ```bash
     python -m sglang.launch_server --model-path LiquidAI/LFM3-Omni-2B
     ```
   </Tab>
 </Tabs>
+
+## Video Frame Rate and Frame Limit
+
+By default, LFM3-Omni-2B samples video at 2 fps, with at least 4 and at most 384 frames per video. Both are configurable: each frame adds vision tokens, so a lower frame rate or frame limit uses less context and memory and lowers latency, while a higher one preserves more detail. Set them according to your latency and quality requirements. These settings do not change the audio track: the model always hears all of it.
+
+- **Transformers:** set the frame rate per call with `processor.apply_chat_template(..., processor_kwargs={"fps": 1})`. With the audio track, use `processor_kwargs={"use_audio_in_video": True, "fps": 1}`. Set the frame limit when you load the processor: `AutoProcessor.from_pretrained(model_id, trust_remote_code=True, max_frames=128)`.
+- **SGLang:** change `fps`, `min_frames`, and `max_frames` under `video_processor` in `processor_config.json` in a local copy of the checkpoint.
+- **llama.cpp:** always uses 2 fps and 4 to 384 frames for this model. These values are fixed in llama.cpp itself, so `--video-fps` has no effect, and editing `processor_config.json` before conversion doesn't help either: the GGUF conversion rejects other values.
