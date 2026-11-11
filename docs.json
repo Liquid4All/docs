@@ -11,6 +11,7 @@
   "name": "Liquid AI Docs",
   "description": "Documentation for Liquid AI Foundation Models (LFM)",
   "seo": {
+    "indexing": "all",
     "organization": {
       "name": "Liquid AI",
       "url": "https://www.liquid.ai",
