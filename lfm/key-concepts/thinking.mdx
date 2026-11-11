@@ -360,7 +360,7 @@ Models not listed here don't reason before they answer. If you don't want reason
 <AccordionGroup>
 
 <Accordion title="Why can't I switch thinking off on every model?">
-Models that always think are trained to answer after a reasoning trace. Setting `enable_thinking=False`, starting llama.cpp with `--reasoning off`, or filling in an empty `<think></think>` by hand isn't supported on them, and their answers get worse. Some models accept `enable_thinking=False`, but it weren't trained for this. In this case, we do not recommend to switch thinking off. If you need answers without reasoning, use a [model that doesn't think](#thinking-models).
+Models that always think are trained to answer after a reasoning trace. Setting `enable_thinking=False`, starting llama.cpp with `--reasoning off`, or filling in an empty `<think></think>` by hand isn't supported on them, and their answers get worse. Some models accept `enable_thinking=False`, but they weren't trained for this, so we don't recommend switching thinking off on them. If you need answers without reasoning, use a [model that doesn't think](#thinking-models).
 </Accordion>
 
 <Accordion title="Can I set a thinking budget or a reasoning effort?">
