@@ -168,6 +168,7 @@ active:
   - /lfm/key-concepts/omni-capabilities
   - /lfm/key-concepts/speculative-decoding
   - /lfm/key-concepts/text-generation-and-prompting
+  - /lfm/key-concepts/thinking
   - /lfm/key-concepts/tool-search
   - /lfm/key-concepts/tool-use
   - /lfm/key-concepts/vision-capabilities
