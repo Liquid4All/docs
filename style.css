@@ -115,12 +115,6 @@ a[href*="discord.gg"]:hover img {
   color: var(--lfm-fg-inverse) !important;
 }
 
-/* Hide the "Ask Assistant" box in the desktop header. The assistant stays on:
-   it opens with Cmd/Ctrl+I, and the mobile header keeps its icon. */
-#assistant-entry {
-  display: none !important;
-}
-
 /* Mobile drawer: reuse Mintlify's close button inside the header.
    No dedicated close-button hook is exposed; its accessible label is the fallback. */
 #mobile-nav > button[aria-label="Close navigation"] {
