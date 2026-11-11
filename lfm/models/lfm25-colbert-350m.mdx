@@ -15,6 +15,8 @@ LFM2.5-ColBERT-350M is a late-interaction retrieval model. It creates 128-dimens
 
 <Note>
 Use LFM2.5-ColBERT-350M when you want stronger retrieval or reranking quality and can afford a larger per-token index. Use [LFM2.5-Embedding-350M](/lfm/models/lfm25-embedding-350m) when you need the smallest, fastest dense-vector index.
+
+It is a late-interaction model, not a cross-encoder: it encodes queries and documents separately and compares their token vectors with MaxSim, so document vectors can be indexed ahead of time.
 </Note>
 
 ## Specifications
