@@ -9,10 +9,12 @@ Inference requests ([chat completions](/api/reference/chat/chat-completions) and
 
 Each model's limit is shared by all of your organization's API keys and console sessions. Your organization's limits for each model are listed on the [Models](https://console.liquid.ai/dashboard/models) page of Liquid Console. To request a higher limit, [contact us](https://www.liquid.ai/connect).
 
-A model may limit requests per minute and per second, and also estimated tokens per minute (TPM) and per second (TPS). Tokens for rate limiting are estimated at four characters of request text per token plus 1,500 per image, then corrected by the response's reported output tokens, so they can differ from billed usage.
+A model may limit requests per minute and per second, and also estimated tokens per minute (TPM) and per second (TPS). Each limit is checked on its own, and a request must fit within all of them. A window starts with the first request it counts and lasts one minute or one second.
+
+Tokens for rate limiting are estimated before a request runs, at four characters of request text per token plus 1,500 per image. When the response completes, its output tokens are added to the same windows. A response is never cut short by a token limit, but a long one can make your next requests wait for the window to reset. Rate limit token counts can differ from billed usage.
 
 <Info>
-  Invalid, unauthorized, unknown-model, and unavailable-model requests do not consume quota.
+  Invalid, unauthorized, unknown-model, and unavailable-model requests do not consume quota. [Batch](/api/guides/batch) requests do not count toward your rate limits either.
 </Info>
 
 ## Rate limit headers
@@ -30,7 +32,7 @@ As in OpenAI's API, locally checked responses carry headers that describe your l
 
 ## Limited requests
 
-A request over your organization's limit returns `429` with a `Retry-After` header, in integral seconds:
+A request over your organization's limit returns `429` with a `Retry-After` header, in integral seconds. `Retry-After` is set by whichever window rejected the request, which can be a per-second window that the headers above don't report. A request over a token limit says `Token rate limit exceeded` instead:
 
 ```json
 {
@@ -46,3 +48,20 @@ A request over your organization's limit returns `429` with a `Retry-After` head
 <Tip>
   The official OpenAI SDKs retry it automatically. If you call the API directly, wait for `Retry-After` before retrying.
 </Tip>
+
+## Model capacity
+
+Separately from your organization's limits, each model has a capacity shared by all callers. When a model is at capacity, a request returns `503` with a `Retry-After` header, even if you are within your own limits. These responses don't carry rate limit headers and don't mean you exceeded your limit:
+
+```json
+{
+  "error": {
+    "message": "The model `lfm3-1.7b` is receiving too many requests. Please try again shortly.",
+    "type": "service_unavailable_error",
+    "param": null,
+    "code": "server_is_overloaded"
+  }
+}
+```
+
+A model that is briefly unable to serve requests returns the same `503` and code, with a message saying it is temporarily unable to accept requests. Retry after `Retry-After`; the official OpenAI SDKs do this automatically. See [Error codes](/api/reference/error-codes).
