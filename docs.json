@@ -300,7 +300,7 @@
                   "examples/android/web-content-summarizer",
                   "examples/android/recipe-generator-constrained-output",
                   "examples/android/vision-language-model-example",
-                  "examples/android/leap-koog-agent"
+                  "examples/android/tool-calling-agent"
                 ]
               },
               {
@@ -331,6 +331,10 @@
     ]
   },
   "redirects": [
+    {
+      "source": "/examples/android/leap-koog-agent",
+      "destination": "/examples/android/tool-calling-agent"
+    },
     {
       "source": "/lfm/key-concepts/tool-search",
       "destination": "/lfm/key-concepts/tool-use"

@@ -1,0 +1,324 @@
+---
+title: "Build a Tool-Calling Agent on Android"
+description: "Build on-device AI agents on Android with llama.cpp and Liquid AI LFM models, using a small Kotlin agent loop with tool calling."
+---
+
+<Card title="View Source Code" icon="github" href="https://github.com/Liquid4All/cookbook/tree/main/examples/AndroidAgent">
+  Browse the complete example on GitHub
+</Card>
+
+This example demonstrates how to build intelligent AI agents on Android with llama.cpp and **LFM2.5-1.2B-Instruct**. The agent understands natural language, decides which tools to call, and turns the tool results into an answer.
+
+AndroidAgent shows how to bring autonomous agent capabilities to mobile devices, enabling apps that can reason, plan, and execute tasks on behalf of users—all running locally on Android.
+
+## What's inside?
+
+AndroidAgent showcases on-device AI agent capabilities:
+
+- **Agent Loop in Plain Kotlin** - A short loop that lets the model call tools until it can answer
+- **Natural Language Understanding** - Process user intents and commands
+- **Tool Invocation** - Enable agents to call functions and use external tools
+- **Native Tool Calling** - llama.cpp writes the tool list into the prompt and parses the model's tool calls
+- **Extensible Architecture** - Easily add new capabilities and tools
+- **On-device Agent Runtime** - Complete agent execution without cloud dependency
+
+The app contains two agents: a **calculator** that uses arithmetic tools, and a **weather forecaster** that uses date tools and the [Open-Meteo](https://open-meteo.com) API.
+
+## How the agent works
+
+An agent is a model in a loop with a set of tools:
+
+1. The app sends the conversation and the list of tools to the model.
+2. The model either answers in plain text or asks to call one or more tools.
+3. The app runs the tool calls and adds their results to the conversation as `tool` messages.
+4. The loop repeats until the model answers, or until it reaches the iteration limit.
+
+LFM2.5 models support tool calling natively. See [Tool Use](/lfm/key-concepts/tool-use) for the prompt format.
+
+## Environment setup
+
+Before running this example, ensure you have the following:
+
+<Accordion title="Android Studio Installation">
+  Download and install [Android Studio](https://developer.android.com/studio) (latest stable version recommended).
+
+  Make sure you have:
+  - Android SDK installed
+  - Android NDK and CMake installed
+  - An Android device or emulator configured
+  - USB debugging enabled (for physical devices)
+</Accordion>
+
+<Accordion title="Minimum SDK Requirements">
+  This example requires:
+  - **Minimum SDK**: API 31 (Android 12)
+  - **Target SDK**: API 36
+  - **Kotlin**: 2.3.0 or higher
+
+  **Hardware recommendations:**
+  - At least 4GB RAM (agents require more memory for reasoning)
+  - About 1 GB of free storage for the model
+</Accordion>
+
+<Accordion title="llama.cpp Dependency Setup">
+  Add [llama.cpp](https://github.com/ggml-org/llama.cpp) as a git submodule and build it with CMake from your app-level `build.gradle.kts`, next to a small JNI wrapper (`app/src/main/cpp/llama_agent_jni.cpp` in the example):
+
+  ```kotlin
+  android {
+      defaultConfig {
+          ndk {
+              abiFilters += listOf("arm64-v8a", "x86_64")
+          }
+          externalNativeBuild {
+              cmake {
+                  arguments += "-DBUILD_SHARED_LIBS=ON"
+                  arguments += "-DLLAMA_BUILD_COMMON=ON"
+                  arguments += "-DGGML_BACKEND_DL=ON"
+                  arguments += "-DGGML_CPU_ALL_VARIANTS=ON"
+              }
+          }
+      }
+      externalNativeBuild {
+          cmake {
+              path("src/main/cpp/CMakeLists.txt")
+          }
+      }
+  }
+
+  dependencies {
+      // JSON processing
+      implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.10.0")
+
+      // HTTP client for the weather tools
+      implementation("io.ktor:ktor-client-okhttp:3.2.3")
+  }
+  ```
+
+  llama.cpp loads its CPU backends from the app's native library folder, so set `android:extractNativeLibs="true"` on the `<application>` tag in `AndroidManifest.xml`.
+</Accordion>
+
+## How to run it
+
+Follow these steps to build and run AI agents on Android:
+
+1. **Clone the repository**
+   ```bash
+   git clone --recurse-submodules https://github.com/Liquid4All/cookbook.git
+   cd cookbook/examples/AndroidAgent
+   ```
+
+2. **Open in Android Studio**
+   - Launch Android Studio
+   - Select "Open an existing project"
+   - Navigate to the `AndroidAgent` folder
+
+3. **Build the project**
+   - Wait for Gradle sync to complete
+   - The first build compiles llama.cpp, which takes a few minutes
+
+4. **Run on device or emulator**
+   - Connect your Android device or start an emulator
+   - Click "Run" or press `Shift + F10`
+
+5. **Interact with the agent**
+   - Pick the calculator or the weather agent
+   - On first use, the app downloads [LFM2.5-1.2B-Instruct](https://huggingface.co/LiquidAI/LFM2.5-1.2B-Instruct-GGUF) (Q5_K_M, about 850 MB) from Hugging Face
+   - Enter a math problem or a city and watch the agent call its tools
+   - Try inputs like:
+     - "1234 + 4321"
+     - "100 / 8"
+     - "London"
+     - "Paris tomorrow"
+
+## Understanding the architecture
+
+### llama.cpp Integration
+
+The example uses a minimal JNI wrapper around llama.cpp. `LlamaChat.chat()` takes the conversation and the tools in the OpenAI chat format and returns the model's next assistant message. llama.cpp's chat template support writes the tool list into the prompt, and its LFM2.5 parser turns the generated `<|tool_call_start|>` block back into structured `tool_calls`. Sampling uses the LFM2.5-1.2B-Instruct defaults: `temperature=0.1`, `top_k=50`, and `repeat_penalty=1.05`.
+
+```kotlin
+class LlamaChat(nativeLibDir: String) {
+    /** Loads the model. Call off the main thread. */
+    fun load(modelPath: String)
+
+    /**
+     * Generates the next assistant message for [messages], given the [tools] the model may call.
+     * Both use the OpenAI chat format. The reply's `tool_calls` are already parsed.
+     */
+    fun chat(messages: JsonArray, tools: JsonArray): JsonObject
+
+    /** Frees the model and context. */
+    fun unload()
+}
+```
+
+### Defining Agent Tools
+
+Each tool has a name, a description, and a JSON schema for its arguments. The agent decodes the model's JSON arguments into the tool's `Args` class:
+
+```kotlin
+abstract class Tool<Args, Result> {
+    abstract val name: String
+    abstract val description: String
+    abstract val parameters: JsonObject
+    abstract val argsSerializer: KSerializer<Args>
+
+    abstract suspend fun execute(args: Args): Result
+
+    /** The text the model sees as the tool's result */
+    open fun resultText(result: Result): String = result.toString()
+}
+
+object CalculatorTools {
+    abstract class CalculatorTool(
+        override val name: String,
+        override val description: String,
+    ) : Tool<CalculatorTool.Args, CalculatorTool.Result>() {
+        @Serializable
+        data class Args(val a: Float, val b: Float)
+
+        @Serializable
+        class Result(val result: Float)
+
+        final override val argsSerializer = Args.serializer()
+        final override val parameters = parametersSchema(
+            "a" to property("number", "First number"),
+            "b" to property("number", "Second number"),
+        )
+
+        final override fun resultText(result: Result) = result.result.toString()
+    }
+
+    object PlusTool : CalculatorTool(
+        name = "plus",
+        description = "Adds a and b",
+    ) {
+        override suspend fun execute(args: Args) = Result(args.a + args.b)
+    }
+}
+```
+
+### The Agent Loop
+
+The agent sends the conversation to the model, runs any tool calls, and adds their results until the model answers. Simplified from `Agent.kt`:
+
+```kotlin
+suspend fun run(input: String): String {
+    val messages = mutableListOf(message("system", systemPrompt), message("user", input))
+    for (iteration in 1..maxIterations) {
+        val reply = withContext(Dispatchers.Default) {
+            llm.chat(buildJsonArray { messages.forEach { add(it) } }, toolDefinitions)
+        }
+        messages += reply
+
+        val toolCalls = reply["tool_calls"]?.jsonArray.orEmpty()
+        if (toolCalls.isEmpty()) {
+            // No tool calls: the model has answered
+            return reply["content"]?.jsonPrimitive?.content.orEmpty()
+        }
+        toolCalls.forEachIndexed { index, call ->
+            val function = call.jsonObject.getValue("function").jsonObject
+            val name = function.getValue("name").jsonPrimitive.content
+            val arguments = function.getValue("arguments").jsonPrimitive.content
+            onToolCallEvent("Tool $name, args $arguments")
+            messages += buildJsonObject {
+                put("role", "tool")
+                put("tool_call_id", call.jsonObject["id"]?.jsonPrimitive?.content ?: "call_$index")
+                put("content", callTool(name, arguments))
+            }
+        }
+    }
+    error("The agent did not answer within $maxIterations iterations")
+}
+```
+
+If a tool throws, `callTool` returns the error message as the tool result, so the model can retry with different arguments.
+
+### Creating an Agent
+
+Each agent combines the shared model, a system prompt, and its tools:
+
+```kotlin
+val agent = Agent(
+    llm = LocalModel.get(), // downloads and loads the model on first use
+    systemPrompt = """
+        You are a calculator.
+        You will be provided a single math problem by the user.
+        Use tools at your disposal to solve it.
+        """.trimIndent(),
+    tools = listOf(
+        CalculatorTools.PlusTool,
+        CalculatorTools.MinusTool,
+        CalculatorTools.DivideTool,
+        CalculatorTools.MultiplyTool,
+    ),
+    maxIterations = 10,
+    onToolCallEvent = { Log.d("Agent", it) },
+    onErrorEvent = { Log.e("Agent", it) },
+    onAssistantMessage = { it },
+)
+
+viewModelScope.launch {
+    val answer = agent.run("What is the result of: 1234 + 4321")
+}
+```
+
+## Results
+
+AndroidAgent demonstrates autonomous agent capabilities on Android:
+
+**Example interaction:**
+
+```
+User: "What is the result of: 1234 + 4321"
+
+Agent: [Using tool: plus]
+        Arguments: {"a": 1234, "b": 4321}
+
+Tool Result: 5555.0
+
+Agent: The result of 1234 + 4321 is 5555.0.
+```
+
+**Weather forecast:**
+
+```
+User: "What is the weather in: London"
+
+Agent: [Using tool: weather_forecast]
+        Arguments: {"location": "London"}
+
+Tool Result: Weather forecast for London, United Kingdom (daily, starting from today): ...
+
+Agent: The weather in London today is overcast with temperatures ranging from 4.3°C to 8.1°C and no precipitation expected.
+```
+
+All agent reasoning and tool execution happens on your Android device. Only the weather tool calls the Open-Meteo API.
+
+Small models work best with one or two tool calls per request. For problems that need several dependent steps, consider breaking them into separate requests or using a larger model.
+
+## Further improvements
+
+Here are some ways to extend this example:
+
+- **Custom tool library** - Build domain-specific tools for your app
+- **Multi-agent systems** - Create multiple specialized agents that collaborate
+- **Persistent memory** - Store long-term memories in a database
+- **Voice interaction** - Add speech-to-text and text-to-speech
+- **Proactive agents** - Trigger agents based on time, location, or events
+- **Knowledge base integration** - Connect to local or remote knowledge sources
+- **Task scheduling** - Let agents schedule and execute delayed tasks
+- **Multi-modal inputs** - Process images, audio, and text together
+- **Security and permissions** - Implement fine-grained tool access control
+- **Agent telemetry** - Track agent performance and decision quality
+- **Offline-first design** - Ensure agents work without internet connectivity
+
+## Need help?
+
+<CardGroup cols={1}>
+
+<Card title="Join our Discord" icon="discord" iconType="brands" href="https://discord.gg/DFU3WQeaYD">
+  Connect with the community and ask questions about this example.
+</Card>
+
+</CardGroup>
