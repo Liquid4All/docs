@@ -22,7 +22,7 @@ The examples below use `d1.1`. Replace it with `d1-ultra` for harder decisions.
 
 ## Pricing
 
-Both models are billed on input tokens only, and output is free. Each question is billed for its text and all supplied images (see [Image Token Usage](#image-token-usage)).
+Both models are billed on input tokens only, and output is free. A request is billed for its state and images once, plus each question's own text, so asking several questions in one request costs less than asking them separately (see [Image Token Usage](#image-token-usage)).
 
 The models are available through the Liquid API. The earlier `d1` model and `d1-ultra` are also on OpenRouter ([d1](https://openrouter.ai/liquid/d1), [d1-ultra](https://openrouter.ai/liquid/d1-ultra)), and Vercel AI Gateway ([d1](https://vercel.com/ai-gateway/models/d1), [d1-ultra](https://vercel.com/ai-gateway/models/d1-ultra)). See the [Liquid AI pricing page](https://www.liquid.ai/pricing) for current prices and available credits.
 
@@ -958,6 +958,6 @@ patches = ceil(width / 32) × ceil(height / 32)
 image_tokens = ceil(patches × 1.5)
 ```
 
-For example, a 1024 × 1024 image covers 1,024 patches and contributes 1,536 input tokens per question. Two questions about that image contribute 3,072 image tokens, plus the text tokens for each question.
+For example, a 1024 × 1024 image covers 1,024 patches and contributes 1,536 input tokens. A request is billed for its state and images once, plus each question's own text, so asking two questions about that image in one request still contributes 1,536 image tokens. Asking the same two questions in separate requests contributes 3,072.
 
-Every question is charged for its text and all the images again. These tokens are included in `usage.input_tokens` and charged at the model's input token rate. Image tokens also count toward each question's input token limit. `usage.output_tokens` remains `0`.
+These tokens are included in `usage.input_tokens` and charged at the model's input token rate. `usage.output_tokens` remains `0`. Every question still reads the state and all the images, so image tokens count toward each question's input token limit.
