@@ -15,9 +15,12 @@ Thinking helps most on tasks with several steps, such as math, logic, documents 
 
 ## Use thinking
 
-Thinking is on by default for [thinking models](#thinking-models). When you build the prompt with the model's chat template, the template adds the thinking tokens to the start of the assistant turn, so the model reasons before it responds. On models with a thinking switch, this is the same as passing `enable_thinking=True`. See [Chat Template](/lfm/key-concepts/chat-template#reasoning) for how LFM3 and LFM2.5 templates handle thinking.
+Thinking is on by default for [thinking models](#thinking-models). When you build the prompt with the model's chat template, the template adds the thinking tokens to the start of the assistant turn, so the model reasons before it responds. On models with a thinking switch, this is the same as passing `enable_thinking=True`. See [Chat Template](/lfm/key-concepts/chat-template) for examples of generation prompts.
 
 ### Text
+
+<Tabs>
+<Tab title="LFM3">
 
 ```python
 from transformers import AutoModelForCausalLM, AutoTokenizer
@@ -47,6 +50,43 @@ output_ids = model.generate(
 )
 text = tokenizer.decode(output_ids[0, inputs["input_ids"].shape[1]:], skip_special_tokens=True)
 ```
+
+</Tab>
+<Tab title="LFM2/LFM2.5">
+
+```python
+from transformers import AutoModelForCausalLM, AutoTokenizer
+
+model_id = "LiquidAI/LFM2.5-1.2B-Thinking"
+model = AutoModelForCausalLM.from_pretrained(model_id, dtype="bfloat16", device_map="auto")
+tokenizer = AutoTokenizer.from_pretrained(model_id)
+
+messages = [{"role": "user", "content": "A shop sells pens at $3 each or 4 for $10. What is the lowest cost for 11 pens?"}]
+
+# Apply chat template
+inputs = tokenizer.apply_chat_template(
+    messages,
+    add_generation_prompt=True,
+    tokenize=True,
+    return_dict=True,
+    return_tensors="pt",
+).to(model.device)
+
+output_ids = model.generate(
+    **inputs,
+    do_sample=True,
+    temperature=0.05,
+    top_k=50,
+    repetition_penalty=1.05,
+    max_new_tokens=16384,
+)
+text = tokenizer.decode(output_ids[0, inputs["input_ids"].shape[1]:], skip_special_tokens=True)
+```
+
+Models that always think have no `enable_thinking` switch, so leave it out. See [Thinking models](#thinking-models).
+
+</Tab>
+</Tabs>
 
 `text` holds the reasoning followed by the answer. See [Separate the reasoning from the answer](#separate-the-reasoning-from-the-answer) to split them.
 
@@ -239,7 +279,7 @@ To keep the reasoning from every earlier turn as well, set `preserve_thinking=Tr
 
 ## Switch thinking off
 
-Some thinking models can answer without reasoning; others always think. LFM3-1.7B accepts the switch, but it wasn't trained to answer without reasoning, so we don't recommend switching it off. The [overview table](#thinking-models) shows which is which.
+Some thinking models can answer without reasoning; others always think. A model may accept the switch without having been trained to answer without reasoning. Check the [model support table](#thinking-models) before switching thinking off.
 
 <Warning>
 We recommend leaving thinking on. With thinking off, a model answers faster but less accurately, especially on math, documents and other multi-step tasks. Test your task both ways before you switch it off.
@@ -349,11 +389,7 @@ To switch thinking off, set `enable_thinking=False`. The chat template then fill
 
 {/* OPEN QUESTION: confirm with the model team that every LFM2.5 thinking model always thinks. LFM3-Audio-2B is left out: its template has no switch and thinking is a manual <think> prefill; add it once its default is confirmed. */}
 
-Models not listed here don't reason before they answer. If you don't want reasoning, use one of them:
-
-- **Text:** [LFM2.5-1.2B-Instruct](/lfm/models/lfm25-1.2b-instruct) for chat and general tasks, or [LFM2.5-350M](/lfm/models/lfm25-350m) and [LFM2.5-230M](/lfm/models/lfm25-230m) for extraction and lightweight on-device pipelines.
-- **Vision:** [LFM2.5-VL-1.6B](/lfm/models/lfm25-vl-1.6b) or [LFM2.5-VL-450M](/lfm/models/lfm25-vl-450m) for fast captioning and visual questions, and [LFM2.5-VL-3B](/lfm/models/lfm25-vl-3b) for document layout.
-- **Audio, video and speech:** [LFM3-Omni-2B](/lfm/models/lfm3-omni-2b).
+If you don't want reasoning, choose a non-thinking model from the [model library](/lfm/models/complete-library) for the modality and task you need.
 
 ## FAQ
 
@@ -364,9 +400,9 @@ Models that always think are trained to answer after a reasoning trace. Setting 
 </Accordion>
 
 <Accordion title="Can I set a thinking budget or a reasoning effort?">
-Current LFM models have one thinking mode, with no effort levels and no trained thinking budget.
+The thinking models in the [model support table](#thinking-models) have one thinking mode, with no effort levels and no trained thinking budget.
 
-No chat template reads a reasoning-effort value, so options such as llama.cpp's `--reasoning-effort` don't change the output. llama.cpp's `--reasoning-budget N` with `N` greater than 0 cuts the reasoning off after `N` tokens. The models weren't trained for this, so test it on your task before you rely on it.
+Their chat templates don't read a reasoning-effort value, so options such as llama.cpp's `--reasoning-effort` don't change the output for these models. llama.cpp's `--reasoning-budget N` with `N` greater than 0 cuts the reasoning off after `N` tokens. These models weren't trained for this, so test it on your task before you rely on it.
 </Accordion>
 
 <Accordion title="How much accuracy do I lose with thinking off?">
