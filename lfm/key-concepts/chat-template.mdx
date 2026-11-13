@@ -182,7 +182,7 @@ What is machine learning?<|im_end|>
 
 LFM2.5 thinking models always think, and their templates have no `enable_thinking` argument. Depending on the model, the template opens the assistant turn with `<think>` or the model writes it itself. Either way, the reply contains a closing `</think>` before the answer.
 
-Reasoning from turns before the latest user message is removed unless `preserve_thinking=True`. Some LFM2.5 models also accept the older name `keep_past_thinking`. See [Thinking](/lfm/key-concepts/thinking) for how to use thinking.
+For LFM2.5-8B-A1B and LFM2.5-24B-A2B, reasoning before the latest user message is removed by default, while reasoning from later assistant turns stays. LFM2.5-1.2B-Thinking instead retains only the last assistant message's reasoning by default. Set `preserve_thinking=True` to retain reasoning from all assistant messages; LFM2.5-1.2B-Thinking also accepts the older name `keep_past_thinking`. See [Thinking](/lfm/key-concepts/thinking#multi-turn-conversations) for guidance on agent conversations.
 
 ### LFM2 Vision Models
 
