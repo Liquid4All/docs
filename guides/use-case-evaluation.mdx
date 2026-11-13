@@ -7,11 +7,14 @@ Use this guide when you want to validate LFMs on an actual product task. The goa
 
 ## Recommended starter models
 
-- **Default:** [LFM2.5-1.2B-Instruct](https://huggingface.co/LiquidAI/LFM2.5-1.2B-Instruct)
-- **Best quality:** [LFM2.5-8B-A1B](https://huggingface.co/LiquidAI/LFM2.5-8B-A1B) or [LFM2.5-24B-A2B](https://huggingface.co/LiquidAI/LFM2.5-24B-A2B)
-- **Reasoning:** [LFM2.5-1.2B-Thinking](https://huggingface.co/LiquidAI/LFM2.5-1.2B-Thinking)
-- **Tightest footprint:** [LFM2.5-350M](https://huggingface.co/LiquidAI/LFM2.5-350M)
-- **Vision and audio:** [LFM2.5-VL-1.6B](https://huggingface.co/LiquidAI/LFM2.5-VL-1.6B) or [LFM2.5-Audio-1.5B](https://huggingface.co/LiquidAI/LFM2.5-Audio-1.5B)
+- **Default text and local agents:** [LFM3-1.7B](/lfm/models/lfm3-1.7b)
+- **Vision:** [LFM3-VL-2B](/lfm/models/lfm3-vl-2b)
+- **Audio and speech:** [LFM3-Audio-2B](/lfm/models/lfm3-audio-2b)
+- **Combined vision and audio:** [LFM3-Omni-2B](/lfm/models/lfm3-omni-2b)
+- **Larger reasoning alternatives:** [LFM2.5-8B-A1B](/lfm/models/lfm25-8b-a1b) or [LFM2.5-24B-A2B](/lfm/models/lfm25-24b-a2b), when they fit your hardware and task
+- **Tightest footprint:** [LFM2.5-230M](/lfm/models/lfm25-230m) or [LFM2.5-350M](/lfm/models/lfm25-350m)
+
+Start with LFM3 for general use. Keep smaller or specialized older models in the evaluation when their memory needs, capabilities, or runtime support suit your deployment. Compare quality on your own task rather than treating model size or generation as a universal ranking.
 
 ## Integration
 
@@ -21,7 +24,7 @@ Read these three pages before judging quality:
 
 - [Chat template](/lfm/key-concepts/chat-template): LFMs use a ChatML-style format. Always use `apply_chat_template` or the server's chat endpoint instead of hand-writing prompts.
 - [Text generation and prompting](/lfm/key-concepts/text-generation-and-prompting): start from LFM sampling defaults instead of carrying over another model's generation parameters.
-- [Tool use](/lfm/key-concepts/tool-use): LFMs emit a Pythonic tool-call format. If your harness assumes OpenAI-style JSON tool calls, read the [migration guide](/guides/migration-guide) first.
+- [Tool use](/lfm/key-concepts/tool-use): LFM3 emits XML tool calls; LFM2 and LFM2.5 use their earlier tool-call format. Configure the serving runtime's parser for your model so your harness receives structured tool calls. Read the [migration guide](/guides/migration-guide) before changing models.
 
 ## What to evaluate
 
