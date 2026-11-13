@@ -89,22 +89,22 @@
             "group": "Models",
             "pages": [
               {
-                "group": "Models",
-                "icon": "brain",
+                "group": "Liquid Foundation Models",
+                "root": "lfm/models/complete-library",
+                "expanded": false,
                 "pages": [
-                  {
-                    "group": "Liquid Foundation Models",
-                    "root": "lfm/models/complete-library",
-                    "expanded": false,
-                    "pages": [
-                      "lfm/models/text-models",
-                      "lfm/models/vision-models",
-                      "lfm/models/audio-models",
-                      "lfm/models/omni-models",
-                      "lfm/models/decision-models",
-                      "lfm/models/liquid-nanos"
-                    ]
-                  },
+                  "lfm/models/text-models",
+                  "lfm/models/vision-models",
+                  "lfm/models/audio-models",
+                  "lfm/models/omni-models",
+                  "lfm/models/decision-models",
+                  "lfm/models/liquid-nanos"
+                ]
+              },
+              {
+                "group": "Core capabilities",
+                "expanded": false,
+                "pages": [
                   "lfm/key-concepts/chat-template",
                   "lfm/key-concepts/text-generation-and-prompting",
                   "lfm/key-concepts/tool-use",
@@ -112,8 +112,7 @@
                   "lfm/key-concepts/audio-capabilities",
                   "lfm/key-concepts/omni-capabilities",
                   "lfm/key-concepts/speculative-decoding"
-                ],
-                "expanded": false
+                ]
               },
               {
                 "group": "Guides",
