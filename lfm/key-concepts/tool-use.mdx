@@ -494,7 +494,7 @@ print(answer)
 **Output**
 
 ```text
-<|tool_call_start|>[search_pet_care(animal="cat", topic="sleeping")]<|tool_call_end|>
+<|tool_call_start|>[search_pet_care(animal='cat', topic='sleep')]<|tool_call_end|>
 ```
 
 </Tab>
@@ -702,6 +702,21 @@ call = processor.decode(outputs.sequences[0, inputs["input_ids"].shape[1]:], ski
 print(call)
 ```
 
+**Output**
+
+```text
+<tool_call>
+<function=cancel_subscription>
+<parameter=platform>
+StreamBox
+</parameter>
+<parameter=effective_when>
+end_of_billing_period
+</parameter>
+</function>
+</tool_call>
+```
+
 **Image and speech together**
 
 An omni model can also combine what it sees and hears in one tool call. This example shows the model a restaurant photo and asks by voice to book a table. The model reads the restaurant name from the sign and combines it with the city, date, time, party size, and reservation name from the spoken request. The example only prints the proposed call and doesn't make a reservation.
@@ -811,7 +826,7 @@ Café de Flore
 Paris
 </parameter>
 <parameter=date>
-2026-11-01
+2026-11-20
 </parameter>
 <parameter=time>
 19:00
