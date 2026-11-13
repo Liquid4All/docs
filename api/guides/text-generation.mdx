@@ -74,7 +74,7 @@ See [Chat template](/lfm/key-concepts/chat-template) and [Text generation and pr
 
 ## Sampling parameters
 
-The API forwards OpenAI's chat parameters, such as `temperature`, `max_tokens`, and `stop`, to the model. It also forwards `top_k` and `repetition_penalty`, which are not part of OpenAI's API: in the Python SDK, pass them in `extra_body`.
+The API forwards OpenAI's chat parameters, such as `temperature`, `top_p`, `max_tokens`, and `stop`, to the model. It also forwards `top_k` and `repetition_penalty`, which are not part of OpenAI's API: in the Python SDK, pass them in `extra_body`.
 
 ## Streaming
 
