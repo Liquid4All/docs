@@ -4,7 +4,7 @@ description: "Move from Qwen, Llama, or Gemma to LFMs while avoiding the common 
 ---
 
 import { ChatMLExample } from "/snippets/key-concepts/chatml-example.mdx";
-import { ToolCallTokenExample } from "/snippets/key-concepts/tool-call-token-example.mdx";
+import { LFM25ToolCallExample } from "/snippets/key-concepts/lfm25-tool-call-example.mdx";
 
 This guide is for teams already running Qwen, Llama, or Gemma who want to evaluate Liquid Foundation Models (LFMs) as replacements. LFMs load and serve through the same frameworks you already use, so most migrations are a model ID and configuration change. The details that usually matter are:
 - deployment runtime choice (see [Deployment runtimes](#deployment-runtimes)),
@@ -64,7 +64,7 @@ See the [Prompting Guide](/lfm/key-concepts/text-generation-and-prompting) for r
 
 LFMs natively emit a Pythonic tool-call list, not OpenAI-style JSON:
 
-<ToolCallTokenExample />
+<LFM25ToolCallExample />
 
 If you swap an agent to an LFM and let a generic JSON parser run, tool calls can appear broken. The format is different.
 
