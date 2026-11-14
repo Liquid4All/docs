@@ -142,7 +142,7 @@ For local agent setup, see the [Agent Harnesses guide](/examples/agent-harnesses
 
 ## Reasoning
 
-Reasoning is enabled by default. You can switch it off, but we don't recommend it: the model wasn't trained to answer without reasoning. Leave room for the reasoning in your token limit. See [Thinking](/lfm/key-concepts/thinking) for guidance on how to use it, and [Chat Template](/lfm/key-concepts/chat-template) and [Tool Use](/lfm/key-concepts/tool-use) for the message format.
+Reasoning is enabled by default. You can set `enable_thinking=False` for direct answers, but results without thinking may be inconsistent, particularly for reasoning-heavy tasks. We recommend leaving thinking on. Leave room for the reasoning in your token limit. See [Thinking](/lfm/key-concepts/thinking) for guidance on how to use it, and [Chat Template](/lfm/key-concepts/chat-template) and [Tool Use](/lfm/key-concepts/tool-use) for the message format.
 
 For math and science, use `temperature=1.0`, `top_p=0.95`, `top_k=20`, and `repetition_penalty=1.0` instead of the general generation parameters.
 
