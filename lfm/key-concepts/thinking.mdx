@@ -1,0 +1,395 @@
+---
+title: "Thinking"
+description: "Use LFM thinking models to reason before they answer, separate the reasoning from the final answer, and switch thinking off on models that support it."
+---
+
+Thinking models reason before they respond. They write their reasoning into a `<think>…</think>` block at the start of the reply and then give the final answer:
+
+```
+<think>15% of 80: 10% is 8 and 5% is 4, so 15% is 12.</think>The answer is 12.
+```
+
+This page shows how to run a thinking model on text and on images, how to separate the reasoning from the answer, and how to switch thinking off where a model supports it. The examples use Hugging Face Transformers and OpenAI-compatible servers.
+
+Thinking helps most on tasks with several steps, such as math, logic, documents and charts, planning, and tool use in agents. Every reasoning token is a generated token, so thinking also makes replies longer and slower (see [Leave room for the reasoning](#leave-room-for-the-reasoning)).
+
+## Use thinking
+
+Thinking is on by default for the models in the [support table](#thinking-models). Some chat templates prefill the assistant turn with `<think>`; others leave the model to generate the thinking tokens itself. On models with a thinking switch, the default is the same as passing `enable_thinking=True`. See [Chat Template](/lfm/key-concepts/chat-template#reasoning) for how LFM3 and LFM2.5 templates handle thinking.
+
+### Text
+
+```python
+from transformers import AutoModelForCausalLM, AutoTokenizer
+
+model_id = "LiquidAI/LFM3-1.7B"
+model = AutoModelForCausalLM.from_pretrained(model_id, dtype="bfloat16", device_map="auto", trust_remote_code=True)
+tokenizer = AutoTokenizer.from_pretrained(model_id, trust_remote_code=True)
+
+messages = [{"role": "user", "content": "A shop sells pens at $3 each or 4 for $10. What is the lowest cost for 11 pens?"}]
+
+inputs = tokenizer.apply_chat_template(
+    messages,
+    add_generation_prompt=True,
+    enable_thinking=True,  # the default
+    tokenize=True,
+    return_dict=True,
+    return_tensors="pt",
+).to(model.device)
+
+output_ids = model.generate(
+    **inputs,
+    do_sample=True,
+    temperature=0.1,
+    top_k=50,
+    repetition_penalty=1.1,
+    max_new_tokens=16384,
+)
+text = tokenizer.decode(output_ids[0, inputs["input_ids"].shape[1]:], skip_special_tokens=True)
+```
+
+`text` holds the reasoning followed by the answer. See [Separate the reasoning from the answer](#separate-the-reasoning-from-the-answer) to split them.
+
+### Images and text
+
+[LFM3-VL-2B](/lfm/models/lfm3-vl-2b) reasons before answering image and video questions by default and supports switching thinking off. The older LFM2.5-VL models answer directly without a separate thinking mode. Use the processor to format LFM3-VL's inputs:
+
+```python
+import torch
+from transformers import AutoModelForImageTextToText, AutoProcessor
+
+model_id = "LiquidAI/LFM3-VL-2B"
+model = AutoModelForImageTextToText.from_pretrained(model_id, dtype=torch.bfloat16, device_map="auto", trust_remote_code=True)
+processor = AutoProcessor.from_pretrained(model_id, trust_remote_code=True)
+
+messages = [
+    {
+        "role": "user",
+        "content": [
+            {"type": "image", "url": "http://images.cocodataset.org/val2017/000000039769.jpg"},
+            {"type": "text", "text": "How many cats are in this image?"},
+        ],
+    }
+]
+
+inputs = processor.apply_chat_template(
+    messages,
+    add_generation_prompt=True,
+    enable_thinking=True,  # the default
+    tokenize=True,
+    return_dict=True,
+    return_tensors="pt",
+).to(model.device)
+
+with torch.inference_mode():
+    output_ids = model.generate(
+        **inputs,
+        do_sample=True,
+        temperature=0.1,
+        top_k=50,
+        repetition_penalty=1.1,
+        max_new_tokens=16384,
+    )
+text = processor.decode(output_ids[0, inputs["input_ids"].shape[1]:], skip_special_tokens=True)
+```
+
+<Note>
+MLX-VLM is the exception: `mlx_vlm.generate` turns thinking off unless you pass `--enable-thinking`. Add the flag to use thinking. See [MLX](/deployment/on-device/mlx#lfm3-and-d1-models).
+</Note>
+
+### Serve a thinking model
+
+Start the server with a reasoning parser, so it returns the reasoning in its own field instead of mixing it into the answer. Each model page lists the parser to use. llama.cpp parses reasoning by default.
+
+<Tabs>
+  <Tab title="vLLM">
+    ```bash
+    vllm serve LiquidAI/LFM3-1.7B --reasoning-parser qwen3
+    ```
+
+    ```python
+    from openai import OpenAI
+
+    client = OpenAI(base_url="http://localhost:8000/v1", api_key="EMPTY")
+
+    response = client.chat.completions.create(
+        model="LiquidAI/LFM3-1.7B",
+        messages=[{"role": "user", "content": "What is 17 * 23 - 45?"}],
+        temperature=0.1,
+        extra_body={"top_k": 50, "repetition_penalty": 1.1},
+    )
+    ```
+  </Tab>
+  <Tab title="SGLang">
+    ```bash
+    sglang serve --model-path LiquidAI/LFM3-1.7B --reasoning-parser qwen3 --port 30000
+    ```
+
+    ```python
+    from openai import OpenAI
+
+    client = OpenAI(base_url="http://localhost:30000/v1", api_key="None")
+
+    response = client.chat.completions.create(
+        model="LiquidAI/LFM3-1.7B",
+        messages=[{"role": "user", "content": "What is 17 * 23 - 45?"}],
+        temperature=0.1,
+        max_tokens=16384,
+        extra_body={"top_k": 50, "repetition_penalty": 1.1},
+    )
+    ```
+  </Tab>
+  <Tab title="llama.cpp">
+    ```bash
+    llama serve -hf LiquidAI/LFM3-1.7B-GGUF:Q4_0
+    ```
+
+    ```python
+    from openai import OpenAI
+
+    client = OpenAI(base_url="http://localhost:9931/v1", api_key="not-needed")
+
+    response = client.chat.completions.create(
+        model="LiquidAI/LFM3-1.7B-GGUF:Q4_0",
+        messages=[{"role": "user", "content": "What is 17 * 23 - 45?"}],
+    )
+    ```
+
+    The GGUF stores the recommended sampling parameters, so the request needs none.
+  </Tab>
+</Tabs>
+
+### Separate the reasoning from the answer
+
+How the reasoning comes back depends on whether a reasoning parser runs.
+
+**With a parser**, the server splits the output for you. The answer arrives in `message.content` and the reasoning in a separate field, so your application never sees the `<think>` tags. The name of the reasoning field differs between servers and versions, so read both:
+
+```python
+message = response.choices[0].message
+reasoning = getattr(message, "reasoning_content", None) or getattr(message, "reasoning", None)
+print("Reasoning:", reasoning)
+print("Answer:", message.content)
+```
+
+When you stream the response, the reasoning arrives in the same field of each chunk's `delta`, before the answer arrives in `delta.content`:
+
+```python
+stream = client.chat.completions.create(
+    model="LiquidAI/LFM3-1.7B",
+    messages=[{"role": "user", "content": "What is 17 * 23 - 45?"}],
+    stream=True,
+)
+for chunk in stream:
+    if not chunk.choices:
+        continue
+    delta = chunk.choices[0].delta
+    reasoning = getattr(delta, "reasoning_content", None) or getattr(delta, "reasoning", None)
+    if reasoning:
+        print(reasoning, end="", flush=True)  # show it greyed out or hide it in your UI
+    if delta.content:
+        print(delta.content, end="", flush=True)
+```
+
+**Without a parser** (Transformers, MLX, and servers started without one), the reasoning and the answer arrive as one string. The text contains a closing `</think>` before the answer, so split on it:
+
+```python
+def split_reasoning(text):
+    reasoning, separator, answer = text.partition("</think>")
+    if not separator:
+        # No closing tag: generation stopped mid-thought. Raise the token limit.
+        return reasoning.replace("<think>", "").strip(), ""
+    return reasoning.replace("<think>", "").strip(), answer.strip()
+
+reasoning, answer = split_reasoning(text)
+```
+
+### Leave room for the reasoning
+
+The token limit covers the reasoning and the answer together. Reasoning on a hard task can run to thousands of tokens, and if the limit is reached first, the model is cut off mid-thought and never gives an answer.
+
+- **vLLM and llama.cpp:** when you don't set `max_tokens`, generation can run to the end of the context window, so you don't need a limit.
+- **Transformers, SGLang and other runtimes:** set the limit yourself, to a generous value such as 16,384 tokens.
+
+If a reply has reasoning but no answer, the limit was too low.
+
+### Structured output and tool calls
+
+The reasoning comes first in every reply, also when you ask for JSON or give the model tools:
+
+- **Structured output:** with a reasoning parser, `response_format` (for example a JSON schema) constrains only the answer. The reasoning before it stays free text, and `message.content` holds just the JSON.
+- **Tool calls:** the model reasons first and then calls the tool. With a tool-call parser, the call arrives in `message.tool_calls`, and the reasoning in the reasoning field.
+
+Without a parser, both arrive after `</think>` in the generated text.
+
+### Multi-turn conversations
+
+When you add a reply to the conversation history, send the answer as `content` and the reasoning as `reasoning_content`. Keep both with each tool-call turn. The default retention rule depends on the model's chat template:
+
+- **LFM3-1.7B, LFM3-VL-2B, LFM2.5-8B-A1B, and LFM2.5-24B-A2B:** reasoning before the latest user message is removed; reasoning from assistant turns after it stays. This preserves the reasoning across tool calls made to answer the current request.
+- **LFM2.5-1.2B-Thinking:** only the last assistant message's reasoning is retained by default, including when several tool calls follow the same user request.
+
+To keep reasoning from all assistant messages, set `preserve_thinking=True`. For LFM2.5-1.2B-Thinking, use this when your agent needs to retain reasoning across multiple tool-call steps:
+
+- **Transformers:** `apply_chat_template(..., preserve_thinking=True)`
+- **vLLM and SGLang:** `"chat_template_kwargs": {"preserve_thinking": True}` in `extra_body`
+- **llama.cpp:** the server keeps earlier reasoning by default (`--reasoning-preserve`). Start it with `--no-reasoning-preserve` to use the template's default instead.
+
+{/* OPEN QUESTION: add the recommended preserve_thinking setting for agents once confirmed. */}
+
+## Switch thinking off
+
+Some thinking models support direct answers; others have no supported thinking-off switch. LFM3-1.7B accepts the switch, but results with thinking disabled can be inconsistent, particularly on reasoning tasks, so we recommend leaving it on. The [overview table](#thinking-models) shows which models support the switch.
+
+<Warning>
+We recommend leaving thinking on. With thinking off, a model answers faster but less accurately, especially on math, documents and other multi-step tasks. Test your task both ways before you switch it off.
+</Warning>
+
+To switch thinking off, set `enable_thinking=False`. The chat template then fills in an empty `<think></think>` block, so the model starts on the answer straight away. On models that always think, this setting isn't supported.
+
+<Tabs>
+  <Tab title="Transformers">
+    In the [image example](#images-and-text), pass `enable_thinking=False` to `apply_chat_template()`:
+
+    ```python
+    inputs = processor.apply_chat_template(
+        messages,
+        add_generation_prompt=True,
+        enable_thinking=False,
+        tokenize=True,
+        return_dict=True,
+        return_tensors="pt",
+    ).to(model.device)
+    ```
+
+    The empty `<think></think>` block is part of the prompt, so the generated text is the answer alone. Don't pass it to `split_reasoning()`, which expects a closing `</think>`.
+  </Tab>
+  <Tab title="vLLM and SGLang">
+    Replace the text-model server from [Serve a thinking model](#serve-a-thinking-model) with LFM3-VL-2B for this image example. Use a runtime build with LFM3-VL support; see the [model's quickstart](/lfm/models/lfm3-vl-2b#quick-start).
+
+    **vLLM:**
+
+    ```bash
+    vllm serve LiquidAI/LFM3-VL-2B \
+      --reasoning-parser qwen3 \
+      --chat-template-content-format openai
+    ```
+
+    **SGLang:**
+
+    ```bash
+    sglang serve --model-path LiquidAI/LFM3-VL-2B \
+      --trust-remote-code --reasoning-parser auto --port 30000
+    ```
+
+    Send `enable_thinking` in `chat_template_kwargs` with each request. With the OpenAI client, it goes in `extra_body`:
+
+    ```python
+    from openai import OpenAI
+
+    client = OpenAI(base_url="http://localhost:8000/v1", api_key="EMPTY")  # SGLang: port 30000
+
+    response = client.chat.completions.create(
+        model="LiquidAI/LFM3-VL-2B",
+        messages=[
+            {
+                "role": "user",
+                "content": [
+                    {"type": "image_url", "image_url": {"url": "http://images.cocodataset.org/val2017/000000039769.jpg"}},
+                    {"type": "text", "text": "How many cats are in this image?"},
+                ],
+            }
+        ],
+        temperature=0.1,
+        extra_body={
+            "top_k": 50,
+            "repetition_penalty": 1.1,
+            "chat_template_kwargs": {"enable_thinking": False},
+        },
+    )
+    print(response.choices[0].message.content)
+    ```
+  </Tab>
+  <Tab title="llama.cpp">
+    Start the server with `--reasoning off` to switch thinking off for every request:
+
+    ```bash
+    llama serve -hf LiquidAI/LFM3-VL-2B-GGUF:Q4_0 \
+      --top-p 1.0 --min-p 0.0 --reasoning off
+    ```
+
+    To switch it off for a single request instead, send `chat_template_kwargs`:
+
+    ```python
+    from openai import OpenAI
+
+    client = OpenAI(base_url="http://localhost:9931/v1", api_key="not-needed")
+
+    response = client.chat.completions.create(
+        model="LiquidAI/LFM3-VL-2B-GGUF:Q4_0",
+        messages=[
+            {
+                "role": "user",
+                "content": [
+                    {"type": "image_url", "image_url": {"url": "http://images.cocodataset.org/val2017/000000039769.jpg"}},
+                    {"type": "text", "text": "How many cats are in this image?"},
+                ],
+            }
+        ],
+        extra_body={"chat_template_kwargs": {"enable_thinking": False}},
+    )
+    print(response.choices[0].message.content)
+    ```
+
+    Builds before [ggml-org/llama.cpp#31374](https://github.com/ggml-org/llama.cpp/pull/31374) returned a 500 error when thinking was off and `response_format` was set, so update llama.cpp if you use structured output.
+  </Tab>
+  <Tab title="MLX">
+    `mlx_vlm.generate` keeps thinking off unless you pass `--enable-thinking`, so leave the flag out:
+
+    ```bash
+    python -m mlx_vlm.generate --model LiquidAI/LFM3-VL-2B-MLX-4bit \
+      --image /path/to/image.jpg --prompt "How many cats are in this image?" \
+      --temperature 0.1 --top-p 1.0 --top-k 50 --min-p 0.0 --repetition-penalty 1.1
+    ```
+  </Tab>
+</Tabs>
+
+## Thinking models
+
+| Model | Default thinking | Can switch off | Thinking levels |
+| --- | --- | --- | --- |
+| [LFM3-1.7B](/lfm/models/lfm3-1.7b) | On | Yes (Not recommended) | n/a |
+| [LFM3-VL-2B](/lfm/models/lfm3-vl-2b) | On | Yes | n/a |
+| [LFM2.5-24B-A2B](/lfm/models/lfm25-24b-a2b) | On | No | n/a |
+| [LFM2.5-8B-A1B](/lfm/models/lfm25-8b-a1b) | On | No | n/a |
+| [LFM2.5-1.2B-Thinking](/lfm/models/lfm25-1.2b-thinking) | On | No | n/a |
+
+{/* OPEN QUESTION: confirm with the model team that every LFM2.5 thinking model always thinks. LFM3-Audio-2B is left out: its template has no switch and thinking is a manual <think> prefill; add it once its default is confirmed. */}
+
+The table covers the text and vision thinking models discussed above. [LFM3-Audio-2B](/lfm/models/lfm3-audio-2b) also supports optional reasoning through an explicit assistant prefill; see [Speech-to-text chat](/lfm/key-concepts/audio-capabilities#speech-to-text-chat) for examples.
+
+For direct answers without reasoning, the following models are options:
+
+- **Text:** [LFM2.5-1.2B-Instruct](/lfm/models/lfm25-1.2b-instruct) for chat and general tasks, or [LFM2.5-350M](/lfm/models/lfm25-350m) and [LFM2.5-230M](/lfm/models/lfm25-230m) for extraction and lightweight on-device pipelines.
+- **Vision:** [LFM2.5-VL-1.6B](/lfm/models/lfm25-vl-1.6b) or [LFM2.5-VL-450M](/lfm/models/lfm25-vl-450m) for fast captioning and visual questions, and [LFM2.5-VL-3B](/lfm/models/lfm25-vl-3b) for document layout.
+- **Audio, video and speech:** [LFM3-Omni-2B](/lfm/models/lfm3-omni-2b).
+
+## FAQ
+
+<AccordionGroup>
+
+<Accordion title="Why can't I switch thinking off on every model?">
+Not every model has a supported thinking-off switch. Use the controls documented for your model in the [support table](#thinking-models). LFM3-1.7B accepts `enable_thinking=False`, but answers in that mode can be inconsistent, especially on tasks that need reasoning. We recommend leaving thinking on and testing any change on your own task. If you need direct answers, consider the non-thinking alternatives listed below the table.
+</Accordion>
+
+<Accordion title="Can I set a thinking budget or a reasoning effort?">
+Current LFM models have one thinking mode, with no effort levels and no trained thinking budget.
+
+No chat template reads a reasoning-effort value, so options such as llama.cpp's `--reasoning-effort` don't change the output. llama.cpp's `--reasoning-budget N` with `N` greater than 0 cuts the reasoning off after `N` tokens. The models weren't trained for this, so test it on your task before you rely on it.
+</Accordion>
+
+<Accordion title="How much accuracy do I lose with thinking off?">
+It depends on the model and the task. Each model's Hugging Face model card reports benchmark results with thinking on and off where the model can switch.
+</Accordion>
+
+</AccordionGroup>
