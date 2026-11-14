@@ -239,7 +239,7 @@ To keep reasoning from all assistant messages, set `preserve_thinking=True`. For
 
 ## Switch thinking off
 
-Some thinking models can answer without reasoning; others always think. LFM3-1.7B accepts the switch, but it wasn't trained to answer without reasoning, so we don't recommend switching it off. The [overview table](#thinking-models) shows which is which.
+Some thinking models support direct answers; others have no supported thinking-off switch. LFM3-1.7B accepts the switch, but results with thinking disabled can be inconsistent, particularly on reasoning tasks, so we recommend leaving it on. The [overview table](#thinking-models) shows which models support the switch.
 
 <Warning>
 We recommend leaving thinking on. With thinking off, a model answers faster but less accurately, especially on math, documents and other multi-step tasks. Test your task both ways before you switch it off.
@@ -366,7 +366,9 @@ To switch thinking off, set `enable_thinking=False`. The chat template then fill
 
 {/* OPEN QUESTION: confirm with the model team that every LFM2.5 thinking model always thinks. LFM3-Audio-2B is left out: its template has no switch and thinking is a manual <think> prefill; add it once its default is confirmed. */}
 
-Models not listed here don't reason before they answer. If you don't want reasoning, use one of them:
+The table covers the text and vision thinking models discussed above. [LFM3-Audio-2B](/lfm/models/lfm3-audio-2b) also supports optional reasoning through an explicit assistant prefill; see [Speech-to-text chat](/lfm/key-concepts/audio-capabilities#speech-to-text-chat) for examples.
+
+For direct answers without reasoning, the following models are options:
 
 - **Text:** [LFM2.5-1.2B-Instruct](/lfm/models/lfm25-1.2b-instruct) for chat and general tasks, or [LFM2.5-350M](/lfm/models/lfm25-350m) and [LFM2.5-230M](/lfm/models/lfm25-230m) for extraction and lightweight on-device pipelines.
 - **Vision:** [LFM2.5-VL-1.6B](/lfm/models/lfm25-vl-1.6b) or [LFM2.5-VL-450M](/lfm/models/lfm25-vl-450m) for fast captioning and visual questions, and [LFM2.5-VL-3B](/lfm/models/lfm25-vl-3b) for document layout.
@@ -377,7 +379,7 @@ Models not listed here don't reason before they answer. If you don't want reason
 <AccordionGroup>
 
 <Accordion title="Why can't I switch thinking off on every model?">
-Models that always think are trained to answer after a reasoning trace. Setting `enable_thinking=False`, starting llama.cpp with `--reasoning off`, or filling in an empty `<think></think>` by hand isn't supported on them, and their answers get worse. Some models accept `enable_thinking=False`, but they weren't trained for this, so we don't recommend switching thinking off on them. If you need answers without reasoning, use a [model that doesn't think](#thinking-models).
+Not every model has a supported thinking-off switch. Use the controls documented for your model in the [support table](#thinking-models). LFM3-1.7B accepts `enable_thinking=False`, but answers in that mode can be inconsistent, especially on tasks that need reasoning. We recommend leaving thinking on and testing any change on your own task. If you need direct answers, consider the non-thinking alternatives listed below the table.
 </Accordion>
 
 <Accordion title="Can I set a thinking budget or a reasoning effort?">
