@@ -1,6 +1,6 @@
 ---
 title: "LFM2.5-Embedding-350M"
-description: "350M dense bi-encoder model for multilingual retrieval and semantic search"
+description: "350M multilingual text embedding model (dense bi-encoder) for vector search and retrieval in RAG (retrieval-augmented generation) pipelines"
 ---
 
 <a href="/lfm/models/liquid-nanos" className="back-button">← Back to Liquid Nanos</a>
@@ -53,7 +53,7 @@ The model was trained with asymmetric prefixes: `query: ` for queries and `docum
 </Warning>
 
 <Tabs>
-  <Tab title="sentence-transformers">
+  <Tab title="Sentence Transformers">
     **Install:**
     ```bash
     pip install -U sentence-transformers "transformers<5.12"

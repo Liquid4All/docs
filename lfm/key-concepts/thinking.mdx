@@ -15,7 +15,7 @@ Thinking helps most on tasks with several steps, such as math, logic, documents 
 
 ## Use thinking
 
-Thinking is on by default for [thinking models](#thinking-models). When you build the prompt with the model's chat template, the template adds the thinking tokens to the start of the assistant turn, so the model reasons before it responds. On models with a thinking switch, this is the same as passing `enable_thinking=True`. See [Chat Template](/lfm/key-concepts/chat-template) for examples of generation prompts.
+Thinking is on by default for the models in the [support table](#thinking-models). Some chat templates prefill the assistant turn with `<think>`; others leave the model to generate the thinking tokens itself. On models with a thinking switch, the default is the same as passing `enable_thinking=True`. See [Chat Template](/lfm/key-concepts/chat-template#reasoning) for how LFM3 and LFM2.5 templates handle thinking.
 
 ### Text
 
@@ -92,7 +92,7 @@ Models that always think have no `enable_thinking` switch, so leave it out. See 
 
 ### Images and text
 
-Vision models work the same way through the processor:
+[LFM3-VL-2B](/lfm/models/lfm3-vl-2b) reasons before answering image and video questions by default and supports switching thinking off. The older LFM2.5-VL models answer directly without a separate thinking mode. Use the processor to format LFM3-VL's inputs:
 
 ```python
 import torch
@@ -264,12 +264,12 @@ Without a parser, both arrive after `</think>` in the generated text.
 
 ### Multi-turn conversations
 
-When you add a reply to the conversation history, send the answer as `content` and the reasoning as `reasoning_content`. The chat template then decides which reasoning stays in the prompt:
+When you add a reply to the conversation history, send the answer as `content` and the reasoning as `reasoning_content`. Keep both with each tool-call turn. The default retention rule depends on the model's chat template:
 
-- **Earlier turns:** by default, the template removes the reasoning from every assistant turn before the latest user message. This keeps long conversations short.
-- **The current turn:** reasoning from turns after the latest user message stays. In an agent, this keeps the model's chain of thought across all the tool calls it makes to answer one request, so keep the reasoning with each tool-call turn.
+- **LFM3-1.7B, LFM3-VL-2B, LFM2.5-8B-A1B, and LFM2.5-24B-A2B:** reasoning before the latest user message is removed; reasoning from assistant turns after it stays. This preserves the reasoning across tool calls made to answer the current request.
+- **LFM2.5-1.2B-Thinking:** only the last assistant message's reasoning is retained by default, including when several tool calls follow the same user request.
 
-To keep the reasoning from every earlier turn as well, set `preserve_thinking=True`:
+To keep reasoning from all assistant messages, set `preserve_thinking=True`. For LFM2.5-1.2B-Thinking, use this when your agent needs to retain reasoning across multiple tool-call steps:
 
 - **Transformers:** `apply_chat_template(..., preserve_thinking=True)`
 - **vLLM and SGLang:** `"chat_template_kwargs": {"preserve_thinking": True}` in `extra_body`
@@ -305,6 +305,23 @@ To switch thinking off, set `enable_thinking=False`. The chat template then fill
     The empty `<think></think>` block is part of the prompt, so the generated text is the answer alone. Don't pass it to `split_reasoning()`, which expects a closing `</think>`.
   </Tab>
   <Tab title="vLLM and SGLang">
+    Replace the text-model server from [Serve a thinking model](#serve-a-thinking-model) with LFM3-VL-2B for this image example. Use a runtime build with LFM3-VL support; see the [model's quickstart](/lfm/models/lfm3-vl-2b#quick-start).
+
+    **vLLM:**
+
+    ```bash
+    vllm serve LiquidAI/LFM3-VL-2B \
+      --reasoning-parser qwen3 \
+      --chat-template-content-format openai
+    ```
+
+    **SGLang:**
+
+    ```bash
+    sglang serve --model-path LiquidAI/LFM3-VL-2B \
+      --trust-remote-code --reasoning-parser auto --port 30000
+    ```
+
     Send `enable_thinking` in `chat_template_kwargs` with each request. With the OpenAI client, it goes in `extra_body`:
 
     ```python

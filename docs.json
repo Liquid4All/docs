@@ -11,6 +11,7 @@
   "name": "Liquid AI Docs",
   "description": "Documentation for Liquid AI Foundation Models (LFM)",
   "seo": {
+    "indexing": "all",
     "organization": {
       "name": "Liquid AI",
       "url": "https://www.liquid.ai",
@@ -186,7 +187,8 @@
                   "lfm/help/deprecations",
                   "lfm/help/contributing",
                   "lfm/help/connect-ai-tools",
-                  "lfm/help/model-license"
+                  "lfm/help/model-license",
+                  "lfm/help/model-documentation"
                 ]
               }
             ]
@@ -623,6 +625,38 @@
     {
       "source": "/lfm/fine-tuning",
       "destination": "/lfm/fine-tuning/overview"
+    },
+    {
+      "source": "/lfm/getting-started/intro",
+      "destination": "/lfm/getting-started/welcome"
+    },
+    {
+      "source": "/lfm/inference/lmstudio",
+      "destination": "/deployment/on-device/lm-studio"
+    },
+    {
+      "source": "/lfm/key-concepts/models",
+      "destination": "/lfm/models/complete-library"
+    },
+    {
+      "source": "/deployment/tools/model-bundling",
+      "destination": "/deployment/on-device/llama-cpp"
+    },
+    {
+      "source": "/lfm/models/lfm3-1-7b",
+      "destination": "/lfm/models/lfm3-1.7b"
+    },
+    {
+      "source": "/lfm/getting-started/text-generation-and-prompting",
+      "destination": "/lfm/key-concepts/text-generation-and-prompting"
+    },
+    {
+      "source": "/lfm/frameworks/leap",
+      "destination": "/deployment/on-device/llama-cpp/migrating-from-leap-sdk"
+    },
+    {
+      "source": "/lfm/getting-started/vision",
+      "destination": "/lfm/key-concepts/vision-capabilities"
     }
   ],
   "ai": {
