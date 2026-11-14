@@ -3,7 +3,7 @@ title: "Migration Guide"
 description: "Move from Qwen, Llama, or Gemma to LFMs while avoiding the common migration pitfalls."
 ---
 
-import { ToolCallTokenExample } from "/snippets/key-concepts/tool-call-token-example.mdx";
+import { LFM25ToolCallExample } from "/snippets/key-concepts/lfm25-tool-call-example.mdx";
 
 This guide is for teams already running Qwen, Llama, or Gemma who want to evaluate Liquid Foundation Models (LFMs) as replacements. LFMs load and serve through the same frameworks you already use, so most migrations are a model ID and configuration change. The details that usually matter are:
 - deployment runtime choice (see [Deployment runtimes](#deployment-runtimes)),
@@ -76,7 +76,7 @@ LFM3 emits XML tool calls, using a superset of the `qwen3_coder` format:
 
 LFM2 and LFM2.5 use the earlier tool-call format, typically a Pythonic call list:
 
-<ToolCallTokenExample></ToolCallTokenExample>
+<LFM25ToolCallExample></LFM25ToolCallExample>
 
 Serving runtimes can parse these native formats into OpenAI-compatible `tool_calls`. A client that reads raw generated text must handle the format for its selected model.
 

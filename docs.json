@@ -113,7 +113,7 @@
                   "lfm/key-concepts/tool-use",
                   "lfm/key-concepts/vision-capabilities",
                   "lfm/key-concepts/audio-capabilities",
-                  "lfm/key-concepts/omni-capabilities",
+                  "lfm/key-concepts/speech-generation",
                   "lfm/key-concepts/speculative-decoding"
                 ]
               },
@@ -334,6 +334,10 @@
     ]
   },
   "redirects": [
+    {
+      "source": "/lfm/key-concepts/omni-capabilities",
+      "destination": "/lfm/key-concepts/audio-capabilities"
+    },
     {
       "source": "/lfm/key-concepts/tool-search",
       "destination": "/lfm/key-concepts/tool-use"
