@@ -116,6 +116,7 @@ active:
   - /examples/android/leap-koog-agent
   - /examples/android/recipe-generator-constrained-output
   - /examples/android/slogan-generator
+  - /examples/android/tool-calling-agent
   - /examples/android/vision-language-model-example
   - /examples/android/web-content-summarizer
   - /examples/connect-ai-tools

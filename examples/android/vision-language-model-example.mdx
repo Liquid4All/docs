@@ -3,15 +3,11 @@ title: "Image Understanding with Vision Language Models"
 description: "Android app for on-device image understanding and visual Q&A using LFM2.5-VL-1.6B with Jetpack Compose."
 ---
 
-<Note>
-This example uses the LEAP SDK, which is **deprecated**. It remains a useful architectural reference, but for new Android apps embed llama.cpp directly — see [iOS & Android](/deployment/on-device/llama-cpp/mobile) and [Migrating from LEAP SDK](/deployment/on-device/llama-cpp/migrating-from-leap-sdk).
-</Note>
-
-<Card title="View Source Code" icon="github" href="https://github.com/Liquid4All/LeapSDK-Examples/tree/main/Android/VLMExample">
+<Card title="View Source Code" icon="github" href="https://github.com/Liquid4All/cookbook/tree/main/examples/VLMExample">
   Browse the complete example on GitHub
 </Card>
 
-This example demonstrates how to use **Vision Language Models (VLMs)** with LeapSDK on Android. VLMs combine image understanding with natural language processing, enabling your app to analyze images, answer questions about visual content, and generate detailed descriptions—all on-device.
+This example demonstrates how to use **Vision Language Models (VLMs)** with llama.cpp on Android. VLMs combine image understanding with natural language processing, enabling your app to analyze images, answer questions about visual content, and generate detailed descriptions—all on-device.
 
 Built with **Jetpack Compose** and the **Coil** image loading library, this example shows how to create a multimodal AI application that processes both images and text locally on Android devices.
 
@@ -58,6 +54,7 @@ Before running this example, ensure you have the following:
 
   Make sure you have:
   - Android SDK installed
+  - Android NDK and CMake installed
   - An Android device or emulator configured
   - USB debugging enabled (for physical devices)
 </Accordion>
@@ -73,33 +70,19 @@ Before running this example, ensure you have the following:
   - Vision models are larger and more compute-intensive than text-only models
 </Accordion>
 
-<Accordion title="VLM Model Bundle Deployment">
-  This example requires the **LFM2.5-VL-1.6B** vision language model bundle.
+<Accordion title="VLM Model Deployment">
+  This example requires the **LFM2.5-VL-1.6B** vision language model.
 
-  **Step 1: Obtain the model bundle**
-
-  The example uses **LFM2.5-VL-1.6B** from the [LEAP Model Library](https://leap.liquid.ai/models). The code below loads it via `LeapModelDownloader.loadModel(...)`, which fetches the GGUF + matching `mmproj` companion file from the registry on first launch and caches them on device. No manual ADB step is needed.
-
-  **Manual deployment (alternative).** If you'd rather sideload the files, push the GGUF and its `mmproj` companion via ADB and use `loadSimpleModel(model: ModelSource(...))` instead of `loadModel(...)`:
-
-  ```bash
-  adb shell mkdir -p /data/local/tmp/liquid/
-  adb push lfm2.5-vl-1.6b-q4_k_m.gguf /data/local/tmp/liquid/
-  adb push lfm2.5-vl-1.6b-mmproj.gguf /data/local/tmp/liquid/
-  ```
-
-  Then pass both paths to `ModelSource(modelPath = ..., mmprojPath = ..., modelName = "LFM2.5-VL-1.6B", quantizationId = "Q4_K_M")` — see [Model Loading → Sideloaded files](/deployment/on-device/sdk/model-loading#sideloaded-files).
+  The example uses **LFM2.5-VL-1.6B** from [LiquidAI/LFM2.5-VL-1.6B-GGUF](https://huggingface.co/LiquidAI/LFM2.5-VL-1.6B-GGUF) on Hugging Face. On first launch, the app downloads the GGUF and its matching `mmproj` companion file with Android's `DownloadManager` and keeps them on device. No manual ADB step is needed.
 </Accordion>
 
 <Accordion title="Dependencies Setup">
   Add the required dependencies to your app-level `build.gradle.kts`:
 
+  The app builds [llama.cpp](https://github.com/ggml-org/llama.cpp) from a git submodule with CMake (`app/src/main/cpp/CMakeLists.txt`), including its `mtmd` library for image input. Set `android:extractNativeLibs="true"` in `AndroidManifest.xml` so llama.cpp can load its CPU backends.
+
   ```kotlin
   dependencies {
-      // LeapSDK for VLM processing (0.10.0+)
-      implementation("ai.liquid.leap:leap-sdk:0.10.7")
-      implementation("ai.liquid.leap:leap-model-downloader:0.10.7")
-
       // Coil for image loading
       implementation("io.coil-kt:coil-compose:2.5.0")
 
@@ -133,13 +116,12 @@ Follow these steps to start analyzing images with VLMs:
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/Liquid4All/LeapSDK-Examples.git
-   cd LeapSDK-Examples/Android/VLMExample
+   git clone --recurse-submodules https://github.com/Liquid4All/cookbook.git
+   cd cookbook/examples/VLMExample
    ```
 
 2. **Pick a deployment strategy**
-   - Default: let `LeapModelDownloader.loadModel(...)` fetch LFM2.5-VL-1.6B from the LEAP Model Library on first launch
-   - Optional manual push: see the **Model Bundle Setup** accordion above for the ADB sideload path
+   - Default: the app downloads LFM2.5-VL-1.6B and its `mmproj` file from Hugging Face on first launch
 
 3. **Open in Android Studio**
    - Launch Android Studio
@@ -197,13 +179,6 @@ fun VLMScreen(viewModel: VLMViewModel) {
 Loading and using the vision language model:
 
 ```kotlin
-import ai.liquid.leap.GenerationOptions
-import ai.liquid.leap.ModelRunner
-import ai.liquid.leap.message.ChatMessage
-import ai.liquid.leap.message.ChatMessageContent
-import ai.liquid.leap.message.ImageUtils
-import ai.liquid.leap.message.MessageResponse
-import ai.liquid.leap.downloader.LeapModelDownloader
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
@@ -211,17 +186,22 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
+import java.io.ByteArrayOutputStream
+import java.io.File
 
 class VLMViewModel(application: Application) : AndroidViewModel(application) {
-    private val downloader = LeapModelDownloader(application)
-    private var runner: ModelRunner? = null
+    private var runner: LlamaVlm? = null
 
     fun initializeModel() {
         viewModelScope.launch(Dispatchers.Default) {
-            runner = downloader.loadModel(
-                modelName = "LFM2.5-VL-1.6B",
-                quantizationType = "Q4_K_M",
-            )
+            // GGUF + mmproj downloaded from LiquidAI/LFM2.5-VL-1.6B-GGUF
+            val dir = getApplication<Application>().getExternalFilesDir(null)
+            runner = LlamaVlm(getApplication<Application>().applicationInfo.nativeLibraryDir).also {
+                it.load(
+                    modelPath = File(dir, "LFM2.5-VL-1.6B-Q8_0.gguf").absolutePath,
+                    mmprojPath = File(dir, "mmproj-LFM2.5-VL-1.6b-Q8_0.gguf").absolutePath,
+                )
+            }
             _modelState.value = ModelState.Ready
         }
     }
@@ -230,30 +210,18 @@ class VLMViewModel(application: Application) : AndroidViewModel(application) {
         val runner = runner ?: return
         viewModelScope.launch(Dispatchers.Default) {
             val bitmap = loadBitmapFromUri(imageUri)
-            // ChatMessageContent.Image expects JPEG bytes — the secondary ctor wraps them in a
-            // `data:image/jpeg;base64,...` URL. Use the SDK's ImageUtils helper rather than
-            // re-encoding by hand.
-            val imageContent = ImageUtils.fromBitmap(bitmap, compressionQuality = 85)
-
-            val conversation = runner.createConversation()
-            val message = ChatMessage(
-                role = ChatMessage.Role.USER,
-                content = listOf(
-                    imageContent,
-                    ChatMessageContent.Text("Describe this image in detail."),
-                ),
-            )
+            // The wrapper takes encoded image bytes (JPEG or PNG)
+            val imageBytes = ByteArrayOutputStream().also {
+                bitmap.compress(Bitmap.CompressFormat.JPEG, 85, it)
+            }.toByteArray()
 
             val description = StringBuilder()
-            conversation.generateResponse(
-                message,
-                GenerationOptions.build {
-                    temperature = 0.1f
-                    minP = 0.15f
-                    repetitionPenalty = 1.05f
-                },
-            ).onEach { resp ->
-                if (resp is MessageResponse.Chunk) description.append(resp.text)
+            runner.generate(
+                systemPrompt = "You are a helpful multimodal assistant by Liquid AI.",
+                prompt = "Describe this image in detail.",
+                image = imageBytes,
+            ).onEach { piece ->
+                description.append(piece)
             }.collect()
 
             _imageAnalysis.value = ImageAnalysis(
@@ -284,6 +252,8 @@ class VLMViewModel(application: Application) : AndroidViewModel(application) {
     }
 }
 ```
+
+`LlamaVlm` is a small wrapper in the example (`LlamaVlm.kt` and `app/src/main/cpp/vlm_jni.cpp`). It loads the model and its `mmproj` file with llama.cpp's `mtmd` library, applies the chat template, and streams the generated text as a `Flow<String>`. It also sets the recommended sampling parameters for LFM2.5-VL-1.6B (`temperature=0.1`, `min_p=0.15`, `repeat_penalty=1.05`).
 
 **Resource cleanup best practices:**
 - Always unload models in `onCleared()` to prevent memory leaks
@@ -341,51 +311,49 @@ fun ImageAnalysisDisplay(analysis: ImageAnalysis) {
 
 ### Interactive Q&A Mode
 
-Reuse the streaming pipeline above but parameterize the question. The image is encoded via `ImageUtils.fromBitmap(...)` (suspend, JPEG-encodes internally) and combined with the user's question into a single `ChatMessage`:
+Reuse the streaming pipeline above but parameterize the question. The image is JPEG-encoded and passed together with the user's question:
 
 ```kotlin
 suspend fun askQuestionAboutImage(
-    runner: ModelRunner,
+    runner: LlamaVlm,
     bitmap: Bitmap,
     question: String,
-    options: GenerationOptions,
 ): String {
-    val conversation = runner.createConversation()
-    val message = ChatMessage(
-        role = ChatMessage.Role.USER,
-        content = listOf(
-            ImageUtils.fromBitmap(bitmap, compressionQuality = 85),
-            ChatMessageContent.Text("Answer this question about the image: $question"),
-        ),
-    )
+    val imageBytes = ByteArrayOutputStream().also {
+        bitmap.compress(Bitmap.CompressFormat.JPEG, 85, it)
+    }.toByteArray()
 
     val builder = StringBuilder()
-    conversation.generateResponse(message, options).collect { response ->
-        if (response is MessageResponse.Chunk) builder.append(response.text)
+    runner.generate(
+        systemPrompt = "You are a helpful multimodal assistant by Liquid AI.",
+        prompt = "Answer this question about the image: $question",
+        image = imageBytes,
+    ).collect { piece ->
+        builder.append(piece)
     }
     return builder.toString()
 }
 
 // Example usage (inside a coroutine):
-// val answer = askQuestionAboutImage(runner, bitmap, "What colors are prominent?", options)
+// val answer = askQuestionAboutImage(runner, bitmap, "What colors are prominent?")
 ```
 
 ### Memory Management
 
-Vision models require more memory. Free the runner when the activity goes to the background by calling `ModelRunner.unload()`:
+Vision models require more memory. Free the runner when the activity goes to the background by calling `LlamaVlm.unload()`:
 
 ```kotlin
 class VLMViewModel(application: Application) : AndroidViewModel(application) {
-    private var runner: ModelRunner? = null
+    private var runner: LlamaVlm? = null
 
-    suspend fun releaseModel() {
+    suspend fun releaseModel() = withContext(Dispatchers.Default) {
         runner?.unload()
         runner = null
     }
 
     suspend fun initializeModel() {
         if (runner != null) return // already loaded — don't re-download
-        // ...same loadModel(...) path as above; assign to runner
+        // ...same LlamaVlm(...).load(...) path as above; assign to runner
     }
 }
 
@@ -400,13 +368,13 @@ override fun onStart() {
 }
 ```
 
-`ModelRunner.unload()` is `suspend` (per `ai.liquid.leap.ModelRunner`), so call it from a coroutine scope.
+`LlamaVlm.unload()` blocks while it frees native memory, so call it off the main thread.
 
 ## Results
 
 The VLMExample demonstrates powerful image understanding capabilities:
 
-![VLMExample Screenshot](https://raw.githubusercontent.com/Liquid4All/LeapSDK-Examples/main/Android/VLMExample/docs/vlm_example.png)
+![VLMExample Screenshot](https://raw.githubusercontent.com/Liquid4All/cookbook/main/examples/VLMExample/docs/vlm_example.png)
 
 The interface shows:
 - Selected image displayed clearly with Coil

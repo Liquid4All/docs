@@ -1,17 +1,13 @@
 ---
-title: "Product Slogan Generator with LeapSDK"
+title: "Product Slogan Generator with llama.cpp"
 description: "Simple Android app for on-device text generation using a Liquid AI LFM model to create product slogans."
 ---
 
-<Note>
-This example uses the LEAP SDK, which is **deprecated**. It remains a useful architectural reference, but for new Android apps embed llama.cpp directly — see [iOS & Android](/deployment/on-device/llama-cpp/mobile) and [Migrating from LEAP SDK](/deployment/on-device/llama-cpp/migrating-from-leap-sdk).
-</Note>
-
-<Card title="View Source Code" icon="github" href="https://github.com/Liquid4All/LeapSDK-Examples/tree/main/Android/SloganApp">
+<Card title="View Source Code" icon="github" href="https://github.com/Liquid4All/cookbook/tree/main/examples/SloganApp">
   Browse the complete example on GitHub
 </Card>
 
-This example demonstrates how to use LeapSDK for **single-turn generation** tasks on Android. The SloganApp generates creative product slogans on-device using local language models, showcasing how to integrate AI capabilities for specific product needs without requiring cloud connectivity.
+This example demonstrates how to use llama.cpp for **single-turn generation** tasks on Android. The SloganApp generates creative product slogans on-device using local language models, showcasing how to integrate AI capabilities for specific product needs without requiring cloud connectivity.
 
 Built with traditional **Android Views**, this example provides a different UI approach compared to Jetpack Compose, making it ideal for teams working with legacy Android codebases.
 
@@ -25,7 +21,7 @@ The SloganApp showcases:
 - **Simple Integration** - Minimal setup for focused AI tasks
 - **Product-focused Prompting** - Optimized prompts for marketing and slogan generation
 
-This example is perfect for understanding how to integrate LeapSDK into existing Android applications that use the traditional View system rather than Jetpack Compose.
+This example is perfect for understanding how to integrate llama.cpp into existing Android applications that use the traditional View system rather than Jetpack Compose.
 
 ## Environment setup
 
@@ -36,24 +32,24 @@ Before running this example, ensure you have the following:
 
   Make sure you have:
   - Android SDK installed
+  - Android NDK and CMake installed
   - An Android device or emulator configured
   - USB debugging enabled (for physical devices)
 </Accordion>
 
 <Accordion title="Minimum SDK Requirements">
   This example requires:
-  - **Minimum SDK**: API 31 (Android 12)
+  - **Minimum SDK**: API 33 (Android 13)
   - **Target SDK**: API 36
   - **Kotlin**: 2.3.0 or higher
 </Accordion>
 
-<Accordion title="LeapSDK Dependency Setup">
-  Add the LeapSDK to your app-level `build.gradle.kts`:
+<Accordion title="llama.cpp Dependency Setup">
+  Add [llama.cpp](https://github.com/ggml-org/llama.cpp) as a git submodule, include its [`examples/llama.android/lib`](https://github.com/ggml-org/llama.cpp/tree/master/examples/llama.android) module in `settings.gradle.kts`, and add it to your app-level `build.gradle.kts`:
 
   ```kotlin
   dependencies {
-      implementation("ai.liquid.leap:leap-sdk:0.10.7")
-      implementation("ai.liquid.leap:leap-model-downloader:0.10.7")
+      implementation(project(":lib"))
 
       // Android UI components
       implementation("androidx.appcompat:appcompat:1.6.1")
@@ -61,6 +57,8 @@ Before running this example, ensure you have the following:
       implementation("androidx.constraintlayout:constraintlayout:2.1.4")
   }
   ```
+
+  The lib loads its CPU backends from the app's native library folder, so set `android:extractNativeLibs="true"` on the `<application>` tag in `AndroidManifest.xml`.
 </Accordion>
 
 ## How to run it
@@ -69,8 +67,8 @@ Follow these steps to generate product slogans:
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/Liquid4All/LeapSDK-Examples.git
-   cd LeapSDK-Examples/Android/SloganApp
+   git clone --recurse-submodules https://github.com/Liquid4All/cookbook.git
+   cd cookbook/examples/SloganApp
    ```
 
 2. **Open in Android Studio**
@@ -149,30 +147,35 @@ Unlike examples that use Jetpack Compose, SloganApp demonstrates integration wit
 
 **Activity Implementation:**
 ```kotlin
-import ai.liquid.leap.GenerationOptions
-import ai.liquid.leap.ModelRunner
-import ai.liquid.leap.message.ChatMessage
-import ai.liquid.leap.message.MessageResponse
-import ai.liquid.leap.downloader.LeapModelDownloader
+import android.app.DownloadManager
+import android.net.Uri
+import com.arm.aichat.AiChat
+import com.arm.aichat.InferenceEngine
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.io.File
 
 class MainActivity : AppCompatActivity() {
     private val mainScope = MainScope()
-    private val downloader by lazy { LeapModelDownloader(applicationContext) }
-    private var runner: ModelRunner? = null
+    private var runner: InferenceEngine? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
         mainScope.launch {
-            runner = downloader.loadModel(
-                modelName = "LFM2-1.2B",
-                quantizationType = "Q5_K_M",
+            val model = downloadModel(
+                url = "https://huggingface.co/LiquidAI/LFM2.5-1.2B-Instruct-GGUF/resolve/main/LFM2.5-1.2B-Instruct-Q5_K_M.gguf",
+                file = File(getExternalFilesDir(null), "LFM2.5-1.2B-Instruct-Q5_K_M.gguf"),
             )
+            runner = withContext(Dispatchers.Default) {
+                AiChat.getInferenceEngine(applicationContext).also { it.loadModel(model.absolutePath) }
+            }
             generateButton.isEnabled = true
         }
 
@@ -191,19 +194,27 @@ class MainActivity : AppCompatActivity() {
 
         sloganOutput.text = ""
         mainScope.launch {
-            val conversation = runner.createConversation()
-            val options = GenerationOptions.build {
-                temperature = 0.3f
-                minP = 0.15f
-                repetitionPenalty = 1.05f
-            }
-            conversation.generateResponse(ChatMessage(ChatMessage.Role.USER, prompt), options)
-                .onEach { resp ->
-                    if (resp is MessageResponse.Chunk) {
-                        sloganOutput.append(resp.text)
-                    }
+            runner.sendUserPrompt(prompt)
+                .onEach { piece ->
+                    sloganOutput.append(piece)
                 }
                 .collect()
+        }
+    }
+
+    // Downloads the GGUF once with DownloadManager and reuses it on later launches
+    private suspend fun downloadModel(url: String, file: File): File {
+        if (file.exists()) return file
+        val dm = getSystemService(DownloadManager::class.java)
+        val id = dm.enqueue(DownloadManager.Request(Uri.parse(url)).setDestinationUri(Uri.fromFile(file)))
+        while (true) {
+            dm.query(DownloadManager.Query().setFilterById(id)).use { c ->
+                if (c.moveToFirst()) when (c.getInt(c.getColumnIndexOrThrow(DownloadManager.COLUMN_STATUS))) {
+                    DownloadManager.STATUS_SUCCESSFUL -> return file
+                    DownloadManager.STATUS_FAILED -> error("Model download failed")
+                }
+            }
+            delay(500)
         }
     }
 }
@@ -212,8 +223,8 @@ class MainActivity : AppCompatActivity() {
 ### Single-turn Generation Pattern
 
 This example demonstrates **single-turn generation**, where:
-- Each request is independent (no conversation history) — a fresh `Conversation` is created per request
-- The streamed `MessageResponse.Chunk` values are appended to the UI as they arrive
+- Each request is sent as a single user prompt; the engine keeps earlier requests in its context until the model is reloaded
+- The streamed text pieces are appended to the UI as they arrive
 - No need to manage conversation state or context across requests
 - Ideal for focused tasks like slogan generation, summarization, or classification
 
@@ -221,19 +232,19 @@ This pattern is simpler than multi-turn conversations and perfect for specific u
 
 ### Model Selection
 
-The app uses **LFM2-1.2B** (Q5_K_M), a lightweight model that balances:
+The app uses **LFM2.5-1.2B-Instruct** (Q5_K_M), a lightweight model that balances:
 - **Speed** - Fast generation for responsive UI
 - **Quality** - Creative and coherent slogans
-- **Size** - ~700 MB on disk; comfortably fits in mobile RAM
+- **Size** - ~850 MB on disk; comfortably fits in mobile RAM
 - **Efficiency** - Lower memory and battery consumption than larger checkpoints
 
-For higher-quality outputs, swap the `modelName` / `quantizationType` arguments to a larger checkpoint from the [LEAP Model Library](https://leap.liquid.ai/models).
+For higher-quality outputs, swap the download URL to another GGUF from [Liquid AI on Hugging Face](https://huggingface.co/LiquidAI).
 
 ## Results
 
 The SloganApp provides instant slogan generation directly on your Android device:
 
-![SloganApp Screenshot](https://raw.githubusercontent.com/Liquid4All/LeapSDK-Examples/main/Android/SloganApp/docs/screenshot.png)
+![SloganApp Screenshot](https://raw.githubusercontent.com/Liquid4All/cookbook/main/examples/SloganApp/docs/screenshot.png)
 
 The interface shows:
 - Clean, simple UI with Material Design components

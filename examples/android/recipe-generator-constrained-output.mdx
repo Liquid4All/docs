@@ -3,28 +3,24 @@ title: "Generate Structured Recipes with Constrained Output"
 description: "Android app demonstrating constrained JSON generation to produce structured recipe output using a Liquid AI LFM model on-device."
 ---
 
-<Note>
-This example uses the LEAP SDK, which is **deprecated**. It remains a useful architectural reference, but for new Android apps embed llama.cpp directly — see [iOS & Android](/deployment/on-device/llama-cpp/mobile) and [Migrating from LEAP SDK](/deployment/on-device/llama-cpp/migrating-from-leap-sdk).
-</Note>
-
-<Card title="View Source Code" icon="github" href="https://github.com/Liquid4All/LeapSDK-Examples/tree/main/Android/RecipeGenerator">
+<Card title="View Source Code" icon="github" href="https://github.com/Liquid4All/cookbook/tree/main/examples/RecipeGenerator">
   Browse the complete example on GitHub
 </Card>
 
-This example demonstrates **constrained generation** with LeapSDK on Android. Instead of generating free-form text, the RecipeGenerator app produces structured JSON output that follows a predefined schema, ensuring consistent and parseable results.
+This example demonstrates **constrained generation** with llama.cpp on Android. Instead of generating free-form text, the RecipeGenerator app produces structured JSON output that follows a predefined schema, ensuring consistent and parseable results.
 
 Constrained generation is essential for building reliable AI-powered applications where the output needs to integrate with downstream systems or databases. This example shows how to enforce structure while maintaining creative and useful AI-generated content.
 
 ## What's inside?
 
-The RecipeGenerator demonstrates advanced LeapSDK capabilities:
+The RecipeGenerator demonstrates advanced llama.cpp capabilities:
 
 - **Structured Output Generation** - Enforce JSON schema constraints on model outputs
-- **Automatic Model Downloading** - Models download automatically via `LeapDownloader` on first run
+- **Automatic Model Downloading** - Models download automatically via Android's `DownloadManager` on first run
 - **Constrained Decoding** - Guide the model to produce valid, parseable data structures
 - **Schema Validation** - Ensure generated recipes follow a specific format
 - **Type Safety** - Parse AI outputs directly into Kotlin data classes with kotlinx.serialization
-- **@Generatable Annotation** - Use LeapSDK's annotation for simplified structured output generation
+- **JSON Schema Grammar** - llama.cpp turns a JSON schema into a grammar that the model must follow
 - **Production-ready Pattern** - Integrate AI outputs with databases and business logic
 - **Practical Use Case** - Generate recipes with ingredients, steps, and metadata
 
@@ -49,8 +45,8 @@ This pattern is applicable to many use cases beyond recipes: generating product 
 - Configuration files
 - Structured reports
 
-<Card title="Learn More About Constrained Generation" icon="book" href="https://leap.liquid.ai/docs/edge-sdk/android/constrained-generation">
-  Read the complete guide in the official Leap documentation
+<Card title="Learn More About Constrained Generation" icon="book" href="/deployment/on-device/llama-cpp/structured-output">
+  Read the complete guide to structured output with llama.cpp
 </Card>
 
 ## Environment setup
@@ -62,6 +58,7 @@ Before running this example, ensure you have the following:
 
   Make sure you have:
   - Android SDK installed
+  - Android NDK and CMake installed
   - An Android device or emulator configured
   - USB debugging enabled (for physical devices)
 </Accordion>
@@ -71,18 +68,18 @@ Before running this example, ensure you have the following:
   - **Minimum SDK**: API 31 (Android 12)
   - **Target SDK**: API 36
   - **Kotlin**: 2.3.0 or higher
-  - **LeapSDK**: 0.10.0 or higher
+  - **llama.cpp**: included as a git submodule
   - **Internet connectivity**: Required for first-time model download
 </Accordion>
 
 <Accordion title="Model Setup - Automatic Download">
-  This example uses **LeapSDK 0.10.0+** with automatic model downloading capabilities.
+  This example downloads the model automatically on first run.
 
   **Automatic Model Management**
 
-  The app uses `LeapModelDownloader` to download and cache **LFM2-1.2B** on first run:
+  The app uses Android's `DownloadManager` to download and cache **LFM2.5-1.2B-Instruct** on first run:
 
-  - On first launch, the model downloads automatically from the [LEAP Model Library](https://leap.liquid.ai/models)
+  - On first launch, the model downloads automatically from [LiquidAI/LFM2.5-1.2B-Instruct-GGUF](https://huggingface.co/LiquidAI/LFM2.5-1.2B-Instruct-GGUF) on Hugging Face
   - Models are cached locally for subsequent app launches
   - No manual ADB push or file transfer required
   - Internet connectivity is required only for the initial download
@@ -96,23 +93,21 @@ Before running this example, ensure you have the following:
 
   **Manual Deployment (Alternative)**
 
-  If you prefer manual deployment or need offline-first installation, push a GGUF file via ADB and load it with `loadSimpleModel(model: ModelSource(...))`:
+  If you prefer manual deployment or need offline-first installation, push the GGUF file into the app's files folder via ADB. The app skips the download when the file is already there:
 
   ```bash
   # Push the GGUF file to device storage
-  adb push lfm2-1.2b-q5_k_m.gguf /data/local/tmp/liquid/
+  adb push LFM2.5-1.2B-Instruct-Q5_K_M.gguf /sdcard/Android/data/ai.liquid.recipegenerator/files/
   ```
 </Accordion>
 
 <Accordion title="Dependencies Setup">
+  The app builds [llama.cpp](https://github.com/ggml-org/llama.cpp) from a git submodule with CMake (`app/src/main/cpp/CMakeLists.txt`). Set `android:extractNativeLibs="true"` in `AndroidManifest.xml` so llama.cpp can load its CPU backends.
+
   Add the required dependencies to your app-level `build.gradle.kts`:
 
   ```kotlin
   dependencies {
-      // LeapSDK + the Android downloader module
-      implementation("ai.liquid.leap:leap-sdk:0.10.7")
-      implementation("ai.liquid.leap:leap-model-downloader:0.10.7")
-
       // Kotlin serialization for type-safe parsing
       implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")
 
@@ -142,8 +137,8 @@ Follow these steps to generate structured recipes:
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/Liquid4All/LeapSDK-Examples.git
-   cd LeapSDK-Examples/Android/RecipeGenerator
+   git clone --recurse-submodules https://github.com/Liquid4All/cookbook.git
+   cd cookbook/examples/RecipeGenerator
    ```
 
 2. **Open in Android Studio**
@@ -153,7 +148,7 @@ Follow these steps to generate structured recipes:
 
 3. **Gradle sync**
    - Wait for Gradle to sync all dependencies
-   - Ensure LeapSDK 0.10.7 is downloaded
+   - The first build compiles llama.cpp from the submodule
 
 4. **Run the app**
    - Connect your Android device or start an emulator
@@ -162,7 +157,7 @@ Follow these steps to generate structured recipes:
    - Select your target device
 
 5. **First launch - model download**
-   - On first run, the app will automatically download the LFM2-1.2B model
+   - On first run, the app will automatically download the LFM2.5-1.2B-Instruct model
    - This may take 2-5 minutes depending on your connection
    - A loading indicator will show download progress
    - The model is cached for future use
@@ -207,47 +202,46 @@ data class Ingredient(
 )
 ```
 
-### Declare the Recipe Schema with `@Generatable`
+### Declare the Recipe JSON Schema
 
-Annotate the data class with `@Generatable`. LeapSDK derives the JSON schema from the Kotlin types and enforces it during generation — no hand-written schema string required.
+Write a JSON schema that matches the data class. llama.cpp turns it into a grammar and enforces it during generation.
 
 ```kotlin
-import ai.liquid.leap.structuredoutput.Generatable
-import ai.liquid.leap.structuredoutput.Guide
-import kotlinx.serialization.Serializable
-
-@Serializable
-@Generatable("A complete recipe with metadata, ingredients, and instructions.")
-data class Recipe(
-    val name: String,
-    val description: String,
-    val servings: Int,
-    val prepTime: String,
-    val cookTime: String,
-    @Guide("One of: easy, medium, hard.")
-    val difficulty: String,
-    val ingredients: List<Ingredient>,
-    val instructions: List<String>,
-    val tags: List<String>,
-)
-
-@Serializable
-@Generatable("A single recipe ingredient with amount and unit.")
-data class Ingredient(
-    val item: String,
-    val amount: String,
-    val unit: String,
-)
+private const val RECIPE_SCHEMA = """
+{
+  "type": "object",
+  "description": "A complete recipe with metadata, ingredients, and instructions.",
+  "properties": {
+    "name": { "type": "string" },
+    "description": { "type": "string" },
+    "servings": { "type": "integer" },
+    "prepTime": { "type": "string" },
+    "cookTime": { "type": "string" },
+    "difficulty": { "type": "string", "enum": ["easy", "medium", "hard"] },
+    "ingredients": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "description": "A single recipe ingredient with amount and unit.",
+        "properties": {
+          "item": { "type": "string" },
+          "amount": { "type": "string" },
+          "unit": { "type": "string" }
+        },
+        "required": ["item", "amount", "unit"]
+      }
+    },
+    "instructions": { "type": "array", "items": { "type": "string" } },
+    "tags": { "type": "array", "items": { "type": "string" } }
+  },
+  "required": ["name", "description", "servings", "prepTime", "cookTime", "difficulty", "ingredients", "instructions", "tags"]
+}
+"""
 ```
 
 ### Load the Model and Wire Constrained Generation
 
 ```kotlin
-import ai.liquid.leap.GenerationOptions
-import ai.liquid.leap.ModelRunner
-import ai.liquid.leap.message.ChatMessage
-import ai.liquid.leap.message.MessageResponse
-import ai.liquid.leap.downloader.LeapModelDownloader
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
@@ -259,27 +253,22 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
+import java.io.File
 
 class MainActivityViewModel(application: Application) : AndroidViewModel(application) {
-    private val downloader = LeapModelDownloader(application)
-    private var runner: ModelRunner? = null
-
-    private val _downloadProgress = MutableStateFlow(0f)
-    val downloadProgress: StateFlow<Float> = _downloadProgress.asStateFlow()
+    private var runner: LlamaJson? = null
 
     private val _recipeState = MutableStateFlow<RecipeState>(RecipeState.Idle)
     val recipeState: StateFlow<RecipeState> = _recipeState.asStateFlow()
 
     fun initializeModel() {
-        viewModelScope.launch {
-            runner = downloader.loadModel(
-                modelName = "LFM2-1.2B",
-                quantizationType = "Q5_K_M",
-                progress = { pd ->
-                    _downloadProgress.value =
-                        if (pd.total > 0) pd.bytes.toFloat() / pd.total else 0f
-                },
-            )
+        viewModelScope.launch(Dispatchers.Default) {
+            // GGUF downloaded from LiquidAI/LFM2.5-1.2B-Instruct-GGUF
+            val app = getApplication<Application>()
+            val modelFile = File(app.getExternalFilesDir(null), "LFM2.5-1.2B-Instruct-Q5_K_M.gguf")
+            runner = LlamaJson(app.applicationInfo.nativeLibraryDir).also {
+                it.load(modelFile.absolutePath)
+            }
         }
     }
 }
@@ -287,7 +276,7 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
 
 ### Generate Structured Recipes
 
-`GenerationOptions.build { setResponseFormatType<Recipe>() }` tells the engine to constrain the stream to the schema derived from `@Generatable`. The streamed `Chunk` values arrive as JSON; concatenate them and decode at the end with `kotlinx-serialization`.
+Passing `RECIPE_SCHEMA` to `runner.generate(...)` constrains the stream to the schema. The schema also goes into the system prompt so the model knows what each field means. The streamed pieces arrive as JSON; concatenate them and decode at the end with `kotlinx-serialization`.
 
 ```kotlin
 fun generateRecipe(userInput: String) {
@@ -303,20 +292,14 @@ fun generateRecipe(userInput: String) {
             step-by-step instructions, and relevant tags.
         """.trimIndent()
 
-        val conversation = runner.createConversation()
-        val options = GenerationOptions.build {
-            temperature = 0.3f
-            minP = 0.15f
-            repetitionPenalty = 1.05f
-            setResponseFormatType<Recipe>()
-        }
+        val systemPrompt =
+            "You are a recipe generator bot that generates JSON output " +
+                "that follows this JSON schema: $RECIPE_SCHEMA"
 
         try {
             val buffer = StringBuilder()
-            conversation.generateResponse(ChatMessage(ChatMessage.Role.USER, prompt), options)
-                .onEach { resp ->
-                    if (resp is MessageResponse.Chunk) buffer.append(resp.text)
-                }
+            runner.generate(systemPrompt, prompt, RECIPE_SCHEMA)
+                .onEach { piece -> buffer.append(piece) }
                 .collect()
 
             val recipe = Json.decodeFromString<Recipe>(buffer.toString())
@@ -327,6 +310,8 @@ fun generateRecipe(userInput: String) {
     }
 }
 ```
+
+`LlamaJson` is a small wrapper in the example (`LlamaJson.kt` and `app/src/main/cpp/llama_json_jni.cpp`). It loads the model with llama.cpp, applies the chat template, converts the JSON schema to a grammar, and streams the generated text as a `Flow<String>`. It also sets the recommended sampling parameters for LFM2.5-1.2B-Instruct (`temperature=0.1`, `top_k=50`, `repeat_penalty=1.05`).
 
 ### Resource Cleanup
 
@@ -431,7 +416,7 @@ The RecipeGenerator produces consistently formatted recipes:
 }
 ```
 
-![RecipeGenerator Screenshot](https://raw.githubusercontent.com/Liquid4All/LeapSDK-Examples/main/Android/RecipeGenerator/docs/screenshot.png)
+![RecipeGenerator Screenshot](https://raw.githubusercontent.com/Liquid4All/cookbook/main/examples/RecipeGenerator/docs/screenshot.png)
 
 The interface shows the structured recipe data rendered beautifully with proper formatting, making it easy to read and follow.
 
