@@ -30,6 +30,7 @@ active:
   - /deployment/gpu-inference/sglang
   - /deployment/gpu-inference/transformers
   - /deployment/gpu-inference/vllm
+  - /deployment/gpu-inference/zml-llmd
   - /deployment/on-device/android/advanced-features
   - /deployment/on-device/android/ai-agent-usage-guide
   - /deployment/on-device/android/android-quick-start-guide
@@ -83,6 +84,7 @@ active:
   - /deployment/on-device/sdk/quick-start
   - /deployment/on-device/sdk/utilities
   - /deployment/on-device/sdk/voice-assistant
+  - /deployment/tools/model-bundling
   - /deployment/tools/model-bundling/authentication
   - /deployment/tools/model-bundling/bundle-creation
   - /deployment/tools/model-bundling/bundle-management
@@ -140,32 +142,41 @@ active:
   - /leap/edge-sdk/overview
   - /lfm/fine-tuning
   - /lfm/fine-tuning/datasets
+  - /lfm/fine-tuning/halo
   - /lfm/fine-tuning/leap-finetune
   - /lfm/fine-tuning/liquid-finetune
   - /lfm/fine-tuning/overview
   - /lfm/fine-tuning/trl
   - /lfm/fine-tuning/unsloth
+  - /lfm/frameworks/leap
   - /lfm/getting-started/connect-ai-tools
+  - /lfm/getting-started/intro
   - /lfm/getting-started/model-license
+  - /lfm/getting-started/text-generation-and-prompting
+  - /lfm/getting-started/vision
   - /lfm/getting-started/welcome
   - /lfm/help/connect-ai-tools
   - /lfm/help/contributing
   - /lfm/help/deprecations
   - /lfm/help/faqs
+  - /lfm/help/model-documentation
   - /lfm/help/model-license
   - /lfm/help/troubleshooting
   - /lfm/inference
   - /lfm/inference/llama-cpp
   - /lfm/inference/lm-studio
+  - /lfm/inference/lmstudio
   - /lfm/inference/mlx
   - /lfm/inference/ollama
   - /lfm/inference/transformers
   - /lfm/inference/vllm
   - /lfm/key-concepts/audio-capabilities
   - /lfm/key-concepts/chat-template
+  - /lfm/key-concepts/models
   - /lfm/key-concepts/omni-capabilities
   - /lfm/key-concepts/speculative-decoding
   - /lfm/key-concepts/text-generation-and-prompting
+  - /lfm/key-concepts/thinking
   - /lfm/key-concepts/tool-search
   - /lfm/key-concepts/tool-use
   - /lfm/key-concepts/vision-capabilities
@@ -217,6 +228,7 @@ active:
   - /lfm/models/lfm25-vl-3b
   - /lfm/models/lfm25-vl-450m
   - /lfm/models/lfm25-vl-450m-extract
+  - /lfm/models/lfm3-1-7b
   - /lfm/models/lfm3-1.7b
   - /lfm/models/lfm3-audio-2b
   - /lfm/models/lfm3-omni-2b

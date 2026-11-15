@@ -17,6 +17,8 @@ Install the MLX language model package:
 pip install mlx-lm
 ```
 
+LFM3 and d1 models use MLX-VLM instead: see [LFM3 and d1 Models](#lfm3-and-d1-models).
+
 ## Basic Usage
 
 The `mlx-lm` package provides a simple interface for text generation with MLX models.
@@ -192,6 +194,63 @@ LFM2-VL models support both text and image inputs for multimodal inference. Use 
   print(output)
   ```
 </Accordion>
+
+## LFM3 and d1 Models
+
+The LFM3 models and the d1 decision models run with [MLX-VLM](https://github.com/Blaizzy/mlx-vlm) 0.7.11 or later:
+
+```bash
+pip install -U "mlx-vlm>=0.7.11"
+```
+
+| Model | MLX repositories |
+| ----- | ----- |
+| [LFM3-1.7B](/lfm/models/lfm3-1.7b) | [4bit](https://huggingface.co/LiquidAI/LFM3-1.7B-MLX-4bit), [5bit](https://huggingface.co/LiquidAI/LFM3-1.7B-MLX-5bit), [6bit](https://huggingface.co/LiquidAI/LFM3-1.7B-MLX-6bit), [8bit](https://huggingface.co/LiquidAI/LFM3-1.7B-MLX-8bit), [bf16](https://huggingface.co/LiquidAI/LFM3-1.7B-MLX-bf16) |
+| [LFM3-VL-2B](/lfm/models/lfm3-vl-2b) | [4bit](https://huggingface.co/LiquidAI/LFM3-VL-2B-MLX-4bit), [5bit](https://huggingface.co/LiquidAI/LFM3-VL-2B-MLX-5bit), [6bit](https://huggingface.co/LiquidAI/LFM3-VL-2B-MLX-6bit), [8bit](https://huggingface.co/LiquidAI/LFM3-VL-2B-MLX-8bit), [bf16](https://huggingface.co/LiquidAI/LFM3-VL-2B-MLX-bf16) |
+| [LFM3-Audio-2B](/lfm/models/lfm3-audio-2b) | [4bit](https://huggingface.co/LiquidAI/LFM3-Audio-2B-MLX-4bit), [8bit](https://huggingface.co/LiquidAI/LFM3-Audio-2B-MLX-8bit), [bf16](https://huggingface.co/LiquidAI/LFM3-Audio-2B-MLX-bf16) |
+| [LFM3-Omni-2B](/lfm/models/lfm3-omni-2b) | [4bit](https://huggingface.co/LiquidAI/LFM3-Omni-2B-MLX-4bit), [8bit](https://huggingface.co/LiquidAI/LFM3-Omni-2B-MLX-8bit), [bf16](https://huggingface.co/LiquidAI/LFM3-Omni-2B-MLX-bf16) |
+| [d1-2B](/lfm/models/d1-2b) | [4bit](https://huggingface.co/LiquidAI/d1-2B-MLX-4bit), [8bit](https://huggingface.co/LiquidAI/d1-2B-MLX-8bit), [fp16](https://huggingface.co/LiquidAI/d1-2B-MLX-fp16) |
+| [d1-omni-2B](/lfm/models/d1-omni-2b) | [8bit](https://huggingface.co/LiquidAI/d1-Omni-2B-MLX-8bit), [fp16](https://huggingface.co/LiquidAI/d1-Omni-2B-MLX-fp16) |
+| [d1-3B](/lfm/models/d1-3b) (deprecated) | [4bit](https://huggingface.co/LiquidAI/d1-3B-MLX-4bit), [8bit](https://huggingface.co/LiquidAI/d1-3B-MLX-8bit), [fp16](https://huggingface.co/LiquidAI/d1-3B-MLX-fp16) |
+| [d1-omni-600M](/lfm/models/d1-omni-600m) | [8bit](https://huggingface.co/LiquidAI/d1-omni-600M-MLX-8bit), [fp16](https://huggingface.co/LiquidAI/d1-omni-600M-MLX-fp16) |
+
+The LFM3 models run with `mlx_vlm.generate`:
+
+```bash
+# LFM3-1.7B: text
+python -m mlx_vlm.generate --model LiquidAI/LFM3-1.7B-MLX-4bit \
+  --prompt "What is the capital of Australia?" --enable-thinking \
+  --temperature 0.1 --top-k 50 --repetition-penalty 1.1 --max-tokens 16384
+
+# LFM3-VL-2B: image
+python -m mlx_vlm.generate --model LiquidAI/LFM3-VL-2B-MLX-4bit \
+  --image /path/to/image.jpg --prompt "Describe this image." --enable-thinking \
+  --temperature 0.1 --top-p 1.0 --top-k 50 --min-p 0.0 --repetition-penalty 1.1 \
+  --max-tokens 16384
+
+# LFM3-Audio-2B: speech recognition
+python -m mlx_vlm.generate --model LiquidAI/LFM3-Audio-2B-MLX-4bit \
+  --system "Perform ASR in English." --prompt "" --audio /path/to/speech.wav \
+  --temperature 0 --max-tokens 2048
+
+# LFM3-Omni-2B: text to speech, saved as a 24 kHz WAV file
+python -m mlx_vlm.generate --model LiquidAI/LFM3-Omni-2B-MLX-4bit \
+  --system "Perform TTS in American English using a female voice." \
+  --prompt "The quick brown fox jumps over the lazy dog." \
+  --output-modality audio --output tts.wav
+```
+
+`mlx_vlm.generate` turns reasoning off unless you pass `--enable-thinking`. mlx-lm cannot load LFM3-1.7B yet. Support is pending in [ml-explore/mlx-lm#2016](https://github.com/ml-explore/mlx-lm/pull/2016).
+
+The d1 models answer questions instead of generating text, and d1-2B and d1-omni-2B refuse `mlx_vlm.generate` and chat apps. Ask them with `python -m mlx_vlm decide`, which prints the answers as JSON:
+
+```bash
+python -m mlx_vlm decide --model LiquidAI/d1-2B-MLX-4bit \
+  --state "I was charged twice this month. Please refund one of the charges." \
+  --questions '{"refund": {"type": "noul", "instructions": "Is the customer asking for a refund?"}}'
+```
+
+Swap the model id to ask d1-omni-2B, d1-3B, or d1-omni-600M. d1-3B and d1-omni-600M return yes/no answers as `value` and `probability`. The d1 model cards show the Python API.
 
 ## Speculative Decoding
 

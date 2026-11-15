@@ -1,0 +1,227 @@
+---
+title: "Halo"
+description: "Fine-tune LFM mixture-of-experts models with distributed expert and tensor parallelism."
+---
+
+<Tip>
+  Use Halo to scale LFM MoE training past a single GPU with expert, tensor, and expert-tensor parallelism.
+</Tip>
+
+[Halo](https://github.com/whitecircle/halo) is an open-source distributed training framework from [White Circle](https://whitecircle.com/research/halo).
+It adds multi-GPU and multi-node scaling to the native Hugging Face workflow.
+Models remain standard `transformers` modules during training, and saved checkpoints load with `from_pretrained`.
+
+Halo adds LFM support around the native MoE and attention blocks once, then reuses that integration across SFT, LoRA, GRPO, and environmental GRPO with a consistent YAML structure. When a job grows from one GPU to a multi-node cluster, the distributed settings change but the integration does not.
+
+Different training methods require specific dataset formats. See [Datasets](/lfm/fine-tuning/datasets) for format requirements for [SFT](/lfm/fine-tuning/datasets#instruction-datasets-sft) and [GRPO](/lfm/fine-tuning/datasets#prompt-only-datasets-grpo).
+
+## Recipes
+
+<CardGroup cols={2}>
+
+<Card title="MoE SFT" href="https://github.com/Liquid4All/cookbook/blob/main/finetuning/notebooks/sft_moe_with_halo.ipynb">
+  `LFM2.5-8B-A1B` across two GPUs with expert parallelism.
+</Card>
+
+<Card title="Vision LoRA SFT" href="https://github.com/Liquid4All/cookbook/blob/main/finetuning/notebooks/sft_for_vision_language_model_with_halo.ipynb">
+  `LFM2.5-VL-3B` on one GPU with a rank-16 LoRA adapter.
+</Card>
+
+<Card title="MoE scaling and GRPO" href="https://github.com/whitecircle/halo/blob/main/human-docs/cookbooks/halo-lfm2-moe-cookbook.md">
+  EP4 and EP8, TP, ETP, LoRA, inference, and GRPO.
+</Card>
+
+</CardGroup>
+
+Both notebooks run inside a Halo container on Hopper (H100, H200) or Blackwell (B200, B300) GPUs and require an NVIDIA driver providing CUDA 13.0 or higher.
+
+## LFM support
+
+Halo supports these LFM MoE models:
+
+| Model | Routed experts | Active experts | Cookbook starting point |
+| --- | ---: | ---: | --- |
+| [LFM2.5-8B-A1B](https://huggingface.co/LiquidAI/LFM2.5-8B-A1B) | 32 | 4 | Two GPUs with EP2 |
+| [LFM2-24B-A2B](https://huggingface.co/LiquidAI/LFM2-24B-A2B) | 64 | 4 | Four or eight GPUs with EP4 or EP8 |
+
+Halo supports FSDP and these MoE parallelism modes:
+
+- **Expert parallelism (EP)**: distributes routed experts across GPUs
+- **Tensor parallelism (TP)**: shards the full-attention layers
+- **Expert-tensor parallelism (ETP)**: shards each expert across GPUs
+- **EP+TP**: distributes experts and shards the full-attention layers
+
+Halo uses DeepEP for token dispatch and grouped GEMM for expert projections.
+
+Halo does not support context parallelism (CP) for LFM2 models because short-convolution layers operate across the sequence axis.
+
+## Quickstart
+
+1. Clone Halo and its submodules.
+
+   ```bash
+   git clone --recurse-submodules https://github.com/whitecircle/halo.git
+   cd halo
+   ```
+
+2. Pull the image that matches your GPUs.
+
+   ```bash
+   # Hopper (H100, H200)
+   export HALO_IMAGE=public.ecr.aws/whitecircle/halo:hopper
+
+   # Blackwell (B200, B300, GB200, GB300)
+   export HALO_IMAGE=public.ecr.aws/whitecircle/halo:blackwell
+
+   docker pull "$HALO_IMAGE"
+   ```
+
+3. Start the training container. Export `HF_TOKEN` in the host shell first, and point `D` at a large scratch volume.
+
+   ```bash
+   D=${HALO_SCRATCH:-/mnt}   # /mnt is not guaranteed large; verify with `df -h`
+   mkdir -p "$D/hf" "$D/checkpoints" "$D/tmp"
+
+   docker run --rm -it \
+     --name halo-lfm2 \
+     --gpus all \
+     --network host \
+     --ipc=host \
+     --shm-size=128g \
+     --ulimit memlock=-1 \
+     --ulimit stack=67108864 \
+     -e HF_TOKEN \
+     -e HF_HOME=/data/hf \
+     -e HF_DATASETS_CACHE=/data/hf/datasets \
+     -e TMPDIR=/data/tmp \
+     -e HALO_DATA_ROOT=/data \
+     -e PYTHONPATH=/workspace \
+     -e CUDA_DEVICE_MAX_CONNECTIONS=1 \
+     -v "$(pwd)":/workspace \
+     -v "$D":/data \
+     -w /workspace \
+     "$HALO_IMAGE" bash
+   ```
+
+   Run the remaining steps inside this container.
+
+4. Configure the run. Save the following as `sft.yaml`, replacing the placeholder values. The chat template fields are LFM2-specific and should stay as they are.
+
+   ```yaml
+   model_name_or_path: LiquidAI/LFM2.5-8B-A1B
+
+   dataset:
+   - <dataset-id>@<split>        # e.g. HuggingFaceH4/ultrachat_200k@train_sft
+   conversation_field: messages
+   test_size: 0.01
+   train_on_completions_only: true
+   assistant_message_template: "<|im_start|>assistant\n"
+   pad_token: "<|pad|>"
+   eos_token: "<|im_end|>"
+
+   expert_parallel_size: 2       # 32 routed experts -> 16 per rank
+   moe_balancing: bias_update    # LFM2 has no router auxiliary loss
+   save_sharded_ep: false        # gather a standard Hugging Face checkpoint
+   use_grouped_gemm: true
+   fp32_router: true             # stable expert selection
+   fp32_experts: false           # experts stay in BF16
+
+   attn_implementation: flash_attention_2
+   packing: true
+   max_length: 8192
+   bf16: true
+
+   per_device_train_batch_size: 1
+   per_device_eval_batch_size: 1
+   gradient_accumulation_steps: 8
+   num_train_epochs: 1.0
+   gradient_checkpointing: true
+   gradient_checkpointing_kwargs:
+     use_reentrant: false
+
+   optim: adamw_torch_fused
+   learning_rate: 5.0e-06
+   lr_scheduler_type: cosine
+   warmup_steps: 32
+   max_grad_norm: 1.0
+
+   output_dir: /data/checkpoints/lfm2.5-8b-a1b-sft
+   save_strategy: steps
+   save_steps: 1000
+   eval_strategy: steps
+   eval_steps: 300
+   save_total_limit: 1
+   save_only_model: true
+
+   logging_steps: 1
+   report_to: none
+   remove_unused_columns: false
+   ```
+
+   To start without editing anything, Halo ships a runnable EP2 configuration at [`examples/sft/lfm2/lfm2.5-8b-a1b-ultrachat-ep2.yaml`](https://github.com/whitecircle/halo/blob/main/examples/sft/lfm2/lfm2.5-8b-a1b-ultrachat-ep2.yaml).
+
+   Each block below is a delta on the configuration above.
+
+   **Train `LFM2-24B-A2B`.** Launch four processes with `-n 4`.
+
+   ```yaml
+   model_name_or_path: LiquidAI/LFM2-24B-A2B
+   expert_parallel_size: 4
+   ```
+
+   On an eight-GPU node, raise `expert_parallel_size` to 8 when expert memory is the main limit and launch eight processes to match. On a single node the working EP sizes are the whole job, 2, or 1. An intermediate size such as EP4 on eight GPUs is rejected at config time.
+
+   **Shard attention with TP.** Both dimensions use the same two ranks, so still launch with `-n 2`.
+
+   ```yaml
+   expert_parallel_size: 2
+   tensor_parallel_size: 2
+   ```
+
+   **Shard each expert with ETP.** Use this when a single local expert is too large.
+
+   ```yaml
+   expert_parallel_size: 1
+   expert_tensor_parallel_size: 2
+   ```
+
+   **Train a LoRA adapter.** Keep EP enabled if the base model still needs expert sharding. These target modules cover text attention only. Vision models need a wider list that also reaches the vision tower and projector layers, as in the [Vision LoRA SFT recipe](https://github.com/Liquid4All/cookbook/blob/main/finetuning/notebooks/sft_for_vision_language_model_with_halo.ipynb).
+
+   ```yaml
+   use_peft: true
+   lora_r: 16
+   lora_alpha: 32
+   lora_dropout: 0.05
+   lora_target_modules:
+   - q_proj
+   - k_proj
+   - v_proj
+   - out_proj
+
+   learning_rate: 1.0e-04
+   ```
+
+   For GRPO with a vLLM or SGLang rollout server, follow the [LFM2 cookbook](https://github.com/whitecircle/halo/blob/main/human-docs/cookbooks/halo-lfm2-moe-cookbook.md).
+
+5. Launch the run. Match the process count to your parallel size.
+
+   ```bash
+   halo launch sft sft.yaml -n 2
+   ```
+
+Each rank owns 16 of the 32 routed experts. Halo gathers the fused expert weights into a standard Hugging Face checkpoint when it saves.
+
+## Tips
+
+* **`expert_parallel_size`**: Must divide the model's routed expert count evenly. `LFM2.5-8B-A1B` has 32 routed experts, so EP2 places 16 on each GPU
+* **`moe_balancing: bias_update`**: Required for LFM2 models. They have no router auxiliary loss, so Halo updates the expert-selection bias instead
+* **`save_sharded_ep: false`**: Gathers a single Hugging Face checkpoint on save, so the result loads with `from_pretrained`. Set it to `true` only if you intend to resume at the same EP size
+* **`fp32_router: true`**: Keeps routing decisions in fp32 while experts stay in bf16, which is the cheaper half of full-precision MoE training
+* **Chat template**: LFM2 uses a ChatML-style template. Keep `assistant_message_template` aligned with it so completion masking trains only the assistant turns
+
+## Resources
+
+* [Halo Repository](https://github.com/whitecircle/halo)
+* [Halo LFM2 MoE Cookbook](https://github.com/whitecircle/halo/blob/main/human-docs/cookbooks/halo-lfm2-moe-cookbook.md)
+* [Halo Technical Report](https://whitecircle.com/research/halo)
+* [Liquid AI Cookbook](https://github.com/Liquid4All/cookbook)

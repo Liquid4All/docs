@@ -1,7 +1,7 @@
 {
   "$schema": "https://mintlify.com/docs.json",
   "banner": {
-    "content": "\ud83d\ude80 New: LFM3 \u2014 text, vision, audio, omni, and decision models on one new backbone! [Learn more \u2192](/lfm/models/complete-library)",
+    "content": "🚀 New: LFM3 — text, vision, audio, omni, and decision models on one new backbone! [Learn more →](/lfm/models/complete-library)",
     "dismissible": true
   },
   "theme": "mint",
@@ -11,6 +11,7 @@
   "name": "Liquid AI Docs",
   "description": "Documentation for Liquid AI Foundation Models (LFM)",
   "seo": {
+    "indexing": "all",
     "organization": {
       "name": "Liquid AI",
       "url": "https://www.liquid.ai",
@@ -106,6 +107,7 @@
                 "expanded": false,
                 "pages": [
                   "lfm/key-concepts/chat-template",
+                  "lfm/key-concepts/thinking",
                   "lfm/key-concepts/text-generation-and-prompting",
                   "lfm/key-concepts/tool-use",
                   "lfm/key-concepts/vision-capabilities",
@@ -134,7 +136,8 @@
                   "lfm/help/deprecations",
                   "lfm/help/contributing",
                   "lfm/help/connect-ai-tools",
-                  "lfm/help/model-license"
+                  "lfm/help/model-license",
+                  "lfm/help/model-documentation"
                 ],
                 "expanded": false
               }
@@ -156,7 +159,8 @@
                   "lfm/fine-tuning/liquid-finetune",
                   "lfm/fine-tuning/datasets",
                   "lfm/fine-tuning/trl",
-                  "lfm/fine-tuning/unsloth"
+                  "lfm/fine-tuning/unsloth",
+                  "lfm/fine-tuning/halo"
                 ],
                 "expanded": false
               }
@@ -191,7 +195,8 @@
                 "pages": [
                   "deployment/gpu-inference/transformers",
                   "deployment/gpu-inference/sglang",
-                  "deployment/gpu-inference/vllm"
+                  "deployment/gpu-inference/vllm",
+                  "deployment/gpu-inference/zml-llmd"
                 ],
                 "expanded": false
               },
@@ -358,10 +363,6 @@
     },
     {
       "source": "/lfm/getting-started/connect-ai-tools",
-      "destination": "/lfm/help/connect-ai-tools"
-    },
-    {
-      "source": "/examples/connect-ai-tools",
       "destination": "/lfm/help/connect-ai-tools"
     },
     {
@@ -635,6 +636,42 @@
     {
       "source": "/lfm/fine-tuning",
       "destination": "/lfm/fine-tuning/overview"
+    },
+    {
+      "source": "/lfm/getting-started/intro",
+      "destination": "/lfm/getting-started/welcome"
+    },
+    {
+      "source": "/lfm/inference/lmstudio",
+      "destination": "/deployment/on-device/lm-studio"
+    },
+    {
+      "source": "/lfm/key-concepts/models",
+      "destination": "/lfm/models/complete-library"
+    },
+    {
+      "source": "/deployment/tools/model-bundling",
+      "destination": "/deployment/on-device/llama-cpp"
+    },
+    {
+      "source": "/lfm/models/lfm3-1-7b",
+      "destination": "/lfm/models/lfm3-1.7b"
+    },
+    {
+      "source": "/lfm/getting-started/text-generation-and-prompting",
+      "destination": "/lfm/key-concepts/text-generation-and-prompting"
+    },
+    {
+      "source": "/lfm/frameworks/leap",
+      "destination": "/deployment/on-device/llama-cpp/migrating-from-leap-sdk"
+    },
+    {
+      "source": "/lfm/getting-started/vision",
+      "destination": "/lfm/key-concepts/vision-capabilities"
+    },
+    {
+      "source": "/examples/connect-ai-tools",
+      "destination": "/lfm/help/connect-ai-tools"
     }
   ],
   "ai": {

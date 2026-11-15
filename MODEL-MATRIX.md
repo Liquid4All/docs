@@ -1,7 +1,7 @@
 # Model Implementation Matrix
 
 > **Maintainer reference only.** This file is excluded from the Mintlify docs build via `.mintignore`.
-> Last updated: 2026-10-27
+> Last updated: 2026-11-02
 
 ## Quick Reference: Snippet Mapping
 
@@ -22,13 +22,13 @@ MLX/ONNX "Yes" means a repo exists (LiquidAI, or mlx-community/onnx-community wh
 | Model | HF ID | Transformers | llama.cpp | vLLM | Ollama | MLX | ONNX | Notes |
 |-------|-------|:---:|:---:|:---:|:---:|:---:|:---:|---|
 | **LFM3** |
-| 1.7B | `LiquidAI/LFM3-1.7B` | Inline (pipeline, remote code) | Standard (LFM3 build) | Standard | -- | Yes | Yes | 256K ctx; also FP8 and NVFP4 for SGLang; TODO parsers/versions |
+| 1.7B | `LiquidAI/LFM3-1.7B` | Inline (pipeline, remote code) | Standard (LFM3 build) | Standard | -- | Yes (mlx-vlm) | Yes | 256K ctx; also FP8 and NVFP4 for SGLang; mlx-lm support pending (ml-explore/mlx-lm#2016); TODO parsers/versions |
 | 1.7B-Base | `LiquidAI/LFM3-1.7B-Base` | Base (no chat) | -- | -- | -- | -- | -- | No docs page |
-| VL-2B | `LiquidAI/LFM3-VL-2B` | Inline | Inline (llama-server) | Inline (serve) | -- | Yes | Yes | Video input, thinking; TODO versions/flags |
-| Audio-2B | `LiquidAI/LFM3-Audio-2B` | Inline (remote code) | TODO (GGUF repo not published; should match Omni's realtime server) | NO | NO | NO | NO | 18 speech languages; 32K ctx; audio codec bundled in the repo |
-| Omni-2B | `LiquidAI/LFM3-Omni-2B` | Inline (remote code) | Inline (realtime server) | NO | NO | NO | NO | 32K ctx; SGLang text output only; no MLX/ONNX support planned yet; TODO flags |
-| d1-2B | `LiquidAI/d1-2B` | system_one (remote code) | TODO (GGUF repo not published) | NO | NO | NO | NO | Typed answers; 128K ctx |
-| d1-omni-2B | `LiquidAI/d1-omni-2B` | system_one (remote code) | TODO (GGUF repo not published) | NO | NO | NO | NO | Audio input; 128K ctx |
+| VL-2B | `LiquidAI/LFM3-VL-2B` | Inline | Inline (llama-server) | Inline (serve) | -- | Yes (mlx-vlm) | Yes | Video input, thinking; TODO versions/flags |
+| Audio-2B | `LiquidAI/LFM3-Audio-2B` | Inline (remote code) | TODO (GGUF repo not published; should match Omni's realtime server) | NO | NO | Yes (mlx-vlm) | NO | 18 speech languages; 32K ctx; audio codec bundled in the repo |
+| Omni-2B | `LiquidAI/LFM3-Omni-2B` | Inline (remote code) | Inline (realtime server) | NO | NO | Yes (mlx-vlm) | NO | 32K ctx; SGLang text output only; TODO flags |
+| d1-2B | `LiquidAI/d1-2B` | system_one (remote code) | TODO (GGUF repo not published) | NO | NO | Yes (mlx-vlm) | NO | Typed answers; 128K ctx |
+| d1-omni-2B | `LiquidAI/d1-omni-2B` | system_one (remote code) | TODO (GGUF repo not published) | NO | NO | Yes (mlx-vlm) | NO | Audio input; 128K ctx |
 | **LFM2.5 Text** |
 | 1.2B-Instruct | `LiquidAI/LFM2.5-1.2B-Instruct` | Standard | Standard | Standard | Standard | Yes | Yes | Flagship |
 | 1.2B-Thinking | `LiquidAI/LFM2.5-1.2B-Thinking` | Standard | Standard | Standard | Standard | Yes | Yes | |
@@ -88,6 +88,7 @@ MLX/ONNX "Yes" means a repo exists (LiquidAI, or mlx-community/onnx-community wh
 | transformers | `>=5.2.0` | VL models require v5; standard models work with v5 too |
 | vLLM | `==0.19.0` | Latest stable with LFM support (text and vision) |
 | llama.cpp | Latest via `brew install` or b7075+ binaries | |
+| mlx-vlm | `>=0.7.11` | First release with LFM3, d1-2B, and d1-omni-2B; d1-3B and d1-omni-600M need `>=0.7.8` |
 
 ## Known Limitations
 

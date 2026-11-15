@@ -118,7 +118,7 @@ Every question you ask a decision model uses one of three core types:
 - **Estimates:** the model reads an estimate on at most 128 values between `low` and `high`. Estimates have no `found`. They are reliable on counts and scores, less so on free quantities.
 - **`at_least`:** `True` when every instance the model read was present, so the picture may hold more than `count`.
 - **Boxes need one picture:** a request with a `box` or `boxes` question must have exactly one picture in `media`.
-- **Runtimes:** typed answers run in Transformers. llama.cpp supports Noul, Choice, and Score only.
+- **Runtimes:** typed answers run in Transformers and mlx-vlm. llama.cpp supports Noul, Choice, and Score only.
 
 Calibrate any decision threshold on data from your own use.
 

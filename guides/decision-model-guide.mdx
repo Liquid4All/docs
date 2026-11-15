@@ -42,10 +42,10 @@ If the answer is one of N known options, use a decision model. If the answer is 
 
 Install the relevant SDK and configure your client. The LLM examples use the OpenAI SDK, which works with any OpenAI-compatible endpoint. The decision model examples use the [TypeSafe SDK](https://pypi.org/project/typesafe-sdk/) to call the [d1 decision model](/lfm/models/decision-models) through the Liquid AI API.  To get an API key, see [d1: Setup](/lfm/models/d1#setup).
 
-For larger migrations, you can hand your coding agent Liquid's decision-model skill before it audits the codebase:
+For larger migrations, use the [Liquid d1 agent skill](https://github.com/Liquid4All/liquid-d1-skills) to help your coding agent audit the codebase. Follow [Agent Skills](/lfm/models/d1#agent-skills) for installation instructions, then start a new agent session and try:
 
 ```text
-Load https://docs.liquid.ai/.well-known/skills/decision-model/skill.md, then inspect this project for generated-text calls that are really bounded decisions. Recommend d1 replacements for classification, routing, scoring, reranking, and yes/no gates.
+Use the Liquid d1 skill to inspect this project for generated-text calls that are really bounded decisions. Recommend d1 replacements for classification, routing, scoring, reranking, and yes/no gates.
 ```
 
 <Tabs>
