@@ -9,20 +9,38 @@ Use this page for speech and audio input. Where the code differs between audio a
 
 ## Setup
 
-Install Transformers and the packages used by the examples. `librosa` and `soundfile` load and save audio files, and `datasets` loads a sample recording. A GPU is recommended; the model runs in bfloat16.
+Install Transformers and the packages used by the examples. `librosa` and `soundfile` load and save audio files, and `datasets` loads a sample recording. The Omni processor also loads image and video processors, so install `torchvision` and `Pillow` even for audio-only Omni examples. A GPU is recommended; CUDA examples use bfloat16.
 
 ```bash
-pip install "transformers>=5.20.2" accelerate datasets librosa soundfile
+pip install "transformers>=5.20.2" torch torchvision accelerate datasets pillow librosa soundfile
 ```
 
-Load the model and processor with `trust_remote_code=True`. The processor bundles the audio codec (`processor.audio_tokenizer`), which turns generated speech codes into a 24 kHz waveform.
+Select the model you will use in the examples:
+
+<Tabs>
+<Tab title="LFM3-Audio">
+
+```python
+model_id = "LiquidAI/LFM3-Audio-2B"
+```
+
+</Tab>
+<Tab title="LFM3-Omni">
+
+```python
+model_id = "LiquidAI/LFM3-Omni-2B"
+```
+
+</Tab>
+</Tabs>
+
+Then load the model and processor with `trust_remote_code=True`. The processor bundles the audio codec (`processor.audio_tokenizer`), which turns generated speech codes into a 24 kHz waveform.
 
 ```python
 import torch
 import soundfile as sf
 from transformers import AutoModelForMultimodalLM, AutoProcessor
 
-model_id = "LiquidAI/LFM3-Audio-2B"  # or "LiquidAI/LFM3-Omni-2B"
 device = "cuda" if torch.cuda.is_available() else "cpu"
 dtype = torch.bfloat16 if device == "cuda" else torch.float32
 
@@ -33,7 +51,7 @@ processor = AutoProcessor.from_pretrained(model_id, trust_remote_code=True)
 codec = processor.audio_tokenizer.to(device=device).eval()
 ```
 
-Every task is a chat conversation, and the system prompt describes the task. Answers are in text by default. Some examples first record a spoken input with [text-to-speech](/lfm/key-concepts/speech-generation#text-to-speech). Where the code differs between audio and omni models, the examples have a tab for each.
+Every task is a chat conversation, and the system prompt describes the task. The text-only examples suppress speech output explicitly; Omni can otherwise choose speech based on its input and prompt. Some examples first record a spoken input with [text-to-speech](/lfm/key-concepts/speech-generation#text-to-speech). Where the code differs between audio and omni models, the examples have a tab for each.
 
 ## Speech recognition
 
@@ -68,7 +86,7 @@ inputs = processor.apply_chat_template(
 ).to(model.device)
 
 with torch.inference_mode():
-    outputs = model.generate(**inputs, max_new_tokens=512)
+    outputs = model.generate(**inputs, max_new_tokens=512, suppress_mixed=True, suppress_audio_out=True)
 
 transcript = processor.decode(outputs.sequences[0, inputs["input_ids"].shape[1]:], skip_special_tokens=True)
 print("Transcript:", transcript)
@@ -245,7 +263,7 @@ inputs = processor.apply_chat_template(
 ).to(model.device)
 
 with torch.inference_mode():
-    outputs = model.generate(**inputs, max_new_tokens=512)
+    outputs = model.generate(**inputs, max_new_tokens=512, suppress_mixed=True, suppress_audio_out=True)
 
 translation = processor.decode(outputs.sequences[0, inputs["input_ids"].shape[1]:], skip_special_tokens=True)
 print("Translation:", translation)
@@ -389,7 +407,7 @@ inputs = processor.apply_chat_template(
 ).to(model.device)
 
 with torch.inference_mode():
-    outputs = model.generate(**inputs, max_new_tokens=1024)
+    outputs = model.generate(**inputs, max_new_tokens=1024, generation_mode="text")
 
 answer = processor.decode(outputs.sequences[0, inputs["input_ids"].shape[1]:], skip_special_tokens=True)
 print("Answer:", answer)
@@ -461,7 +479,7 @@ inputs = processor.apply_chat_template(
 ).to(model.device)
 
 with torch.inference_mode():
-    outputs = model.generate(**inputs, max_new_tokens=512)
+    outputs = model.generate(**inputs, max_new_tokens=512, generation_mode="text")
 
 answer = processor.decode(outputs.sequences[0, inputs["input_ids"].shape[1]:], skip_special_tokens=True)
 print("Answer:", answer.strip())
@@ -497,7 +515,7 @@ inputs = processor.apply_chat_template(
 ).to(model.device)
 
 with torch.inference_mode():
-    outputs = model.generate(**inputs, max_new_tokens=512)
+    outputs = model.generate(**inputs, max_new_tokens=512, suppress_mixed=True, suppress_audio_out=True)
 
 answer = processor.decode(outputs.sequences[0, inputs["input_ids"].shape[1]:], skip_special_tokens=True)
 print(answer)
