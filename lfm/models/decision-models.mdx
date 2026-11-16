@@ -78,7 +78,7 @@ Decision models are a new class of AI model purpose-built for structured decisio
 
 ## Pricing
 
-The hosted models are billed on input tokens only: $0.02 per million for d1.2 and $0.042 per million for d1.2-ultra. Output is free because decision models do not generate tokens. A request is billed its state, images, and audio once, and each question adds its own text. See [Pricing](/lfm/models/d1#pricing) for how images and audio are counted.
+The hosted models are billed on input tokens only: $0.02 per million for d1.2 and $0.042 per million for d1.2-ultra. Output is free because decision models do not generate tokens. A request is billed its state, images, and audio once, and each question adds its own tokens (its instructions, options, and answer slots). See [Pricing](/lfm/models/d1#pricing) for how images and audio are counted.
 
 The models are available through the [Liquid Console](https://console.liquid.ai). See the [Liquid AI pricing page](https://www.liquid.ai/pricing) for current prices and available credits. `d1.1`, `d1-ultra`, and the earlier `d1` are [deprecated](/lfm/help/deprecations#deprecated-api-models).
 
@@ -115,12 +115,12 @@ Every question you ask a decision model uses one of three core types, or one of 
 | `date` | None | `date` (ISO 8601), `text` (the span as written), `span`, `found` |
 | `number` with `range` | `range`: `[low, high]`. `step` (optional): the spacing of the values, which must divide `high - low`. `unit` (optional) | `number` (the median), `interval` (`[p10, p90]`), `unit` |
 | `box` | None | `box` (`top`, `bottom`, `left`, `right` as fractions of the picture), `found`, `confidence` |
-| `boxes` | `max` (optional): the most instances to read, from 1 to 16 (the default). From 1 to 64 on the Liquid API | `boxes` (each with its `box`, `found`, and `confidence`, in reading order), `count`, `at_least` |
+| `boxes` | `max` (optional): the most instances to read, from 1 to 16 (the default). From 1 to 64 on the Liquid API | `boxes` (each with its `box`, `found`, and `confidence`, ordered by left edge, then top), `count`, `at_least`, and on the Liquid API `presence` |
 | `spans` (Liquid API only) | `max` (optional): the most passages to read, from 1 to 64 (16 by default) | `spans` (each with its `text`, `span`, and `found`), `count`, `at_least`, `presence` |
 
 - **Missing values:** a value or a box is missing when `found` is under 0.5. Its value, `text`, and `span` are then `None`. For `boxes`, instances under 0.5 are left out.
 - **Values are read, not converted:** `number` and `date` are parsed from the span. For example, `4 %` reads as `4` with the unit `%`. A value that is found but can't be parsed keeps its span, and the value is `None`.
-- **JSON states:** with the open-weight models, a value found in a JSON state also has a `path`, the RFC 6901 pointer to it.
+- **JSON states:** a value found in a JSON state also has a `path`, the RFC 6901 pointer to it. On the Liquid API, send the state as a JSON object to get it.
 - **Estimates:** the model reads an estimate on at most 128 values between `low` and `high`. Estimates have no `found`. They are reliable on counts and scores, less so on free quantities.
 - **`at_least`:** `True` when every instance the model read was present, so the picture may hold more than `count`.
 - **Boxes need one picture:** a request with a `box` or `boxes` question must have exactly one picture (in `media` for the open-weight models, in `images` on the Liquid API).

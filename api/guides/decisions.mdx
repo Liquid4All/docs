@@ -94,7 +94,7 @@ curl https://api.liquid.ai/decisions/v1/systemone \
 | Spans | Every passage of a kind in the state, with its position. | Redaction and highlighting. |
 | Box, Boxes | A box around one object in the image, or every instance with a count. | Grounding and counting in pictures. |
 
-The TypeSafe SDKs send Noul, Choice, and Score questions. Send the other question types, images, and audio over HTTP: see [Typed Answers](/lfm/models/d1#typed-answers).
+Use the TypeSafe SDKs for Noul, Choice, and Score questions. They can't read the other answer types yet, so send typed questions, images, and audio over HTTP: see [Typed Answers](/lfm/models/d1#typed-answers).
 
 ## Models
 
@@ -103,7 +103,7 @@ The TypeSafe SDKs send Noul, Choice, and Score questions. Send the other questio
 | `d1.2-ultra` | Text, images, audio | Harder decisions. |
 | `d1.2` | Text, images, audio | The default decision model. |
 
-Both are billed on input tokens only, and output is free. A request is billed its state, images, and audio once, and each question adds its own text. Requests may be up to 4.5 MB and 128 questions, and validation errors return `422`. `d1.1`, `d1-ultra`, and `d1` are [deprecated](/lfm/help/deprecations#deprecated-api-models).
+Both are billed on input tokens only, and output is free. A request is billed its state, images, and audio once, and each question adds its own tokens (its instructions, options, and answer slots). Requests may be up to 4.5 MB and 128 questions, and validation errors return `422`. `d1.1`, `d1-ultra`, and `d1` are [deprecated](/lfm/help/deprecations#deprecated-api-models).
 
 ## Learn more
 

@@ -26,6 +26,8 @@ Pick the hosted model with the `model` field. Both models use the same endpoint,
 | `d1.2-ultra` | Text, images, audio | $0.042 | 65,536 tokens | Most capable decision model, for harder decisions. |
 | `d1.2` | Text, images, audio | $0.02 | 65,536 tokens | Default hosted decision model. Faster, at less than half the price. |
 
+The input limit counts a question with the state, images, and audio. Each question is also limited to 250,000 bytes of text, which text in Chinese, Japanese, or Korean can reach before the token limit.
+
 The examples below use `d1.2`. Replace it with `d1.2-ultra` for harder decisions.
 
 <Note>
@@ -34,7 +36,7 @@ The examples below use `d1.2`. Replace it with `d1.2-ultra` for harder decisions
 
 ## Pricing
 
-Both models are billed on input tokens only, and output is free. A request is billed its state, images, and audio once, however many questions it asks. Each question then adds its own text. See [Image Token Usage](#image-token-usage) and [Audio Token Usage](#audio-token-usage).
+Both models are billed on input tokens only, and output is free. A request is billed its state, images, and audio once, however many questions it asks. Each question then adds its own tokens. A question's tokens include its instructions, its options, and its answer slots, so a `spans` or `boxes` question costs more as `max` grows: about 250 and 415 tokens at the default of 16. See [Image Token Usage](#image-token-usage) and [Audio Token Usage](#audio-token-usage).
 
 See the [Liquid AI pricing page](https://www.liquid.ai/pricing) for current prices and available credits.
 
@@ -66,11 +68,11 @@ Install the SDK and create a client:
 
     client = TypeSafeClient(
         api_key=os.environ["LIQUID_API_KEY"],
-        base_url="https://api.liquid.ai",
+        base_url="https://api.liquid.ai/decisions",
     )
     ```
 
-    The SDK covers Noul, Choice, and Score questions on text. For [typed answers](#typed-answers), [image inputs](#image-inputs), and [audio inputs](#audio-inputs), the examples call the endpoint with [`requests`](https://pypi.org/project/requests/):
+    Use the SDK for Noul, Choice, and Score questions on text. For [typed answers](#typed-answers), [image inputs](#image-inputs), and [audio inputs](#audio-inputs), the examples call the endpoint with [`requests`](https://pypi.org/project/requests/):
 
     ```bash
     pip install requests
@@ -88,12 +90,12 @@ Install the SDK and create a client:
 
     const client = new TypeSafeClient({
       apiKey: process.env.LIQUID_API_KEY!,
-      baseURL: "https://api.liquid.ai",
+      baseURL: "https://api.liquid.ai/decisions",
       compression: false, // the API doesn't accept zstd-compressed request bodies
     });
     ```
 
-    The SDK covers Noul, Choice, and Score questions on text. For [typed answers](#typed-answers), [image inputs](#image-inputs), and [audio inputs](#audio-inputs), call the endpoint with `fetch` instead.
+    Use the SDK for Noul, Choice, and Score questions on text. For [typed answers](#typed-answers), [image inputs](#image-inputs), and [audio inputs](#audio-inputs), call the endpoint with `fetch` instead.
   </Tab>
 </Tabs>
 
@@ -216,7 +218,7 @@ A single API call contains the following fields:
 
 - **`answers.is_complaint.noul`**: The probability that the answer is "yes." Here, `0.989` means a 0.989 probability that this is a complaint.
 - **`usage.output_tokens`**: Always `0`. Decision models do not generate tokens.
-- **`usage.input_tokens`**: The input tokens billed for the request: the state, images, and audio once, plus the text of each question.
+- **`usage.input_tokens`**: The input tokens billed for the request: the state, images, and audio once, plus the tokens of each question.
 
 The response contains one answer per question, keyed by the question name. A Noul answer is a single probability. Choice and Score answers also include a full probability distribution and a `confidence` value. [Typed answers](#typed-answers) have their own fields.
 
@@ -721,7 +723,7 @@ d1.2 and d1.2-ultra answer five more tasks with the same endpoint and request fo
 | Estimate a number | `number` with `range` | `range`: `[low, high]`. `step` (optional): the spacing of the values, which must divide `high - low`. `unit` (optional) | `number` (the median), `interval` (`[p10, p90]`), `unit` |
 | Pick several options | `choice` with `"multiple": true` | `criteria`: the options, as `{name: description}` | `choices` (the options with a probability of at least 0.5), `probabilities` (each option's own probability) |
 
-The TypeSafe SDKs don't send these question types yet, so the examples below call the endpoint directly.
+The TypeSafe SDKs can't read these answers yet: they drop them from the response, and a multiple-choice question makes the call fail. The examples below call the endpoint directly. The Python examples after the first one reuse its imports (`os` and `requests`).
 
 ### Read a Value
 
@@ -879,7 +881,7 @@ The probabilities don't sum to 1, since each option is its own yes-or-no questio
 
 ### Estimate a Number
 
-A `number` question with a `range` estimates a quantity instead of reading it. The model returns its median estimate and an interval from the 10th to the 90th percentile. It reads at most 128 values between `low` and `high`, `step` apart. Estimates are reliable on counts and scores, less so on free quantities. They have no `found`.
+A `number` question with a `range` estimates a quantity instead of reading it. The model returns its median estimate and an interval from the 10th to the 90th percentile. It reads values `step` apart between `low` and `high`, up to 128 of them. When `step` would give more than 128 values, it reads 128 evenly spaced values instead, so the answer may fall between steps. Round it if you need whole numbers. Estimates are reliable on counts and scores, less so on free quantities. They have no `found`.
 
 ```python
 import base64
@@ -916,9 +918,14 @@ response = requests.post(
 
 ### Locate Objects
 
-A `box` question returns a box around one object in a picture. A `boxes` question returns a box around every instance, in reading order, with a count. Box edges are fractions of the picture's height (`top`, `bottom`) and width (`left`, `right`), from its top-left corner. A request with a `box` or `boxes` question must have exactly one image.
+A `box` question returns a box around one object in a picture. A `boxes` question returns a box around every instance, ordered by left edge and then top, with a count. Box edges are fractions of the picture's height (`top`, `bottom`) and width (`left`, `right`), from its top-left corner. A request with a `box` or `boxes` question must have exactly one image.
 
 ```python
+import base64
+from pathlib import Path
+
+image = base64.b64encode(Path("photo.jpg").read_bytes()).decode("ascii")
+
 response = requests.post(
     "https://api.liquid.ai/decisions/v1/systemone",
     headers={"Authorization": f"Bearer {os.environ['LIQUID_API_KEY']}"},
@@ -963,13 +970,14 @@ response = requests.post(
 ### Typed Answer Tips
 
 - **Read from text:** reads and spans point into the text of the state. A value that only appears in an image is not found, so send the document's text (from a PDF's text layer or from OCR) as the state.
-- **Positions:** `span` counts Unicode code points of the state, end excluded. When the state is JSON, positions count the state as rendered with 2-space indentation, so plain-text states are easier to map back.
+- **Positions:** `span` counts Unicode code points of the state, end excluded.
+- **JSON states:** when `state` is a JSON object (not a string), positions count the state as rendered with 2-space indentation, and each value read also has a `path`, the [JSON Pointer](https://www.rfc-editor.org/rfc/rfc6901) of the string it lies in, such as `/customer/phone`.
 - **Ask spans on their own:** a `spans` question asked in the same request as other question types can return fewer passages. Send it in its own request for the best recall.
 - **Thresholds:** calibrate any decision threshold on `found`, `presence`, or a probability on data from your own use.
 
 ## Image Inputs
 
-Send images to the decision model through the same `/decisions/v1/systemone` endpoint used for text decisions. Add an `images` array alongside `model`, `state`, and `questions`. The question types and response format stay the same. Images also enable the [box, boxes, and estimate questions](#typed-answers).
+Send images to the decision model through the same `/decisions/v1/systemone` endpoint used for text decisions. Add an `images` array alongside `model`, `state`, and `questions`. The question types and response format stay the same. Images also enable the [box and boxes questions](#locate-objects).
 
 Each image can be a Base64 data URL or an object with `content_type` and `base64` fields. Remote image URLs are not accepted. If an image is hosted online, download it and encode its contents before sending the request.
 
@@ -1206,7 +1214,6 @@ All questions in a request receive all images. The order of the images matters. 
 |---|---|
 | Formats | JPEG (`image/jpeg`), PNG (`image/png`), WebP (`image/webp`) |
 | Images per request | Up to 8, or exactly 1 with a `box` or `boxes` question |
-| Image size | Up to 5 MB each |
 | Request size | Keep the entire JSON body under 4.5 MB, including Base64 image data, state, and questions |
 | Total image patches | Up to 10,000 patches of 32 × 32 pixels across all images in a request |
 | Aspect ratio | The longer side of each image can be at most 100 times the shorter side |
@@ -1225,7 +1232,7 @@ image_tokens = ceil(patches × 1.5)
 
 For example, a 1024 × 1024 image covers 1,024 patches and contributes 1,536 input tokens.
 
-A request is billed its images once, however many questions it asks: two questions about that image still bill 1,536 image tokens, plus the text of each question. These tokens are included in `usage.input_tokens` and charged at the model's input token rate. Every question reads all the images, so image tokens count toward each question's input limit. `usage.output_tokens` remains `0`.
+A request is billed its images once, however many questions it asks: two questions about that image still bill 1,536 image tokens, plus the tokens of each question. These tokens are included in `usage.input_tokens` and charged at the model's input token rate. Every question reads all the images, so image tokens count toward each question's input limit. `usage.output_tokens` remains `0`.
 
 ## Audio Inputs
 
@@ -1299,6 +1306,12 @@ You can combine clips with a text state and with images in the same request, for
 Any question's `instructions` can be a clip instead of text, in the same `{"type": "audio", "data": ...}` form. The model answers the spoken question like a typed one.
 
 ```python
+import base64
+import os
+from pathlib import Path
+
+import requests
+
 question = base64.b64encode(Path("question.wav").read_bytes()).decode("ascii")
 
 response = requests.post(
