@@ -118,7 +118,7 @@
               },
               {
                 "group": "Guides",
-                "icon": "book-open",
+                "icon": {"name": "book-open", "style": "light"},
                 "pages": [
                   "guides/hardware-evaluation",
                   "guides/use-case-evaluation",
@@ -129,7 +129,7 @@
               },
               {
                 "group": "Help",
-                "icon": "book",
+                "icon": {"name": "book", "style": "light"},
                 "pages": [
                   "lfm/help/faqs",
                   "lfm/help/troubleshooting",
@@ -153,7 +153,7 @@
             "pages": [
               {
                 "group": "Fine-tuning",
-                "icon": "sliders",
+                "icon": {"name": "sliders", "style": "light"},
                 "pages": [
                   "lfm/fine-tuning/overview",
                   "lfm/fine-tuning/liquid-finetune",
@@ -176,7 +176,7 @@
             "pages": [
               {
                 "group": "Edge Inference",
-                "icon": "mobile",
+                "icon": {"name": "mobile", "style": "light"},
                 "pages": [
                   "deployment/on-device/llama-cpp",
                   "deployment/on-device/llama-cpp/mobile",
@@ -191,7 +191,7 @@
               },
               {
                 "group": "GPU Inference",
-                "icon": "microchip",
+                "icon": {"name": "microchip", "style": "light"},
                 "pages": [
                   "deployment/gpu-inference/transformers",
                   "deployment/gpu-inference/sglang",
@@ -202,7 +202,7 @@
               },
               {
                 "group": "Cloud Inference",
-                "icon": "cloud",
+                "icon": {"name": "cloud", "style": "light"},
                 "pages": [
                   "deployment/gpu-inference/modal",
                   "deployment/gpu-inference/baseten",
@@ -212,7 +212,7 @@
               },
               {
                 "group": "Agents",
-                "icon": "robot",
+                "icon": {"name": "robot", "style": "light"},
                 "pages": [
                   "examples/agent-harnesses"
                 ],
@@ -230,7 +230,7 @@
             "pages": [
               {
                 "group": "Get started",
-                "icon": "rocket",
+                "icon": {"name": "rocket", "style": "light"},
                 "pages": [
                   "api/overview",
                   "api/quickstart",
@@ -240,7 +240,7 @@
               },
               {
                 "group": "Capabilities",
-                "icon": "wand-magic-sparkles",
+                "icon": {"name": "wand-magic-sparkles", "style": "light"},
                 "pages": [
                   "api/guides/text-generation",
                   "api/guides/vision",
@@ -251,7 +251,7 @@
               },
               {
                 "group": "Platform",
-                "icon": "server",
+                "icon": {"name": "server", "style": "light"},
                 "pages": [
                   "api/guides/batch",
                   "api/guides/your-data"
@@ -260,7 +260,7 @@
               },
               {
                 "group": "API reference",
-                "icon": "code",
+                "icon": {"name": "code", "style": "light"},
                 "pages": [
                   "api/reference/overview",
                   "api/reference/rate-limits",
@@ -288,7 +288,7 @@
             "pages": [
               {
                 "group": "Getting Started",
-                "icon": "rocket",
+                "icon": {"name": "rocket", "style": "light"},
                 "pages": [
                   "examples/index"
                 ],
@@ -296,7 +296,7 @@
               },
               {
                 "group": "Laptop",
-                "icon": "laptop",
+                "icon": {"name": "laptop", "style": "light"},
                 "pages": [
                   "examples/laptop-examples/invoice-extractor-tool-with-liquid-nanos",
                   "examples/laptop-examples/build-a-game-with-decision-models",
@@ -311,7 +311,7 @@
               },
               {
                 "group": "Android",
-                "icon": "robot",
+                "icon": {"name": "robot", "style": "light"},
                 "pages": [
                   "examples/android/slogan-generator",
                   "examples/android/web-content-summarizer",
@@ -323,7 +323,7 @@
               },
               {
                 "group": "Web",
-                "icon": "globe",
+                "icon": {"name": "globe", "style": "light"},
                 "pages": [
                   "examples/web/vl-webgpu-demo",
                   "examples/web/audio-webgpu-demo",
@@ -333,7 +333,7 @@
               },
               {
                 "group": "Fine-tuning",
-                "icon": "sliders",
+                "icon": {"name": "sliders", "style": "light"},
                 "pages": [
                   "examples/customize-models/car-maker-identification",
                   "examples/customize-models/home-assistant",

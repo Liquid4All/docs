@@ -180,7 +180,7 @@
       height: 1rem;
       flex-shrink: 0;
       background-color: currentColor;
-      mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='m5 12 4 4L19 6' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat;
+      mask: url("https://d3gk2c5xim1je2.cloudfront.net/fontawesome/v7.2.0/light/check.svg") center / contain no-repeat;
     }
 
     /* Card border clipping fix */
