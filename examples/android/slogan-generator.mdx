@@ -1,279 +1,58 @@
 ---
 title: "Product Slogan Generator with llama.cpp"
-description: "Simple Android app for on-device text generation using a Liquid AI LFM model to create product slogans."
+description: "Generate product slogans on Android with LFM2.5-1.2B-Instruct and llama.cpp."
 ---
 
 <Card title="View Source Code" icon="github" href="https://github.com/Liquid4All/cookbook/tree/main/examples/SloganApp">
-  Browse the complete example on GitHub
+  Browse the complete Android project
 </Card>
 
-This example demonstrates how to use llama.cpp for **single-turn generation** tasks on Android. The SloganApp generates creative product slogans on-device using local language models, showcasing how to integrate AI capabilities for specific product needs without requiring cloud connectivity.
-
-Built with traditional **Android Views**, this example provides a different UI approach compared to Jetpack Compose, making it ideal for teams working with legacy Android codebases.
-
-## What's inside?
-
-The SloganApp showcases:
-
-- **Single-turn Generation** - Generate creative output without maintaining conversation context
-- **Traditional Android Views UI** - Implementation using XML layouts and View-based architecture
-- **On-device Processing** - Complete privacy with local model inference
-- **Simple Integration** - Minimal setup for focused AI tasks
-- **Product-focused Prompting** - Optimized prompts for marketing and slogan generation
-
-This example is perfect for understanding how to integrate llama.cpp into existing Android applications that use the traditional View system rather than Jetpack Compose.
+SloganApp generates marketing slogans locally with **LFM2.5-1.2B-Instruct**, using the Q5_K_M GGUF. Its interface uses Android Views.
 
 ## Environment setup
 
-Before running this example, ensure you have the following:
+Use Android Studio with JDK 17, Android SDK 36, NDK `29.0.13113456`, and CMake `3.31.6`. The projects pin Kotlin `2.3.20` and llama.cpp `v0.9.0`.
 
-<Accordion title="Android Studio Installation">
-  Download and install [Android Studio](https://developer.android.com/studio) (latest stable version recommended).
+Clone the complete repository so the app can include `examples/android-common` and its pinned llama.cpp submodule:
 
-  Make sure you have:
-  - Android SDK installed
-  - Android NDK and CMake installed
-  - An Android device or emulator configured
-  - USB debugging enabled (for physical devices)
-</Accordion>
+```bash
+git clone --recurse-submodules https://github.com/Liquid4All/cookbook.git
+```
 
-<Accordion title="Minimum SDK Requirements">
-  This example requires:
-  - **Minimum SDK**: API 33 (Android 13)
-  - **Target SDK**: API 36
-  - **Kotlin**: 2.3.0 or higher
-</Accordion>
-
-<Accordion title="llama.cpp Dependency Setup">
-  Add [llama.cpp](https://github.com/ggml-org/llama.cpp) as a git submodule, include its [`examples/llama.android/lib`](https://github.com/ggml-org/llama.cpp/tree/master/examples/llama.android) module in `settings.gradle.kts`, and add it to your app-level `build.gradle.kts`:
-
-  ```kotlin
-  dependencies {
-      implementation(project(":lib"))
-
-      // Android UI components
-      implementation("androidx.appcompat:appcompat:1.6.1")
-      implementation("com.google.android.material:material:1.11.0")
-      implementation("androidx.constraintlayout:constraintlayout:2.1.4")
-  }
-  ```
-
-  The lib loads its CPU backends from the app's native library folder, so set `android:extractNativeLibs="true"` on the `<application>` tag in `AndroidManifest.xml`.
-</Accordion>
+The shared runtime handles model downloads, native inference, cancellation, and cleanup. Keep the app and `android-common` directories together.
 
 ## How to run it
 
-Follow these steps to generate product slogans:
+1. Open `cookbook/examples/SloganApp` in Android Studio and let Gradle sync.
+2. Run the app on an Android 13+ device or emulator. Allow about 850 MB for the model, plus memory for inference.
+3. Enter a business description and tap **Generate**. The first request downloads and loads the model.
+4. Tap **Stop** to cancel. Enter another description to make a new, independent request.
 
-1. **Clone the repository**
-   ```bash
-   git clone --recurse-submodules https://github.com/Liquid4All/cookbook.git
-   cd cookbook/examples/SloganApp
-   ```
+## Code walkthrough
 
-2. **Open in Android Studio**
-   - Launch Android Studio
-   - Select "Open an existing project"
-   - Navigate to the `SloganApp` folder and open it
+`SloganViewModel` inherits the shared `TextTaskViewModel`. It selects the checkpoint and the system prompt:
 
-3. **Gradle sync**
-   - Wait for Gradle to sync all dependencies
-   - Resolve any dependency conflicts if prompted
-
-4. **Run the app**
-   - Connect your Android device or start an emulator
-   - Click "Run" or press `Shift + F10`
-   - Select your target device
-
-5. **Generate slogans**
-   - Enter a product name or description in the input field
-   - Tap the "Generate Slogan" button
-   - Watch as the AI creates creative marketing copy on-device
-   - Generate multiple variations by tapping again
-
-## Usage examples
-
-Try generating slogans for different products:
-
-**Example 1: Technology Product**
-```
-Input: "Wireless noise-cancelling headphones"
-Output: "Silence the world. Amplify your music."
-```
-
-**Example 2: Food Product**
-```
-Input: "Organic cold-pressed juice"
-Output: "Nature's energy, bottled fresh daily."
-```
-
-**Example 3: Service Business**
-```
-Input: "On-demand dog walking service"
-Output: "Happy paws, on your schedule."
-```
-
-**Example 4: Software Product**
-```
-Input: "AI-powered photo editing app"
-Output: "Your photos, brilliantly reimagined."
-```
-
-Each generation produces unique slogans tailored to your product description, perfect for brainstorming marketing campaigns.
-
-## Understanding the architecture
-
-### Traditional Android Views Approach
-
-Unlike examples that use Jetpack Compose, SloganApp demonstrates integration with the traditional Android View system:
-
-**XML Layout Structure:**
-```xml
-<!-- activity_main.xml -->
-<LinearLayout>
-    <EditText
-        android:id="@+id/productInput"
-        android:hint="Enter product name or description" />
-
-    <Button
-        android:id="@+id/generateButton"
-        android:text="Generate Slogan" />
-
-    <TextView
-        android:id="@+id/sloganOutput"
-        android:textStyle="italic" />
-</LinearLayout>
-```
-
-**Activity Implementation:**
 ```kotlin
-import android.app.DownloadManager
-import android.net.Uri
-import com.arm.aichat.AiChat
-import com.arm.aichat.InferenceEngine
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.MainScope
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import java.io.File
-
-class MainActivity : AppCompatActivity() {
-    private val mainScope = MainScope()
-    private var runner: InferenceEngine? = null
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
-
-        mainScope.launch {
-            val model = downloadModel(
-                url = "https://huggingface.co/LiquidAI/LFM2.5-1.2B-Instruct-GGUF/resolve/main/LFM2.5-1.2B-Instruct-Q5_K_M.gguf",
-                file = File(getExternalFilesDir(null), "LFM2.5-1.2B-Instruct-Q5_K_M.gguf"),
-            )
-            runner = withContext(Dispatchers.Default) {
-                AiChat.getInferenceEngine(applicationContext).also { it.loadModel(model.absolutePath) }
-            }
-            generateButton.isEnabled = true
-        }
-
-        generateButton.setOnClickListener {
-            val product = productInput.text.toString()
-            generateSlogan(product)
-        }
-    }
-
-    private fun generateSlogan(product: String) {
-        val runner = runner ?: return
-        val prompt = """
-            Create a compelling, memorable slogan for: $product
-            Make it concise, catchy, and professional.
-        """.trimIndent()
-
-        sloganOutput.text = ""
-        mainScope.launch {
-            runner.sendUserPrompt(prompt)
-                .onEach { piece ->
-                    sloganOutput.append(piece)
-                }
-                .collect()
-        }
-    }
-
-    // Downloads the GGUF once with DownloadManager and reuses it on later launches
-    private suspend fun downloadModel(url: String, file: File): File {
-        if (file.exists()) return file
-        val dm = getSystemService(DownloadManager::class.java)
-        val id = dm.enqueue(DownloadManager.Request(Uri.parse(url)).setDestinationUri(Uri.fromFile(file)))
-        while (true) {
-            dm.query(DownloadManager.Query().setFilterById(id)).use { c ->
-                if (c.moveToFirst()) when (c.getInt(c.getColumnIndexOrThrow(DownloadManager.COLUMN_STATUS))) {
-                    DownloadManager.STATUS_SUCCESSFUL -> return file
-                    DownloadManager.STATUS_FAILED -> error("Model download failed")
-                }
-            }
-            delay(500)
-        }
-    }
-}
+class SloganViewModel(application: Application) : TextTaskViewModel(
+    application, Models.text,
+    "You are a marketing expert. Suggest engaging and creative slogans based on a business description provided by the user.",
+)
 ```
 
-### Single-turn Generation Pattern
+The Activity obtains the retained ViewModel with `by viewModels()`, observes `generation`, and sends the user's description:
 
-This example demonstrates **single-turn generation**, where:
-- Each request is sent as a single user prompt; the engine keeps earlier requests in its context until the model is reloaded
-- The streamed text pieces are appended to the UI as they arrive
-- No need to manage conversation state or context across requests
-- Ideal for focused tasks like slogan generation, summarization, or classification
+```kotlin
+viewModel.generate("Suggest slogans for this business: ${input.text.toString().trim()}")
+```
 
-This pattern is simpler than multi-turn conversations and perfect for specific use cases where context isn't needed.
+The runtime clears the model context before every request. Earlier businesses and slogans do not enter the next prompt. The Generate/Stop control covers both model preparation and generation, so repeated clicks cannot start duplicate loads.
 
-### Model Selection
+## Downloads and lifecycle
 
-The app uses **LFM2.5-1.2B-Instruct** (Q5_K_M), a lightweight model that balances:
-- **Speed** - Fast generation for responsive UI
-- **Quality** - Creative and coherent slogans
-- **Size** - ~850 MB on disk; comfortably fits in mobile RAM
-- **Efficiency** - Lower memory and battery consumption than larger checkpoints
+The first request downloads the model from Hugging Face. Downloads go to a temporary file; the runtime checks the expected size and SHA-256 before publishing the final GGUF. An interrupted download restarts on the next attempt. A verified cached model works offline.
 
-For higher-quality outputs, swap the download URL to another GGUF from [Liquid AI on Hugging Face](https://huggingface.co/LiquidAI).
-
-## Results
-
-The SloganApp provides instant slogan generation directly on your Android device:
-
-![SloganApp Screenshot](https://raw.githubusercontent.com/Liquid4All/cookbook/main/examples/SloganApp/docs/screenshot.png)
-
-The interface shows:
-- Clean, simple UI with Material Design components
-- Instant feedback with loading states during generation
-- Generated slogans displayed with italic styling for emphasis
-- Ability to regenerate for multiple creative options
-
-All processing happens on-device, ensuring complete privacy for your product ideas and marketing concepts.
+A ViewModel retains the model across screen rotation. Native calls run in one queue per model instance. Cancellation stops the token loop before cleanup releases the model. A failed request displays an error and allows retry.
 
 ## Further improvements
 
-Here are some ways to extend this example:
-
-- **Multiple variations** - Generate 3-5 slogan options at once for comparison
-- **Style selection** - Let users choose tone (professional, playful, luxury, etc.)
-- **Length control** - Add options for short taglines vs. longer slogans
-- **History tracking** - Save generated slogans with timestamps and product names
-- **Share functionality** - Export slogans via Android's share intent
-- **Copy to clipboard** - One-tap copy for easy paste into marketing materials
-- **Language support** - Generate slogans in multiple languages
-- **Industry templates** - Pre-configured prompts for different industries (tech, food, fashion)
-- **A/B testing mode** - Compare multiple AI-generated options side-by-side
-
-## Need help?
-
-<CardGroup cols={1}>
-
-<Card title="Join our Discord" icon="discord" iconType="brands" href="https://discord.gg/DFU3WQeaYD">
-  Connect with the community and ask questions about this example.
-</Card>
-
-</CardGroup>
+Add tone and length controls by including them in each prompt. To use another checkpoint, update its model specification, including its verified size and SHA-256, and test it with the pinned runtime.

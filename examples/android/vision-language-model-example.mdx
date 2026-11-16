@@ -1,425 +1,65 @@
 ---
 title: "Image Understanding with Vision Language Models"
-description: "Android app for on-device image understanding and visual Q&A using LFM2.5-VL-1.6B with Jetpack Compose."
+description: "Describe camera images on Android using LFM2.5-VL-1.6B and llama.cpp."
 ---
 
 <Card title="View Source Code" icon="github" href="https://github.com/Liquid4All/cookbook/tree/main/examples/VLMExample">
-  Browse the complete example on GitHub
+  Browse the complete Android project
 </Card>
 
-This example demonstrates how to use **Vision Language Models (VLMs)** with llama.cpp on Android. VLMs combine image understanding with natural language processing, enabling your app to analyze images, answer questions about visual content, and generate detailed descriptions—all on-device.
-
-Built with **Jetpack Compose** and the **Coil** image loading library, this example shows how to create a multimodal AI application that processes both images and text locally on Android devices.
-
-## What's inside?
-
-The VLMExample showcases cutting-edge multimodal AI capabilities:
-
-- **Vision Language Models** - Analyze images and generate text descriptions
-- **Image Input Processing** - Handle image selection from gallery or camera
-- **Multimodal Understanding** - Combine visual and textual information
-- **Jetpack Compose UI** - Modern, declarative UI for image display and results
-- **Coil Integration** - Efficient image loading and rendering
-- **On-device Inference** - Complete privacy with local VLM processing
-- **Interactive Q&A** - Ask questions about images and get contextual answers
-
-This example demonstrates the **LFM2.5-VL-1.6B** model, a vision-language model that can understand and reason about visual content.
-
-## What are Vision Language Models?
-
-**Vision Language Models (VLMs)** are AI models that can process both images and text simultaneously, enabling them to:
-
-- **Describe images** - Generate detailed captions of what's in a photo
-- **Answer visual questions** - Respond to queries about image content ("What color is the car?")
-- **Detect objects** - Identify and describe objects, people, and scenes
-- **Read text in images** - Extract and interpret text from photos (OCR-like capabilities)
-- **Understand context** - Grasp relationships between objects and spatial arrangements
-- **Generate insights** - Provide analysis, suggestions, or interpretations of visual data
-
-**Example use cases:**
-- Accessibility tools that describe images for visually impaired users
-- Product identification and information lookup
-- Document analysis and data extraction
-- Visual search and discovery
-- Educational apps that explain diagrams and illustrations
-- Real estate apps that describe property photos
-- Medical imaging assistants for preliminary analysis
+VLMExample captures a photo and generates a description locally using **LFM2.5-VL-1.6B**, Q8_0, with its matching vision projector. Its interface uses Jetpack Compose and Coil.
 
 ## Environment setup
 
-Before running this example, ensure you have the following:
+Use Android Studio with JDK 17, Android SDK 36, NDK `29.0.13113456`, and CMake `3.31.6`. The projects pin Kotlin `2.3.20` and llama.cpp `v0.9.0`.
 
-<Accordion title="Android Studio Installation">
-  Download and install [Android Studio](https://developer.android.com/studio) (latest stable version recommended).
+Clone the complete repository so the app can include `examples/android-common` and its pinned llama.cpp submodule:
 
-  Make sure you have:
-  - Android SDK installed
-  - Android NDK and CMake installed
-  - An Android device or emulator configured
-  - USB debugging enabled (for physical devices)
-</Accordion>
+```bash
+git clone --recurse-submodules https://github.com/Liquid4All/cookbook.git
+```
 
-<Accordion title="Minimum SDK Requirements">
-  This example requires:
-  - **Minimum SDK**: API 31 (Android 12)
-  - **Target SDK**: API 36
-  - **Kotlin**: 2.3.0 or higher
-
-  **Hardware recommendations:**
-  - At least 4GB RAM (6GB+ recommended for better performance)
-  - Vision models are larger and more compute-intensive than text-only models
-</Accordion>
-
-<Accordion title="VLM Model Deployment">
-  This example requires the **LFM2.5-VL-1.6B** vision language model.
-
-  The example uses **LFM2.5-VL-1.6B** from [LiquidAI/LFM2.5-VL-1.6B-GGUF](https://huggingface.co/LiquidAI/LFM2.5-VL-1.6B-GGUF) on Hugging Face. On first launch, the app downloads the GGUF and its matching `mmproj` companion file with Android's `DownloadManager` and keeps them on device. No manual ADB step is needed.
-</Accordion>
-
-<Accordion title="Dependencies Setup">
-  Add the required dependencies to your app-level `build.gradle.kts`:
-
-  The app builds [llama.cpp](https://github.com/ggml-org/llama.cpp) from a git submodule with CMake (`app/src/main/cpp/CMakeLists.txt`), including its `mtmd` library for image input. Set `android:extractNativeLibs="true"` in `AndroidManifest.xml` so llama.cpp can load its CPU backends.
-
-  ```kotlin
-  dependencies {
-      // Coil for image loading
-      implementation("io.coil-kt:coil-compose:2.5.0")
-
-      // Jetpack Compose
-      implementation(platform("androidx.compose:compose-bom:2024.01.00"))
-      implementation("androidx.compose.ui:ui")
-      implementation("androidx.compose.material3:material3")
-      implementation("androidx.compose.ui:ui-tooling-preview")
-      implementation("androidx.activity:activity-compose:1.8.2")
-
-      // Image picker
-      implementation("androidx.activity:activity-ktx:1.8.2")
-
-      // ViewModel
-      implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.7.0")
-  }
-  ```
-
-  **About Coil:**
-
-  [Coil](https://coil-kt.github.io/coil/) is a Kotlin-first image loading library for Android that:
-  - Efficiently loads and caches images
-  - Integrates seamlessly with Jetpack Compose
-  - Handles image transformations and processing
-  - Provides modern coroutine-based APIs
-</Accordion>
+The shared runtime handles model downloads, native inference, cancellation, and cleanup. Keep the app and `android-common` directories together.
 
 ## How to run it
 
-Follow these steps to start analyzing images with VLMs:
+1. Open `cookbook/examples/VLMExample` in Android Studio and run it on Android 12+.
+2. Tap **Take a picture** and capture an image with the camera app.
+3. On the first request, the app downloads both the GGUF (about 1.25 GB) and its matching `mmproj` file (about 583 MB), then loads them.
+4. Read the streamed description. Tap **Take a picture** again for another image.
+5. Use **Retry** if the download, model load, or image request fails.
 
-1. **Clone the repository**
-   ```bash
-   git clone --recurse-submodules https://github.com/Liquid4All/cookbook.git
-   cd cookbook/examples/VLMExample
-   ```
+Allow at least 1.9 GB of storage for the model files, plus memory for inference. Startup and generation time depend on your device.
 
-2. **Pick a deployment strategy**
-   - Default: the app downloads LFM2.5-VL-1.6B and its `mmproj` file from Hugging Face on first launch
+The current app uses the fixed prompt `Describe this image.` It does not have gallery selection or an editable question field.
 
-3. **Open in Android Studio**
-   - Launch Android Studio
-   - Select "Open an existing project"
-   - Navigate to the `VLMExample` folder and open it
+## Code walkthrough
 
-4. **Verify model path**
-   - Check that the model path in your code matches the deployment location
-   - Update if you used a different path
+The Activity captures images with `ActivityResultContracts.TakePicture()` and a `FileProvider` URI. It saves the pending capture path across Activity recreation.
 
-5. **Run the app**
-   - Connect your Android device or start an emulator
-   - Click "Run" or press `Shift + F10`
-   - Select your target device
-
-6. **Select an image**
-   - On first launch, the app will load the VLM model (this may take 10-30 seconds)
-   - Tap the "Select Image" button
-   - Choose an image from your device's gallery
-   - Alternatively, take a photo if camera integration is enabled
-
-7. **Analyze the image**
-   - After selecting an image, it will be displayed in the app
-   - The VLM will automatically analyze the image
-   - View the generated description or ask questions about the image
-   - Try different prompts: "What's in this image?", "Describe the scene", "What colors do you see?"
-
-<Note>
-  **Performance Note**: Vision models are computationally intensive. First-time inference may take 5-15 seconds on mobile devices. Subsequent inferences on the same or similar images will be faster as the model stays loaded in memory.
-</Note>
-
-## Understanding the architecture
-
-### Image Selection Flow
-
-The app uses Android's image picker to select photos:
+`VlmViewModel` owns a `NativeVisionModel`. It downloads and verifies `Models.vision` and `Models.projector`, loads them once, and streams descriptions:
 
 ```kotlin
-@Composable
-fun VLMScreen(viewModel: VLMViewModel) {
-    val imagePickerLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent()
-    ) { uri: Uri? ->
-        uri?.let { viewModel.processImage(it) }
-    }
-
-    Button(onClick = { imagePickerLauncher.launch("image/*") }) {
-        Text("Select Image")
-    }
+model.load(weights, projector)
+model.generate(
+    system = "You are a helpful multimodal assistant by Liquid AI.",
+    prompt = "Describe this image.",
+    image = image.readBytes(),
+).collect { piece ->
+    output.append(piece)
 }
 ```
 
-### VLM Integration Pattern
+`NativeVisionModel` and `vision_jni.cpp` live in `examples/android-common`. The native code uses llama.cpp's `mtmd` library to decode the image, apply the model's image marker, and evaluate text and image inputs together. Each image request starts with an empty context.
 
-Loading and using the vision language model:
+The ViewModel retains both model and projector across rotation. Cleanup waits for active inference to stop before freeing them.
 
-```kotlin
-import android.app.Application
-import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.launch
-import java.io.ByteArrayOutputStream
-import java.io.File
+## Downloads and lifecycle
 
-class VLMViewModel(application: Application) : AndroidViewModel(application) {
-    private var runner: LlamaVlm? = null
+The first request downloads the model from Hugging Face. Downloads go to a temporary file; the runtime checks the expected size and SHA-256 before publishing the final GGUF. An interrupted download restarts on the next attempt. A verified cached model works offline.
 
-    fun initializeModel() {
-        viewModelScope.launch(Dispatchers.Default) {
-            // GGUF + mmproj downloaded from LiquidAI/LFM2.5-VL-1.6B-GGUF
-            val dir = getApplication<Application>().getExternalFilesDir(null)
-            runner = LlamaVlm(getApplication<Application>().applicationInfo.nativeLibraryDir).also {
-                it.load(
-                    modelPath = File(dir, "LFM2.5-VL-1.6B-Q8_0.gguf").absolutePath,
-                    mmprojPath = File(dir, "mmproj-LFM2.5-VL-1.6b-Q8_0.gguf").absolutePath,
-                )
-            }
-            _modelState.value = ModelState.Ready
-        }
-    }
-
-    fun processImage(imageUri: Uri) {
-        val runner = runner ?: return
-        viewModelScope.launch(Dispatchers.Default) {
-            val bitmap = loadBitmapFromUri(imageUri)
-            // The wrapper takes encoded image bytes (JPEG or PNG)
-            val imageBytes = ByteArrayOutputStream().also {
-                bitmap.compress(Bitmap.CompressFormat.JPEG, 85, it)
-            }.toByteArray()
-
-            val description = StringBuilder()
-            runner.generate(
-                systemPrompt = "You are a helpful multimodal assistant by Liquid AI.",
-                prompt = "Describe this image in detail.",
-                image = imageBytes,
-            ).onEach { piece ->
-                description.append(piece)
-            }.collect()
-
-            _imageAnalysis.value = ImageAnalysis(
-                imageUri = imageUri,
-                description = description.toString(),
-            )
-        }
-    }
-
-    private fun loadBitmapFromUri(uri: Uri): Bitmap {
-        return getApplication<Application>().contentResolver.openInputStream(uri)?.use { input ->
-            BitmapFactory.decodeStream(input)
-        } ?: throw IllegalArgumentException("Unable to load image")
-    }
-
-    override fun onCleared() {
-        super.onCleared()
-        val runner = runner ?: return
-        // Unload the model asynchronously to avoid ANRs.
-        // Do NOT use runBlocking here — it blocks the main thread.
-        CoroutineScope(Dispatchers.IO).launch {
-            try {
-                runner.unload()
-            } catch (e: Exception) {
-                Log.e("VLMViewModel", "Error unloading model", e)
-            }
-        }
-    }
-}
-```
-
-`LlamaVlm` is a small wrapper in the example (`LlamaVlm.kt` and `app/src/main/cpp/vlm_jni.cpp`). It loads the model and its `mmproj` file with llama.cpp's `mtmd` library, applies the chat template, and streams the generated text as a `Flow<String>`. It also sets the recommended sampling parameters for LFM2.5-VL-1.6B (`temperature=0.1`, `min_p=0.15`, `repeat_penalty=1.05`).
-
-**Resource cleanup best practices:**
-- Always unload models in `onCleared()` to prevent memory leaks
-- Never use `runBlocking` in `onCleared()` - it causes ANRs
-- Use async cleanup with `CoroutineScope(Dispatchers.IO).launch`
-- Catch exceptions to ensure cleanup doesn't crash the app
-
-### Coil Integration for Image Display
-
-Using Coil to efficiently display selected images:
-
-```kotlin
-@Composable
-fun ImageAnalysisDisplay(analysis: ImageAnalysis) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
-    ) {
-        // Display image with Coil
-        AsyncImage(
-            model = ImageRequest.Builder(LocalContext.current)
-                .data(analysis.imageUri)
-                .crossfade(true)
-                .build(),
-            contentDescription = "Selected image",
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(300.dp)
-                .clip(RoundedCornerShape(8.dp)),
-            contentScale = ContentScale.Crop
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Display AI-generated description
-        Card(
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                Text(
-                    text = "Analysis",
-                    style = MaterialTheme.typography.titleMedium
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = analysis.description,
-                    style = MaterialTheme.typography.bodyMedium
-                )
-            }
-        }
-    }
-}
-```
-
-### Interactive Q&A Mode
-
-Reuse the streaming pipeline above but parameterize the question. The image is JPEG-encoded and passed together with the user's question:
-
-```kotlin
-suspend fun askQuestionAboutImage(
-    runner: LlamaVlm,
-    bitmap: Bitmap,
-    question: String,
-): String {
-    val imageBytes = ByteArrayOutputStream().also {
-        bitmap.compress(Bitmap.CompressFormat.JPEG, 85, it)
-    }.toByteArray()
-
-    val builder = StringBuilder()
-    runner.generate(
-        systemPrompt = "You are a helpful multimodal assistant by Liquid AI.",
-        prompt = "Answer this question about the image: $question",
-        image = imageBytes,
-    ).collect { piece ->
-        builder.append(piece)
-    }
-    return builder.toString()
-}
-
-// Example usage (inside a coroutine):
-// val answer = askQuestionAboutImage(runner, bitmap, "What colors are prominent?")
-```
-
-### Memory Management
-
-Vision models require more memory. Free the runner when the activity goes to the background by calling `LlamaVlm.unload()`:
-
-```kotlin
-class VLMViewModel(application: Application) : AndroidViewModel(application) {
-    private var runner: LlamaVlm? = null
-
-    suspend fun releaseModel() = withContext(Dispatchers.Default) {
-        runner?.unload()
-        runner = null
-    }
-
-    suspend fun initializeModel() {
-        if (runner != null) return // already loaded — don't re-download
-        // ...same LlamaVlm(...).load(...) path as above; assign to runner
-    }
-}
-
-override fun onStop() {
-    super.onStop()
-    lifecycleScope.launch { viewModel.releaseModel() }
-}
-
-override fun onStart() {
-    super.onStart()
-    lifecycleScope.launch { viewModel.initializeModel() }
-}
-```
-
-`LlamaVlm.unload()` blocks while it frees native memory, so call it off the main thread.
-
-## Results
-
-The VLMExample demonstrates powerful image understanding capabilities:
-
-![VLMExample Screenshot](https://raw.githubusercontent.com/Liquid4All/cookbook/main/examples/VLMExample/docs/vlm_example.png)
-
-The interface shows:
-- Selected image displayed clearly with Coil
-- AI-generated analysis below the image
-- Smooth, responsive UI even with large images
-- Professional Material3 design
-
-**Example analysis output:**
-
-*Image: A sunset over a beach*
-```
-"The image shows a beautiful sunset scene at a beach. The sky displays
-vibrant orange and pink hues as the sun sets on the horizon. The ocean
-water reflects the warm colors of the sky. In the foreground, there are
-silhouettes of people walking along the shoreline. The overall mood is
-peaceful and serene."
-```
-
-All processing happens entirely on your Android device, ensuring complete privacy for your photos.
+A ViewModel retains the model across screen rotation. Native calls run in one queue per model instance. Cancellation stops the token loop before cleanup releases the model. A failed request displays an error and allows retry.
 
 ## Further improvements
 
-Here are some ways to extend this example:
-
-- **Camera integration** - Take photos directly in-app for immediate analysis
-- **Multi-image support** - Compare and analyze multiple images simultaneously
-- **Batch processing** - Process entire photo albums with progress tracking
-- **Custom prompts** - Let users enter their own questions about images
-- **Object detection** - Highlight detected objects with bounding boxes
-- **Text extraction** - Pull out text from images (receipts, documents, signs)
-- **Image editing suggestions** - Recommend crops, filters, or enhancements
-- **Accessibility features** - Auto-generate alt text for images
-- **Favorites and history** - Save analyzed images with their descriptions
-- **Export functionality** - Share analysis results or create reports
-- **Comparison mode** - Analyze differences between two images
-- **Real-time video analysis** - Process camera frames in real-time
-- **Multilingual descriptions** - Generate descriptions in different languages
-- **Style transfer guidance** - Describe artistic styles and suggest transformations
-
-## Need help?
-
-<CardGroup cols={1}>
-
-<Card title="Join our Discord" icon="discord" iconType="brands" href="https://discord.gg/DFU3WQeaYD">
-  Connect with the community and ask questions about this example.
-</Card>
-
-</CardGroup>
+Add a gallery picker or a question field by passing the selected image bytes and question to `NativeVisionModel.generate()`. These controls are extensions to the example, not existing app features.
