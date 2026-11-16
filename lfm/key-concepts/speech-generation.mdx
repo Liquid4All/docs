@@ -1,0 +1,351 @@
+---
+title: "Speech Generation"
+description: "Generate speech, carry on spoken conversations, and answer questions in text, speech, or both."
+---
+
+Speech-capable models can answer in text, speech, or interleaved text and speech. This guide covers text-to-speech, spoken chat, and spoken answers about images.
+
+Use an audio model for speech-only tasks. Use an omni model to [answer questions about a photo in speech](#answer-in-speech).
+
+The examples generate speech as a 24 kHz waveform. For speech input, see [Audio Capabilities](/lfm/key-concepts/audio-capabilities).
+
+## Setup
+
+Load the model and processor as shown in [Audio Capabilities](/lfm/key-concepts/audio-capabilities#setup). Where the code differs between audio and omni models, pick a model type in the tabs. The choice applies to every example on the page.
+
+Speech output uses each model's recommended sampling parameters. They are also the defaults in the model's `generation_config.json`; the examples pass them explicitly to keep the results reproducible. Check the model page for the values.
+
+## Choose the output modality
+
+<Tabs>
+<Tab title="LFM3-Audio">
+
+Generation starts in text mode and switches to speech or interleaved output when the model emits an output-mode token. To select a mode from the start, prefill the assistant turn: add an assistant message with one of the prefixes below and pass `continue_final_message=True` to `apply_chat_template()`.
+
+| Assistant prefill | Behavior |
+|---|---|
+| None | Start in text mode. The model can still emit a token that switches modes. |
+| `<\|audio_start\|>` | Start speech-only output, for example text-to-speech, until an end-of-audio frame. |
+| `<\|mixed_start\|>` | Start interleaved text and speech, alternating blocks of text tokens and speech frames. |
+| `<think>` | Begin a thinking block. The answer follows the closing `</think>`. |
+| `<think></think>` | Supply an empty thinking block, so the answer starts immediately. |
+
+The thinking prefixes are for text-only answers. For those, also pass `suppress_mixed=True` and `suppress_audio_out=True` to `model.generate()`, so the model doesn't switch to speech.
+
+</Tab>
+<Tab title="LFM3-Omni">
+
+The model chooses its output modality itself, guided by the system prompt. Pass `generation_mode` to `model.generate()` to override that choice: `"text"`, `"audio"` (speech only), or `"interleaved"`. Use `"audio"` for reading text aloud. For open-ended answers, prefer `"interleaved"`.
+
+</Tab>
+</Tabs>
+
+## Text-to-speech
+
+Use the system prompt `Perform TTS in <language> using a <female|male> voice.` For English, say `American English` or `British English`.
+
+Check the model page for supported languages and voices.
+
+This example speaks a sentence in American English:
+
+```python
+messages = [
+    {"role": "system", "content": "Perform TTS in American English using a female voice."},
+    {"role": "user", "content": "I made a little plan for today: go for a walk, find a new workout playlist, and try a new cake recipe."},
+]
+```
+
+<Tabs>
+<Tab title="LFM3-Audio">
+
+Prefill `<|audio_start|>`:
+
+```python
+# Apply chat template
+inputs = processor.apply_chat_template(
+    messages + [{"role": "assistant", "content": "<|audio_start|>"}],
+    continue_final_message=True,
+    tokenize=True,
+    return_dict=True,
+    return_tensors="pt",
+).to(model.device)
+
+torch.manual_seed(0)
+with torch.inference_mode():
+    outputs = model.generate(
+        **inputs,
+        max_new_tokens=512,
+        audio_temperature=1.0,
+        audio_top_k=128,
+        audio_repetition_penalty=1.1,
+        audio_repetition_window=4096,
+    )
+
+codes = outputs.audio_codes[:1, :, : outputs.audio_lengths[0]]
+with torch.inference_mode():
+    speech = codec.decode(codes).audio_values[0].float().cpu().numpy().squeeze()
+sf.write("tts_en.wav", speech, 24_000)
+```
+
+</Tab>
+<Tab title="LFM3-Omni">
+
+Pass `generation_mode="audio"`:
+
+```python
+# Apply chat template
+inputs = processor.apply_chat_template(
+    messages,
+    add_generation_prompt=True,
+    tokenize=True,
+    return_dict=True,
+    return_tensors="pt",
+).to(model.device)
+
+torch.manual_seed(0)
+with torch.inference_mode():
+    outputs = model.generate(
+        **inputs,
+        max_new_tokens=512,
+        generation_mode="audio",
+        audio_temperature=0.4,
+        audio_repetition_penalty=1.2,
+        audio_repetition_window=64,
+    )
+
+codes = outputs.audio_codes[:1, :, : outputs.audio_lengths[0]]
+with torch.inference_mode():
+    speech = codec.decode(codes).audio_values[0].float().cpu().numpy().squeeze()
+sf.write("tts_en.wav", speech, 24_000)
+```
+
+</Tab>
+</Tabs>
+
+To check the result, pass the file to the [speech recognition](/lfm/key-concepts/audio-capabilities#speech-recognition) example.
+
+## Spoken chat
+
+Use the system prompt `Respond with interleaved text and audio.` The model answers conversationally in text and speech at the same time, so speech can start playing before the full answer is written. Keep the system prompt exactly as shown, and give any further instructions in the user turn.
+
+This example first records a spoken question with text-to-speech, then asks it and saves the spoken reply to `reply.wav`:
+
+```python
+tts_messages = [
+    {"role": "system", "content": "Perform TTS in American English using a male voice."},
+    {"role": "user", "content": "I want to move more, but I have not found an activity I enjoy. How can I try a few options and build a small habit?"},
+]
+messages = [
+    {"role": "system", "content": "Respond with interleaved text and audio."},
+    {"role": "user", "content": [{"type": "audio", "audio": "question.wav"}]},
+]
+```
+
+<Tabs>
+<Tab title="LFM3-Audio">
+
+Record the question:
+
+```python
+# Apply chat template
+inputs = processor.apply_chat_template(
+    tts_messages + [{"role": "assistant", "content": "<|audio_start|>"}],
+    continue_final_message=True,
+    tokenize=True,
+    return_dict=True,
+    return_tensors="pt",
+).to(model.device)
+
+torch.manual_seed(0)
+with torch.inference_mode():
+    outputs = model.generate(
+        **inputs,
+        max_new_tokens=512,
+        audio_temperature=1.0,
+        audio_top_k=128,
+        audio_repetition_penalty=1.1,
+        audio_repetition_window=4096,
+    )
+
+codes = outputs.audio_codes[:1, :, : outputs.audio_lengths[0]]
+with torch.inference_mode():
+    speech = codec.decode(codes).audio_values[0].float().cpu().numpy().squeeze()
+sf.write("question.wav", speech, 24_000)
+```
+
+Then ask it. Prefill `<|mixed_start|>`:
+
+```python
+# Apply chat template
+inputs = processor.apply_chat_template(
+    messages + [{"role": "assistant", "content": "<|mixed_start|>"}],
+    continue_final_message=True,
+    tokenize=True,
+    return_dict=True,
+    return_tensors="pt",
+).to(model.device)
+
+with torch.inference_mode():
+    outputs = model.generate(
+        **inputs,
+        max_new_tokens=1024,
+        audio_temperature=1.0,
+        audio_top_k=128,
+        audio_repetition_penalty=1.1,
+        audio_repetition_window=4096,
+    )
+
+reply = processor.decode(outputs.sequences[0, inputs["input_ids"].shape[1]:], skip_special_tokens=True)
+print("Text:", reply)
+
+codes = outputs.audio_codes[:1, :, : outputs.audio_lengths[0]]
+with torch.inference_mode():
+    speech = codec.decode(codes).audio_values[0].float().cpu().numpy().squeeze()
+sf.write("reply.wav", speech, 24_000)
+```
+
+**Output** (text part; the speech is saved to `reply.wav`)
+
+```text
+Text: Try picking three low‑commitment activities you like, like a short hike, a cooking class, or a language meetup, and schedule a 30‑minute trial each week. Keep a simple log of what you did and how you felt, then after a month notice which one feels most rewarding and keep it. Does that sound doable for you?
+```
+
+
+</Tab>
+<Tab title="LFM3-Omni">
+
+Record the question:
+
+```python
+# Apply chat template
+inputs = processor.apply_chat_template(
+    tts_messages,
+    add_generation_prompt=True,
+    tokenize=True,
+    return_dict=True,
+    return_tensors="pt",
+).to(model.device)
+
+torch.manual_seed(0)
+with torch.inference_mode():
+    outputs = model.generate(
+        **inputs,
+        max_new_tokens=512,
+        generation_mode="audio",
+        audio_temperature=0.4,
+        audio_repetition_penalty=1.2,
+        audio_repetition_window=64,
+    )
+
+codes = outputs.audio_codes[:1, :, : outputs.audio_lengths[0]]
+with torch.inference_mode():
+    speech = codec.decode(codes).audio_values[0].float().cpu().numpy().squeeze()
+sf.write("question.wav", speech, 24_000)
+```
+
+Then ask it. Pass `generation_mode="interleaved"`:
+
+```python
+# Apply chat template
+inputs = processor.apply_chat_template(
+    messages,
+    add_generation_prompt=True,
+    tokenize=True,
+    return_dict=True,
+    return_tensors="pt",
+).to(model.device)
+
+with torch.inference_mode():
+    outputs = model.generate(
+        **inputs,
+        max_new_tokens=1024,
+        generation_mode="interleaved",
+        audio_temperature=0.4,
+        audio_repetition_penalty=1.2,
+        audio_repetition_window=64,
+    )
+
+reply = processor.decode(outputs.sequences[0, inputs["input_ids"].shape[1]:], skip_special_tokens=True)
+print("Text:", reply)
+
+codes = outputs.audio_codes[:1, :, : outputs.audio_lengths[0]]
+with torch.inference_mode():
+    speech = codec.decode(codes).audio_values[0].float().cpu().numpy().squeeze()
+sf.write("reply.wav", speech, 24_000)
+```
+
+**Output**
+
+```text
+Text: Gotcha, trying a few different things is a great way to find what clicks. You could pick two or three activities that sound interesting, schedule a short trial session each week, and note how you feel afterward. Keep a simple log of what you did and what you enjoyed, then after a couple of weeks look for patterns and pick one to make a habit of. And remember, it’s normal for the first few tries not to feel excited, so stay curious and give yourself space to explore.
+```
+
+</Tab>
+</Tabs>
+
+## Answer in speech
+
+<Info>Spoken answers about images require an omni model with image input and speech output. Load it as shown in [Audio Capabilities](/lfm/key-concepts/audio-capabilities#setup).</Info>
+
+An omni model can answer a question about an image in speech. Add an output instruction after the task prompt, for example `Respond with interleaved text and audio.` This example asks in text about a sample photo:
+
+```python
+from transformers.image_utils import load_image
+
+load_image("https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/bee.jpg").save("bee.jpg")
+
+messages = [
+    {"role": "system", "content": "Answer questions about the provided image. Base every answer only on what can be seen. Respond with interleaved text and audio."},
+    {"role": "user", "content": [{"type": "image", "image": "bee.jpg"}, {"type": "text", "text": "Is this insect useful for the garden? Why?"}]},
+]
+
+# Apply chat template
+inputs = processor.apply_chat_template(
+    messages,
+    add_generation_prompt=True,
+    tokenize=True,
+    return_dict=True,
+    return_tensors="pt",
+).to(model.device)
+
+with torch.inference_mode():
+    outputs = model.generate(
+        **inputs,
+        max_new_tokens=512,
+        audio_temperature=0.4,
+        audio_repetition_penalty=1.2,
+        audio_repetition_window=64,
+    )
+
+answer = processor.decode(outputs.sequences[0, inputs["input_ids"].shape[1]:], skip_special_tokens=True)
+print(answer)
+
+codes = outputs.audio_codes[:1, :, : outputs.audio_lengths[0]]
+with torch.inference_mode():
+    speech = codec.decode(codes).audio_values[0].float().cpu().numpy().squeeze()
+sf.write("bee_answer.wav", speech, 24_000)
+```
+
+**Output** (text part; the speech is saved to `bee_answer.wav`)
+
+```text
+Yes, this insect is useful for the garden because it is a bee, and bees pollinate flowers, helping plants reproduce and grow. They are essential for the health and productivity of many garden plants, including the cosmos and red flowers in the image.
+```
+
+## Stream speech
+
+For streaming applications, `model.generate()` accepts `streamer` for text tokens and `audio_streamer` for speech frames. The codec decodes those frames incrementally, so speech can be played as it is generated.
+
+## FAQ
+
+**Which model should I use?**
+
+Choose an audio model for speech-only workloads or an omni model when the spoken answer is about an image or a video. See the [model library](/lfm/models/complete-library) for current options.
+
+**What audio format is the speech output?**
+
+A 24 kHz mono waveform. The examples save it as WAV with `soundfile`.
+
+**Does the model reason before speaking?**
+
+The examples on this page do not use thinking for speech output. Check [Thinking](/lfm/key-concepts/thinking) for reasoning support and controls when requesting a text answer.

@@ -175,6 +175,7 @@ active:
   - /lfm/key-concepts/models
   - /lfm/key-concepts/omni-capabilities
   - /lfm/key-concepts/speculative-decoding
+  - /lfm/key-concepts/speech-generation
   - /lfm/key-concepts/text-generation-and-prompting
   - /lfm/key-concepts/thinking
   - /lfm/key-concepts/tool-search
