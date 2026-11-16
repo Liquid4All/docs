@@ -19,6 +19,10 @@ Migrate when the LLM's output is a **bounded decision**, meaning the set of poss
 | [Scoring](#scoring) | Prompt that returns a number or rating | [Score](/lfm/models/d1#score) |
 | [Reranking](#reranking) | LLM scores or filters search results | [Noul](/lfm/models/d1#noul) or [Score](/lfm/models/d1#score) |
 | [Multiple decisions](#multi-question) | Several classification calls on the same input | Any combination, in one call |
+| Tagging | Prompt that returns a list of labels | [Choice with `multiple`](/lfm/models/d1#pick-several-options) |
+| Field extraction | Prompt or JSON schema that copies values out of a document | [Text, Number, Date](/lfm/models/d1#read-a-value) |
+| Redaction | Prompt that lists the personal data in a text | [Spans](/lfm/models/d1#find-every-passage) |
+| Grounding and counting | Vision LLM that returns coordinates or a count | [Box, Boxes](/lfm/models/d1#locate-objects) or [Number with `range`](/lfm/models/d1#estimate-a-number) |
 
 Keep your LLM when the task requires **generating new content**:
 
@@ -27,7 +31,7 @@ Keep your LLM when the task requires **generating new content**:
 - **Multi-turn conversation**: chatbots and copilots
 - **Complex reasoning**: multi-step logic, math, planning
 
-If the answer is one of N known options, use a decision model. If the answer is a new string the model must compose, use an LLM.
+If the answer is one of N known options, or a value already written in the input, use a decision model. If the answer is a new string the model must compose, use an LLM. The extraction and grounding questions need [d1.2 or d1.2-ultra](/lfm/models/d1#typed-answers).
 
 | | LLM | Decision model (d1) |
 |---|---|---|
@@ -75,7 +79,7 @@ Use the Liquid d1 skill to inspect this project for generated-text calls that ar
 
     client = TypeSafeClient(
         api_key=os.environ["LIQUID_API_KEY"],
-        base_url="https://api.liquid.ai",
+        base_url="https://api.liquid.ai/decisions",
     )
     ```
   </Tab>
@@ -122,7 +126,7 @@ The standard LLM pattern for classification uses a JSON schema or enum constrain
     inquiry = "I was charged twice for my subscription last month."
 
     result = client.system_one(
-        model="d1.1",
+        model="d1.2",
         state=inquiry,
         questions={
             "department": Choice(
@@ -194,7 +198,7 @@ A common pattern uses a small, cheap LLM to classify the complexity of an incomi
     user_message = "What's the weather like today?"
 
     result = client.system_one(
-        model="d1.1",
+        model="d1.2",
         state=user_message,
         questions={
             "route": Choice(
@@ -260,7 +264,7 @@ The typical LLM approach asks whether content is safe, either with structured ou
     user_message = "You're an absolute idiot and I hope your company goes bankrupt."
 
     result = client.system_one(
-        model="d1.1",
+        model="d1.2",
         state=user_message,
         questions={
             "is_harmful": Noul(
@@ -337,7 +341,7 @@ The LLM approach for scoring asks the model to rate something on a scale, typica
     )
 
     result = client.system_one(
-        model="d1.1",
+        model="d1.2",
         state=ticket_text,
         questions={
             "urgency": Score(
@@ -424,7 +428,7 @@ In retrieval-augmented generation (RAG) pipelines, a common pattern uses an LLM 
     scored_chunks = []
     for chunk in chunks:
         result = client.system_one(
-            model="d1.1",
+            model="d1.2",
             state=f"Query: {query}\n\nPassage: {chunk}",
             questions={
                 "relevant": Noul(
@@ -518,7 +522,7 @@ LLM pipelines often chain multiple classification calls sequentially, one per de
     )
 
     result = client.system_one(
-        model="d1.1",
+        model="d1.2",
         state=message,
         questions={
             "intent": Choice(

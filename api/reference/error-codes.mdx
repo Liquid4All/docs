@@ -22,7 +22,7 @@ Errors use OpenAI's shape, so the official SDKs raise their usual exceptions and
 
 | Status | `type` | Cause | What to do |
 | ------ | ------ | ----- | ---------- |
-| `400` | `invalid_request_error` | The request body is invalid, for example a missing field, an unsupported parameter such as `top_p`, or an input type the model doesn't take. | Fix the field named in `param`. |
+| `400` | `invalid_request_error` | The request body is invalid, for example a missing field, an unsupported parameter, or an input type the model doesn't take. | Fix the field named in `param`. |
 | `401` | `authentication_error` | The API key is missing, invalid, or revoked (code `invalid_api_key`). | Send a valid key as `Authorization: Bearer $LIQUID_API_KEY`. |
 | `402` | `insufficient_quota` | Your organization is not being served: it has no credit left and no card on file, or a payment failed (code `insufficient_quota`). | Add a card or settle the balance on the [Billing](https://console.liquid.ai/dashboard/billing) page. |
 | `403` | `permission_error` | Your organization can't use this feature, for example the Batch API before it is enabled (code `batch_api_not_enabled`). | [Contact us](https://www.liquid.ai/connect) to request access. |

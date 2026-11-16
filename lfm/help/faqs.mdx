@@ -6,11 +6,11 @@ description: "Frequently asked questions about LFM models and deployment."
 ## General Questions
 
 <Accordion title="What are LFM models?">
-LFM (Liquid Foundation Models) are a family of efficient models built on a new hybrid architecture designed for fast training and inference. Open-weight models range from 230M to 24B parameters ([LFM2.5-24B-A2B](/lfm/models/lfm25-24b-a2b) is the largest) and support text, vision, and audio. The family also includes embedding, encoder, and [decision models](/lfm/models/decision-models).
+LFM (Liquid Foundation Models) are Liquid AI's efficient models for local and hosted deployment. [LFM3](/lfm/models/complete-library) is the latest generation, with text, vision, audio, omni, and decision models. The library also includes smaller and specialized LFM2.5 and LFM2 models, including embedding and encoder models. Open-weight models range from 230M to 24B parameters.
 </Accordion>
 
 <Accordion title="What context length do LFM models support?">
-Most LFM text, vision, and audio models support a 32K token context length. [LFM2.5-8B-A1B](/lfm/models/lfm25-8b-a1b) supports 128K tokens, and [LFM2.5-2.6B](/lfm/models/lfm25-2.6b) and [LFM2.5-24B-A2B](/lfm/models/lfm25-24b-a2b) support 131K. Encoder-based models have shorter limits (8K for the LFM2.5 encoders, 16K for d1-omni-600M). Each model page lists its exact limit.
+[LFM3-1.7B](/lfm/models/lfm3-1.7b) supports 256K tokens, and [LFM3-VL-2B](/lfm/models/lfm3-vl-2b) supports 128K. Other limits vary by model: many LFM text, vision, and audio models support 32K, [LFM2.5-8B-A1B](/lfm/models/lfm25-8b-a1b) supports 128K, and [LFM2.5-24B-A2B](/lfm/models/lfm25-24b-a2b) supports 131K. Encoder-based models have shorter limits (8K for the LFM2.5 encoders, 16K for d1-omni-600M). Each model page lists its exact limit; hosted API limits can differ from the open-weight checkpoints.
 </Accordion>
 
 <Accordion title="Which inference frameworks are supported?">
@@ -26,18 +26,23 @@ LFM models are compatible with the frameworks below. Support varies by model (fo
 ## Model Selection
 
 <Accordion title="Which model should I use for my use case?">
-- **General chat/instruction following**: LFM2.5-1.2B-Instruct (recommended)
-- **Vision tasks**: LFM2.5-VL-1.6B
-- **Audio/speech**: LFM2.5-Audio-1.5B
-- **Extraction from images**: LFM2.5-VL-1.6B-Extract or LFM2.5-VL-450M-Extract
-- **Extraction from text**: LFM2.5-1.2B-Instruct, LFM2.5-350M, or LFM2.5-230M
-- **Classification, routing, and scoring**: [decision models](/lfm/models/decision-models) such as d1-3B
-- **Edge deployment**: LFM2.5-230M or LFM2.5-350M for the smallest footprint
-- **Highest performance**: LFM2.5-24B-A2B (MoE architecture, 131K context)
+- **General chat/instruction following**: [LFM3-1.7B](/lfm/models/lfm3-1.7b)
+- **Vision tasks**: [LFM3-VL-2B](/lfm/models/lfm3-vl-2b)
+- **Audio/speech**: [LFM3-Audio-2B](/lfm/models/lfm3-audio-2b)
+- **Combined vision and audio**: [LFM3-Omni-2B](/lfm/models/lfm3-omni-2b)
+- **Extraction from text**: [LFM3-1.7B](/lfm/models/lfm3-1.7b) with structured output
+- **Classification, routing, and scoring**: [decision models](/lfm/models/decision-models) such as [d1-2B](/lfm/models/d1-2b)
+- **Specialized extraction from images**: [LFM2.5-VL-1.6B-Extract](/lfm/models/lfm25-vl-1.6b-extract) or [LFM2.5-VL-450M-Extract](/lfm/models/lfm25-vl-450m-extract)
+- **Smallest footprint**: [LFM2.5-230M](/lfm/models/lfm25-230m) or [LFM2.5-350M](/lfm/models/lfm25-350m) for tight memory budgets
+- **Larger reasoning model**: [LFM2.5-24B-A2B](/lfm/models/lfm25-24b-a2b) (MoE architecture, 131K context); evaluate it on your task when a larger model fits your hardware
 </Accordion>
 
-<Accordion title="What is the difference between LFM2 and LFM2.5?">
-LFM2.5 models are updated versions with improved training that deliver higher performance on the same hybrid architecture. Some LFM2.5 models also extend the context window or vocabulary. We recommend using LFM2.5 variants when available.
+<Accordion title="What is the difference between LFM versions?">
+- **LFM3** is the latest generation. Its tri-hybrid architecture combines gated short convolutions, sliding-window attention, and global attention. The family includes text, vision, audio, omni, and decision models, with updated chat templates and tool-call formats.
+- **LFM2.5** builds on the LFM2 architecture with improved training. Some models extend the context window or vocabulary. It remains useful for smaller footprints, larger MoE models, and specialized tasks.
+- **LFM2** is the earlier generation. Some specialized models remain useful; deprecated models and their replacements are listed on the [Deprecations](/lfm/help/deprecations) page.
+
+Start with LFM3 for general use, then consider an older model when its size, specialization, or runtime support better fits your needs. Use the selected model's own [chat template](/lfm/key-concepts/chat-template), [tool-call format](/lfm/key-concepts/tool-use), and generation settings.
 </Accordion>
 
 <Accordion title="What are Liquid Nanos?">

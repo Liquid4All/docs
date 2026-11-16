@@ -3,8 +3,6 @@ title: "LFM3-1.7B"
 description: "1.7B text model for local agents and specialized applications, with a 256K context window and native tool calling"
 ---
 
-import { TextVllm } from "/snippets/quickstart/text-vllm.mdx";
-import { TextSglang } from "/snippets/quickstart/text-sglang.mdx";
 import { TextLlamacpp } from "/snippets/quickstart/text-llamacpp.mdx";
 
 <a href="/lfm/models/text-models" className="back-button">← Back to Text Models</a>
@@ -102,10 +100,29 @@ LFM3-1.7B is designed for local agents, tool calling, structured outputs, and do
     ```
   </Tab>
   <Tab title="vLLM">
-    <TextVllm modelId="LiquidAI/LFM3-1.7B" samplingParams="temperature=0.1, top_k=50, repetition_penalty=1.1, " maxTokens="8192"></TextVllm>
+    vLLM 0.33.0 cannot load this checkpoint: its Transformers backend does not support LFM3's convolution layers. Use the Transformers, SGLang, or llama.cpp examples on this page.
   </Tab>
   <Tab title="SGLang">
-    <TextSglang modelId="LiquidAI/LFM3-1.7B" samplingParams={'temperature=0.1,\n    extra_body={"top_k": 50, "repetition_penalty": 1.1},'}></TextSglang>
+    Requires a build containing [LFM3 support](https://github.com/sgl-project/sglang/pull/46858), verified at commit `47361c57`. SGLang 0.5.23 does not run this example correctly. The launch command needs `--trust-remote-code` to load the checkpoint's configuration and tokenizer.
+
+    ```bash
+    sglang serve --model-path LiquidAI/LFM3-1.7B \
+      --trust-remote-code --reasoning-parser qwen3 --port 30000
+    ```
+
+    ```python
+    from openai import OpenAI
+
+    client = OpenAI(base_url="http://localhost:30000/v1", api_key="EMPTY")
+    response = client.chat.completions.create(
+        model="LiquidAI/LFM3-1.7B",
+        messages=[{"role": "user", "content": "What is machine learning?"}],
+        temperature=0.1,
+        max_tokens=16384,
+        extra_body={"top_k": 50, "repetition_penalty": 1.1},
+    )
+    print(response.choices[0].message.content)
+    ```
   </Tab>
   <Tab title="zml/llmd">
     Run LFM3 with zml/llmd on apple metal, NVIDIA CUDA, AMD ROCm, Intel oneAPI, or Google TPU. On Apple Silicon:
@@ -142,7 +159,7 @@ For local agent setup, see the [Agent Harnesses guide](/examples/agent-harnesses
 
 ## Reasoning
 
-Reasoning is enabled by default. Set `enable_thinking=False` in `apply_chat_template()` for direct answers. Reasoning from turns before the latest user message is removed unless `preserve_thinking=True`. See [Chat Template](/lfm/key-concepts/chat-template) and [Tool Use](/lfm/key-concepts/tool-use) for the message format.
+Reasoning is enabled by default. You can set `enable_thinking=False` for direct answers, but the model may still emit reasoning or give inconsistent answers, particularly for reasoning-heavy tasks. We recommend leaving thinking on. Leave room for the reasoning in your token limit. See [Thinking](/lfm/key-concepts/thinking) for guidance on how to use it, and [Chat Template](/lfm/key-concepts/chat-template) and [Tool Use](/lfm/key-concepts/tool-use) for the message format.
 
 For math and science, use `temperature=1.0`, `top_p=0.95`, `top_k=20`, and `repetition_penalty=1.0` instead of the general generation parameters.
 

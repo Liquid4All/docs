@@ -1,10 +1,10 @@
 ---
 title: "Decision Models"
-description: "Purpose-built models for structured decisions: classification, routing, and scoring in a single call with zero generated tokens"
+description: "Purpose-built models for structured decisions: classification, routing, scoring, extraction, and grounding in a single call with zero generated tokens"
 icon: "scale-balanced"
 ---
 
-Decision models are a new class of AI model purpose-built for structured decisions. Instead of generating text token by token, a decision model evaluates a situation and returns calibrated probabilities across a fixed set of outcomes in a single call with zero generated tokens.
+Decision models are a new class of AI model purpose-built for structured decisions. Instead of generating text token by token, a decision model evaluates a situation and returns calibrated probabilities across a fixed set of outcomes in a single call with zero generated tokens. The latest models also read values from the input, find passages, and locate objects in pictures, in the same single pass.
 
 <div className="use-cases" style={{marginTop: '-0.5rem'}}>
 <CardGroup cols={2}>
@@ -22,7 +22,7 @@ Decision models are a new class of AI model purpose-built for structured decisio
 </Card>
 
 <Card title="Multimodal" icon="images">
-  Visual inspection, image classification, voice-command routing.
+  Visual inspection, document reading, call routing, voice commands.
 </Card>
 
 </CardGroup>
@@ -33,8 +33,20 @@ Decision models are a new class of AI model purpose-built for structured decisio
 <div className="model-cards">
 <CardGroup cols={2}>
 
+<Card title="d1.2-ultra" href="/lfm/models/d1#models">
+  Hosted <Badge shape="pill" color="purple">Most capable</Badge>
+
+  Omnimodal decision model (text + images + audio) with typed answers, via the Liquid API.
+</Card>
+
+<Card title="d1.2" href="/lfm/models/d1">
+  Hosted <Badge shape="pill" color="blue">API</Badge>
+
+  Faster omnimodal decision model (text + images + audio) with typed answers, via the Liquid API.
+</Card>
+
 <Card title="d1-2B" href="/lfm/models/d1-2b">
-  1.9B <Badge shape="pill" color="green">Recommended</Badge>
+  1.9B
 
   Multimodal decision model (text + images or video) with typed answers, built on LFM3-VL-2B.
 </Card>
@@ -51,18 +63,6 @@ Decision models are a new class of AI model purpose-built for structured decisio
   Multimodal decision model (text + images or audio) built on LFM2.5-Encoder-350M.
 </Card>
 
-<Card title="d1.1" href="/lfm/models/d1">
-  Hosted <Badge shape="pill" color="blue">API</Badge>
-
-  Hosted decision model with Python and TypeScript SDKs via the Liquid API.
-</Card>
-
-<Card title="d1-ultra" href="/lfm/models/d1#models">
-  Hosted <Badge shape="pill" color="purple">Most capable</Badge>
-
-  Multimodal decision model (text + images) via the Liquid API, built on a larger open-weight model.
-</Card>
-
 </CardGroup>
 </div>
 
@@ -70,29 +70,34 @@ Decision models are a new class of AI model purpose-built for structured decisio
 
 | Model | Access | Inputs | Use it when |
 |---|---|---|---|
-| [d1-ultra](/lfm/models/d1#models) | Liquid API, OpenRouter, Vercel AI Gateway | Text, images | You need the most capable decision model, for harder decisions. |
-| [d1.1](/lfm/models/d1) | Liquid API | Text, images | You want a hosted model at a lower price than d1-ultra. |
-| [d1-2B](/lfm/models/d1-2b) | Open weights (1.9B) | Text, images, video | You want to run locally or on your own hardware, or need typed answers (values, boxes, estimates). |
+| [d1.2-ultra](/lfm/models/d1#models) | Liquid API | Text, images, audio | You need the most capable decision model, for harder decisions. |
+| [d1.2](/lfm/models/d1) | Liquid API | Text, images, audio | You want a hosted model that is faster and less than half the price of d1.2-ultra. |
+| [d1-2B](/lfm/models/d1-2b) | Open weights (1.9B) | Text, images, video | You want to run locally or on your own hardware. |
 | [d1-omni-2B](/lfm/models/d1-omni-2b) | Open weights (2.2B) | Text, images, video, audio | Your inputs include audio, such as calls, voice messages, or spoken questions. |
 | [d1-omni-600M](/lfm/models/d1-omni-600m) | Open weights (587M) | Text with images or audio | You need the smallest model, or audio input (up to 30 s of speech). |
 
 ## Pricing
 
-The hosted models are billed on input tokens only. Output is free because decision models do not generate tokens. Each question is billed as its own prompt, including its text and all images. See [Image Token Usage](/lfm/models/d1#image-token-usage) for how images are counted.
+The hosted models are billed on input tokens only: $0.02 per million for d1.2 and $0.042 per million for d1.2-ultra. Output is free because decision models do not generate tokens. A request is billed its state, images, and audio once, and each question adds its own tokens (its instructions, options, and answer slots). See [Pricing](/lfm/models/d1#pricing) for how images and audio are counted.
 
-The models are available through the [Liquid Console](https://console.liquid.ai). d1-ultra and the earlier d1 model are also on [OpenRouter](https://openrouter.ai/liquid/d1) and [Vercel AI Gateway](https://vercel.com/ai-gateway/models/d1). See the [Liquid AI pricing page](https://www.liquid.ai/pricing) for current prices and available credits.
+The models are available through the [Liquid Console](https://console.liquid.ai). See the [Liquid AI pricing page](https://www.liquid.ai/pricing) for current prices and available credits. `d1.1`, `d1-ultra`, and the earlier `d1` are [deprecated](/lfm/help/deprecations#deprecated-api-models).
 
 d1-2B, d1-omni-2B, and d1-omni-600M are open-weight models under the [LFM Open License](/lfm/help/model-license) and free to run on your own hardware.
 
 ## Primitives
 
-Every question you ask a decision model uses one of three core types:
+Every question you ask a decision model uses one of three core types, or one of the [typed answers](#typed-answers):
 
 | If the answer is... | Use | Example |
 |---|---|---|
 | Pick one from a set of unordered categories | **Choice** | Which department handles this ticket? |
 | Rate something along an ordered scale with defined levels | **Score** | How severe is this bug? |
 | Yes or no, where the probability itself is useful | **Noul** | Does this message contain personal data? |
+| Every option that applies | **Choice** with `multiple` | Which topics does this message raise? |
+| A value written in the input | **Text**, **Number**, **Date** | How much is due on this invoice? |
+| Every passage of a kind in a text | **Spans** | Where is the personal data in this note? |
+| Where something is in a picture | **Box**, **Boxes** | Where is the signature on this form? |
+| A quantity, with a likely range | **Number** with `range` | How many people are in this photo? |
 
 - **Noul**: A yes/no question that returns a probability between 0 and 1. "Is this message spam?" might return `0.92`.
 - **Choice**: A pick-one-from-many question that returns a probability distribution over named options.
@@ -100,7 +105,7 @@ Every question you ask a decision model uses one of three core types:
 
 ### Typed Answers
 
-[d1-2B](/lfm/models/d1-2b) and [d1-omni-2B](/lfm/models/d1-omni-2b) add typed answers on top of the three core types. Every question has a `type` and `instructions`, and every answer repeats its `type`.
+[d1.2](/lfm/models/d1#typed-answers), [d1.2-ultra](/lfm/models/d1#typed-answers), [d1-2B](/lfm/models/d1-2b), and [d1-omni-2B](/lfm/models/d1-omni-2b) add typed answers on top of the three core types. Every question has a `type` and `instructions`, and every answer repeats its `type`. The table below uses the open-weight models' Python syntax (`True`, `None`). On the Liquid API, the same fields are JSON (`true`, `null`). See [Typed Answers](/lfm/models/d1#typed-answers) for API examples.
 
 | Type | Question fields | Answer fields |
 |---|---|---|
@@ -110,15 +115,16 @@ Every question you ask a decision model uses one of three core types:
 | `date` | None | `date` (ISO 8601), `text` (the span as written), `span`, `found` |
 | `number` with `range` | `range`: `[low, high]`. `step` (optional): the spacing of the values, which must divide `high - low`. `unit` (optional) | `number` (the median), `interval` (`[p10, p90]`), `unit` |
 | `box` | None | `box` (`top`, `bottom`, `left`, `right` as fractions of the picture), `found`, `confidence` |
-| `boxes` | `max` (optional): the most instances to read, from 1 to 16 (the default) | `boxes` (each with its `box`, `found`, and `confidence`, in reading order), `count`, `at_least` |
+| `boxes` | `max` (optional): the most instances to read, from 1 to 16 (the default). From 1 to 64 on the Liquid API | `boxes` (each with its `box`, `found`, and `confidence`, ordered by left edge, then top), `count`, `at_least`, and on the Liquid API `presence` |
+| `spans` (Liquid API only) | `max` (optional): the most passages to read, from 1 to 64 (16 by default) | `spans` (each with its `text`, `span`, and `found`), `count`, `at_least`, `presence` |
 
 - **Missing values:** a value or a box is missing when `found` is under 0.5. Its value, `text`, and `span` are then `None`. For `boxes`, instances under 0.5 are left out.
 - **Values are read, not converted:** `number` and `date` are parsed from the span. For example, `4 %` reads as `4` with the unit `%`. A value that is found but can't be parsed keeps its span, and the value is `None`.
-- **JSON states:** when the state is JSON, a found value also has a `path`, the RFC 6901 pointer to it.
+- **JSON states:** a value found in a JSON state also has a `path`, the RFC 6901 pointer to it. On the Liquid API, send the state as a JSON object to get it.
 - **Estimates:** the model reads an estimate on at most 128 values between `low` and `high`. Estimates have no `found`. They are reliable on counts and scores, less so on free quantities.
 - **`at_least`:** `True` when every instance the model read was present, so the picture may hold more than `count`.
-- **Boxes need one picture:** a request with a `box` or `boxes` question must have exactly one picture in `media`.
-- **Runtimes:** typed answers run in Transformers and mlx-vlm. llama.cpp supports Noul, Choice, and Score only.
+- **Boxes need one picture:** a request with a `box` or `boxes` question must have exactly one picture (in `media` for the open-weight models, in `images` on the Liquid API).
+- **Runtimes:** typed answers run on the Liquid API, Transformers, and mlx-vlm. llama.cpp supports Noul, Choice, and Score only.
 
 Calibrate any decision threshold on data from your own use.
 
@@ -126,7 +132,7 @@ Calibrate any decision threshold on data from your own use.
 
 Decision models are a good fit when the answer is a structured decision: classification, categorization, routing (tickets, emails, requests), scoring, triage, content moderation, guardrails and safety checks, LLM-as-judge replacement, agent tool-call approval, and model routing or cascades.
 
-With image input, the same primitives support visual inspection, image classification, and decisions based on screenshots. With audio (d1-omni-2B and d1-omni-600M), they support voice-command routing and spoken-intent detection.
+With image input, the same primitives support visual inspection, image classification, and decisions based on screenshots. With audio (d1.2, d1.2-ultra, d1-omni-2B, and d1-omni-600M), they support call routing, voice-command routing, and spoken-intent detection. With typed answers, they also read values from documents, find personal data to redact, and locate objects in pictures.
 
 Use a language model instead for free-form text generation, creative writing, multi-turn conversation, complex multi-step reasoning, open-ended Q&A, summarization, and code generation.
 
@@ -147,6 +153,4 @@ To move existing LLM calls to a decision model, see the [Decision Model Guide](/
 <Panel>
   - [Liquid Console](https://console.liquid.ai)
   - [Pricing](https://www.liquid.ai/pricing)
-  - OpenRouter: [d1](https://openrouter.ai/liquid/d1), [d1-ultra](https://openrouter.ai/liquid/d1-ultra)
-  - Vercel AI Gateway: [d1](https://vercel.com/ai-gateway/models/d1), [d1-ultra](https://vercel.com/ai-gateway/models/d1-ultra)
 </Panel>
