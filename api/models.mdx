@@ -23,8 +23,10 @@ Call these through the [decisions endpoint](/api/guides/decisions). They answer 
 
 | Model | Input | Context window | Best for |
 | ----- | ----- | -------------- | -------- |
-| `d1-ultra` | Text, images | 32,768 | The most capable decision model, for harder decisions. |
-| `d1.1` | Text, images | 65,536 | The default decision model. |
+| `d1.2-ultra` | Text, images, audio | 65,536 | The most capable decision model, for harder decisions. |
+| `d1.2` | Text, images, audio | 65,536 | The default decision model: faster, at less than half the price. |
+
+`d1.1`, `d1-ultra`, and `d1` are deprecated: use `d1.2` or `d1.2-ultra` instead. See [Deprecations](/lfm/help/deprecations#deprecated-api-models).
 
 ## Open-weight models
 
