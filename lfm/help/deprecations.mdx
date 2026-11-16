@@ -189,6 +189,16 @@ Deprecated models remain available for download on Hugging Face, but they are no
   </tbody>
 </table>
 
+## Deprecated API Models
+
+These hosted decision models are still served on the Liquid API, but they are no longer updated and don't answer the new question types or take audio. To migrate, change the `model` field. The request and response format is unchanged.
+
+| Deprecated model | Recommended replacement |
+|---|---|
+| `d1-ultra` | [`d1.2-ultra`](/lfm/models/d1#models) |
+| `d1.1` | [`d1.2`](/lfm/models/d1#models) |
+| `d1` | [`d1.2`](/lfm/models/d1#models) |
+
 ## Deprecated SDKs
 
 | Deprecated | Recommended replacement | Migration guide |
