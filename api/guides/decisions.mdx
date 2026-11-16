@@ -1,9 +1,9 @@
 ---
 title: "Decisions"
-description: "Classify, route, and score text and images with calibrated probabilities from Liquid decision models, all in a single request."
+description: "Classify, route, score, and extract from text, images, and audio with calibrated probabilities from Liquid decision models, all in a single request."
 ---
 
-Decision models answer typed questions about a state with calibrated probabilities instead of generated text. One request can ask several questions, and the model answers them all in a single forward pass with no generated tokens. Use them for classification, routing, scoring, and yes/no gates.
+Decision models answer typed questions about a state with calibrated probabilities instead of generated text. One request can ask several questions, and the model answers them all in a single forward pass with no generated tokens. Use them for classification, routing, scoring, yes/no gates, and reading values, passages, and objects from documents and pictures.
 
 The endpoint, [`POST /decisions/v1/systemone`](/api/reference/decision-models/make-decisions), implements [TypeSafe's System One API](https://docs.typesafe.ai/api), so the official TypeSafe SDKs work with the base URL `https://api.liquid.ai/decisions`.
 
@@ -18,7 +18,7 @@ from typesafe_sdk import Choice, Noul, TypeSafeClient
 client = TypeSafeClient(
     api_key=os.environ["LIQUID_API_KEY"],
     base_url="https://api.liquid.ai/decisions",
-    model="d1.1",
+    model="d1.2",
 )
 
 response = client.system_one(
@@ -42,7 +42,7 @@ import { TypeSafeClient, choice, noul } from "@typesafe-ai/sdk";
 const client = new TypeSafeClient({
   apiKey: process.env.LIQUID_API_KEY,
   baseURL: "https://api.liquid.ai/decisions",
-  defaultModel: "d1.1",
+  defaultModel: "d1.2",
   compression: false, // the API doesn't accept zstd-compressed request bodies
 });
 
@@ -66,7 +66,7 @@ curl https://api.liquid.ai/decisions/v1/systemone \
   -H "Authorization: Bearer $LIQUID_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
-    "model": "d1.1",
+    "model": "d1.2",
     "state": "Help! My payouts have been failing for 3 days.",
     "questions": {
       "department": {
@@ -88,22 +88,29 @@ curl https://api.liquid.ai/decisions/v1/systemone \
 | Noul | One probability that the answer is yes. | Yes/no gates, moderation, flags. |
 | Choice | The most likely option, its confidence, and the full distribution over options. | Classification and routing. |
 | Score | The most likely level, its confidence, and the full distribution over ordered levels. | Rating and prioritization. |
+| Choice with `multiple` | Every option that applies, each with its own probability. | Tagging and multi-label classification. |
+| Text, Number, Date | A value read from the state, with the characters it came from, or "not found". | Extraction from documents, forms, and messages. |
+| Number with `range` | An estimate with a likely range. | Counts and quantities. |
+| Spans | Every passage of a kind in the state, with its position. | Redaction and highlighting. |
+| Box, Boxes | A box around one object in the image, or every instance with a count. | Grounding and counting in pictures. |
+
+The TypeSafe SDKs send Noul, Choice, and Score questions. Send the other question types, images, and audio over HTTP: see [Typed Answers](/lfm/models/d1#typed-answers).
 
 ## Models
 
 | Model | Input | Use it for |
 | ----- | ----- | ---------- |
-| `d1-ultra` | Text, images | Harder decisions. |
-| `d1.1` | Text, images | The default decision model. |
+| `d1.2-ultra` | Text, images, audio | Harder decisions. |
+| `d1.2` | Text, images, audio | The default decision model. |
 
-Both are billed on input tokens only; output is free. Requests may be up to 4.5 MB, and validation errors return `422`.
+Both are billed on input tokens only, and output is free. A request is billed its state, images, and audio once, and each question adds its own text. Requests may be up to 4.5 MB and 128 questions, and validation errors return `422`. `d1.1`, `d1-ultra`, and `d1` are [deprecated](/lfm/help/deprecations#deprecated-api-models).
 
 ## Learn more
 
 <CardGroup cols={2}>
 
 <Card title="d1" icon="scale-balanced" href="/lfm/models/d1">
-  Every question type in depth, image inputs, image token usage, and pricing.
+  Every question type in depth, typed answers, image and audio inputs, and pricing.
 </Card>
 
 <Card title="Decision models" icon="cubes" href="/lfm/models/decision-models">
