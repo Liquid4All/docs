@@ -5,7 +5,6 @@ description: "Multi-turn conversations on llama.cpp with streaming, the correct 
 
 Use llama.cpp v0.8.0 (b11960) or later for LFM3; the server examples were checked with b12359. Start with [LFM3-1.7B](/lfm/models/lfm3-1.7b) for new text applications. The API shape also applies to supported older GGUF models, with their own sampling and template settings.
 
-
 The quickest way to build a chat experience on llama.cpp is `llama-server`. It applies the model's chat template, exposes an OpenAI-compatible `/v1/chat/completions` endpoint, streams tokens over server-sent events, and reuses the KV cache across turns. Any OpenAI client library becomes your app-side API. For in-process use (mobile, or a desktop app that must not spawn a helper process) the same loop is a few dozen lines of the C API — see [Native C API](#native-c-api).
 
 ## Start the server

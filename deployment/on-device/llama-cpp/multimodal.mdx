@@ -5,7 +5,6 @@ description: "Run LFM3 vision, audio, and omni models on llama.cpp: projector fi
 
 LFM3 requires llama.cpp v0.8.0 (b11960) or later. Use the same supported build for the main guide and subsidiary examples.
 
-
 Multimodal LFMs run on llama.cpp through its `mtmd` library. A vision or audio GGUF comes in two parts: the language model (`LFM3-VL-2B-QAD-Q4_0.gguf`) and a projector / encoder file (`mmproj-*.gguf`). `llama-server` and `llama-cli` load both; the same `mtmd` code is available in the iOS XCFramework and Android builds.
 
 ## Vision (LFM3-VL)

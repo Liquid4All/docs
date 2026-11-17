@@ -90,7 +90,7 @@ Start with LFM3 for a new application. The basic CLI and OpenAI-compatible API a
 
 ## Downloading GGUF Models
 
-llama.cpp uses the GGUF format, which stores quantized model weights for efficient inference. All LFM models are available in GGUF format on Hugging Face. See the [Models page](/lfm/models/complete-library) for all available GGUF models.
+llama.cpp uses the GGUF format, which stores quantized model weights for efficient inference. Use the exact GGUF repository linked on the selected [model page](/lfm/models/complete-library).
 
 You can download LFM models in GGUF format from Hugging Face as follows:
 
@@ -150,8 +150,8 @@ llama.cpp offers two main interfaces for running inference: `llama serve` (web c
             {"role": "user", "content": "What is machine learning?"}
         ],
         temperature=0.1,
-        max_tokens=512,
-        extra_body={"top_k": 50, "repeat_penalty": 1.05},
+        max_tokens=2048,
+        extra_body={"top_k": 50, "repeat_penalty": 1.1},
     )
     print(response.choices[0].message.content)
     ```
@@ -161,11 +161,12 @@ llama.cpp offers two main interfaces for running inference: `llama serve` (web c
     curl http://localhost:9931/v1/chat/completions \
       -H "Content-Type: application/json" \
       -d '{
-        "model": "lfm2.5-1.2b-instruct",
+        "model": "LiquidAI/LFM3-1.7B-GGUF:Q4_K_M",
         "messages": [{"role": "user", "content": "Hello!"}],
         "temperature": 0.1,
         "top_k": 50,
-        "repeat_penalty": 1.05
+        "repeat_penalty": 1.1,
+        "max_tokens": 2048
       }'
     ```
   </Tab>
@@ -175,13 +176,13 @@ llama.cpp offers two main interfaces for running inference: `llama serve` (web c
 
     ```bash
     llama cli -hf LiquidAI/LFM3-1.7B-GGUF:Q4_K_M -c 4096 \
-        --temp 0.1 --top-k 50 --repeat-penalty 1.05
+        --temp 0.1 --top-k 50 --repeat-penalty 1.1
     ```
 
     The `-hf` flag downloads the model directly from Hugging Face. Alternatively, use a local model file:
     ```bash
     llama cli -m LFM3-1.7B-Q4_K_M.gguf -c 4096 \
-        --temp 0.1 --top-k 50 --repeat-penalty 1.05
+        --temp 0.1 --top-k 50 --repeat-penalty 1.1
     ```
 
     Key parameters:
@@ -221,8 +222,8 @@ Control text generation behavior using parameters in the OpenAI-compatible API o
       model="LiquidAI/LFM3-1.7B-GGUF:Q4_K_M",
       messages=[{"role": "user", "content": "What is machine learning?"}],
       temperature=0.1,
-      max_tokens=512,
-      extra_body={"top_k": 50, "repeat_penalty": 1.05},
+      max_tokens=2048,
+      extra_body={"top_k": 50, "repeat_penalty": 1.1},
   )
   print(response.choices[0].message.content)
   ```
@@ -277,7 +278,7 @@ response = client.chat.completions.create(
 print(response.choices[0].message.content)
 ```
 
-The LFM3 GGUFs store their recommended sampling parameters, so the request needs none. For LFM2.5-VL, see the sampling parameters on its [model page](/lfm/models/lfm25-vl-1.6b).
+This request inherits the GGUF's temperature, top-k, and repetition penalty, plus the server's explicit top-p and min-p settings. For LFM2.5-VL, see the sampling parameters on its [model page](/lfm/models/lfm25-vl-1.6b).
 
 <Accordion title="Using local model files">
   Download the model and the projector, then pass both:

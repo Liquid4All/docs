@@ -17,7 +17,7 @@ Use an updated llama.cpp runtime that supports LFM3 (upstream v0.8.0 / b11960 or
 
 1. Open LM Studio and click the **Search** tab (🔍)
 2. Search for "LiquidAI LFM3-1.7B" for text, or "LiquidAI LFM3-VL-2B" for vision
-3. Select a model and quantization level (`Q4_K_M` recommended)
+3. Select a GGUF quantization (`Q4_K_M` for text, or the QAD `Q4_0` checkpoint for LFM3-VL)
 4. Click **Download**
 
 See the [Models page](/lfm/models/complete-library) for all available GGUF models.
@@ -42,9 +42,12 @@ Control text generation behavior using the GUI sidebar or API parameters. Key pa
 
 Via the OpenAI-compatible API:
 
-Replace `local-model` below with the model ID reported by your running server's `/v1/models` endpoint.
+Start the server as described below and install the client with `uv pip install openai`. Replace `local-model` with the ID reported by the server's `/v1/models` endpoint.
 
 ```python
+from openai import OpenAI
+
+client = OpenAI(base_url="http://localhost:1234/v1", api_key="not-needed")
 response = client.chat.completions.create(
     model="local-model",
     messages=[{"role": "user", "content": "What is machine learning?"}],
@@ -73,7 +76,7 @@ client = OpenAI(
 )
 
 response = client.chat.completions.create(
-    model="local-model",  # Any string works
+    model="local-model",  # Use the ID from /v1/models
     messages=[
         {"role": "user", "content": "What is machine learning?"}
     ],

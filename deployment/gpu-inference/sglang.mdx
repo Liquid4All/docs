@@ -25,6 +25,8 @@ ENTRYPOINT ["sglang", "serve"]
 docker build -f Dockerfile.sglang -t lfm-sglang .
 ```
 
+This setup was checked on an NVIDIA H100 with LFM3 and LFM2.5 text/image models, plus original LFM2 text. First startup can take several minutes to compile kernels.
+
 A clean pip install can select incompatible CUDA compiler/header packages or lack the library layout required by JIT kernels. For a source installation, follow the [upstream CUDA prerequisites](https://docs.sglang.ai/get_started/install.html) rather than assuming the container's environment exists on the host. The direct Transformers inference guide uses a separate environment and a newer Transformers version.
 
 ## Serve LFM3 text

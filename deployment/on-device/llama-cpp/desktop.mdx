@@ -5,7 +5,6 @@ description: "Ship LFM models in desktop apps with llama.cpp: run llama-server a
 
 Use llama.cpp v0.8.0 (b11960) or later for LFM3; the server examples were checked with b12359. Start with [LFM3-1.7B](/lfm/models/lfm3-1.7b) for new text applications. The API shape also applies to supported older GGUF models, with their own sampling and template settings.
 
-
 On laptops, desktops, and servers there are two ways to embed llama.cpp. Pick one per application:
 
 | Pattern | How it works | Choose it when |
@@ -106,8 +105,8 @@ Both consume the same GGUF files from [Hugging Face](/lfm/models/complete-librar
         messages = new[] { new { role = "user", content = "Summarize the benefits of on-device AI." } },
         temperature = 0.1,
         top_k = 50,
-        repeat_penalty = 1.05,
-        max_tokens = 512,
+        repeat_penalty = 1.1,
+        max_tokens = 2048,
     });
     using var json = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
     Console.WriteLine(json.RootElement.GetProperty("choices")[0]

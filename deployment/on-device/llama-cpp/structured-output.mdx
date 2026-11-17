@@ -5,7 +5,6 @@ description: "Constrain LFM generation on llama.cpp to a JSON schema or GBNF gra
 
 Use llama.cpp v0.8.0 (b11960) or later for LFM3; the server examples were checked with b12359. Start with [LFM3-1.7B](/lfm/models/lfm3-1.7b) for new text applications. The API shape also applies to supported older GGUF models, with their own sampling and template settings.
 
-
 llama.cpp enforces structure at decode time: tokens that would break the schema get zero probability, so the output is guaranteed to parse. You can supply a **JSON Schema** (converted to a grammar automatically) or a hand-written **GBNF grammar**. Both work in `llama-server`, the CLI tools, and the C API.
 
 ## JSON schema with llama-server
@@ -92,6 +91,8 @@ python llama.cpp/examples/json_schema_to_grammar.py schema.json > schema.gbnf
 
 ## In-process bindings
 
+These examples retain LFM2.5 because each binding bundles its own llama.cpp build. Check that build's architecture support before changing the model; use the server example above for the tested LFM3 path.
+
 <Tabs>
   <Tab title="C API (mobile, embedded)">
     Add a grammar sampler to the chain before the final `dist` sampler. Convert JSON schemas ahead of time with `json_schema_to_grammar.py`, or at runtime with `json_schema_to_grammar()` from the `common` library.
@@ -112,7 +113,7 @@ python llama.cpp/examples/json_schema_to_grammar.py schema.json > schema.gbnf
     from llama_cpp import Llama
 
     llm = Llama.from_pretrained(
-        repo_id="LiquidAI/LFM3-1.7B-GGUF",
+        repo_id="LiquidAI/LFM2.5-1.2B-Instruct-GGUF",
         filename="*Q4_K_M.gguf",
         n_ctx=4096,
     )
@@ -141,7 +142,7 @@ python llama.cpp/examples/json_schema_to_grammar.py schema.json > schema.gbnf
 
     const llama = await getLlama();
     const modelPath = await resolveModelFile(
-      "hf:LiquidAI/LFM3-1.7B-GGUF/LFM3-1.7B-Q4_K_M.gguf", "./models");
+      "hf:LiquidAI/LFM2.5-1.2B-Instruct-GGUF/LFM2.5-1.2B-Instruct-Q4_K_M.gguf", "./models");
     const model = await llama.loadModel({ modelPath });
     const context = await model.createContext();
     const session = new LlamaChatSession({ contextSequence: context.getSequence() });

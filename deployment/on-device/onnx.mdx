@@ -40,6 +40,8 @@ The [upstream support table](https://github.com/Liquid4All/onnx-export#1-support
 
 Export the original checkpoint, not its MLX/GGUF or FP8/NVFP4 variant:
 
+Exporting also writes FP32 intermediate weights. Budget memory and disk for those files, not only the final quantized model; CPU quantization can take several minutes. Use a compatible [pre-exported repository](#pre-exported-repositories) when you only need inference.
+
 ```bash
 uv run --no-project lfm3-export LiquidAI/LFM3-1.7B --precision q4
 uv run --no-project lfm3-infer --model exports/LFM3-1.7B-ONNX \
