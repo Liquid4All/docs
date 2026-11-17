@@ -92,7 +92,7 @@
               {
                 "group": "Liquid Foundation Models",
                 "root": "lfm/models/complete-library",
-                "expanded": false,
+                "expanded": true,
                 "pages": [
                   "lfm/models/text-models",
                   "lfm/models/vision-models",
@@ -187,7 +187,7 @@
                   "deployment/on-device/atomic-chat",
                   "deployment/on-device/llama"
                 ],
-                "expanded": false
+                "expanded": true
               },
               {
                 "group": "GPU Inference",
@@ -198,7 +198,7 @@
                   "deployment/gpu-inference/vllm",
                   "deployment/gpu-inference/zml-llmd"
                 ],
-                "expanded": false
+                "expanded": true
               },
               {
                 "group": "Cloud Inference",
@@ -208,7 +208,7 @@
                   "deployment/gpu-inference/baseten",
                   "deployment/gpu-inference/fal"
                 ],
-                "expanded": false
+                "expanded": true
               },
               {
                 "group": "Agents",
@@ -216,7 +216,7 @@
                 "pages": [
                   "examples/agent-harnesses"
                 ],
-                "expanded": false
+                "expanded": true
               }
             ]
           }
