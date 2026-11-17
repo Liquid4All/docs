@@ -1305,13 +1305,13 @@ You can combine clips with a text state and with images in the same request, for
 
 | Requirement | Limit |
 |---|---|
-| Formats | WAV (`audio/wav`), MP3 (`audio/mpeg`), FLAC (`audio/flac`), OGG (`audio/ogg`) |
+| Formats | WAV with PCM or floating-point samples (`audio/wav`), MP3 (`audio/mpeg`), FLAC (`audio/flac`), OGG with Opus or Vorbis (`audio/ogg`) |
 | Encoding | A Base64 `data:` URL, or `{"content_type": ..., "base64": ...}` |
 | Clips per request | Up to 8 |
 | Total length | Up to 300 seconds of audio per request |
 | Request size | Keep the entire JSON body under 4.5 MB, including Base64 audio and image data |
 
-The 4.5 MB request limit usually binds first for uncompressed WAV, which fits about 100 seconds of mono audio at 16 kHz. Send MP3, FLAC, or OGG as is to fit longer recordings, up to the 300-second limit.
+The 4.5 MB request limit usually binds first for uncompressed WAV, which fits about 100 seconds of 16-bit mono PCM audio at 16 kHz. Send MP3, FLAC, or OGG as is to fit longer recordings, up to the 300-second limit.
 
 <Note>
 If a request returns an error saying the model does not accept audio, audio input is not available for that model. Use `d1.2` or `d1.2-ultra`.
