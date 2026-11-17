@@ -48,6 +48,9 @@ jobs:
       - name: Install modal
         run: uv pip install --system modal
 
+      - name: Test notebook preprocessing
+        run: uv run --no-project --with modal python -m unittest util.test_notebook_preprocessing
+
       - name: Set up Modal token
         run: modal token set --token-id ${{ secrets.MODAL_TOKEN_ID }} --token-secret ${{ secrets.MODAL_TOKEN_SECRET }}
 
