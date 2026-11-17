@@ -143,7 +143,7 @@ A single API call contains the following fields:
 2. **State**: the context the model should evaluate. This can be plain text (a customer message, an email, a log entry) or a JSON object with structured fields.
 3. **Questions**: up to 128 questions, each with a name, a type, and instructions. Choice and Score questions also take criteria that define the options or levels. The model evaluates all the questions of a call at once.
 4. **Images** (optional): images to evaluate alongside the state, in the top-level `images` array. See [Image Inputs](#image-inputs).
-5. **Audio** (optional): audio clips to evaluate alongside the state, in the top-level `media` array. See [Audio Inputs](#audio-inputs).
+5. **Audio** (optional): audio clips to evaluate alongside the state, in the top-level `audio` array. See [Audio Inputs](#audio-inputs).
 
 <Tabs>
   <Tab title="cURL">
@@ -1236,11 +1236,11 @@ A request is billed its images once, however many questions it asks: two questio
 
 ## Audio Inputs
 
-d1.2 and d1.2-ultra also take audio. A clip can be what you ask about, such as a call, a voice message, or a recording to check for a siren. A question can also be a recording, spoken instead of typed.
+d1.2 and d1.2-ultra also take audio. A clip can be what you ask about, such as a call, a voice message, or a recording to check for a siren. Questions are always written as text.
 
 ### Recordings to Decide On
 
-Pass clips in the top-level `media` array. Each clip is an object with `"type": "audio"` and `data`, a 16-bit PCM WAV file as Base64 or as a `data:audio/wav;base64,` URL. The clips come before the state, which can be `null` when the clips are all the model needs. Every question hears every clip, and the answers have the same format as for text.
+Pass clips in the top-level `audio` array. Each clip is a Base64 `data:` URL, such as `data:audio/wav;base64,...`, or an object with `content_type` and `base64`. WAV, MP3, FLAC, and OGG are supported, and the content type must match the file. The clips come before the state, which can be `null` when the clips are all the model needs. Every question hears every clip, and the answers have the same format as for text.
 
 <Tabs>
   <Tab title="cURL">
@@ -1254,7 +1254,7 @@ Pass clips in the top-level `media` array. Each clip is an object with `"type": 
     {
       "model": "d1.2",
       "state": null,
-      "media": [{"type": "audio", "data": "data:audio/wav;base64,$AUDIO_BASE64"}],
+      "audio": ["data:audio/wav;base64,$AUDIO_BASE64"],
       "questions": {
         "refund": {"type": "noul", "instructions": "Does the caller ask for a refund?"},
         "language": {
@@ -1283,7 +1283,7 @@ Pass clips in the top-level `media` array. Each clip is an object with `"type": 
         json={
             "model": "d1.2",
             "state": None,
-            "media": [{"type": "audio", "data": f"data:audio/wav;base64,{clip}"}],
+            "audio": [f"data:audio/wav;base64,{clip}"],
             "questions": {
                 "refund": {"type": "noul", "instructions": "Does the caller ask for a refund?"},
                 "language": {
@@ -1301,49 +1301,17 @@ Pass clips in the top-level `media` array. Each clip is an object with `"type": 
 
 You can combine clips with a text state and with images in the same request, for example a voice note with the ticket it belongs to.
 
-### Spoken Questions
-
-Any question's `instructions` can be a clip instead of text, in the same `{"type": "audio", "data": ...}` form. The model answers the spoken question like a typed one.
-
-```python
-import base64
-import os
-from pathlib import Path
-
-import requests
-
-question = base64.b64encode(Path("question.wav").read_bytes()).decode("ascii")
-
-response = requests.post(
-    "https://api.liquid.ai/decisions/v1/systemone",
-    headers={"Authorization": f"Bearer {os.environ['LIQUID_API_KEY']}"},
-    json={
-        "model": "d1.2",
-        "state": "Order 4417: two lamps, shipped on 12 November, delivered on 14 November.",
-        "questions": {
-            "delivered": {
-                "type": "noul",
-                "instructions": {"type": "audio", "data": f"data:audio/wav;base64,{question}"},
-            },
-        },
-    },
-)
-```
-
 ### Audio Requirements
 
 | Requirement | Limit |
 |---|---|
-| Format | 16-bit PCM WAV, as Base64 or a `data:audio/wav;base64,` URL |
-| Clips per request | Up to 8, spoken questions included |
+| Formats | WAV with PCM or floating-point samples (`audio/wav`), MP3 (`audio/mpeg`), FLAC (`audio/flac`), OGG with Opus or Vorbis (`audio/ogg`) |
+| Encoding | A Base64 `data:` URL, or `{"content_type": ..., "base64": ...}` |
+| Clips per request | Up to 8 |
 | Total length | Up to 300 seconds of audio per request |
 | Request size | Keep the entire JSON body under 4.5 MB, including Base64 audio and image data |
 
-The 4.5 MB request limit usually binds first. Mono audio at 16 kHz fits about 100 seconds in one request. To convert a file with [FFmpeg](https://ffmpeg.org):
-
-```bash
-ffmpeg -i call.mp3 -ac 1 -ar 16000 -sample_fmt s16 call.wav
-```
+The 4.5 MB request limit usually binds first for uncompressed WAV, which fits about 100 seconds of 16-bit mono PCM audio at 16 kHz. Send MP3, FLAC, or OGG as is to fit longer recordings, up to the 300-second limit.
 
 <Note>
 If a request returns an error saying the model does not accept audio, audio input is not available for that model. Use `d1.2` or `d1.2-ultra`.
@@ -1357,4 +1325,4 @@ Audio is billed by length, at 10 input tokens per second, rounded up per clip:
 audio_tokens = ceil(seconds × 10)
 ```
 
-For example, a 42-second call contributes 420 input tokens. Clips in `media` are billed once per request, like images, and count toward each question's input limit. A spoken question's clip is billed as that question's own text. Audio tokens are charged at the model's input token rate.
+For example, a 42-second call contributes 420 input tokens. Clips in `audio` are billed once per request, like images, and count toward each question's input limit. Audio tokens are charged at the model's input token rate.
