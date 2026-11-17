@@ -27,7 +27,7 @@ Use a card to send the reader somewhere. Icon, title, one or two lines of text, 
 ```mdx
 <CardGroup cols={2}>
 
-<Card title="Explore Models" icon="brain" href="/lfm/models/complete-library">
+<Card title="Explore Models" icon="brain" iconType="light" href="/lfm/models/complete-library">
   Browse text, vision, audio, omni and decision models.
 </Card>
 
@@ -63,7 +63,7 @@ Small gray tiles that list what a model can do. Not clickable (no `href`). 3 col
 <div className="use-cases">
 <CardGroup cols={3}>
 
-<Card title="Math & Logic" icon="calculator">
+<Card title="Math & Logic" icon="calculator" iconType="light">
   Strong arithmetic and logical reasoning
 </Card>
 
@@ -116,6 +116,7 @@ Keep the original branded badge artwork. The shared `.colab-link img` style size
 ### Icons
 
 - Font Awesome names (fontawesome.com/icons); Lucide names render as an empty box.
+- Light style: `iconType="light"` on components, `iconType: light` in frontmatter, `{"name": "…", "style": "light"}` in `docs.json`.
 - Brand icons (`github`, `discord`): `iconType="brands"`.
 
 ## CSS
