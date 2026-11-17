@@ -1,39 +1,37 @@
 ---
 title: "Deploy"
 sidebarTitle: "Overview"
-description: "Run LFMs on your device or serve them on GPUs."
+description: "Deploy LFM3 and other Liquid models on your own hardware or in the cloud."
 ---
-
-Start with [LFM3](/lfm/models/complete-library), then choose a runtime or platform for your hardware.
 
 ## Edge
 
-Run models locally on your device.
+Build apps that keep data on-device and work offline.
 
 <CardGroup cols={3}>
   <Card title="llama.cpp" icon="microchip" iconType="light" href="/deployment/on-device/llama-cpp">
-    Run GGUF models across CPUs and GPUs.
+    Embed models in your app or run a local API across CPUs and GPUs.
   </Card>
   <Card title="Ollama" icon="comments" iconType="light" href="/deployment/on-device/ollama">
-    Download models and start a local chat API.
+    Get a local model API running with a few commands.
   </Card>
   <Card title="MLX" icon="apple" iconType="brands" href="/deployment/on-device/mlx">
-    Run models on Apple Silicon with Metal acceleration.
+    Build Python applications with GPU acceleration on Apple Silicon.
   </Card>
 </CardGroup>
 
 ## GPU
 
-Serve models on your own GPUs or cloud infrastructure.
+Serve models through an API, on your own GPUs or in the cloud.
 
 <CardGroup cols={3}>
   <Card title="vLLM" icon="server" iconType="light" href="/deployment/gpu-inference/vllm">
-    Serve models with batching and an OpenAI-compatible API.
+    Handle concurrent requests with continuous batching.
   </Card>
   <Card title="SGLang" icon="bolt" iconType="light" href="/deployment/gpu-inference/sglang">
-    Serve models with optimized inference and structured outputs.
+    Serve agents with tool calling and constrained JSON output.
   </Card>
   <Card title="Modal" icon="cloud" iconType="light" href="/deployment/gpu-inference/modal">
-    Deploy GPU inference with serverless scaling.
+    Run GPU services that scale without managing servers.
   </Card>
 </CardGroup>
