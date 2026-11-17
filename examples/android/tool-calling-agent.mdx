@@ -1,0 +1,72 @@
+---
+title: "Build a Tool-Calling Agent on Android"
+description: "Run local calculator and weather agents on Android with llama.cpp and LFM2.5-1.2B-Instruct."
+---
+
+<Card title="View Source Code" icon="github" iconType="brands" href="https://github.com/Liquid4All/cookbook/tree/main/examples/AndroidAgent">
+  Browse the complete Android project
+</Card>
+
+AndroidAgent uses **LFM2.5-1.2B-Instruct**, Q5_K_M, and a Kotlin tool-calling loop. It includes a calculator and a weather forecaster.
+
+Inference and calculator tools run locally. Weather tools fetch data from the [Open-Meteo API](https://open-meteo.com/en/docs) and require internet access.
+
+## Environment setup
+
+Use Android Studio with JDK 17, Android SDK 36, NDK `29.0.13113456`, and CMake `3.31.6`. The projects pin Kotlin `2.3.20` and llama.cpp `v0.9.0`.
+
+Clone the complete repository so the app can include `examples/android-common` and its pinned llama.cpp submodule:
+
+```bash
+git clone --recurse-submodules https://github.com/Liquid4All/cookbook.git
+```
+
+The shared runtime handles model downloads, native inference, cancellation, and cleanup. Keep the app and `android-common` directories together.
+
+## How to run it
+
+1. Open `cookbook/examples/AndroidAgent` in Android Studio and run it on Android 12+.
+2. Select the calculator or weather agent.
+3. Submit a calculation such as `1234 + 4321`, or a location such as `London tomorrow`.
+4. On first use, the app downloads and verifies the model (about 850 MB).
+5. Inspect the tool results and final answer. If a request fails, correct it or retry.
+
+## How the agent works
+
+1. Send the conversation and tool definitions to the model.
+2. llama.cpp applies the checkpoint's chat template and parses generated tool calls into structured `tool_calls`.
+3. Kotlin decodes each tool's arguments and executes it.
+4. Append the assistant's tool call and the corresponding `tool` result to the conversation.
+5. Repeat until the model answers or the iteration limit is reached.
+
+See [Tool Use](/lfm/key-concepts/tool-use) for model-specific formats.
+
+## Code walkthrough
+
+`Agent.kt` implements the loop; `Tool.kt` defines typed arguments, JSON schemas, execution, and result formatting. `LlamaChat.kt` adapts the shared `NativeAgentModel` to Kotlin JSON objects:
+
+```kotlin
+suspend fun chat(messages: JsonArray, tools: JsonArray): JsonObject {
+    val reply = Json.parseToJsonElement(
+        model.chat(messages.toString(), tools.toString())
+    ).jsonObject
+    reply["error"]?.let { error("Generation failed: $it") }
+    return reply
+}
+```
+
+`LocalModel` shares one loaded model across agents. The runtime serializes every native operation, so calculator and weather requests cannot mutate its context at the same time. Each native call receives the full conversation for that request. Older GGUF templates can ignore structured tool calls when rendering history, so the runtime also preserves the generated call text in assistant content when the template needs it. Keep the full assistant reply in the conversation, including both content and parsed calls.
+
+### Calculator tools
+
+The calculator exposes arithmetic tools with numeric `a` and `b` arguments. Kotlin computes the result and returns it to the model for the final response.
+
+### Weather tools
+
+The weather agent exposes current date/time, date arithmetic, and weather forecasts. It geocodes the location, resolves dates in that location's timezone, and requests an explicit start/end interval from Open-Meteo. Unsupported dates return an error instead of silently substituting today's forecast.
+
+## Downloads and lifecycle
+
+The first request downloads the model from Hugging Face. Downloads go to a temporary file; the runtime checks the expected size and SHA-256 before publishing the final GGUF. An interrupted download restarts on the next attempt. A verified cached model works offline.
+
+A ViewModel retains the model across screen rotation. Native calls run in one queue per model instance. Cancellation stops the token loop before cleanup releases the model. A failed request displays an error and allows retry.

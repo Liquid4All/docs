@@ -44,7 +44,7 @@ description: "Browse example projects and step-by-step tutorials built with Liqu
 ## Android
 
 <Note>
-These Android tutorials were built with the LEAP SDK, which is now deprecated. For new apps, embed llama.cpp directly — see [iOS & Android](/deployment/on-device/llama-cpp/mobile).
+These apps run tested LFM2.5 GGUF checkpoints locally with llama.cpp. Each project uses the shared Android runtime in the cookbook for verified downloads and model lifecycle management. See [iOS & Android](/deployment/on-device/llama-cpp/mobile) for deployment guidance.
 </Note>
 
 <CardGroup cols={2}>
@@ -65,8 +65,8 @@ These Android tutorials were built with the LEAP SDK, which is now deprecated. F
   Analyze images and answer visual questions on Android using Vision Language Models. Built with Jetpack Compose and Coil.
 </Card>
 
-<Card title="AI Agents with Koog" icon="robot" iconType="light" href="/examples/android/leap-koog-agent">
-  Build intelligent AI agents on Android with the Koog framework. Demonstrates tool invocation, context management, and MCP integration.
+<Card title="Tool-Calling Agent" icon="robot" iconType="light" href="/examples/android/tool-calling-agent">
+  Build intelligent AI agents on Android with llama.cpp. Demonstrates tool invocation with a small Kotlin agent loop.
 </Card>
 
 </CardGroup>

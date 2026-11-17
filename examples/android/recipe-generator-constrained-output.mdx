@@ -1,463 +1,110 @@
 ---
-title: "Generate Structured Recipes with Constrained Output"
-description: "Android app demonstrating constrained JSON generation to produce structured recipe output using a Liquid AI LFM model on-device."
+title: "Recipe Generator with Constrained Output"
+description: "Generate schema-constrained JSON recipes on Android with LFM2.5-1.2B-Instruct."
 ---
 
-<Note>
-This example uses the LEAP SDK, which is **deprecated**. It remains a useful architectural reference, but for new Android apps embed llama.cpp directly — see [iOS & Android](/deployment/on-device/llama-cpp/mobile) and [Migrating from LEAP SDK](/deployment/on-device/llama-cpp/migrating-from-leap-sdk).
-</Note>
-
-<Card title="View Source Code" icon="github" iconType="brands" href="https://github.com/Liquid4All/LeapSDK-Examples/tree/main/Android/RecipeGenerator">
-  Browse the complete example on GitHub
+<Card title="View Source Code" icon="github" iconType="brands" href="https://github.com/Liquid4All/cookbook/tree/main/examples/RecipeGenerator">
+  Browse the complete Android project
 </Card>
 
-This example demonstrates **constrained generation** with LeapSDK on Android. Instead of generating free-form text, the RecipeGenerator app produces structured JSON output that follows a predefined schema, ensuring consistent and parseable results.
-
-Constrained generation is essential for building reliable AI-powered applications where the output needs to integrate with downstream systems or databases. This example shows how to enforce structure while maintaining creative and useful AI-generated content.
-
-## What's inside?
-
-The RecipeGenerator demonstrates advanced LeapSDK capabilities:
-
-- **Structured Output Generation** - Enforce JSON schema constraints on model outputs
-- **Automatic Model Downloading** - Models download automatically via `LeapDownloader` on first run
-- **Constrained Decoding** - Guide the model to produce valid, parseable data structures
-- **Schema Validation** - Ensure generated recipes follow a specific format
-- **Type Safety** - Parse AI outputs directly into Kotlin data classes with kotlinx.serialization
-- **@Generatable Annotation** - Use LeapSDK's annotation for simplified structured output generation
-- **Production-ready Pattern** - Integrate AI outputs with databases and business logic
-- **Practical Use Case** - Generate recipes with ingredients, steps, and metadata
-
-This pattern is applicable to many use cases beyond recipes: generating product catalogs, form data, API responses, database entries, and more.
-
-## What is constrained generation?
-
-**Constrained generation** refers to the ability to enforce specific formatting or structural requirements on model outputs. Instead of generating free-form text, the model produces outputs that conform to a predefined schema or pattern.
-
-**Benefits:**
-- **Reliability** - Guaranteed parseable output every time
-- **Type Safety** - Direct integration with typed programming languages
-- **Validation** - Automatic schema compliance
-- **Downstream Integration** - Feed structured data into databases, APIs, or UIs
-- **Error Reduction** - Eliminate parsing errors from inconsistent formats
-
-**Common use cases:**
-- JSON API responses
-- Database records
-- Form submissions
-- Product catalogs
-- Configuration files
-- Structured reports
-
-<Card title="Learn More About Constrained Generation" icon="book" iconType="light" href="https://leap.liquid.ai/docs/edge-sdk/android/constrained-generation">
-  Read the complete guide in the official Leap documentation
-</Card>
+RecipeGenerator uses **LFM2.5-1.2B-Instruct**, Q5_K_M, to generate a recipe as JSON. llama.cpp converts the recipe schema into a grammar that constrains generation.
 
 ## Environment setup
 
-Before running this example, ensure you have the following:
+Use Android Studio with JDK 17, Android SDK 36, NDK `29.0.13113456`, and CMake `3.31.6`. The projects pin Kotlin `2.3.20` and llama.cpp `v0.9.0`.
 
-<Accordion title="Android Studio Installation">
-  Download and install [Android Studio](https://developer.android.com/studio) (latest stable version recommended).
+Clone the complete repository so the app can include `examples/android-common` and its pinned llama.cpp submodule:
 
-  Make sure you have:
-  - Android SDK installed
-  - An Android device or emulator configured
-  - USB debugging enabled (for physical devices)
-</Accordion>
+```bash
+git clone --recurse-submodules https://github.com/Liquid4All/cookbook.git
+```
 
-<Accordion title="Minimum SDK Requirements">
-  This example requires:
-  - **Minimum SDK**: API 31 (Android 12)
-  - **Target SDK**: API 36
-  - **Kotlin**: 2.3.0 or higher
-  - **LeapSDK**: 0.10.0 or higher
-  - **Internet connectivity**: Required for first-time model download
-</Accordion>
-
-<Accordion title="Model Setup - Automatic Download">
-  This example uses **LeapSDK 0.10.0+** with automatic model downloading capabilities.
-
-  **Automatic Model Management**
-
-  The app uses `LeapModelDownloader` to download and cache **LFM2-1.2B** on first run:
-
-  - On first launch, the model downloads automatically from the [LEAP Model Library](https://leap.liquid.ai/models)
-  - Models are cached locally for subsequent app launches
-  - No manual ADB push or file transfer required
-  - Internet connectivity is required only for the initial download
-
-  **First Run Experience:**
-
-  1. Launch the app (internet connection required)
-  2. The model downloads automatically (may take 2-5 minutes depending on connection)
-  3. Once cached, subsequent launches work offline
-  4. The model persists across app restarts
-
-  **Manual Deployment (Alternative)**
-
-  If you prefer manual deployment or need offline-first installation, push a GGUF file via ADB and load it with `loadSimpleModel(model: ModelSource(...))`:
-
-  ```bash
-  # Push the GGUF file to device storage
-  adb push lfm2-1.2b-q5_k_m.gguf /data/local/tmp/liquid/
-  ```
-</Accordion>
-
-<Accordion title="Dependencies Setup">
-  Add the required dependencies to your app-level `build.gradle.kts`:
-
-  ```kotlin
-  dependencies {
-      // LeapSDK + the Android downloader module
-      implementation("ai.liquid.leap:leap-sdk:0.10.7")
-      implementation("ai.liquid.leap:leap-model-downloader:0.10.7")
-
-      // Kotlin serialization for type-safe parsing
-      implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")
-
-      // Jetpack Compose (if using Compose UI)
-      implementation(platform("androidx.compose:compose-bom:2024.01.00"))
-      implementation("androidx.compose.ui:ui")
-      implementation("androidx.compose.material3:material3")
-
-      // ViewModel
-      implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.7.0")
-  }
-  ```
-
-  **Also enable the Kotlin serialization plugin** in your app-level `build.gradle.kts`:
-
-  ```kotlin
-  plugins {
-      id("org.jetbrains.kotlin.plugin.serialization") version "2.3.20"
-  }
-  ```
-</Accordion>
-
+The shared runtime handles model downloads, native inference, cancellation, and cleanup. Keep the app and `android-common` directories together.
 
 ## How to run it
 
-Follow these steps to generate structured recipes:
+1. Open `cookbook/examples/RecipeGenerator` in Android Studio and run it on Android 12+.
+2. On launch, the app downloads the model if needed (about 850 MB), then generates a dinner recipe automatically.
+3. Read the recipe's name, ingredients, cooking time, vegetarian flag, and steps.
+4. Tap **Generate another recipe** for another result, or **Retry** after a failure.
 
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/Liquid4All/LeapSDK-Examples.git
-   cd LeapSDK-Examples/Android/RecipeGenerator
-   ```
-
-2. **Open in Android Studio**
-   - Launch Android Studio
-   - Select "Open an existing project"
-   - Navigate to the `RecipeGenerator` folder and open it
-
-3. **Gradle sync**
-   - Wait for Gradle to sync all dependencies
-   - Ensure LeapSDK 0.10.7 is downloaded
-
-4. **Run the app**
-   - Connect your Android device or start an emulator
-   - **Ensure internet connectivity** (required for first-time model download)
-   - Click "Run" or press `Shift + F10`
-   - Select your target device
-
-5. **First launch - model download**
-   - On first run, the app will automatically download the LFM2-1.2B model
-   - This may take 2-5 minutes depending on your connection
-   - A loading indicator will show download progress
-   - The model is cached for future use
-
-6. **Generate recipes**
-   - Enter ingredients or a dish name (e.g., "pasta carbonara", "chocolate chip cookies")
-   - Tap "Generate Recipe"
-   - The app will produce a structured recipe with ingredients, steps, and metadata
-   - All output will be valid JSON conforming to the recipe schema
-
-<Note>
-  **After First Run**: The model is cached locally. Subsequent app launches work offline and start immediately without downloading.
-</Note>
+The current app uses the fixed prompt `A recipe for a dinner dish`. It has no ingredient-entry field; add one if your application needs user-selected dishes.
 
 ## Code walkthrough
 
-The core business logic is implemented in `MainActivityViewModel.kt`. Here's how it works:
-
-### Define the Recipe Schema
-
-First, define the data structure you want the AI to generate:
+The data class and schema in `MainActivityViewModel.kt` describe the same five fields:
 
 ```kotlin
 @Serializable
 data class Recipe(
     val name: String,
-    val description: String,
-    val servings: Int,
-    val prepTime: String,
-    val cookTime: String,
-    val difficulty: String,
-    val ingredients: List<Ingredient>,
-    val instructions: List<String>,
-    val tags: List<String>
+
+    val ingredients: List<String>,
+
+    val cookingTime: Int,
+
+    val isVegetarian: Boolean,
+
+    val steps: List<String>,
+
 )
 
-@Serializable
-data class Ingredient(
-    val item: String,
-    val amount: String,
-    val unit: String
-)
+// JSON schema for Recipe. llama.cpp turns it into a grammar, so the model can only generate matching JSON.
+private const val RECIPE_SCHEMA = """
+{
+  "type": "object",
+  "additionalProperties": false,
+  "description": "A recipe for cooking great dishes",
+  "properties": {
+    "name": { "type": "string" },
+    "ingredients": { "type": "array", "items": { "type": "string" }, "description": "Ingredients for making the dishes" },
+    "cookingTime": { "type": "integer", "description": "Cooking time in minutes" },
+    "isVegetarian": { "type": "boolean", "description": "Whether the meal is vegetarian" },
+    "steps": { "type": "array", "items": { "type": "string" }, "description": "Steps of cooking" }
+  },
+  "required": ["name", "ingredients", "cookingTime", "isVegetarian", "steps"]
+}
+"""
 ```
 
-### Declare the Recipe Schema with `@Generatable`
-
-Annotate the data class with `@Generatable`. LeapSDK derives the JSON schema from the Kotlin types and enforces it during generation — no hand-written schema string required.
+`MainActivityViewModel` selects the model, supplies the schema to the runtime, and decodes only a successfully completed response:
 
 ```kotlin
-import ai.liquid.leap.structuredoutput.Generatable
-import ai.liquid.leap.structuredoutput.Guide
-import kotlinx.serialization.Serializable
+class MainActivityViewModel(application: Application) : TextTaskViewModel(
+    application, Models.text,
+    "You are a recipe generator. Generate JSON that follows this schema: $RECIPE_SCHEMA",
+    RECIPE_SCHEMA,
+) {
+    var recipeState: Recipe? by mutableStateOf(null)
+        private set
 
-@Serializable
-@Generatable("A complete recipe with metadata, ingredients, and instructions.")
-data class Recipe(
-    val name: String,
-    val description: String,
-    val servings: Int,
-    val prepTime: String,
-    val cookTime: String,
-    @Guide("One of: easy, medium, hard.")
-    val difficulty: String,
-    val ingredients: List<Ingredient>,
-    val instructions: List<String>,
-    val tags: List<String>,
-)
-
-@Serializable
-@Generatable("A single recipe ingredient with amount and unit.")
-data class Ingredient(
-    val item: String,
-    val amount: String,
-    val unit: String,
-)
-```
-
-### Load the Model and Wire Constrained Generation
-
-```kotlin
-import ai.liquid.leap.GenerationOptions
-import ai.liquid.leap.ModelRunner
-import ai.liquid.leap.message.ChatMessage
-import ai.liquid.leap.message.MessageResponse
-import ai.liquid.leap.downloader.LeapModelDownloader
-import android.app.Application
-import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.launch
-import kotlinx.serialization.json.Json
-
-class MainActivityViewModel(application: Application) : AndroidViewModel(application) {
-    private val downloader = LeapModelDownloader(application)
-    private var runner: ModelRunner? = null
-
-    private val _downloadProgress = MutableStateFlow(0f)
-    val downloadProgress: StateFlow<Float> = _downloadProgress.asStateFlow()
-
-    private val _recipeState = MutableStateFlow<RecipeState>(RecipeState.Idle)
-    val recipeState: StateFlow<RecipeState> = _recipeState.asStateFlow()
-
-    fun initializeModel() {
-        viewModelScope.launch {
-            runner = downloader.loadModel(
-                modelName = "LFM2-1.2B",
-                quantizationType = "Q5_K_M",
-                progress = { pd ->
-                    _downloadProgress.value =
-                        if (pd.total > 0) pd.bytes.toFloat() / pd.total else 0f
-                },
-            )
-        }
+    fun generateRecipe() { generate("A recipe for a dinner dish") }
+    override fun completed(output: String) {
+        recipeState = Json.decodeFromString<Recipe>(output)
     }
 }
 ```
 
-### Generate Structured Recipes
-
-`GenerationOptions.build { setResponseFormatType<Recipe>() }` tells the engine to constrain the stream to the schema derived from `@Generatable`. The streamed `Chunk` values arrive as JSON; concatenate them and decode at the end with `kotlinx-serialization`.
-
-```kotlin
-fun generateRecipe(userInput: String) {
-    val runner = runner ?: return
-    viewModelScope.launch {
-        _recipeState.value = RecipeState.Loading
-
-        val prompt = """
-            Generate a detailed recipe for: $userInput
-
-            Include the recipe name, description, servings, preparation time,
-            cooking time, difficulty level, complete ingredient list with amounts,
-            step-by-step instructions, and relevant tags.
-        """.trimIndent()
-
-        val conversation = runner.createConversation()
-        val options = GenerationOptions.build {
-            temperature = 0.3f
-            minP = 0.15f
-            repetitionPenalty = 1.05f
-            setResponseFormatType<Recipe>()
-        }
-
-        try {
-            val buffer = StringBuilder()
-            conversation.generateResponse(ChatMessage(ChatMessage.Role.USER, prompt), options)
-                .onEach { resp ->
-                    if (resp is MessageResponse.Chunk) buffer.append(resp.text)
-                }
-                .collect()
-
-            val recipe = Json.decodeFromString<Recipe>(buffer.toString())
-            _recipeState.value = RecipeState.Success(recipe)
-        } catch (e: Exception) {
-            _recipeState.value = RecipeState.Error(e.message ?: "Failed to generate recipe")
-        }
-    }
-}
-```
-
-### Resource Cleanup
-
-**Important:** Always clean up model resources properly in your ViewModel:
-
-```kotlin
-override fun onCleared() {
-    super.onCleared()
-    val runner = runner ?: return
-    // Unload the model asynchronously to avoid ANRs.
-    // Do NOT use runBlocking here — it blocks the main thread.
-    CoroutineScope(Dispatchers.IO).launch {
-        try {
-            runner.unload()
-        } catch (e: Exception) {
-            Log.e("RecipeViewModel", "Error unloading model", e)
-        }
-    }
-}
-```
-
-**Best practices:**
-- Never use `runBlocking` in `onCleared()` - it causes ANRs (Application Not Responding)
-- Use `CoroutineScope(Dispatchers.IO).launch` for async cleanup
-- Always catch exceptions to prevent crashes during cleanup
-- This ensures smooth app shutdown without blocking the UI
-
-### Display the Recipe
-
-The structured output can be easily rendered in the UI:
-
-```kotlin
-@Composable
-fun RecipeDisplay(recipe: Recipe) {
-    Column(modifier = Modifier.padding(16.dp)) {
-        Text(text = recipe.name, style = MaterialTheme.typography.headlineMedium)
-        Text(text = recipe.description, style = MaterialTheme.typography.bodyMedium)
-
-        Row {
-            Text("Servings: ${recipe.servings}")
-            Spacer(modifier = Modifier.width(16.dp))
-            Text("Difficulty: ${recipe.difficulty}")
-        }
-
-        Text("Prep: ${recipe.prepTime} | Cook: ${recipe.cookTime}")
-
-        Text("Ingredients:", style = MaterialTheme.typography.titleMedium)
-        recipe.ingredients.forEach { ingredient ->
-            Text("• ${ingredient.amount} ${ingredient.unit} ${ingredient.item}")
-        }
-
-        Text("Instructions:", style = MaterialTheme.typography.titleMedium)
-        recipe.instructions.forEachIndexed { index, step ->
-            Text("${index + 1}. $step")
-        }
-
-        FlowRow {
-            recipe.tags.forEach { tag ->
-                Chip(text = tag)
-            }
-        }
-    }
-}
-```
+The native implementation is in `examples/android-common/src/main/cpp/text_jni.cpp`. It applies the checkpoint's chat template, converts the JSON schema to a grammar, and streams UTF-8 output. Cancellation and token/context limits produce an error instead of treating an unfinished document as a valid recipe.
 
 ## Results
 
-The RecipeGenerator produces consistently formatted recipes:
+The app renders this structure:
 
-**Example Output:**
 ```json
 {
-  "name": "Classic Chocolate Chip Cookies",
-  "description": "Soft and chewy chocolate chip cookies with a perfect golden-brown exterior",
-  "servings": 24,
-  "prepTime": "15 minutes",
-  "cookTime": "12 minutes",
-  "difficulty": "easy",
-  "ingredients": [
-    {"item": "all-purpose flour", "amount": "2.25", "unit": "cups"},
-    {"item": "butter", "amount": "1", "unit": "cup"},
-    {"item": "granulated sugar", "amount": "0.75", "unit": "cup"},
-    {"item": "brown sugar", "amount": "0.75", "unit": "cup"},
-    {"item": "eggs", "amount": "2", "unit": "large"},
-    {"item": "vanilla extract", "amount": "2", "unit": "tsp"},
-    {"item": "baking soda", "amount": "1", "unit": "tsp"},
-    {"item": "salt", "amount": "1", "unit": "tsp"},
-    {"item": "chocolate chips", "amount": "2", "unit": "cups"}
-  ],
-  "instructions": [
-    "Preheat oven to 375°F (190°C)",
-    "Cream together butter and both sugars until light and fluffy",
-    "Beat in eggs one at a time, then add vanilla extract",
-    "In a separate bowl, whisk together flour, baking soda, and salt",
-    "Gradually blend dry ingredients into butter mixture",
-    "Stir in chocolate chips",
-    "Drop rounded tablespoons of dough onto ungreased cookie sheets",
-    "Bake for 9-11 minutes or until golden brown",
-    "Cool on baking sheet for 2 minutes before transferring to a wire rack"
-  ],
-  "tags": ["dessert", "baking", "cookies", "chocolate", "classic"]
+  "name": "Vegetable pasta",
+  "ingredients": ["200 g pasta", "1 zucchini", "1 tbsp olive oil"],
+  "cookingTime": 20,
+  "isVegetarian": true,
+  "steps": ["Cook the pasta.", "Sauté the zucchini.", "Combine and serve."]
 }
 ```
 
-![RecipeGenerator Screenshot](https://raw.githubusercontent.com/Liquid4All/LeapSDK-Examples/main/Android/RecipeGenerator/docs/screenshot.png)
+Schema constraints enforce the output shape; they do not validate the recipe's content. This is an illustrative recipe, not a recorded model response. To extend the structure, update the data class, JSON schema, and renderer together.
 
-The interface shows the structured recipe data rendered beautifully with proper formatting, making it easy to read and follow.
+## Downloads and lifecycle
 
-## Further improvements
+The first request downloads the model from Hugging Face. Downloads go to a temporary file; the runtime checks the expected size and SHA-256 before publishing the final GGUF. An interrupted download restarts on the next attempt. A verified cached model works offline.
 
-Here are some ways to extend this example:
-
-- **Database integration** - Save generated recipes to Room database
-- **Multiple cuisines** - Add cuisine type selector (Italian, Mexican, Asian, etc.)
-- **Dietary restrictions** - Filter for vegan, gluten-free, keto, etc.
-- **Nutritional information** - Extend schema to include calories, protein, carbs
-- **Scaling calculator** - Adjust ingredient amounts based on servings
-- **Shopping list generation** - Extract ingredients into a shareable shopping list
-- **Image generation** - Integrate with image models to visualize the dish
-- **Recipe sharing** - Export as PDF or share via social media
-- **User ratings** - Allow users to rate and review generated recipes
-- **Variation generator** - Generate recipe variations (e.g., "make it vegan")
-- **Meal planning** - Combine multiple recipes into weekly meal plans
-- **Ingredient substitution** - Suggest alternatives for missing ingredients
-
-## Need help?
-
-<CardGroup cols={1}>
-
-<Card title="Join our Discord" icon="discord" iconType="brands" href="https://discord.gg/DFU3WQeaYD">
-  Connect with the community and ask questions about this example.
-</Card>
-
-</CardGroup>
+A ViewModel retains the model across screen rotation. Native calls run in one queue per model instance. Cancellation stops the token loop before cleanup releases the model. A failed request displays an error and allows retry.

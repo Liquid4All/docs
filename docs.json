@@ -317,7 +317,7 @@
                   "examples/android/web-content-summarizer",
                   "examples/android/recipe-generator-constrained-output",
                   "examples/android/vision-language-model-example",
-                  "examples/android/leap-koog-agent"
+                  "examples/android/tool-calling-agent"
                 ],
                 "expanded": false
               },
@@ -349,6 +349,10 @@
     ]
   },
   "redirects": [
+    {
+      "source": "/examples/android/leap-koog-agent",
+      "destination": "/examples/android/tool-calling-agent"
+    },
     {
       "source": "/lfm/key-concepts/omni-capabilities",
       "destination": "/lfm/key-concepts/audio-capabilities"
