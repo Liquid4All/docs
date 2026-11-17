@@ -1,15 +1,17 @@
 ---
 title: "Liquid Foundation Models"
-description: "Browse every Liquid Foundation Model (LFM) for local AI: text, vision, audio, and decision models plus Liquid Nanos, with GGUF, MLX, and ONNX formats."
+description: "Browse Liquid Foundation Models for local AI: LFM3 text, vision, audio, and omni models, decision models, and specialized Liquid Nanos."
 ---
+
+Start with **LFM3** for a new application: [LFM3-1.7B](/lfm/models/lfm3-1.7b) for text and agents, [LFM3-VL-2B](/lfm/models/lfm3-vl-2b) for images and video, [LFM3-Audio-2B](/lfm/models/lfm3-audio-2b) for speech, or [LFM3-Omni-2B](/lfm/models/lfm3-omni-2b) for combined inputs. Smaller models, larger MoEs, and specialized [Liquid Nanos](/lfm/models/liquid-nanos) remain useful alternatives; choose them for their footprint, task, or runtime support.
 
 <div className="capabilities">
 
 Across the library:
 
 - Context length depends on the model: 32K tokens for most text, vision, audio, and omni models, 256K for LFM3-1.7B, 128K for LFM3-VL-2B, LFM2.5-8B-A1B, d1-2B, and d1-omni-2B, 131K for LFM2.5-24B-A2B, 8K for the LFM2.5 encoders, and 16K for d1-omni-600M. Each model page lists its exact limit.
-- Text and vision models run with [Transformers](/deployment/gpu-inference/transformers), [llama.cpp](/deployment/on-device/llama-cpp), [vLLM](/deployment/gpu-inference/vllm), [SGLang](/deployment/gpu-inference/sglang), [zml/llmd](/deployment/gpu-inference/zml-llmd), [MLX](/deployment/on-device/mlx), [Ollama](/deployment/on-device/ollama), and [Atomic Chat](/deployment/on-device/atomic-chat). Audio, omni, retrieval, encoder, and decision models support fewer runtimes (d1-omni-600M: Transformers, llama.cpp, and mlx-vlm); check each model page.
-- Most open-weight models can be fine-tuned with [Liquid Finetune](/lfm/fine-tuning/liquid-finetune), [TRL](/lfm/fine-tuning/trl), or [Unsloth](/lfm/fine-tuning/unsloth), and MoE models can be trained across GPUs with [Halo](/lfm/fine-tuning/halo). The **Trainable?** column in the matrix below lists the documented path for each model.
+- Runtime support varies by checkpoint and modality. Start with the model page's supported [Transformers](/deployment/gpu-inference/transformers), [llama.cpp](/deployment/on-device/llama-cpp), [vLLM](/deployment/gpu-inference/vllm), [SGLang](/deployment/gpu-inference/sglang), [zml/llmd](/deployment/gpu-inference/zml-llmd), [MLX](/deployment/on-device/mlx), or app-based path. A downloadable format does not establish every runtime's support for it.
+- Training is also model-specific. Start with [TRL](/lfm/fine-tuning/trl) for LFM3 text LoRA; use [Liquid Finetune](/lfm/fine-tuning/liquid-finetune), [Unsloth](/lfm/fine-tuning/unsloth), or [Halo](/lfm/fine-tuning/halo) for their documented checkpoints and workflows. The **Trainable?** column below links the model's path.
 
 </div>
 
@@ -31,7 +33,7 @@ Start with the model family that matches your input and output shape, then choos
 </Card>
 
 <Card title="Vision Models" icon="eye" iconType="light" href="/lfm/models/vision-models">
-  Image understanding with LFM backbones and custom encoders.
+  Image and video understanding, OCR, and visual reasoning.
 </Card>
 
 <Card title="Audio Models" icon="headphones" iconType="light" href="/lfm/models/audio-models">
@@ -64,8 +66,8 @@ Start with the model family that matches your input and output shape, then choos
   Use [llama.cpp](/deployment/on-device/llama-cpp), [Ollama](/deployment/on-device/ollama), [Atomic Chat](/deployment/on-device/atomic-chat), or [MLX](/deployment/on-device/mlx) depending on platform and packaging needs. To embed a model in an iOS, Android, or desktop app, see [Build with llama.cpp](/deployment/on-device/llama-cpp/mobile).
 </Card>
 
-<Card title="Fine-Tuning" icon="sliders" iconType="light" href="/lfm/fine-tuning/liquid-finetune">
-  Start with [Liquid Finetune](/lfm/fine-tuning/liquid-finetune) for managed workflows, or use [TRL](/lfm/fine-tuning/trl), [Unsloth](/lfm/fine-tuning/unsloth), and [Halo](/lfm/fine-tuning/halo) for framework-level control.
+<Card title="Fine-Tuning" icon="sliders" iconType="light" href="/lfm/fine-tuning/trl">
+  Start with the LFM3 text LoRA smoke test in [TRL](/lfm/fine-tuning/trl). Follow [Liquid Finetune](/lfm/fine-tuning/liquid-finetune), [Unsloth](/lfm/fine-tuning/unsloth), or [Halo](/lfm/fine-tuning/halo) for supported managed, optimized, or distributed workflows.
 </Card>
 
 <Card title="Model Repositories" icon="database" iconType="light" href="https://huggingface.co/LiquidAI/collections">

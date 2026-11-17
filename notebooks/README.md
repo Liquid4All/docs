@@ -1,10 +1,12 @@
 # Notebooks
 
-This directory contains example notebooks for LFM2 models.
+Start with [LFM3 text inference](LFM3_Inference_with_Transformers.ipynb).
+
+This directory also retains model-specific LFM2/LFM2.5 inference and training notebooks, plus the shared quickstart sources. Start new applications with the current [LFM3 deployment guides](https://docs.liquid.ai/deployment/gpu-inference/transformers). Notebook names identify their original scope; changing a model ID does not verify a new architecture, runtime, or training method.
 
 ## Quality checks
 
-We use automated checks to ensure notebooks don't have basic issues like syntax errors, undefined variables, or import errors. These checks run automatically in CI on every pull request. See `.github/workflows/notebooks-check.yaml` for details.
+We use automated checks to ensure notebooks don't have basic issues like syntax errors, undefined variables, or import errors. These checks run automatically in CI on every pull request. See `.github/workflows/check-notebooks.yaml` for details.
 
 **Run local checks**
 
