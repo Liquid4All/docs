@@ -1,264 +1,72 @@
 ---
 title: "Ollama"
-description: "Deploy Liquid AI LFM models with Ollama. Pull, configure, and serve LFM2.5 models locally with an OpenAI-compatible API."
+description: "Run LFM3 locally with Ollama, and keep model-specific instructions for LFM2.5 and LFM2 deployments."
 ---
 
-<Tip>
-  Use Ollama for quick local model serving with a simple CLI or Docker-based deployment.
-</Tip>
+Start with the official [LFM3 model](https://ollama.com/library/lfm3) for local text chat, agents, and tool use. The commands below were checked with Ollama 0.40.16. Install or update Ollama from [ollama.com](https://ollama.com/download), then start its local service.
 
-Ollama uses GGUF models and supports GPU acceleration (CUDA, Metal, ROCm).
-
-<Warning>
-  The official Ollama v0.17.0 (latest stable) from [ollama.com](https://ollama.com) fails with a `missing tensor 'output_norm.weight'` error on the `lfm2moe` architecture. This affects all LFM MoE models (e.g. LFM2-24B-A2B, LFM2-8B-A1B). To run any LFM MoE model you specifically need [v0.17.1-rc0](https://github.com/ollama/ollama/releases/tag/v0.17.1-rc0) or later.
-</Warning>
-
-<div className="colab-link">
-  <a href="https://colab.research.google.com/github/Liquid4All/docs/blob/main/notebooks/LFM2_Inference_with_Ollama.ipynb" target="_blank">
-    <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open in Colab"></img>
-  </a>
-</div>
-
-
-## Installation
-
-<Tabs>
-  <Tab title="macOS and Windows">
-    Download directly from [ollama.com/download](https://ollama.com/download).
-  </Tab>
-  <Tab title="Linux">
-    ```bash
-    curl -fsSL https://ollama.com/install.sh | sh
-    ```
-  </Tab>
-  <Tab title="Docker">
-    Run Ollama with GPU acceleration inside Docker containers:
-
-    **CPU only:**
-
-    ```bash
-    docker run -d -v ollama:/root/.ollama -p 11434:11434 --name ollama ollama/ollama
-    ```
-
-    **NVIDIA GPU:**
-
-    ```bash
-    docker run -d --gpus=all -v ollama:/root/.ollama -p 11434:11434 --name ollama ollama/ollama
-    ```
-
-    Then run a model:
-
-    ```bash
-    docker exec -it ollama ollama run hf.co/LiquidAI/LFM2.5-1.2B-Instruct-GGUF
-    ```
-
-    See the [Ollama Docker documentation](https://ollama.com/blog/ollama-is-now-available-as-an-official-docker-image) for more details.
-  </Tab>
-</Tabs>
-
-## Using LFM2 Models
-
-Ollama can load GGUF models directly from Hugging Face or from local files.
-
-### Running GGUFs
-
-You can run LFM2 models directly from Hugging Face:
+## Run LFM3
 
 ```bash
-ollama run hf.co/LiquidAI/LFM2.5-1.2B-Instruct-GGUF
+ollama run lfm3
 ```
 
-See the [Models page](/lfm/models/complete-library) for all available GGUF repositories.
+Ollama downloads the model and its template. The official `lfm3` model supports thinking and tools. Leave enough output tokens for reasoning; a short generation cap can stop before the final answer.
 
-To use a local GGUF file, first download a model from Hugging Face:
+## Native chat API
 
 ```bash
-uv pip install huggingface-hub
-hf download LiquidAI/LFM2.5-1.2B-Instruct-GGUF {quantization}.gguf --local-dir .
+curl http://localhost:11434/api/chat \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "lfm3",
+    "messages": [{"role": "user", "content": "What is the capital of France?"}],
+    "stream": false,
+    "options": {"num_ctx": 4096, "num_predict": 2048, "temperature": 0.1}
+  }'
 ```
 
-Replace `{quantization}` with your preferred quantization level (e.g., `q4_k_m`, `q8_0`).
+The native response separates `message.thinking` from `message.content`. Set `stream: true` to receive newline-delimited JSON chunks. Send the full conversation history for follow-up questions, including tool calls and results when applicable.
 
-Then run the local model:
+## OpenAI-compatible API
 
-```bash
-ollama run /path/to/model.gguf
-```
-
-<Accordion title="Custom Setup with Modelfile">
-  For custom configurations (specific quantization, chat template, or parameters), create a Modelfile.
-
-  Create a plain text file named `Modelfile` (no extension) with the following content:
-
-  ```
-  FROM /path/to/model.gguf
-
-  TEMPLATE """<|startoftext|><|im_start|>system
-  {{ .System }}<|im_end|>
-  <|im_start|>user
-  {{ .Prompt }}<|im_end|>
-  <|im_start|>assistant
-  """
-
-  PARAMETER temperature 0.1
-  PARAMETER top_k 50
-  PARAMETER repeat_penalty 1.05
-  PARAMETER stop "<|im_end|>"
-  PARAMETER stop "<|endoftext|>"
-  ```
-
-  Import the model with the Modelfile:
-
-  ```bash
-  ollama create my-model -f Modelfile
-  ```
-
-  Then run it:
-
-  ```bash
-  ollama run my-model
-  ```
-</Accordion>
-
-## Basic Usage
-
-Interact with models through the command-line interface.
-
-### Interactive Chat
-
-```bash
-ollama run hf.co/LiquidAI/LFM2.5-1.2B-Instruct-GGUF
-```
-
-Type your messages and press Enter. Use `/bye` to exit.
-
-### Single Prompt
-
-```bash
-ollama run hf.co/LiquidAI/LFM2.5-1.2B-Instruct-GGUF "What is machine learning?"
-```
-
-If you imported a model with a custom name using a Modelfile, use that name instead (e.g., `ollama run my-model`).
-
-## Serving Models
-
-Ollama automatically starts a server on `http://localhost:11434` with an OpenAI-compatible API for programmatic access.
-
-### Python Client
+Install the client with `uv pip install openai`:
 
 ```python
 from openai import OpenAI
 
-client = OpenAI(
-    base_url="http://localhost:11434/v1",
-    api_key="not-needed"
-)
-
+client = OpenAI(base_url="http://localhost:11434/v1", api_key="ollama")
 response = client.chat.completions.create(
-    model="hf.co/LiquidAI/LFM2.5-1.2B-Instruct-GGUF",
-    messages=[
-        {"role": "user", "content": "Explain quantum computing."}
-    ],
+    model="lfm3",
+    messages=[{"role": "user", "content": "What is the capital of France?"}],
     temperature=0.1,
-    extra_body={"top_k": 50, "repeat_penalty": 1.05},
+    max_tokens=2048,
 )
 print(response.choices[0].message.content)
 ```
 
-<Accordion title="Curl request examples">
-  Ollama provides two native API endpoints:
+For tool use, pass OpenAI-style `tools` and handle the returned `tool_calls`. For JSON constraints, Ollama's native API accepts a JSON schema in `format`. See the [upstream API](https://docs.ollama.com/api) for supported fields in the native and OpenAI-compatible endpoints; their options are not identical.
 
-  **Generate API** (simple completion):
+## Older models and Hugging Face GGUFs
 
-  ```bash
-  curl http://localhost:11434/api/generate -d '{
-    "model": "hf.co/LiquidAI/LFM2-1.2B-GGUF",
-    "prompt": "What is artificial intelligence?"
-  }'
-  ```
+Keep older checkpoints for a concrete size, specialization, or deployment requirement. Use the repository and sampling settings linked on that model's page:
 
-  **Chat API** (conversational format):
+```bash
+ollama run hf.co/LiquidAI/LFM2.5-1.2B-Instruct-GGUF:Q4_K_M
+```
 
-  ```bash
-  curl http://localhost:11434/api/chat -d '{
-    "model": "hf.co/LiquidAI/LFM2-1.2B-GGUF",
-    "messages": [
-      {"role": "user", "content": "Hello!"}
-    ]
-  }'
-  ```
-</Accordion>
+The native chat request above works by replacing `model` with this exact Ollama model name. The same chat flow also works with `hf.co/LiquidAI/LFM2-1.2B-GGUF:Q4_K_M`, a deprecated checkpoint retained for existing users. Check [Deprecations](/lfm/help/deprecations) before choosing it for a new application.
 
-## Vision Models
+Capabilities depend on the imported model's template and Ollama metadata. Successful text generation does not establish tool, vision, audio, or video support. In particular, the original LFM2-1.2B Hugging Face import was checked for chat; it rejects the tool request used with `lfm3`. Do not copy LFM3 tool claims to every older import.
 
-LFM2-VL GGUF models can also be used for multimodal inference with Ollama.
+For images, speech, or combined inputs, follow the selected [model page](/lfm/models/complete-library) and its supported runtimes. A GGUF's availability alone does not establish Ollama modality support; [llama.cpp](/deployment/on-device/llama-cpp) has the current LFM3 multimodal examples.
 
-<Accordion title="Interactive Chat with Images">
-  Run a vision model directly and provide images in the chat:
-
-  ```bash
-  ollama run hf.co/LiquidAI/LFM2.5-VL-1.6B-GGUF
-  ```
-
-  In the interactive chat, you can ask questions about images using the `/image` command followed by the file path:
-
-  ```
-  >>> /image path/to/image.jpg What's in this image?
-  ```
-
-  Or provide the image path directly in your prompt:
-
-  ```
-  >>> Describe the contents of ~/Downloads/photo.png
-  ```
-</Accordion>
-
-<Accordion title="Using the API">
-  ```python
-  from openai import OpenAI
-  import base64
-
-  client = OpenAI(
-      base_url="http://localhost:11434/v1",
-      api_key="not-needed"
-  )
-
-  # Encode image to base64
-  with open("image.jpg", "rb") as image_file:
-      image_data = base64.b64encode(image_file.read()).decode("utf-8")
-
-  response = client.chat.completions.create(
-      model="hf.co/LiquidAI/LFM2.5-VL-1.6B-GGUF",
-      messages=[
-          {
-              "role": "user",
-              "content": [
-                  {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{image_data}"}},
-                  {"type": "text", "text": "What's in this image?"}
-              ]
-          }
-      ]
-  )
-  print(response.choices[0].message.content)
-  ```
-</Accordion>
-
-## Model Management
-
-List installed models:
+## Manage models
 
 ```bash
 ollama list
+ollama show lfm3
+ollama stop lfm3
 ```
 
-Remove a model:
-
-```bash
-ollama rm hf.co/LiquidAI/LFM2.5-1.2B-Instruct-GGUF
-```
-
-Show model information:
-
-```bash
-ollama show hf.co/LiquidAI/LFM2.5-1.2B-Instruct-GGUF
-```
+The [older Ollama notebook](https://github.com/Liquid4All/docs/blob/main/notebooks/LFM2_Inference_with_Ollama.ipynb) remains scoped to its LFM2/LFM2.5 examples. Use the quickstart above for LFM3.

@@ -50,12 +50,14 @@ LFM3-Omni-2B is Liquid AI's first omni model: a single end-to-end model that und
 
 ## Quick Start
 
+On Apple Silicon, use [MLX-VLM 0.8.0](/deployment/on-device/mlx#lfm3-and-d1-models) with the model's MLX weights. The guide includes the current text, image, ASR, and speech-generation commands.
+
 <Tabs>
   <Tab title="Transformers">
     **Install:**
 
     ```bash
-    pip install "transformers>=5.20.2" accelerate torch torchvision torchcodec pillow soundfile librosa
+    pip install "transformers==5.23.0" accelerate torch torchvision torchcodec pillow soundfile librosa
     ```
 
     **Load the model:**
@@ -165,7 +167,7 @@ LFM3-Omni-2B is Liquid AI's first omni model: a single end-to-end model that und
   </Tab>
 
   <Tab title="SGLang">
-    SGLang serves LFM3-Omni-2B with text output. Text, image, video (optionally with its audio track, via `use_audio_in_video`), and audio inputs are supported.
+    Use the build and CUDA setup in the [SGLang guide](/deployment/gpu-inference/sglang#installation). SGLang serves LFM3-Omni-2B with text output. Text, image, video (optionally with its audio track, via `use_audio_in_video`), and audio inputs are supported.
 
     ```bash
     python -m sglang.launch_server --model-path LiquidAI/LFM3-Omni-2B

@@ -3,6 +3,10 @@ title: "Fal"
 description: "Deploy Liquid AI LFM models on Fal for serverless inference with fast autoscaling."
 ---
 
+<Note>
+This integration retains its original LFM2 deployment project and runtime pins. For new LFM3 GPU serving, start with the current [vLLM](/deployment/gpu-inference/vllm) or [SGLang](/deployment/gpu-inference/sglang) guide. Updating a provider script requires testing its image, model architecture, and launch flags together; changing only `MODEL_NAME` is insufficient.
+</Note>
+
 <Tip>
   Use Fal for serverless cloud deployments with lightning-fast inference, autoscaling, and easy API access.
 </Tip>
@@ -16,7 +20,7 @@ git clone https://github.com/Liquid4All/lfm-inference
 ## Deployment
 
 ```bash
-cd fal
+cd lfm-inference/fal
 
 # run one-off server
 fal run deploy-lfm2.py::serve

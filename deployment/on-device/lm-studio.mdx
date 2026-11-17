@@ -11,10 +11,12 @@ description: "Run Liquid AI LFM models in LM Studio. Download GGUF models and st
 
 Download and install LM Studio directly from [lmstudio.ai](https://lmstudio.ai/download).
 
+Use an updated llama.cpp runtime that supports LFM3 (upstream v0.8.0 / b11960 or later). Runtime packages are updated separately from the LM Studio app. For LFM3 on Apple Silicon, use a supported GGUF runtime or follow the [MLX-VLM guide](/deployment/on-device/mlx); MLX-LM and MLX-VLM have different model support.
+
 ## Downloading Models
 
 1. Open LM Studio and click the **Search** tab (🔍)
-2. Search for "LiquidAI" or "LFM2"
+2. Search for "LiquidAI LFM3-1.7B" for text, or "LiquidAI LFM3-VL-2B" for vision
 3. Select a model and quantization level (`Q4_K_M` recommended)
 4. Click **Download**
 
@@ -40,13 +42,15 @@ Control text generation behavior using the GUI sidebar or API parameters. Key pa
 
 Via the OpenAI-compatible API:
 
+Replace `local-model` below with the model ID reported by your running server's `/v1/models` endpoint.
+
 ```python
 response = client.chat.completions.create(
     model="local-model",
     messages=[{"role": "user", "content": "What is machine learning?"}],
     temperature=0.1,
-    max_tokens=512,
-    extra_body={"top_k": 50, "repeat_penalty": 1.05},
+    max_tokens=2048,
+    extra_body={"top_k": 50, "repeat_penalty": 1.1},
 )
 ```
 
@@ -74,8 +78,8 @@ response = client.chat.completions.create(
         {"role": "user", "content": "What is machine learning?"}
     ],
     temperature=0.1,
-    max_tokens=512,
-    extra_body={"top_k": 50, "repeat_penalty": 1.05},
+    max_tokens=2048,
+    extra_body={"top_k": 50, "repeat_penalty": 1.1},
 )
 print(response.choices[0].message.content)
 ```
@@ -105,14 +109,14 @@ for chunk in stream:
       "messages": [{"role": "user", "content": "Hello!"}],
       "temperature": 0.1,
       "top_k": 50,
-      "repeat_penalty": 1.05
+      "repeat_penalty": 1.1
     }'
   ```
 </Accordion>
 
 ## Vision Models
 
-Search for "LiquidAI LFM2-VL" to download vision models. In the **Chat** tab:
+Search for "LiquidAI LFM3-VL-2B" to download vision models. In the **Chat** tab:
 
 * Drag and drop images into the chat
 * Click the image icon to upload

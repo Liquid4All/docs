@@ -33,7 +33,7 @@ SNIPPET_CONFIG = {
         "sections": [
             {"type": "label", "text": "Install:"},
             {"type": "code_block", "language": "bash",
-             "code": 'pip install "transformers>=5.2.0" torch accelerate'},
+             "code": 'pip install "transformers==5.23.0" torch accelerate'},
             {"type": "label", "text": "Download & Run:"},
             {"type": "code_block", "language": "python",
              "code": (
@@ -70,13 +70,13 @@ SNIPPET_CONFIG = {
         "sections": [
             {"type": "label", "text": "Install:"},
             {"type": "code_block", "language": "bash",
-             "code": "pip install -U vllm"},
+             "code": "uv pip install vllm==0.34.0"},
             {"type": "label", "text": "Run:"},
             {"type": "code_block", "language": "python",
              "code": (
                  "from vllm import LLM, SamplingParams\n"
                  "\n"
-                 'llm = LLM(model="${modelId}")\n'
+                 'llm = LLM(model="${modelId}", enforce_eager=True)\n'
                  "\n"
                  "sampling_params = SamplingParams(${samplingParams}max_tokens=${maxTokens || 512})\n"
                  "\n"
@@ -120,7 +120,7 @@ SNIPPET_CONFIG = {
         "sections": [
             {"type": "label", "text": "Install:"},
             {"type": "code_block", "language": "bash",
-             "code": 'pip install "transformers>=5.2.0" pillow torch torchvision accelerate'},
+             "code": 'pip install "transformers==5.23.0" pillow torch torchvision accelerate'},
             {"type": "label", "text": "Download & Run:"},
             {"type": "notebook_code", "language": "python"},
         ],
@@ -141,9 +141,7 @@ SNIPPET_CONFIG = {
         "sections": [
             {"type": "label", "text": "Install:"},
             {"type": "code_block", "language": "bash",
-             "code": "uv pip install vllm==0.19.0"},
-            {"type": "code_block", "language": "bash",
-             "code": 'uv pip install transformers==5.5.0 pillow'},
+             "code": 'uv pip install "vllm==0.34.0" pillow'},
             {"type": "label", "text": "Run:"},
             {"type": "notebook_code", "language": "python"},
         ],

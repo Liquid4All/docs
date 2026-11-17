@@ -1,63 +1,68 @@
 ---
 title: "vLLM"
-description: "Serve LFM2.5 with vLLM, a high-throughput OpenAI-compatible inference engine. The full recipe, verified on real hardware, lives in the vLLM cookbook."
+description: "Serve LFM3 with vLLM 0.34.0, with model-specific parsers and compatible paths for LFM2.5 and LFM2."
 ---
 
-vLLM is the highest-throughput way to serve LFM2.5 in production. Point vLLM at an LFM2.5 checkpoint to start an OpenAI-compatible endpoint with one command. The dense, MoE, and vision-language models are all native to vLLM (`Lfm2ForCausalLM`, `Lfm2MoeForCausalLM`, and `Lfm2VlForConditionalGeneration`), so there's no `--trust-remote-code` and nothing to patch.
+Use vLLM for GPU serving, batching, and an OpenAI-compatible API. Start with [LFM3-1.7B](/lfm/models/lfm3-1.7b) for text or [LFM3-VL-2B](/lfm/models/lfm3-vl-2b) for images. The examples below use a CUDA GPU and vLLM 0.34.0, which adds native LFM3 support.
 
-<Tip>
-  Reach for vLLM when you need high-throughput serving, batch processing, or an OpenAI-compatible API. It requires a CUDA GPU. On CPU-only machines, use [llama.cpp](/deployment/on-device/llama-cpp) instead.
-</Tip>
+## Installation
 
-The vLLM cookbook keeps the serve flags, sampling presets, and tuning notes current. This page gets you from install to first request.
-
-<Card title="LFM2.5 vLLM Cookbook" icon="book-open" iconType="light" href="https://docs.vllm.ai/projects/recipes/en/latest/LiquidAI/LFM2.5.html">
-  Serving commands, sampling settings, and hardware notes for LFM2.5 on vLLM, verified on real hardware and updated with each release.
-</Card>
-
-## What's in the cookbook
-
-- **Commands for every model.** The full LFM2.5 matrix (dense, MoE, reasoning, Japanese, base, and vision), with the exact command for each.
-- **Reasoning and tool calling.** When to pass `--reasoning-parser qwen3` and `--tool-call-parser lfm2`, and how the parsed output comes back.
-- **Recommended sampling.** Per-checkpoint presets from the model cards.
-- **Vision.** Serving the VL models and sending image-and-text turns.
-- **Blackwell tuning and benchmarks.** Throughput-impacting flags, with benchmark numbers.
-- **One-command Modal deploy.** A ready-to-run script for cloud GPUs.
-
-## Quickstart
-
-Install vLLM. LFM2.5's dense, MoE, and VL architectures ship in **v0.23.0** and later:
+Use an isolated Python 3.12 environment and a CUDA setup compatible with the [vLLM installation guide](https://docs.vllm.ai/en/latest/getting_started/installation/gpu/):
 
 ```bash
-uv pip install -U vllm
+uv pip install "vllm==0.34.0" openai
 ```
 
-Serve any LFM2.5 model behind an OpenAI-compatible API:
+LFM3 requires 0.34.0's native implementation. Follow the [release notes](https://github.com/vllm-project/vllm/releases/tag/v0.34.0) when upgrading an existing deployment; defaults and dependencies changed too.
+
+## Serve LFM3 text
 
 ```bash
-vllm serve LiquidAI/LFM2.5-1.2B-Instruct
+vllm serve LiquidAI/LFM3-1.7B \
+  --trust-remote-code \
+  --reasoning-parser qwen3 \
+  --enable-auto-tool-choice --tool-call-parser qwen3_coder \
+  --max-model-len 4096 --gpu-memory-utilization 0.8 --enforce-eager
 ```
 
-<Note>
-  This is the minimal path. The per-model and per-hardware flags (`--tool-call-parser lfm2`, `--reasoning-parser qwen3`, vision options, and Blackwell tuning) live in the [cookbook](https://docs.vllm.ai/projects/recipes/en/latest/LiquidAI/LFM2.5.html), where they stay in sync with each release.
-</Note>
+Review the checkpoint's configuration code before enabling `--trust-remote-code`. `--enforce-eager` uses eager execution for this quickstart rather than CUDA graph capture. The 4,096-token limit is a small quickstart budget, not the checkpoint's maximum context. Increase it to fit your task and GPU memory.
 
-Send your first request with the OpenAI client:
+Install the client with `uv pip install openai`, then send a request:
 
 ```python
 from openai import OpenAI
 
 client = OpenAI(base_url="http://localhost:8000/v1", api_key="EMPTY")
-
 response = client.chat.completions.create(
-    model="LiquidAI/LFM2.5-1.2B-Instruct",
-    messages=[{"role": "user", "content": "What is C. elegans? Answer in one sentence."}],
+    model="LiquidAI/LFM3-1.7B",
+    messages=[{"role": "user", "content": "What is the capital of France?"}],
     temperature=0.1,
-    extra_body={"top_k": 50, "repetition_penalty": 1.05},
+    max_tokens=2048,
+    extra_body={"top_k": 50, "repetition_penalty": 1.1},
 )
 print(response.choices[0].message.content)
 ```
 
-## Sampling parameters
+Leave room for reasoning as well as the final answer. The reasoning parser separates reasoning from `content`; it does not disable thinking. See [Thinking](/lfm/key-concepts/thinking). Set `stream=True` for streaming responses, and pass OpenAI-style `tools` for parsed tool calls. Use `response_format` with a JSON schema for constrained JSON output.
 
-LFM2.5 ships per-model sampling presets on its Hugging Face model cards. The [cookbook's sampling table](https://docs.vllm.ai/projects/recipes/en/latest/LiquidAI/LFM2.5.html#recommended-sampling) has the exact values for every checkpoint. Two details matter: `top_k`, `min_p`, and `repetition_penalty` are vLLM extras, so pass them through `extra_body` rather than as top-level arguments; and leave `max_tokens` unset unless you mean to cap output, since a low cap cuts off the reasoning models mid-thought.
+## Vision, audio, and omni
+
+For images, use the launch configuration on the [LFM3-VL model page](/lfm/models/lfm3-vl-2b#quick-start), then send OpenAI `image_url` content parts. Multimodal input limits and memory needs differ from text-only serving.
+
+Upstream vLLM lists additional [LFM3 multimodal architectures](https://docs.vllm.ai/en/latest/models/supported_models/). Architecture registration alone does not establish speech output, video handling, or a particular API contract. Follow a tested example for the exact checkpoint and modality; the [Audio](/lfm/models/lfm3-audio-2b) and [Omni](/lfm/models/lfm3-omni-2b) pages retain their documented runtime paths.
+
+## LFM2.5 and LFM2
+
+Older supported checkpoints keep their native architectures and tool-call formats:
+
+```bash
+vllm serve LiquidAI/LFM2.5-1.2B-Instruct \
+  --enable-auto-tool-choice --tool-call-parser lfm2 \
+  --max-model-len 4096 --gpu-memory-utilization 0.8 --enforce-eager
+```
+
+The client request has the same shape. Change `model` to match the server and use that checkpoint's sampling settings. For LFM2.5-1.2B-Instruct, use `temperature=0.1`, `top_k=50`, and `repetition_penalty=1.05`. Original LFM2 models and thinking/MoE variants have their own settings; check the model's quickstart rather than inheriting LFM3's parser or generation preset.
+
+<Card title="LFM2.5 vLLM Cookbook" icon="book-open" iconType="light" href="https://docs.vllm.ai/projects/recipes/en/latest/LiquidAI/LFM2.5.html">
+  Keep the older family-specific recipes for MoE, Japanese, DSpark, vision, hardware tuning, and sampling. Their model/version scope is separate from the LFM3 quickstart above.
+</Card>

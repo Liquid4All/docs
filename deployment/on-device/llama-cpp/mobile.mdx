@@ -3,6 +3,11 @@ title: "iOS & Android"
 description: "Embed llama.cpp directly in an iOS or Android app and run LFM GGUF models on-device through the native C API."
 ---
 
+Start with [LFM3-1.7B](/lfm/models/lfm3-1.7b) for a new application and llama.cpp v0.8.0 (b11960) or later. Download the model and use its chat template and sampling settings from the [main guide](/deployment/on-device/llama-cpp).
+
+The native examples and Android cookbook apps below retain their tested LFM2.5 checkpoints. They are a smaller-footprint reference path. Test a new checkpoint's bindings, memory fit, and conversation handling on the target device before replacing a bundled model; a desktop server check does not certify a mobile app.
+
+
 llama.cpp is a dependency-free C/C++ library, so it links straight into a mobile app. Every LFM checkpoint ships as GGUF on Hugging Face ([LiquidAI](https://huggingface.co/LiquidAI)), and upstream llama.cpp supports the LFM2 architecture, LFM2-VL projectors, and LFM2/LFM2.5 tool-call parsing. No wrapper SDK is required.
 
 <Tip>

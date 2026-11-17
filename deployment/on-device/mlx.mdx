@@ -7,200 +7,14 @@ description: "Run Liquid AI LFM models on Apple Silicon with MLX. Setup, model d
   Use MLX for running models on Apple Silicon Macs with Metal GPU acceleration.
 </Tip>
 
-MLX leverages unified memory architecture on Apple Silicon, allowing seamless data sharing between CPU and GPU. The `mlx-lm` package provides a simple interface for loading and serving LLMs.
-
-## Installation
-
-Install the MLX language model package:
-
-```bash
-pip install mlx-lm
-```
-
-LFM3 and d1 models use MLX-VLM instead: see [LFM3 and d1 Models](#lfm3-and-d1-models).
-
-## Basic Usage
-
-The `mlx-lm` package provides a simple interface for text generation with MLX models.
-
-See the [Models page](/lfm/models/complete-library) for all available MLX models, or browse MLX community models at [mlx-community LFM2 models](https://huggingface.co/models?sort=created&search=mlx-communityLFM2).
-
-```python
-from mlx_lm import load, generate
-
-# Load model and tokenizer
-model, tokenizer = load("mlx-community/LFM2-1.2B-8bit")
-
-# Generate text
-prompt = "What is machine learning?"
-
-# Apply chat template
-messages = [{"role": "user", "content": prompt}]
-prompt = tokenizer.apply_chat_template(
-    messages, tokenizer=False, add_generation_prompt=True
-)
-
-response = generate(model, tokenizer, prompt=prompt, verbose=True)
-print(response)
-```
-
-### Generation Parameters
-
-Control text generation behavior using parameters in the `generate()` function. Key parameters:
-
-* **`temperature`** (`float`, default 1.0): Controls randomness (0.0 = deterministic, higher = more random). Typical range: 0.1-2.0
-* **`top_p`** (`float`, default 1.0): Nucleus sampling - limits to tokens with cumulative probability ≤ top\_p. Typical range: 0.1-1.0
-* **`top_k`** (`int`, default 50): Limits to top-k most probable tokens. Typical range: 1-100
-* **`max_tokens`** (`int`): Maximum number of tokens to generate
-* **`repetition_penalty`** (`float`, default 1.0): Penalty for repeating tokens (>1.0 = discourage repetition). Typical range: 1.0-1.5
-
-Example with custom parameters:
-
-```python
-response = generate(
-    model,
-    tokenizer,
-    prompt=prompt,
-    temperature=0.3,
-    min_p=0.15,
-    repetition_penalty=1.05,
-    max_tokens=512
-)
-```
-
-## Streaming Generation
-
-Stream responses with `stream_generate()`:
-
-```python
-from mlx_lm import load, stream_generate
-
-model, tokenizer = load("mlx-community/LFM2-1.2B-8bit")
-
-messages = [{"role": "user", "content": "Tell me a story about space exploration."}]
-prompt = tokenizer.apply_chat_template(
-    messages, tokenizer=False, add_generation_prompt=True
-)
-
-for token in stream_generate(model, tokenizer, prompt=prompt, max_tokens=512):
-    print(token, end="", flush=True)
-```
-
-## Serving with mlx-lm
-
-MLX can serve models through an OpenAI-compatible API. Start a server with:
-
-```bash
-mlx_lm.server --model mlx-community/LFM2-1.2B-8bit --port 8080
-```
-
-### Using the Server
-
-Once running, use the OpenAI Python client:
-
-```python
-from openai import OpenAI
-
-client = OpenAI(
-    base_url="http://localhost:8080/v1",
-    api_key="not-needed"
-)
-
-response = client.chat.completions.create(
-    model="mlx-community/LFM2-1.2B-8bit",
-    messages=[
-        {"role": "user", "content": "Explain quantum computing."}
-    ],
-    temperature=0.3,
-    max_tokens=512,
-    extra_body={"min_p": 0.15, "repetition_penalty": 1.05},
-)
-print(response.choices[0].message.content)
-```
-
-You can also use curl to interact with the server:
-
-<Accordion title="Curl request example">
-  ```bash
-  curl http://localhost:8080/v1/chat/completions \
-    -H "Content-Type: application/json" \
-    -d '{
-      "model": "mlx-community/LFM2-1.2B-8bit",
-      "messages": [{"role": "user", "content": "Hello!"}],
-      "temperature": 0.3,
-      "min_p": 0.15,
-      "repetition_penalty": 1.05
-    }'
-  ```
-</Accordion>
-
-## Vision Models
-
-LFM2-VL models support both text and image inputs for multimodal inference. Use `mlx_vlm` to load and generate with vision models:
-
-<Accordion title="Single Image Example">
-  ```python
-  from mlx_vlm import load, generate
-  from mlx_vlm.prompt_utils import apply_chat_template
-  from mlx_vlm.utils import load_image_processor
-  from PIL import Image
-
-  # Load vision model
-  model, processor = load("mlx-community/LFM2-VL-1.6B-8bit")
-
-  # Load image
-  image = Image.open("path/to/image.jpg")
-
-  # Create prompt
-  messages = [
-      {
-          "role": "user",
-          "content": [
-              {"type": "image"},
-              {"type": "text", "text": "What's in this image?"}
-          ]
-      }
-  ]
-
-  # Apply chat template
-  prompt = apply_chat_template(processor, messages)
-
-  # Generate
-  output = generate(model, processor, image, prompt, verbose=False)
-  print(output)
-  ```
-</Accordion>
-
-<Accordion title="Multiple Images Example">
-  ```python
-  images = [
-      Image.open("path/to/first.jpg"),
-      Image.open("path/to/second.jpg")
-  ]
-
-  messages = [
-      {
-          "role": "user",
-          "content": [
-              {"type": "image"},
-              {"type": "image"},
-              {"type": "text", "text": "What are the differences between these images?"}
-          ]
-      }
-  ]
-
-  prompt = apply_chat_template(processor, messages)
-  output = generate(model, processor, images, prompt, verbose=False)
-  print(output)
-  ```
-</Accordion>
+MLX runs LFMs on Apple Silicon's Metal GPU. Use MLX-VLM for LFM3; MLX-LM remains the text-generation path for supported older models.
 
 ## LFM3 and d1 Models
 
-The LFM3 models and the d1 decision models run with [MLX-VLM](https://github.com/Blaizzy/mlx-vlm) 0.7.11 or later:
+The LFM3 models and the d1 decision models run with [MLX-VLM](https://github.com/Blaizzy/mlx-vlm) 0.8.0:
 
 ```bash
-pip install -U "mlx-vlm>=0.7.11"
+uv pip install "mlx-vlm==0.8.0"
 ```
 
 | Model | MLX repositories |
@@ -251,6 +65,37 @@ python -m mlx_vlm decide --model LiquidAI/d1-2B-MLX-4bit \
 ```
 
 Swap the model id to ask d1-omni-2B, d1-3B, or d1-omni-600M. d1-3B and d1-omni-600M return yes/no answers as `value` and `probability`. The d1 model cards show the Python API.
+
+## LFM2 and LFM2.5 text models
+
+Use MLX-LM for older text checkpoints, including small, Japanese, and larger MoE models. These examples use MLX-LM 0.32.2. The LFM3 commands above use a different package; changing only the model ID in an MLX-LM command does not add LFM3 support.
+
+```bash
+uv pip install "mlx-lm==0.32.2"
+python -m mlx_lm.generate --model LiquidAI/LFM2.5-1.2B-Instruct-MLX-4bit \
+  --prompt "What is the capital of France?" --max-tokens 512
+```
+
+For the Python API, apply the tokenizer's template with `tokenize=False` and pass a sampler:
+
+```python
+from mlx_lm import load, generate
+from mlx_lm.sample_utils import make_sampler
+
+model, tokenizer = load("LiquidAI/LFM2.5-1.2B-Instruct-MLX-4bit")
+prompt = tokenizer.apply_chat_template(
+    [{"role": "user", "content": "What is the capital of France?"}],
+    tokenize=False,
+    add_generation_prompt=True,
+)
+response = generate(
+    model, tokenizer, prompt=prompt, max_tokens=512,
+    sampler=make_sampler(temp=0.1, top_k=50),
+)
+print(response)
+```
+
+For an existing LFM2 deployment, keep its own model repository and sampling settings. For older vision checkpoints, use MLX-VLM and the repository linked on the selected [model page](/lfm/models/vision-models).
 
 ## Speculative Decoding
 

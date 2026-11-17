@@ -1,14 +1,19 @@
 ---
 title: "Function Calling & Agents"
-description: "Tool use with LFM2.5 on llama.cpp: OpenAI-style tools through llama-server, the agent loop, and how LFM tool-call tokens are parsed."
+description: "Tool use with LFM3 and older models on llama.cpp: OpenAI-style tools through llama-server, the agent loop, and how LFM tool-call tokens are parsed."
 ---
+
+Use llama.cpp v0.8.0 (b11960) or later for LFM3; the server examples were checked with b12359. Start with [LFM3-1.7B](/lfm/models/lfm3-1.7b) for new text applications. The API shape also applies to supported older GGUF models, with their own sampling and template settings.
+
+
+LFM3 emits XML tool calls. LFM2 and LFM2.5 use their earlier Pythonic/JSON formats. With the model's Jinja template enabled, llama.cpp parses these into OpenAI-compatible `tool_calls`, so the client uses one tool schema across generations. See [Tool Use](/lfm/key-concepts/tool-use) for the raw formats.
 
 LFM2 and LFM2.5 emit tool calls between `<|tool_call_start|>` and `<|tool_call_end|>` control tokens (see [Tool Use](/lfm/key-concepts/tool-use)). llama.cpp ships a dedicated parser for both formats: start `llama-server` with `--jinja`, pass `tools` in the request, and tool calls come back as structured `tool_calls` on the OpenAI-compatible response. There is nothing to parse on the client.
 
 ## Start the server
 
 ```bash
-llama-server -hf LiquidAI/LFM2.5-1.2B-Instruct-GGUF:Q4_K_M -c 8192 --port 8080 --jinja
+llama-server -hf LiquidAI/LFM3-1.7B-GGUF:Q4_K_M -c 8192 --port 8080 --jinja
 ```
 
 `--jinja` is mandatory: it renders the tool definitions through the model's chat template and enables tool-call parsing. Use a recent llama.cpp release — LFM2/LFM2.5 template detection lives in `common/chat.cpp` and older builds fall back to a generic parser.
@@ -42,13 +47,13 @@ tools = [{
 messages = [{"role": "user", "content": "What's the weather like in Paris right now?"}]
 
 response = client.chat.completions.create(
-    model="lfm2.5-1.2b-instruct",
+    model="lfm3-1.7b",
     messages=messages,
     tools=tools,
     tool_choice="auto",
     temperature=0.1,
-    max_tokens=512,
-    extra_body={"top_k": 50, "repeat_penalty": 1.05},
+    max_tokens=2048,
+    extra_body={"top_k": 50, "repeat_penalty": 1.1},
 )
 
 message = response.choices[0].message
@@ -77,12 +82,12 @@ def run_agent(user_text: str, max_steps: int = 5) -> str:
     ]
     for _ in range(max_steps):
         response = client.chat.completions.create(
-            model="lfm2.5-1.2b-instruct",
+            model="lfm3-1.7b",
             messages=messages,
             tools=tools,
             temperature=0.1,
-            max_tokens=512,
-            extra_body={"top_k": 50, "repeat_penalty": 1.05},
+            max_tokens=2048,
+            extra_body={"top_k": 50, "repeat_penalty": 1.1},
         )
         message = response.choices[0].message
         messages.append(message)                      # keep the assistant turn (incl. tool_calls)
@@ -115,7 +120,7 @@ Guidelines that matter on small on-device models:
 
 With `stream: true`, tool calls arrive incrementally in `choices[0].delta.tool_calls` (`index`, `id`, `function.name`, then chunks of `function.arguments`). Accumulate the argument fragments per `index` and parse the JSON once `finish_reason` is `"tool_calls"`.
 
-## Pythonic and JSON tool-call formats
+## Older Pythonic and JSON tool-call formats
 
 LFM2.5 natively writes Pythonic calls (`get_weather(city="Paris")`); LFM2 wraps definitions in `<|tool_list_start|>` / `<|tool_list_end|>`. With `--jinja`, `llama-server` detects the template and normalizes either format into OpenAI `tool_calls`, so you never see the raw tokens. If you disable tool parsing (`parse_tool_calls: false` in the request) the raw `<|tool_call_start|>…<|tool_call_end|>` text is returned in `content` instead.
 
@@ -136,6 +141,6 @@ See [`common/chat.h`](https://github.com/ggml-org/llama.cpp/blob/master/common/c
     Force valid JSON for tool arguments or final answers.
   </Card>
   <Card title="Tool Use concepts" icon="book" iconType="light" href="/lfm/key-concepts/tool-use">
-    How LFM2.5 represents tools and calls at the token level.
+    How LFM3 and older models represent tools and calls at the token level.
   </Card>
 </CardGroup>

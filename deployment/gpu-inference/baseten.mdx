@@ -3,6 +3,10 @@ title: "Baseten"
 description: "Deploy Liquid AI LFM models on Baseten with optimized inference, autoscaling, and multi-cloud support."
 ---
 
+<Note>
+This integration retains its original LFM2 deployment project and runtime pins. For new LFM3 GPU serving, start with the current [vLLM](/deployment/gpu-inference/vllm) or [SGLang](/deployment/gpu-inference/sglang) guide. Updating a provider script requires testing its image, model architecture, and launch flags together; changing only `MODEL_NAME` is insufficient.
+</Note>
+
 <Tip>
   Use Baseten for production ML model deployments with optimized inference, autoscaling, and multi-cloud support.
 </Tip>
@@ -20,7 +24,7 @@ The deployment script is based on Baseten's [documentation](https://docs.baseten
 Launch command:
 
 ```bash
-cd baseten
+cd lfm-inference/baseten
 pip install truss
 truss push lfm2-8b --publish
 ```

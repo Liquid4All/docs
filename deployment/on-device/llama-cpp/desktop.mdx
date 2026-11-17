@@ -3,6 +3,9 @@ title: "Desktop & Server Apps"
 description: "Ship LFM models in desktop apps with llama.cpp: run llama-server as a sidecar, embed it via Python, Node.js, or .NET, and route between local AI and cloud."
 ---
 
+Use llama.cpp v0.8.0 (b11960) or later for LFM3; the server examples were checked with b12359. Start with [LFM3-1.7B](/lfm/models/lfm3-1.7b) for new text applications. The API shape also applies to supported older GGUF models, with their own sampling and template settings.
+
+
 On laptops, desktops, and servers there are two ways to embed llama.cpp. Pick one per application:
 
 | Pattern | How it works | Choose it when |
@@ -14,7 +17,7 @@ Both consume the same GGUF files from [Hugging Face](/lfm/models/complete-librar
 
 ## Sidecar: llama-server
 
-1. **Bundle the binary.** Download the prebuilt archive for each platform you ship from [llama.cpp releases](https://github.com/ggml-org/llama.cpp/releases) (`macos-arm64`, `win-cpu-x64` / `win-cuda-*`, `ubuntu-x64`, `ubuntu-vulkan-x64`, …) and place `llama-server` plus its shared libraries in your app's resources. See the [install guide](/deployment/on-device/llama-cpp#installation) for the binary matrix.
+1. **Bundle the binary.** Download the prebuilt archive for each platform you ship from [llama.cpp releases](https://github.com/ggml-org/llama.cpp/releases) (`macos-arm64`, `win-cpu-x64` / `win-cuda-*`, `ubuntu-x64`, `ubuntu-vulkan-x64`, …) and place `llama-server` plus its shared libraries in your app's resources. See the [install guide](/deployment/on-device/llama-cpp#installation) for the supported build and platform choices.
 2. **Launch it on startup** with a free port and the model path, and wait for `GET /health` to return `{"status":"ok"}`.
 3. **Call `/v1/chat/completions`** with any OpenAI client. Everything in [Chat & Streaming](/deployment/on-device/llama-cpp/chat), [Function Calling](/deployment/on-device/llama-cpp/function-calling), [Structured Output](/deployment/on-device/llama-cpp/structured-output), and [Vision & Audio](/deployment/on-device/llama-cpp/multimodal) applies unchanged.
 4. **Kill the child process** when your app exits.
@@ -50,7 +53,7 @@ Both consume the same GGUF files from [Hugging Face](/lfm/models/complete-librar
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         messages: [{ role: "user", content: "Summarize the benefits of on-device AI." }],
-        temperature: 0.1, top_k: 50, repeat_penalty: 1.05, max_tokens: 512,
+        temperature: 0.1, top_k: 50, repeat_penalty: 1.1, max_tokens: 2048,
       }),
     });
     console.log((await res.json()).choices[0].message.content);
@@ -75,10 +78,10 @@ Both consume the same GGUF files from [Hugging Face](/lfm/models/complete-librar
 
     client = OpenAI(base_url=f"http://127.0.0.1:{PORT}/v1", api_key="not-needed")
     response = client.chat.completions.create(
-        model="lfm2.5-1.2b-instruct",
+        model="lfm3-1.7b",
         messages=[{"role": "user", "content": "Summarize the benefits of on-device AI."}],
-        temperature=0.1, max_tokens=512,
-        extra_body={"top_k": 50, "repeat_penalty": 1.05},
+        temperature=0.1, max_tokens=2048,
+        extra_body={"top_k": 50, "repeat_penalty": 1.1},
     )
     print(response.choices[0].message.content)
     server.terminate()
@@ -123,6 +126,8 @@ Complete sample applications built this way:
 
 ## In-process bindings
 
+These bindings package their own llama.cpp builds. The examples below retain LFM2.5; check the binding's vendored runtime for LFM3 support before changing the model. For the tested LFM3 path, use the sidecar server above.
+
 <Tabs>
   <Tab title="Python (llama-cpp-python)">
     ```bash
@@ -141,7 +146,7 @@ Complete sample applications built this way:
 
     for chunk in llm.create_chat_completion(
         messages=[{"role": "user", "content": "What is machine learning?"}],
-        temperature=0.1, top_k=50, repeat_penalty=1.05, max_tokens=512,
+        temperature=0.1, top_k=50, repeat_penalty=1.05, max_tokens=2048,
         stream=True,
     ):
         delta = chunk["choices"][0]["delta"].get("content")
@@ -222,14 +227,14 @@ cloud = OpenAI(base_url="https://your-vllm-host/v1", api_key=os.environ["CLOUD_A
 
 def complete(messages, prefer_local=True):
     if prefer_local:
-        client, model = local, "lfm2.5-1.2b-instruct"
-        extra = {"top_k": 50, "repeat_penalty": 1.05}          # llama.cpp field name
+        client, model = local, "lfm3-1.7b"
+        extra = {"top_k": 50, "repeat_penalty": 1.1}          # llama.cpp field name
     else:
         client, model = cloud, "LiquidAI/LFM2.5-8B-A1B"
         extra = {"top_k": 80, "repetition_penalty": 1.05}      # vLLM / SGLang field name
     return client.chat.completions.create(
         model=model, messages=messages, temperature=0.1 if prefer_local else 0.2,
-        max_tokens=512, extra_body=extra,
+        max_tokens=2048, extra_body=extra,
     )
 ```
 
