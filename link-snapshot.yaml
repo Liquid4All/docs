@@ -84,6 +84,7 @@ active:
   - /deployment/on-device/sdk/quick-start
   - /deployment/on-device/sdk/utilities
   - /deployment/on-device/sdk/voice-assistant
+  - /deployment/overview
   - /deployment/tools/model-bundling
   - /deployment/tools/model-bundling/authentication
   - /deployment/tools/model-bundling/bundle-creation
