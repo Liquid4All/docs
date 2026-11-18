@@ -35,7 +35,7 @@ For distributed LFM MoE training with expert or tensor parallelism, use [Halo](/
 
 1. Start with [LFM3-1.7B](/lfm/models/lfm3-1.7b) for general text or the LFM3 model for your modality. Use an older checkpoint when its size or specialization fits your task better, and choose a training framework that supports its architecture. The [TRL guide](/lfm/fine-tuning/trl) provides the text LoRA path.
 2. Prepare 500 to 5,000 task examples. Quality and distribution matter more than volume; match production inputs.
-3. Train with LoRA for the first pass. A 1.2B LoRA run can take minutes to tens of minutes on a single modern GPU.
+3. Start with a short LoRA run to check the training setup before running a full job.
 4. Evaluate on a held-out set that you froze before training.
 5. Iterate on data, prompts, and hyperparameters before scaling to larger runs.
 
