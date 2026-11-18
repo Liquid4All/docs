@@ -7,9 +7,11 @@ description: "Release notes for the LEAP SDK, including the 0.9.x → 0.10.x Kot
 The LEAP SDK is deprecated and this page is no longer maintained. Build on llama.cpp directly instead — see [Migrating from LEAP SDK](/deployment/on-device/llama-cpp/migrating-from-leap-sdk).
 </Warning>
 
-Latest release: **v0.10.7** ([GitHub](https://github.com/Liquid4All/leap-sdk/releases/tag/v0.10.7)).
+These archived pages document **v0.10.7** ([GitHub](https://github.com/Liquid4All/leap-sdk/releases/tag/v0.10.7)). See the [release history](https://github.com/Liquid4All/leap-sdk/releases) for other published versions.
 
 This page covers user-visible changes in the LEAP SDK across releases. For per-build commit detail, see the release notes on [`Liquid4All/leap-sdk`](https://github.com/Liquid4All/leap-sdk/releases).
+
+<span id="0-9-x-0-10-x-kotlin-multiplatform-unification"></span>
 
 ## 0.9.x → 0.10.x: Kotlin Multiplatform unification
 
@@ -63,7 +65,7 @@ See [Voice Assistant Widget](/deployment/on-device/sdk/voice-assistant).
 
 `LeapDownloader.loadSimpleModel` and `LeapModelDownloader.loadSimpleModel` load a model from explicit resource paths or URLs without going through the LEAP Model Library manifest. Useful for ADB-pushed bundles, app-bundled models, or any setup where you've already placed the model files on disk.
 
-See [Model Loading — Sideloaded files](/deployment/on-device/sdk/model-loading#loadsimplemodel-sideloaded-files).
+See [Model Loading — Sideloaded files](/deployment/on-device/sdk/model-loading#sideloaded-files).
 
 ### iOS background downloads
 
@@ -149,13 +151,19 @@ val runner = downloader.loadModel(
 )
 ```
 
+<span id="kotlin-native-linux-windows"></span>
+
+### Kotlin/Native Linux and Windows
+
+The archived desktop recipes use v0.10.7, which includes the accumulated native linking and packaging fixes. Earlier fixes are listed in the v0.10.4.x release notes below. Follow [Desktop Platforms](/deployment/on-device/sdk/desktop-platforms) for platform-specific installation and runtime requirements.
+
 ## Per-release notes
 
 ### v0.10.7 — 2026-05-18
 
 KMP target completion for `leap-openai-client` plus a repo-wide bytecode-hardening pass. iOS / macOS Swift surface is unchanged from v0.10.6 — this is a Kotlin/JVM ergonomics release for non-Apple consumers.
 
-**New targets on `leap-openai-client`** ([PR #256](https://github.com/Liquid4All/leap-android-sdk/pull/256)):
+**New targets on `leap-openai-client`** ([v0.10.7 release](https://github.com/Liquid4All/leap-sdk/releases/tag/v0.10.7)):
 
 - **`jvm`** (Ktor CIO engine) — Maven Central now publishes `ai.liquid.leap:leap-openai-client-jvm:0.10.7`. Pure-JVM desktop / server apps can route OpenAI-compatible chat completions without dragging in Android or KMP targets. (The 0.10.0 — 0.10.6 SPM cascade only shipped Android + Apple + Linux/MinGW K/N + wasmJs metadata; the JVM slice was absent.)
 - **`wasmJs`** (Ktor Js engine) — browser-side chat-completions client matching what `leap-sdk` already targets.
@@ -223,6 +231,8 @@ iOS `ModelDownloader` (the Swift class formerly known as `LeapModelDownloader` �
 - Options on the new load methods take `LiquidInferenceEngineManifestOptions?` (the Swift-friendly type already used by `Leap.load`), with `toModelLoadingOptions()` / `toGenerationTimeParameters()` conversion at the boundary — no separate KMP options class needed from Swift.
 - Internal: the iOS class uses `kotlin.experimental.ExperimentalObjCName` (stable in our Kotlin 2.3.20 baseline but still formally experimental).
 - No public-API changes for Android or non-Apple Kotlin/Native targets.
+
+<span id="v0-10-5"></span>
 
 ### v0.10.5 — 2026-05-11
 

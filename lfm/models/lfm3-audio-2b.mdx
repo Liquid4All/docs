@@ -49,12 +49,14 @@ LFM3-Audio-2B is a compact, fully featured audio model that runs locally on lapt
 
 ## Quick Start
 
+On Apple Silicon, use [MLX-VLM 0.8.0](/deployment/on-device/mlx#lfm3-and-d1-models) with the model's MLX weights. The guide includes the current text, image, ASR, and speech-generation commands.
+
 <Tabs>
   <Tab title="Transformers">
     **Install:**
 
     ```bash
-    pip install "transformers>=5.20.2" torch accelerate librosa soundfile
+    pip install "transformers==5.23.0" torch accelerate librosa soundfile
     ```
 
     **Load the model:**

@@ -1,411 +1,90 @@
 ---
 title: "TRL"
-description: "Fine-tune LFM models with Hugging Face's TRL library using Supervised Fine-Tuning (SFT), Direct Preference Optimization (DPO), and Low-Rank Adaptation (LoRA)."
+description: "Fine-tune LFM3 text models with a tested TRL LoRA smoke test, and choose model-specific recipes for older and multimodal LFMs."
 ---
 
-<Tip>
-  Use TRL for fine-tuning with native Hugging Face integration, support for SFT, DPO, PPO, and GRPO, and access to the most recent training algorithms and techniques.
-</Tip>
+Start with [LFM3-1.7B](/lfm/models/lfm3-1.7b) for general text adaptation. [TRL](https://huggingface.co/docs/trl) provides trainers for supervised fine-tuning, preference optimization, and reinforcement learning. The model architecture, chat template, and dataset format still determine the right recipe.
 
-<Tip>
-  [Liquid Finetune](/lfm/fine-tuning/liquid-finetune) builds on TRL and wraps the repetitive setup for LFM training: dataset validation, config defaults, evals, distributed launch, checkpointing, and optimized paths for VLM and MoE runs.
-</Tip>
+## Installation
 
-Different training methods require specific dataset formats. See [Datasets](/lfm/fine-tuning/datasets) for format requirements.
+The text smoke test below uses Python 3.12, Transformers 5.23.0, TRL 1.18.1, and PEFT 0.21.3 on a CUDA GPU:
 
-## Installation[​](#installation "Direct link to Installation")
-
-Install TRL and required dependencies:
-
-```
-pip install trl>=0.9.0 transformers>=4.55.0 torch>=2.6 peft accelerate
+```bash
+uv pip install "transformers==5.23.0" "trl==1.18.1" "peft==0.21.3" torch accelerate datasets
 ```
 
-* **`trl`**: Core training library
-* **`peft`**: LoRA/QLoRA support
-* **`accelerate`**: Multi-GPU and distributed training
+Review the checkpoint's custom code before enabling `trust_remote_code=True`. Use an isolated environment for this recipe; older notebooks can require different package versions.
 
-## Supervised Fine-Tuning (SFT)[​](#supervised-fine-tuning-sft "Direct link to Supervised Fine-Tuning (SFT)")
+## LFM3 text LoRA smoke test
 
-<div className="colab-link">
-  <a href="https://colab.research.google.com/github/Liquid4All/docs/blob/main/notebooks/💧_LFM2_5_SFT_with_TRL.ipynb" target="_blank" rel="noreferrer">
-    <img src="/images/lfm/fine-tuning/production/uploads/61b8e2ba285851687028d395/vlOyMEjwHa_b_LXysEu2E.png" alt="Open in Colab"></img>
-  </a>
-</div>
-
-The `SFTTrainer` makes it easy to fine-tune LFM models on instruction-following or conversational datasets. It handles chat templates, packing, and dataset formatting automatically. SFT training requires [Instruction datasets](/lfm/fine-tuning/datasets#instruction-datasets-sft).
-
-### LoRA Fine-Tuning (Recommended)[​](#lora-fine-tuning-recommended "Direct link to LoRA Fine-Tuning (Recommended)")
-
-LoRA (Low-Rank Adaptation) is the recommended approach for fine-tuning LFM2 models with TRL. It offers several key advantages:
-
-* **Memory efficient**: Trains only small adapter weights (\~1-2% of model size) instead of full model parameters
-* **Data efficient**: Achieves strong task performance improvements with less training data than full fine-tuning
-* **Fast training**: Reduced parameter count enables faster iteration and larger effective batch sizes
-* **Flexible**: Easy to switch between different task adapters without retraining the base model
-
-For memory-efficient fine-tuning, use LoRA with the `SFTTrainer`:
+This two-step run checks model loading, tokenization, adapter attachment, gradients, and checkpoint saving. Its two synthetic examples are a setup check, not a useful training dataset or a quality evaluation.
 
 ```python
-from transformers import AutoModelForCausalLM, AutoTokenizer
-from trl import SFTTrainer, SFTConfig
+from datasets import Dataset
 from peft import LoraConfig
-from datasets import load_dataset
+from transformers import AutoModelForCausalLM, AutoTokenizer
+from trl import SFTConfig, SFTTrainer
 
+model_id = "LiquidAI/LFM3-1.7B"
 model = AutoModelForCausalLM.from_pretrained(
-    "LiquidAI/LFM2.5-1.2B-Instruct",
-    dtype="auto",
-    device_map="auto"
+    model_id, trust_remote_code=True, device_map="auto", dtype="bfloat16",
 )
-tokenizer = AutoTokenizer.from_pretrained("LiquidAI/LFM2.5-1.2B-Instruct")
+tokenizer = AutoTokenizer.from_pretrained(model_id, trust_remote_code=True)
 
-# Configure LoRA
-peft_config = LoraConfig(
-    r=16,
-    lora_alpha=32,
-    lora_dropout=0.05,
-    target_modules=["q_proj", "k_proj", "v_proj", "o_proj"],
-    task_type="CAUSAL_LM",
-)
-
-training_args = SFTConfig(
-    output_dir="./lfm2-sft-lora",
-    num_train_epochs=3,
-    per_device_train_batch_size=4,
-    gradient_accumulation_steps=4,
-    learning_rate=2e-4,
-    bf16=True,
-)
-
-dataset = load_dataset("HuggingFaceTB/smoltalk", "all")
+dataset = Dataset.from_list([
+    {"messages": [
+        {"role": "user", "content": "What is the capital of France?"},
+        {"role": "assistant", "content": "Paris."},
+    ]},
+    {"messages": [
+        {"role": "user", "content": "What is two plus two?"},
+        {"role": "assistant", "content": "Four."},
+    ]},
+])
 
 trainer = SFTTrainer(
     model=model,
-    args=training_args,
-    train_dataset=dataset["train"],
-    tokenizer=tokenizer,
-    peft_config=peft_config,
+    processing_class=tokenizer,
+    train_dataset=dataset,
+    peft_config=LoraConfig(
+        r=8, lora_alpha=16, target_modules="all-linear", task_type="CAUSAL_LM",
+    ),
+    args=SFTConfig(
+        output_dir="./lfm3-sft", max_steps=2,
+        per_device_train_batch_size=1, gradient_accumulation_steps=1,
+        learning_rate=2e-4, max_length=256, bf16=True,
+        report_to="none", save_strategy="no", logging_steps=1,
+    ),
 )
-
 trainer.train()
+trainer.save_model("./lfm3-sft/adapter")
 ```
 
-<Accordion title="Full Fine-Tuning">
-  Full fine-tuning updates all model parameters. Use this only when you have sufficient GPU memory and need maximum adaptation for your task.
+`target_modules="all-linear"` lets PEFT find the model's linear layers. Inspect the attached adapters and trainable parameter count before a long run; names copied from Llama/Qwen recipes do not necessarily exist in LFMs. This recipe saves an adapter, not a merged standalone checkpoint.
 
-  ```python
-  from transformers import AutoModelForCausalLM, AutoTokenizer
-  from trl import SFTTrainer, SFTConfig
-  from datasets import load_dataset
+## Move from a smoke test to training
 
-  # Load model and tokenizer
-  model = AutoModelForCausalLM.from_pretrained(
-      "LiquidAI/LFM2.5-1.2B-Instruct",
-      dtype="auto",
-      device_map="auto"
-  )
-  tokenizer = AutoTokenizer.from_pretrained("LiquidAI/LFM2.5-1.2B-Instruct")
+- Replace the synthetic rows with a representative [instruction dataset](/lfm/fine-tuning/datasets#instruction-datasets-sft) and freeze a separate evaluation set.
+- Choose sequence length, batching, training duration, and learning rate for the task and available memory. Reasoning traces count toward the sequence length.
+- Preserve the selected checkpoint's template, tool-call format, and intended reasoning behavior in the training data. LFM3 uses XML tool calls; LFM2/LFM2.5 use their earlier formats.
+- Evaluate both task quality and the exported inference path. A finite loss and saved adapter establish that training runs, not that the adaptation is good.
 
-  # Load your dataset
-  dataset = load_dataset("HuggingFaceTB/smoltalk", "all")
+For managed configs, distributed launch, evaluation, and export, see [Liquid Finetune](/lfm/fine-tuning/liquid-finetune). Verify that its current configuration supports the selected checkpoint before launching.
 
-  # Configure training
-  training_args = SFTConfig(
-      output_dir="./lfm2-sft",
-      num_train_epochs=3,
-      per_device_train_batch_size=4,
-      gradient_accumulation_steps=4,
-      learning_rate=2e-5,
-      logging_steps=10,
-      save_strategy="epoch",
-      bf16=True,
-  )
+## LFM2.5 and LFM2
 
-  # Create trainer
-  trainer = SFTTrainer(
-      model=model,
-      args=training_args,
-      train_dataset=dataset["train"],
-      tokenizer=tokenizer,
-  )
+Keep older models when a smaller footprint, larger MoE, Japanese specialization, or an established deployment is the reason for choosing them. Use their own chat templates and module names. The text trainer structure above can be adapted, but a successful LFM3 smoke test does not certify every older model or training method.
 
-  # Train
-  trainer.train()
-  ```
-</Accordion>
+These notebooks retain their named LFM2/LFM2.5 recipes and environments:
 
-## Vision Language Model Fine-Tuning (VLM-SFT)[​](#vision-language-model-fine-tuning-vlm-sft "Direct link to Vision Language Model Fine-Tuning (VLM-SFT)")
+- [LFM2.5 text SFT](https://github.com/Liquid4All/docs/blob/main/notebooks/💧_LFM2_5_SFT_with_TRL.ipynb)
+- [LFM2.5 vision SFT](https://github.com/Liquid4All/docs/blob/main/notebooks/💧_LFM2_5_VL_SFT_with_TRL.ipynb)
+- [LFM2 DPO](https://github.com/Liquid4All/docs/blob/main/notebooks/💧_LFM2_DPO_with_TRL.ipynb)
 
-<div className="colab-link">
-  <a href="https://colab.research.google.com/github/Liquid4All/docs/blob/main/notebooks/💧_LFM2_5_VL_SFT_with_TRL.ipynb" target="_blank" rel="noreferrer">
-    <img src="/images/lfm/fine-tuning/production/uploads/61b8e2ba285851687028d395/vlOyMEjwHa_b_LXysEu2E.png" alt="Open in Colab"></img>
-  </a>
-</div>
+Their model names describe their scope; changing the ID does not make them LFM3 recipes. Follow the [migration guide](/guides/migration-guide#fine-tuning) when selecting adapters and training formats.
 
-The `SFTTrainer` also supports fine-tuning Vision Language Models like `LFM2.5-VL-1.6B` on image-text datasets. VLM fine-tuning requires [Vision datasets](/lfm/fine-tuning/datasets#vision-datasets-vlm-sft) and a few key differences from text-only SFT:
+## Vision, audio, omni, and preference training
 
-* Uses `AutoModelForImageTextToText` instead of `AutoModelForCausalLM`
-* Uses `AutoProcessor` instead of just a tokenizer
-* Requires dataset formatting with image content types
-* Needs a custom `collate_fn` for multimodal batching
+Multimodal training needs a processor, modality-aware data collator, and a compatible trainer. The text-only smoke test above is not an LFM3-VL, Audio, or Omni training recipe. Start with the selected model's [training path](/lfm/models/complete-library#complete-model-matrix) and upstream examples.
 
-### VLM LoRA Fine-Tuning (Recommended)[​](#vlm-lora-fine-tuning-recommended "Direct link to VLM LoRA Fine-Tuning (Recommended)")
-
-LoRA is recommended for VLM fine-tuning due to the larger model size and multimodal complexity:
-
-```python
-from transformers import AutoModelForImageTextToText, AutoProcessor
-from trl import SFTTrainer, SFTConfig
-from peft import LoraConfig, get_peft_model
-from datasets import load_dataset
-
-model_id = "LiquidAI/LFM2.5-VL-1.6B"
-
-processor = AutoProcessor.from_pretrained(
-    model_id,
-    max_image_tokens=256,
-    trust_remote_code=True
-)
-
-model = AutoModelForImageTextToText.from_pretrained(
-    model_id,
-    dtype="bfloat16",
-    device_map="auto",
-    trust_remote_code=True
-)
-
-# Format dataset for VLM (image + text)
-def format_vlm_sample(sample):
-    return [
-        {"role": "system", "content": [{"type": "text", "text": "You are a vision assistant."}]},
-        {"role": "user", "content": [
-            {"type": "image", "image": sample["image"]},
-            {"type": "text", "text": sample["question"]},
-        ]},
-        {"role": "assistant", "content": [{"type": "text", "text": sample["answer"]}]},
-    ]
-
-# Custom collate function for multimodal batching
-def collate_fn(samples):
-    batch = processor.apply_chat_template(samples, tokenize=True, return_dict=True, return_tensors="pt")
-    labels = batch["input_ids"].clone()
-    labels[labels == processor.tokenizer.pad_token_id] = -100
-    batch["labels"] = labels
-    return batch
-
-# Configure LoRA
-peft_config = LoraConfig(
-    lora_alpha=16,
-    lora_dropout=0.05,
-    r=8,
-    bias="none",
-    target_modules=["q_proj", "v_proj", "fc1", "fc2", "linear", "gate_proj", "up_proj", "down_proj"],
-    task_type="CAUSAL_LM",
-)
-
-model = get_peft_model(model, peft_config)
-
-sft_config = SFTConfig(
-    output_dir="./lfm2-vl-sft-lora",
-    num_train_epochs=1,
-    per_device_train_batch_size=1,
-    gradient_accumulation_steps=16,
-    learning_rate=5e-4,
-    gradient_checkpointing=True,
-    max_length=512,
-    dataset_kwargs={"skip_prepare_dataset": True},
-)
-
-# Load and format your dataset
-dataset = load_dataset("HuggingFaceH4/llava-instruct-mix-vsft")
-train_dataset = [format_vlm_sample(s) for s in dataset["train"]]
-
-trainer = SFTTrainer(
-    model=model,
-    args=sft_config,
-    train_dataset=train_dataset,
-    data_collator=collate_fn,
-    processing_class=processor.tokenizer,
-)
-
-trainer.train()
-```
-
-<Accordion title="Full VLM Fine-Tuning">
-  Full VLM fine-tuning updates all model parameters. Use this only when you have sufficient GPU memory.
-
-  ```python
-  from transformers import AutoModelForImageTextToText, AutoProcessor
-  from trl import SFTTrainer, SFTConfig
-  from datasets import load_dataset
-
-  model_id = "LiquidAI/LFM2.5-VL-1.6B"
-
-  processor = AutoProcessor.from_pretrained(
-      model_id,
-      max_image_tokens=256,
-      trust_remote_code=True
-  )
-
-  model = AutoModelForImageTextToText.from_pretrained(
-      model_id,
-      dtype="bfloat16",
-      device_map="auto",
-      trust_remote_code=True
-  )
-
-  def format_vlm_sample(sample):
-      return [
-          {"role": "user", "content": [
-              {"type": "image", "image": sample["image"]},
-              {"type": "text", "text": sample["question"]},
-          ]},
-          {"role": "assistant", "content": [{"type": "text", "text": sample["answer"]}]},
-      ]
-
-  def collate_fn(samples):
-      batch = processor.apply_chat_template(samples, tokenize=True, return_dict=True, return_tensors="pt")
-      labels = batch["input_ids"].clone()
-      labels[labels == processor.tokenizer.pad_token_id] = -100
-      batch["labels"] = labels
-      return batch
-
-  sft_config = SFTConfig(
-      output_dir="./lfm2-vl-sft",
-      num_train_epochs=1,
-      per_device_train_batch_size=1,
-      gradient_accumulation_steps=16,
-      learning_rate=2e-5,
-      gradient_checkpointing=True,
-      max_length=512,
-      dataset_kwargs={"skip_prepare_dataset": True},
-  )
-
-  dataset = load_dataset("HuggingFaceH4/llava-instruct-mix-vsft")
-  train_dataset = [format_vlm_sample(s) for s in dataset["train"]]
-
-  trainer = SFTTrainer(
-      model=model,
-      args=sft_config,
-      train_dataset=train_dataset,
-      data_collator=collate_fn,
-      processing_class=processor.tokenizer,
-  )
-
-  trainer.train()
-  ```
-</Accordion>
-
-## Direct Preference Optimization (DPO)[​](#direct-preference-optimization-dpo "Direct link to Direct Preference Optimization (DPO)")
-
-<div className="colab-link">
-  <a href="https://colab.research.google.com/github/Liquid4All/docs/blob/main/notebooks/💧_LFM2_DPO_with_TRL.ipynb" target="_blank" rel="noreferrer">
-    <img src="/images/lfm/fine-tuning/production/uploads/61b8e2ba285851687028d395/vlOyMEjwHa_b_LXysEu2E.png" alt="Open in Colab"></img>
-  </a>
-</div>
-
-The `DPOTrainer` implements Direct Preference Optimization, a method to align models with human preferences without requiring a separate reward model. DPO training requires [Preference datasets](/lfm/fine-tuning/datasets#preference-datasets-dpo) with chosen and rejected response pairs.
-
-### DPO with LoRA (Recommended)[​](#dpo-with-lora-recommended "Direct link to DPO with LoRA (Recommended)")
-
-LoRA is highly recommended for DPO training, as it significantly reduces memory requirements while maintaining strong alignment performance.
-
-```python
-from transformers import AutoModelForCausalLM, AutoTokenizer
-from trl import DPOTrainer, DPOConfig
-from peft import LoraConfig
-from datasets import load_dataset
-
-model = AutoModelForCausalLM.from_pretrained(
-    "LiquidAI/LFM2.5-1.2B-Instruct",
-    dtype="auto",
-    device_map="auto"
-)
-tokenizer = AutoTokenizer.from_pretrained("LiquidAI/LFM2.5-1.2B-Instruct")
-
-peft_config = LoraConfig(
-    r=16,
-    lora_alpha=32,
-    lora_dropout=0.05,
-    target_modules=["q_proj", "k_proj", "v_proj", "o_proj"],
-    task_type="CAUSAL_LM",
-)
-
-training_args = DPOConfig(
-    output_dir="./lfm2-dpo-lora",
-    num_train_epochs=3,
-    per_device_train_batch_size=2,
-    gradient_accumulation_steps=8,
-    learning_rate=5e-7,
-    beta=0.1,
-    bf16=True,
-)
-
-dataset = load_dataset("mlabonne/orpo-dpo-mix-40k")
-
-trainer = DPOTrainer(
-    model=model,
-    args=training_args,
-    train_dataset=dataset["train"],
-    tokenizer=tokenizer,
-    peft_config=peft_config,
-)
-
-trainer.train()
-```
-
-<Accordion title="Full DPO Training">
-  Full DPO training updates all model parameters. Use this only when you have sufficient GPU memory.
-
-  ```python
-  from transformers import AutoModelForCausalLM, AutoTokenizer
-  from trl import DPOTrainer, DPOConfig
-  from datasets import load_dataset
-
-  # Load model and tokenizer
-  model = AutoModelForCausalLM.from_pretrained(
-      "LiquidAI/LFM2.5-1.2B-Instruct",
-      dtype="auto",
-      device_map="auto"
-  )
-  tokenizer = AutoTokenizer.from_pretrained("LiquidAI/LFM2.5-1.2B-Instruct")
-
-  # Load preference dataset
-  # Dataset should have "prompt", "chosen", and "rejected" columns
-  dataset = load_dataset("mlabonne/orpo-dpo-mix-40k")
-
-  # Configure DPO training
-  training_args = DPOConfig(
-      output_dir="./lfm2-dpo",
-      num_train_epochs=3,
-      per_device_train_batch_size=2,
-      gradient_accumulation_steps=8,
-      learning_rate=5e-7,
-      beta=0.1,  # DPO temperature parameter
-      logging_steps=10,
-      bf16=True,
-  )
-
-  # Create trainer
-  trainer = DPOTrainer(
-      model=model,
-      args=training_args,
-      train_dataset=dataset["train"],
-      tokenizer=tokenizer,
-  )
-
-  # Train
-  trainer.train()
-  ```
-</Accordion>
-
-## Tips[​](#tips "Direct link to Tips")
-
-* **Learning Rates**: SFT typically uses higher learning rates (1e-5 to 5e-5) than DPO (1e-7 to 1e-6)
-* **Batch Size**: DPO requires larger effective batch sizes; increase `gradient_accumulation_steps` if GPU memory is limited
-* **LoRA Ranks**: Start with `r=16`. Higher ranks increase adapter memory and parameter count. Set `lora_alpha` (`a`) to `2 * r`
-* **DPO Beta**: The `beta` parameter controls the deviation from the reference model. Start with `0.1`
-
-***
-
-For more end to end examples, visit the [Liquid AI Cookbook](https://github.com/Liquid4All/cookbook).
+[DPO](https://huggingface.co/docs/trl/dpo_trainer) uses preference pairs rather than SFT conversations; [GRPO](https://huggingface.co/docs/trl/grpo_trainer) additionally needs a verifiable reward and a compatible generation backend. Check architecture support in both the trainer and the rollout engine before reusing an older recipe.

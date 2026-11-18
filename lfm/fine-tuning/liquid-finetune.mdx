@@ -16,6 +16,10 @@ Use it when you want a repo-driven workflow that Claude Code or Codex can operat
 | Data and rewards | Dataset loading, format validation, tool-calling data, VLM image roots, GRPO rewards, judge rewards, and OpenEnv-style RL environments |
 | Launch and export | Local Ray, SLURM, Modal, KubeRay, checkpoint resume, Hugging Face export, and GGUF export |
 
+## Choose a model
+
+Start with [LFM3-1.7B](/lfm/models/lfm3-1.7b) for general text adaptation. Use the [tested TRL smoke test](/lfm/fine-tuning/trl) first, then check Liquid Finetune's current configs and architecture support before moving a run into its managed workflow. The older LFM2.5 configs below remain useful for their tested workflows; copying a model ID alone does not verify a new training path.
+
 ## Agent quickstart
 
 Clone the repo and install the locked environment:
@@ -44,7 +48,7 @@ The repo includes `AGENTS.md`, `CLAUDE.md`, and mirrored skills under `.agents/s
 
 Good starter prompts:
 
-- "Train `LFM2-1.2B` with SFT LoRA on the Hugging Face `HuggingFaceTB/smoltalk` dataset, sweep learning rate and LoRA rank, and tell me which run looks best."
+- "Check support for `LiquidAI/LFM3-1.7B`, then prepare an SFT LoRA smoke test on the Hugging Face `HuggingFaceTB/smoltalk` dataset, sweep learning rate and LoRA rank, and tell me which run looks best."
 - "Fine-tune an LFM vision model on a chart question-answering dataset from Hugging Face, add a small eval suite, and show me the launch command."
 - "Evaluate my latest `support_sft` checkpoint with vLLM, compare it against the base model, and write the metrics to `results.json`."
 - "Set up a GRPO experiment that rewards valid JSON answers, run a small smoke test, and suggest the next config to try."
@@ -86,7 +90,7 @@ from liquid_finetune.config import DatasetConfig, JobConfig, PeftConfig, Trainin
 
 job = JobConfig(
     project_name="support_sft",
-    model_name="LFM2-1.2B",
+    model_name="LFM2.5-1.2B-Instruct",
     training_type="sft",
     dataset=DatasetConfig(
         path="HuggingFaceTB/smoltalk",
@@ -122,7 +126,7 @@ run_config(job)
 
   job = JobConfig(
       project_name="support_sft_with_evals",
-      model_name="LFM2-1.2B",
+      model_name="LFM2.5-1.2B-Instruct",
       training_type="sft",
       dataset=DatasetConfig(
           path="/data/support_train.jsonl",

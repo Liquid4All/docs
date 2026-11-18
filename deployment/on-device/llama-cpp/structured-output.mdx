@@ -3,6 +3,8 @@ title: "Structured Output"
 description: "Constrain LFM generation on llama.cpp to a JSON schema or GBNF grammar so output always parses."
 ---
 
+Use llama.cpp v0.8.0 (b11960) or later for LFM3; the server examples were checked with b12359. Start with [LFM3-1.7B](/lfm/models/lfm3-1.7b) for new text applications. The API shape also applies to supported older GGUF models, with their own sampling and template settings.
+
 llama.cpp enforces structure at decode time: tokens that would break the schema get zero probability, so the output is guaranteed to parse. You can supply a **JSON Schema** (converted to a grammar automatically) or a hand-written **GBNF grammar**. Both work in `llama-server`, the CLI tools, and the C API.
 
 ## JSON schema with llama-server
@@ -37,15 +39,15 @@ recipe_schema = {
 }
 
 response = client.chat.completions.create(
-    model="lfm2.5-1.2b-instruct",
+    model="lfm3-1.7b",
     messages=[
         {"role": "system", "content": "You write recipes as JSON with fields name, servings, ingredients (item, quantity), and steps."},
         {"role": "user", "content": "A quick weeknight pasta for two."},
     ],
     response_format={"type": "json_schema", "json_schema": {"name": "recipe", "schema": recipe_schema}},
     temperature=0.1,
-    max_tokens=512,
-    extra_body={"top_k": 50, "repeat_penalty": 1.05},
+    max_tokens=2048,
+    extra_body={"top_k": 50, "repeat_penalty": 1.1},
 )
 
 recipe = json.loads(response.choices[0].message.content)
@@ -77,7 +79,7 @@ curl http://localhost:8080/v1/chat/completions \
   -d '{
     "messages": [{"role": "user", "content": "Classify: I love this phone."}],
     "grammar": "root ::= \"positive\" | \"neutral\" | \"negative\"",
-    "temperature": 0.1, "top_k": 50, "repeat_penalty": 1.05
+    "temperature": 0.1, "top_k": 50, "repeat_penalty": 1.1
   }'
 ```
 
@@ -88,6 +90,8 @@ python llama.cpp/examples/json_schema_to_grammar.py schema.json > schema.gbnf
 ```
 
 ## In-process bindings
+
+These examples retain LFM2.5 because each binding bundles its own llama.cpp build. Check that build's architecture support before changing the model; use the server example above for the tested LFM3 path.
 
 <Tabs>
   <Tab title="C API (mobile, embedded)">

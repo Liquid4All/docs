@@ -2,10 +2,7 @@ export const VlVllm = ({ modelId, samplingArgs = "temperature=0.1, min_p=0.15, r
 <div>
 <p><strong>Install:</strong></p>
 <CodeBlock language="bash">
-{`uv pip install vllm==0.19.0`}
-</CodeBlock>
-<CodeBlock language="bash">
-{`uv pip install transformers==5.5.0 pillow`}
+{`uv pip install "vllm==0.34.0" pillow`}
 </CodeBlock>
 <p><strong>Run:</strong></p>
 <CodeBlock language="python">
@@ -16,6 +13,7 @@ IMAGE_URL = "http://images.cocodataset.org/val2017/000000039769.jpg"
 llm = LLM(
     model="${modelId}",
     max_model_len=1024,
+    enforce_eager=True,
 )
 
 sampling_params = SamplingParams(

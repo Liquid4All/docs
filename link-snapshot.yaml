@@ -12,7 +12,20 @@ active:
   - /api/models
   - /api/overview
   - /api/quickstart
+  - /api/reference/batches/cancel-batch
+  - /api/reference/batches/create-batch
+  - /api/reference/batches/list-batches
+  - /api/reference/batches/retrieve-batch
+  - /api/reference/chat/chat-completions
+  - /api/reference/decision-models/list-decision-models
+  - /api/reference/decision-models/make-decisions
   - /api/reference/error-codes
+  - /api/reference/files/list-files
+  - /api/reference/files/retrieve-file
+  - /api/reference/files/retrieve-file-content
+  - /api/reference/large-uploads/create-upload-url
+  - /api/reference/models/list-models
+  - /api/reference/models/retrieve-model
   - /api/reference/overview
   - /api/reference/rate-limits
   - /customization/finetuning-frameworks/datasets
@@ -84,6 +97,7 @@ active:
   - /deployment/on-device/sdk/quick-start
   - /deployment/on-device/sdk/utilities
   - /deployment/on-device/sdk/voice-assistant
+  - /deployment/overview
   - /deployment/tools/model-bundling
   - /deployment/tools/model-bundling/authentication
   - /deployment/tools/model-bundling/bundle-creation

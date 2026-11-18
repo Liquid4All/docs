@@ -5,11 +5,14 @@ description: "A practical guide to prompting LFM models: how to structure system
 
 ## Prompt Roles
 
-LFM2 models use a structured conversation format with three prompt roles:
+LFM3, LFM2.5, and LFM2 chat models accept structured conversations. Start with [LFM3-1.7B](/lfm/models/lfm3-1.7b) for general text tasks and use the selected checkpoint's tokenizer or processor to apply its [chat template](/lfm/key-concepts/chat-template).
 
 * **`system`** (optional) - Sets assistant behavior, context, and instructions. Use for personality, task context, output format, or constraints.
 * **`user`** - Contains the question, instruction, or request from the user.
-* **`assistant`** - Provides a partial response for the model to continue from. Useful for multi-turn conversations, few-shot prompting, or prefilling structured outputs (e.g., JSON opening brace).
+* **`assistant`** - A previous model response, used for conversation history and few-shot examples.
+* **`tool`** - The result of a tool call, associated with the call's ID. See [Tool Use](/lfm/key-concepts/tool-use) for the model-specific format.
+
+LFM3 text and vision models can reason before answering. Leave room for reasoning in the output limit, preserve history as the model's template requires, and follow [Thinking](/lfm/key-concepts/thinking) for controls. LFM3-Omni is non-reasoning. Assistant prefill is template-dependent; prefer a runtime's JSON-schema constraint to a hand-written JSON prefix.
 
 **Example:**
 
@@ -80,7 +83,11 @@ Parameter names and syntax vary by platform. See [Transformers](/deployment/gpu-
 
 ## Vision Models
 
-LFM2-VL models use a **variable resolution encoder** to control the quality/speed tradeoff by adjusting how images are tokenized.
+Start with [LFM3-VL-2B](/lfm/models/lfm3-vl-2b) for images and video. Its processor and runtime determine resolution and frame sampling; see [Vision Capabilities](/lfm/key-concepts/vision-capabilities) for the current examples.
+
+### LFM2 and LFM2.5 vision controls
+
+The following controls apply to LFM2-VL and LFM2.5-VL's variable-resolution encoder. They are not universal settings for LFM3.
 
 ### Image Token Management
 
@@ -117,5 +124,5 @@ min_image_tokens = 32
 * `do_image_splitting=True`
 
 <Note>
-**Liquid Nanos** (task-specific models like LFM2-Extract, LFM2-RAG, LFM2-Tool, etc.) may have special prompting requirements and different generation parameters. For the best usage guidelines, refer to the individual model cards on the [Liquid Nanos](/lfm/models/liquid-nanos) page.
+**Liquid Nanos**, such as embedding, reranking, extraction, and translation models, have task-specific input formats and settings. Use the individual [model pages](/lfm/models/liquid-nanos); check deprecation notices before choosing a checkpoint.
 </Note>

@@ -2,13 +2,13 @@ export const TextVllm = ({ modelId, samplingParams, maxTokens }) => (
 <div>
 <p><strong>Install:</strong></p>
 <CodeBlock language="bash">
-{`pip install -U vllm`}
+{`uv pip install vllm==0.34.0`}
 </CodeBlock>
 <p><strong>Run:</strong></p>
 <CodeBlock language="python">
 {`from vllm import LLM, SamplingParams
 
-llm = LLM(model="${modelId}")
+llm = LLM(model="${modelId}", enforce_eager=True)
 
 sampling_params = SamplingParams(${samplingParams}max_tokens=${maxTokens || 512})
 

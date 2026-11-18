@@ -1,5 +1,6 @@
 ---
-title: "Overview"
+title: "Fine-tune LFMs"
+sidebarTitle: "Overview"
 description: "Decide when to fine-tune an LFM and choose the right training workflow."
 ---
 
@@ -32,9 +33,9 @@ For distributed LFM MoE training with expert or tensor parallelism, use [Halo](/
 
 ## Typical workflow
 
-1. Load a base model from Hugging Face. Start from the current LFM2.5 checkpoint for your target size.
+1. Start with [LFM3-1.7B](/lfm/models/lfm3-1.7b) for general text or the LFM3 model for your modality. Use an older checkpoint when its size or specialization fits your task better, and choose a training framework that supports its architecture. The [TRL guide](/lfm/fine-tuning/trl) provides the text LoRA path.
 2. Prepare 500 to 5,000 task examples. Quality and distribution matter more than volume; match production inputs.
-3. Train with LoRA for the first pass. A 1.2B LoRA run can take minutes to tens of minutes on a single modern GPU.
+3. Start with a short LoRA run to check the training setup before running a full job.
 4. Evaluate on a held-out set that you froze before training.
 5. Iterate on data, prompts, and hyperparameters before scaling to larger runs.
 
@@ -42,7 +43,7 @@ For distributed LFM MoE training with expert or tensor parallelism, use [Halo](/
 
 Train with the model's own chat template. Use `apply_chat_template` and keep training formatting character-for-character identical to production.
 
-For tool calling, train on the native Pythonic tool-call format. The [migration guide](/guides/migration-guide) explains how LFMs differ from OpenAI-style JSON tool calls and how to adapt parsers safely.
+For tool calling, train on the selected model's native format: LFM3 uses XML tool calls; LFM2 and LFM2.5 use their earlier formats. The [migration guide](/guides/migration-guide) explains the differences. Choose LoRA target modules from the selected architecture rather than copying names from another family.
 
 ## Fine-tuning docs
 

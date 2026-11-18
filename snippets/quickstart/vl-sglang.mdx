@@ -1,9 +1,6 @@
 export const VlSglang = ({ modelId, samplingArgs = 'temperature=0.1, extra_body={"min_p": 0.15, "repetition_penalty": 1.05}' }) => (
 <div>
-<p><strong>Install:</strong></p>
-<CodeBlock language="bash">
-{`uv pip install "sglang>=0.5.10"`}
-</CodeBlock>
+<p>Use the configured CUDA image from the <a href="/deployment/gpu-inference/sglang#installation">SGLang installation guide</a>. Run the following launch command inside that image, or pass its model flags to the guide's Docker command.</p>
 <p><strong>Launch server:</strong></p>
 <CodeBlock language="bash">
 {`sglang serve \\

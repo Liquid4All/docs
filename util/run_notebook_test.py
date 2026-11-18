@@ -70,8 +70,8 @@ def parse_packages_from_cell(source: str) -> tuple[list[list[str]], list[str]]:
         # Skip individual lines marked with modal_skip
         if "!modal_skip" in line:
             continue
-        # Match: !pip install ..., !uv pip install ..., pip install ...
-        match = re.match(r"^!?\s*(?:uv\s+)?pip\s+install\s+(.+)", line)
+        # Match shell installs and the kernel-aware %pip notebook magic.
+        match = re.match(r"^[!%]?\s*(?:uv\s+)?pip\s+install\s+(.+)", line)
         if match:
             group = []
             for token in re.split(r"[,\s]+", match.group(1)):
@@ -96,7 +96,7 @@ def strip_pip_lines(source: str) -> str:
     i = 0
     while i < len(lines):
         stripped = lines[i].strip()
-        if re.match(r"^!?\s*(?:uv\s+)?pip\s+install\s+", stripped):
+        if re.match(r"^[!%]?\s*(?:uv\s+)?pip\s+install\s+", stripped):
             # Skip this line and any backslash-continuation lines
             while stripped.endswith("\\") and i + 1 < len(lines):
                 i += 1

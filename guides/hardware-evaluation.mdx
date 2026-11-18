@@ -7,16 +7,17 @@ Use this guide when you are evaluating LFMs on a specific board, accelerator, mo
 
 ## Recommended models
 
-Start with **LFM2.5-350M**. It is small enough to bring up quickly on almost any target and is the first model many silicon partners profile.
+Start with [LFM3-1.7B](/lfm/models/lfm3-1.7b) for the current general text baseline. For initial board bring-up with very little memory, [LFM2.5-350M](/lfm/models/lfm25-350m) is a useful diagnostic model; its results do not characterize LFM3.
 
-Then scale through the family to map the performance curve:
+Profile the architectures your application will actually use:
 
-1. **LFM2.5-350M**: bring-up and baseline
-2. **LFM2.5-1.2B-Instruct**: standard dense datapoint
-3. **LFM2.5-8B-A1B**: MoE with 1.5B active parameters, useful for testing sparse-model behavior on your memory subsystem
-4. **LFM2.5-VL-450M** and **LFM2.5-Audio-1.5B**: multimodal datapoints when your target supports vision or audio workloads
+1. **LFM3-1.7B**: current text, agents, and tool-use baseline.
+2. **LFM3-VL-2B**, **LFM3-Audio-2B**, or **LFM3-Omni-2B**: the required modality, with its processor and encoders.
+3. **LFM2.5-350M / 230M**: small-footprint bring-up and deployment alternatives.
+4. **LFM2.5-1.2B-Instruct**: an older dense comparison point.
+5. **LFM2.5-8B-A1B / 24B-A2B**: larger MoE alternatives, useful for measuring sparse-model behavior on your memory subsystem.
 
-The LFM2 and LFM2.5 architecture interleaves short convolutions with grouped-query attention. In practice, that means less KV-cache pressure and better long-context latency scaling than pure-attention models of the same size. Your profiling should make that behavior visible.
+LFM3 combines short convolutions, sliding-window attention, and global attention. LFM2/LFM2.5 have a different convolution/attention layout. Measure memory, context scaling, prefill, and decode for each selected checkpoint; do not transfer an older architecture's results to LFM3.
 
 ## Setup by framework
 

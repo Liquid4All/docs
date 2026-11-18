@@ -11,11 +11,13 @@ description: "Run Liquid AI LFM models in LM Studio. Download GGUF models and st
 
 Download and install LM Studio directly from [lmstudio.ai](https://lmstudio.ai/download).
 
+Use an updated llama.cpp runtime that supports LFM3 (upstream v0.8.0 / b11960 or later). Runtime packages are updated separately from the LM Studio app. For LFM3 on Apple Silicon, use a supported GGUF runtime or follow the [MLX-VLM guide](/deployment/on-device/mlx); MLX-LM and MLX-VLM have different model support.
+
 ## Downloading Models
 
 1. Open LM Studio and click the **Search** tab (🔍)
-2. Search for "LiquidAI" or "LFM2"
-3. Select a model and quantization level (`Q4_K_M` recommended)
+2. Search for "LiquidAI LFM3-1.7B" for text, or "LiquidAI LFM3-VL-2B" for vision
+3. Select a GGUF quantization (`Q4_K_M` for text, or the QAD `Q4_0` checkpoint for LFM3-VL)
 4. Click **Download**
 
 See the [Models page](/lfm/models/complete-library) for all available GGUF models.
@@ -40,13 +42,18 @@ Control text generation behavior using the GUI sidebar or API parameters. Key pa
 
 Via the OpenAI-compatible API:
 
+Start the server as described below and install the client with `uv pip install openai`. Replace `local-model` with the ID reported by the server's `/v1/models` endpoint.
+
 ```python
+from openai import OpenAI
+
+client = OpenAI(base_url="http://localhost:1234/v1", api_key="not-needed")
 response = client.chat.completions.create(
     model="local-model",
     messages=[{"role": "user", "content": "What is machine learning?"}],
     temperature=0.1,
-    max_tokens=512,
-    extra_body={"top_k": 50, "repeat_penalty": 1.05},
+    max_tokens=2048,
+    extra_body={"top_k": 50, "repeat_penalty": 1.1},
 )
 ```
 
@@ -69,13 +76,13 @@ client = OpenAI(
 )
 
 response = client.chat.completions.create(
-    model="local-model",  # Any string works
+    model="local-model",  # Use the ID from /v1/models
     messages=[
         {"role": "user", "content": "What is machine learning?"}
     ],
     temperature=0.1,
-    max_tokens=512,
-    extra_body={"top_k": 50, "repeat_penalty": 1.05},
+    max_tokens=2048,
+    extra_body={"top_k": 50, "repeat_penalty": 1.1},
 )
 print(response.choices[0].message.content)
 ```
@@ -105,14 +112,14 @@ for chunk in stream:
       "messages": [{"role": "user", "content": "Hello!"}],
       "temperature": 0.1,
       "top_k": 50,
-      "repeat_penalty": 1.05
+      "repeat_penalty": 1.1
     }'
   ```
 </Accordion>
 
 ## Vision Models
 
-Search for "LiquidAI LFM2-VL" to download vision models. In the **Chat** tab:
+Search for "LiquidAI LFM3-VL-2B" to download vision models. In the **Chat** tab:
 
 * Drag and drop images into the chat
 * Click the image icon to upload

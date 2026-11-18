@@ -1,244 +1,83 @@
 ---
 title: "ONNX"
-description: "Run Liquid AI LFM models with ONNX Runtime on CPU, GPU, NPU, and WebGPU for cross-platform on-device inference."
+description: "Export and run LFM3, LFM2.5, and LFM2 with LiquidONNX, and choose the correct ONNX runtime for each family."
 ---
 
-<Tip>
-  Use ONNX for cross-platform deployment, edge devices, and browser-based inference with WebGPU and Transformers.js.
-</Tip>
-
-ONNX (Open Neural Network Exchange) is a portable format that enables LFM inference across diverse hardware and runtimes. ONNX models run on CPUs, GPUs, NPUs, and in browsers via WebGPU—making them ideal for edge deployment and web applications.
-
-## LiquidONNX
-
-[LiquidONNX](https://github.com/Liquid4All/onnx-export) is the official tool for exporting LFM models to ONNX and running inference.
-
-### Installation
-
-```bash
-git clone https://github.com/Liquid4All/onnx-export.git
-cd onnx-export
-uv sync
-
-# For GPU inference
-uv sync --extra gpu
-```
-
-### Supported Models
-
-| Family | Quantization Formats |
-|--------|---------------------|
-| LFM2.5, LFM2 (text) | fp32, fp16, q4, q8 |
-| LFM2.5-VL, LFM2-VL (vision) | fp32, fp16, q4, q8 |
-| LFM2-MoE | fp32, fp16, q4, q4f16 |
-| LFM2.5-Audio | fp32, fp16, q4, q8 |
-
-### Export
-
-```bash
-# Text models - export with all precisions (fp16, q4, q8)
-uv run lfm2-export LiquidAI/LFM2.5-1.2B-Instruct --precision
-
-# Vision-language models
-uv run lfm2-vl-export LiquidAI/LFM2.5-VL-1.6B --precision
-
-# MoE models
-uv run lfm2-moe-export LiquidAI/LFM2-8B-A1B --precision
-
-# Audio models
-uv run lfm2-audio-export LiquidAI/LFM2.5-Audio-1.5B --precision
-```
-
-### Inference
-
-```bash
-# Text model chat
-uv run lfm2-infer --model ./exports/LFM2.5-1.2B-Instruct-ONNX/onnx/model_q4.onnx
-
-# Vision-language with images
-uv run lfm2-vl-infer --model ./exports/LFM2.5-VL-1.6B-ONNX \
-    --images photo.jpg --prompt "Describe this image"
-
-# Audio transcription (ASR)
-uv run lfm2-audio-infer LFM2.5-Audio-1.5B-ONNX --mode asr \
-    --audio input.wav --precision q4
-
-# Text-to-speech (TTS)
-uv run lfm2-audio-infer LFM2.5-Audio-1.5B-ONNX --mode tts \
-    --prompt "Hello, how are you?" --output speech.wav --precision q4
-```
-
-For complete documentation and advanced options, see the [LiquidONNX GitHub repository](https://github.com/Liquid4All/onnx-export).
-
-## Pre-exported Models
-
-Many LFM models are available as pre-exported ONNX packages from [LiquidAI](https://huggingface.co/LiquidAI/models?search=onnx) and the [onnx-community](https://huggingface.co/onnx-community). Check the [Model Library](/lfm/models/complete-library) for a complete list of available formats.
-
-### Quantization Options
-
-Each ONNX export includes multiple precision levels. **Q4** is recommended for most deployments and supports WebGPU, CPU, and GPU. **FP16** offers higher quality and works on WebGPU and GPU. **Q8** provides a quality/size balance but is server-only (CPU/GPU). **FP32** is the full precision baseline.
-
-## Hugging Face Spaces
-
-These are fully deployed examples of WebGPU and ONNX inference with LFM models.
-
-<CardGroup cols={3}>
-
-<Card title="LFM2 WebGPU Chat" icon="message" iconType="light" href="https://huggingface.co/spaces/LiquidAI/LFM2-WebGPU">
-  Run LFM2 text models directly in your browser with WebGPU acceleration.
-</Card>
-
-<Card title="LFM2.5 Audio" icon="microphone" iconType="light" href="https://huggingface.co/spaces/LiquidAI/LFM2.5-Audio-1.5B-transformers-js">
-  Speech-to-text and text-to-speech with LFM2.5 Audio in the browser.
-</Card>
-
-<Card title="LFM2.5 Vision" icon="eye" iconType="light" href="https://huggingface.co/spaces/LiquidAI/LFM2.5-VL-1.6B-WebGPU">
-  Vision-language inference with LFM2.5-VL in the browser.
-</Card>
-
-</CardGroup>
-
-## WebGPU Inference
-
-ONNX models run in browsers via [Transformers.js](https://huggingface.co/docs/transformers.js) with WebGPU acceleration. This enables fully client-side inference without server infrastructure.
-
-### Setup
-
-1. Install Transformers.js:
-```bash
-npm install @huggingface/transformers
-```
-
-2. Enable WebGPU in your browser:
-   - **Chrome/Edge**: Navigate to `chrome://flags/#enable-unsafe-webgpu`, enable, and restart
-   - **Verify**: Check `chrome://gpu` for WebGPU status
-
-### Usage
-
-```javascript
-import { AutoModelForCausalLM, AutoTokenizer, TextStreamer } from "@huggingface/transformers";
-
-const modelId = "LiquidAI/LFM2.5-1.2B-Instruct-ONNX";
-
-// Load model with WebGPU
-const tokenizer = await AutoTokenizer.from_pretrained(modelId);
-const model = await AutoModelForCausalLM.from_pretrained(modelId, {
-  device: "webgpu",
-  dtype: "q4",  // or "fp16"
-});
-
-// Generate with streaming
-const messages = [{ role: "user", content: "What is the capital of France?" }];
-const input = tokenizer.apply_chat_template(messages, {
-  add_generation_prompt: true,
-  return_dict: true,
-});
-
-const streamer = new TextStreamer(tokenizer, { skip_prompt: true });
-const output = await model.generate({
-  ...input,
-  max_new_tokens: 256,
-  do_sample: false,
-  streamer,
-});
-
-console.log(tokenizer.decode(output[0], { skip_special_tokens: true }));
-```
+[LiquidONNX](https://github.com/Liquid4All/onnx-export) is Liquid's export and inference toolkit. Start with LFM3 for a new text, vision, audio, or omni application. Use an older checkpoint when its size, specialization, or runtime support fits your deployment better.
 
 <Note>
-WebGPU supports Q4 and FP16 precision. Q8 quantization is not available in browser environments.
+An ONNX file is not a complete runtime contract. LiquidONNX uses plain ONNX Runtime for LFM3 and ONNX Runtime GenAI for LFM2/LFM2.5. Its exports are not loadable by Transformers.js. Browser demos use their own compatible exports and inference code.
 </Note>
 
-## Python Inference
-
-Install with pip:
+## Install LiquidONNX
 
 ```bash
-pip install onnxruntime transformers numpy huggingface_hub jinja2
-
-# For GPU support
-pip install onnxruntime-gpu transformers numpy huggingface_hub jinja2
+uv venv --python 3.12
+source .venv/bin/activate
+uv pip install --no-sources --no-config \
+  "git+https://github.com/Liquid4All/onnx-export.git@26857c2e4d12381c6c630e7f7daf00bb3589f721" \
+  "onnxruntime==1.30.0" "onnxruntime-genai==0.17.1" "transformers==5.23.0"
 ```
 
-<Accordion title="Full Python example with KV cache">
+This CPU environment pins the LiquidONNX revision and stable runtime versions used for the text/VL checks. Run the commands outside an existing uv project so its dependencies do not replace this environment. The upstream development lock file can select nightly ONNX Runtime builds for other workloads, including MoE optimizations. CUDA requires a separate environment with the GPU distributions; follow the repository's [installation instructions](https://github.com/Liquid4All/onnx-export#2-installation).
 
-```python
-import numpy as np
-import onnxruntime as ort
-from huggingface_hub import hf_hub_download, list_repo_files
-from transformers import AutoTokenizer
+## Model families
 
-# Download Q4 model (recommended)
-model_id = "LiquidAI/LFM2.5-1.2B-Instruct-ONNX"
-model_path = hf_hub_download(model_id, "onnx/model_q4.onnx")
+| Family | Runner | Export precisions |
+| --- | --- | --- |
+| LFM3 text | `lfm3-infer` | fp32, fp16, q4, q4f16, q4f32, q8, q8f16 |
+| LFM3-VL | `lfm3-vl-infer` | fp32, fp16, q4, q4f16, q8, q8f16 |
+| LFM3-Audio | `lfm3-audio-infer` | fp32, fp16, q4, q4f16, q8, q8f16 |
+| LFM3-Omni | `lfm3-omni-infer` | fp32, fp16, q4, q4f16, q8, q8f16 |
+| LFM2/LFM2.5 text | `lfm2-infer` | fp32, fp16, q4, q4f16, q4f32, q8 |
+| LFM2/LFM2.5 VL | `lfm2-vl-infer` | fp32, fp16, q4, q8 |
+| Supported LFM2/LFM2.5 MoEs | `lfm2-moe-infer` | fp32, fp16, q4, q4f16, q8 |
+| LFM2.5-Audio | `lfm2-audio-infer` | fp32, fp16, q4, q8 |
 
-# Download external data files
-for f in list_repo_files(model_id):
-    if f.startswith("onnx/model_q4.onnx_data"):
-        hf_hub_download(model_id, f)
+The [upstream support table](https://github.com/Liquid4All/onnx-export#1-supported-models) lists supported checkpoints and decision models. Available files vary by exported repository; the table describes the exporter, not a guarantee that every precision has been published.
 
-# Load model and tokenizer
-session = ort.InferenceSession(model_path)
-tokenizer = AutoTokenizer.from_pretrained(model_id, trust_remote_code=True)
+## LFM3 quickstart
 
-# Prepare input
-messages = [{"role": "user", "content": "What is the capital of France?"}]
-prompt = tokenizer.apply_chat_template(
-    messages, tokenize=False, add_generation_prompt=True
-)
-inputs = tokenizer.encode(prompt, add_special_tokens=False)
-input_ids = np.array([inputs], dtype=np.int64)
+Export the original checkpoint, not its MLX/GGUF or FP8/NVFP4 variant:
 
-# Initialize KV cache
-DTYPE_MAP = {
-    "tensor(float)": np.float32,
-    "tensor(float16)": np.float16,
-    "tensor(int64)": np.int64
-}
-cache = {}
-for inp in session.get_inputs():
-    if inp.name in {"input_ids", "attention_mask", "position_ids"}:
-        continue
-    shape = [d if isinstance(d, int) else 1 for d in inp.shape]
-    for i, d in enumerate(inp.shape):
-        if isinstance(d, str) and "sequence" in d.lower():
-            shape[i] = 0
-    dtype = DTYPE_MAP.get(inp.type, np.float32)
-    cache[inp.name] = np.zeros(shape, dtype=dtype)
+Exporting also writes FP32 intermediate weights. Budget memory and disk for those files, not only the final quantized model; CPU quantization can take several minutes. Use a compatible [pre-exported repository](#pre-exported-repositories) when you only need inference.
 
-# Generate tokens
-seq_len = input_ids.shape[1]
-generated = []
-input_names = {inp.name for inp in session.get_inputs()}
-
-for step in range(100):
-    if step == 0:
-        ids = input_ids
-        pos = np.arange(seq_len, dtype=np.int64).reshape(1, -1)
-    else:
-        ids = np.array([[generated[-1]]], dtype=np.int64)
-        pos = np.array([[seq_len + len(generated) - 1]], dtype=np.int64)
-
-    attn_mask = np.ones((1, seq_len + len(generated)), dtype=np.int64)
-    feed = {"input_ids": ids, "attention_mask": attn_mask, **cache}
-    if "position_ids" in input_names:
-        feed["position_ids"] = pos
-
-    outputs = session.run(None, feed)
-    next_token = int(np.argmax(outputs[0][0, -1]))
-    generated.append(next_token)
-
-    # Update cache
-    for i, out in enumerate(session.get_outputs()[1:], 1):
-        name = out.name.replace("present_conv", "past_conv")
-        name = name.replace("present.", "past_key_values.")
-        if name in cache:
-            cache[name] = outputs[i]
-
-    if next_token == tokenizer.eos_token_id:
-        break
-
-print(tokenizer.decode(generated, skip_special_tokens=True))
+```bash
+uv run --no-project lfm3-export LiquidAI/LFM3-1.7B --precision q4
+uv run --no-project lfm3-infer --model exports/LFM3-1.7B-ONNX \
+  --cpu --precision q4 --prompt "What is the capital of France?"
 ```
 
-</Accordion>
+The model can reason before answering. Leave room for the reasoning in its token limit. The CLI's `--no-think` control changes the chat template; it does not make thinking-off quality equivalent to thinking-on quality.
+
+For an image question:
+
+```bash
+uv run --no-project lfm3-vl-export LiquidAI/LFM3-VL-2B --precision q4
+uv run --no-project lfm3-vl-infer --model exports/LFM3-VL-2B-ONNX \
+  --cpu --precision q4 --images photo.jpg --prompt "Describe this image."
+```
+
+The VL CLI accepts images; graph support for video does not imply that this CLI accepts a video file. Likewise, the Omni CLI accepts text, images, and audio, with its own mode and output controls. Follow the upstream [Audio](https://github.com/Liquid4All/onnx-export#31d-lfm3-audio) and [Omni](https://github.com/Liquid4All/onnx-export#31e-lfm3-omni) recipes for ASR, TTS, and speech-to-speech.
+
+## Older models
+
+Older text checkpoints use a different runner and export format:
+
+```bash
+uv run --no-project lfm2-export LiquidAI/LFM2.5-1.2B-Instruct --precision q4
+uv run --no-project lfm2-infer --model exports/LFM2.5-1.2B-Instruct-ONNX \
+  --prompt "What is the capital of France?"
+```
+
+Use `lfm2-vl-export` / `lfm2-vl-infer` for older vision models, and the corresponding MoE or audio commands in the support table. Changing only the model ID in an `lfm2-*` command does not add LFM3 support.
+
+## Pre-exported repositories
+
+The [model matrix](/lfm/models/complete-library#complete-model-matrix) links each checkpoint's exact ONNX repository. Download the selected graph **and all of its external data files**, tokenizer/configuration files, and required encoders. Keep the graph and data files as real files in the same local export folder; ONNX Runtime can reject cache symlinks whose external data resolves outside the graph directory. Do not mix files from different revisions or precisions. Check that the repository was exported for the runner you intend to use; community exports can come from a different pipeline.
+
+## Browser deployment
+
+WebGPU support depends on the graph, precision, execution provider, and browser. Q4, Q8, and FP16 are not universal browser compatibility guarantees. For LFM3, follow LiquidONNX's [native ONNX Runtime Web guidance](https://github.com/Liquid4All/onnx-export#46-lfm3-families-on-webgpu), including the required operators, encoders, and cache handling.
+
+The existing [vision browser demo](/examples/web/vl-webgpu-demo) and [audio browser demo](/examples/web/audio-webgpu-demo) retain their tested LFM2.5 models and export pipelines. Use them as scoped examples, rather than replacing their model IDs with LFM3. Use a browser with WebGPU enabled through its normal supported configuration; verify availability with `navigator.gpu`.

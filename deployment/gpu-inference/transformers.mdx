@@ -1,279 +1,70 @@
 ---
 title: "Transformers"
-description: "Run Liquid AI LFM models with Hugging Face Transformers. Load, configure, and generate with LFM2.5 models in Python."
+description: "Run LFM3 first, with model-specific setup for LFM2.5 and LFM2, using Hugging Face Transformers."
 ---
 
-<Tip>
-  Use Transformers for simple inference without extra dependencies, research and experimentation, or integration with the Hugging Face ecosystem.
-</Tip>
-
-Transformers provides the most flexibility for model development and is ideal for users who want direct access to model internals. For production deployments with high throughput, consider using [vLLM](/deployment/gpu-inference/vllm).
-
-<div className="colab-link">
-  <a href="https://colab.research.google.com/github/Liquid4All/docs/blob/main/notebooks/LFM2_Inference_with_Transformers.ipynb" target="_blank">
-    <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open in Colab"></img>
-  </a>
-</div>
+Use Transformers for direct Python inference, research, and model development. Start with [LFM3-1.7B](/lfm/models/lfm3-1.7b) for text and agents, or [LFM3-VL-2B](/lfm/models/lfm3-vl-2b) for images and video. For an OpenAI-compatible serving endpoint, see [vLLM](/deployment/gpu-inference/vllm) or [SGLang](/deployment/gpu-inference/sglang).
 
 ## Installation
 
-<Note>
-We use [uv](https://docs.astral.sh/uv/#installation) to manage packages across all our code examples. It's backwards compatible with pip.
-</Note>
-
-Install the required dependencies:
+Use a Python 3.12 environment. The examples use Transformers 5.23.0:
 
 ```bash
-uv pip install "transformers>=5.2.0" torch accelerate
+uv pip install "transformers==5.23.0" torch accelerate pillow torchvision
 ```
 
-GPU is recommended for faster inference.
+GPU inference is recommended. LFM3 checkpoints provide custom configuration, model, and processor code: review the repository before enabling `trust_remote_code=True`. LFM2 and LFM2.5 text/VL models use built-in Transformers classes and do not need it.
 
-## Basic Usage
+[Open the LFM3 notebook in Colab](https://colab.research.google.com/github/Liquid4All/docs/blob/main/notebooks/LFM3_Inference_with_Transformers.ipynb).
 
-The Transformers library provides two interfaces for text generation: [`generate()`](https://huggingface.co/docs/transformers/v4.57.1/en/main_classes/text_generation#transformers.GenerationMixin.generate) for fine-grained control and [`pipeline()`](https://huggingface.co/docs/transformers/en/main_classes/pipelines) for simplicity. We use `generate()` here for direct access to model internals and explicit control over the generation process:
+## Text generation
 
 ```python
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
-# Load model and tokenizer
-model_id = "LiquidAI/LFM2.5-1.2B-Instruct"
+model_id = "LiquidAI/LFM3-1.7B"
 model = AutoModelForCausalLM.from_pretrained(
-    model_id,
-    device_map="auto",
-    dtype="bfloat16",
-#    attn_implementation="flash_attention_2" <- uncomment on compatible GPU
+    model_id, trust_remote_code=True, device_map="auto", dtype="bfloat16",
 )
-tokenizer = AutoTokenizer.from_pretrained(model_id)
+tokenizer = AutoTokenizer.from_pretrained(model_id, trust_remote_code=True)
 
-# Generate answer
-prompt = "What is C. elegans?"
 inputs = tokenizer.apply_chat_template(
-    [{"role": "user", "content": prompt}],
-    add_generation_prompt=True,
-    return_tensors="pt",
-    tokenize=True,
-    return_dict=True,
+    [{"role": "user", "content": "What is the capital of France?"}],
+    add_generation_prompt=True, tokenize=True,
+    return_tensors="pt", return_dict=True,
 ).to(model.device)
 
-output = model.generate(**inputs, do_sample=True, temperature=0.1, top_k=50, repetition_penalty=1.05, max_new_tokens=512)
-
-# Decode only the newly generated tokens (excluding the input prompt)
-input_length = inputs["input_ids"].shape[1]
-response = tokenizer.decode(output[0][input_length:], skip_special_tokens=True)
-print(response)
-# C. elegans, also known as Caenorhabditis elegans, is a small, free-living
-# nematode worm (roundworm) that belongs to the phylum Nematoda.
-```
-
-**Model loading notes:**
-
-* **`model_id`**: Can be a Hugging Face model ID (e.g., `"LiquidAI/LFM2.5-1.2B-Instruct"`) or a local path
-* **`device_map="auto"`**: Automatically distributes across available GPUs/CPU (requires `accelerate`). Use `device="cuda"` for single GPU or `device="cpu"` for CPU only
-* **`dtype="bfloat16"`**: Recommended for modern GPUs. Use `"auto"` for automatic selection, or `"float32"` (slower, more memory)
-
-<Accordion title="Click to see a pipeline() example">
-  The [`pipeline()`](https://huggingface.co/docs/transformers/en/main_classes/pipelines) interface provides a simpler API for text generation with automatic chat template handling. It wraps model loading and tokenization, making it ideal for quick prototyping.
-
-  ```python
-  from transformers import pipeline
-
-  generator = pipeline(
-      "text-generation",
-      "LiquidAI/LFM2.5-1.2B-Instruct",
-      dtype="auto",
-      device_map="auto",
-  )
-
-  messages = [
-      {"role": "user", "content": "Give me a short introduction to large language models."},
-  ]
-
-  messages = generator(messages, max_new_tokens=512)[0]["generated_text"]
-  messages.append({"role": "user", "content": "In a single sentence."})
-  messages = generator(messages, max_new_tokens=512)[0]["generated_text"]
-  ```
-
-  **Key parameters:**
-
-  * **`"text-generation"`**: Task type for the pipeline
-  * **`model_name_or_path`**: Model ID (e.g., `"LiquidAI/LFM2.5-1.2B-Instruct"`) or local path (download locally with `hf download --local-dir ./LFM2.5-1.2B-Instruct LiquidAI/LFM2.5-1.2B-Instruct`)
-  * **`dtype="auto"`**: Automatically selects optimal dtype (`bfloat16` on modern devices). Can use `"bfloat16"` explicitly or `"float32"` (slower, more memory)
-  * **`device_map="auto"`**: Automatically distributes across available GPUs/CPU (requires `accelerate`). Alternative: `device="cuda"` for single GPU, `device="cpu"` for CPU only. Don't mix `device_map` and `device`
-
-  The pipeline automatically handles chat templates and tokenization, returning structured output with the generated text.
-</Accordion>
-
-### Generation Parameters
-
-Control text generation behavior using [`GenerationConfig`](https://huggingface.co/docs/transformers/v4.57.1/en/main_classes/text_generation#transformers.GenerationConfig). Key parameters:
-
-* **`do_sample`** (`bool`): Enable sampling (`True`) or greedy decoding (`False`, default)
-* **`temperature`** (`float`, default 1.0): Controls randomness (0.0 = deterministic, higher = more random). Typical range: 0.1-2.0
-* **`top_p`** (`float`, default 1.0): Nucleus sampling - limits to tokens with cumulative probability ≤ top\_p. Typical range: 0.1-1.0
-* **`top_k`** (`int`, default 50): Limits to top-k most probable tokens. Typical range: 1-100
-* **`min_p`** (`float`): Minimum token probability threshold. Typical range: 0.01-0.2
-* **`max_new_tokens`** (`int`): Maximum number of tokens to generate (preferred over `max_length`)
-* **`repetition_penalty`** (`float`, default 1.0): Penalty for repeating tokens (>1.0 = discourage repetition). Typical range: 1.0-1.5
-* **`stop_strings`** (`str` or `list[str]`): Strings that terminate generation when encountered
-
-Use `GenerationConfig` to organize parameters:
-
-```python
-from transformers import GenerationConfig
-
-# Create a generation config
-generation_config = GenerationConfig(
-    do_sample=True,
-    temperature=0.1,
-    top_k=50,
-    repetition_penalty=1.05,
-    max_new_tokens=512,
+output = model.generate(
+    **inputs, do_sample=True, temperature=0.1, top_k=50,
+    repetition_penalty=1.1, max_new_tokens=2048,
 )
-
-# Use it in generate()
-output = model.generate(**inputs, generation_config=generation_config)
+print(tokenizer.decode(output[0, inputs["input_ids"].shape[1]:], skip_special_tokens=True))
 ```
 
-For a complete list of parameters, see the [GenerationConfig documentation](https://huggingface.co/docs/transformers/v4.57.1/en/main_classes/text_generation#transformers.GenerationConfig).
+The model reasons before answering, and this raw decode includes that reasoning. A token limit can stop generation before the final answer. See [Thinking](/lfm/key-concepts/thinking) for output controls and [Chat Template](/lfm/key-concepts/chat-template) for response parsing and history handling. Use a larger output budget for tasks that need longer reasoning.
 
-## Streaming Generation
+For streaming, pass `TextStreamer(tokenizer, skip_prompt=True, skip_special_tokens=True)` as `streamer` to `model.generate()`. Streaming the raw tokens also streams the reasoning; it does not separate a final-answer channel.
 
-Stream responses as they're generated using `TextStreamer`:
+## Vision and video
 
-```python
-from transformers import AutoModelForCausalLM, AutoTokenizer, TextStreamer
+LFM3-VL uses `AutoModelForImageTextToText` and `AutoProcessor`, both with `trust_remote_code=True`. Its processor formats image/video messages and its checkpoint provides a response parser. Follow the complete [LFM3-VL quickstart](/lfm/models/lfm3-vl-2b#quick-start) and [Vision Capabilities](/lfm/key-concepts/vision-capabilities) examples for image loading, video frame controls, and reasoning-aware output parsing.
 
-# Use the model and tokenizer setup from Basic Usage above
-prompt = "Tell me a story about space exploration."
-inputs = tokenizer.apply_chat_template(
-    [{"role": "user", "content": prompt}],
-    add_generation_prompt=True,
-    return_tensors="pt",
-    tokenize=True,
-    return_dict=True,
-).to(model.device)
+## Audio and omni
 
-streamer = TextStreamer(tokenizer, skip_prompt=True, skip_special_tokens=True)
-output = model.generate(**inputs, do_sample=True, temperature=0.1, top_k=50, repetition_penalty=1.05, streamer=streamer, max_new_tokens=512)
-```
+[LFM3-Audio](/lfm/models/lfm3-audio-2b#quick-start) and [LFM3-Omni](/lfm/models/lfm3-omni-2b#quick-start) use `AutoModelForMultimodalLM` with their own processors. Install the audio/video dependencies on those pages; a text-model script is not sufficient. Use the requested output modality explicitly when you want text rather than speech.
 
-## Batch Generation
+## LFM2.5 and LFM2 compatibility
 
-Process multiple prompts in a single batch for efficiency. See the [batching documentation](https://huggingface.co/docs/transformers/en/main_classes/text_generation#batch-generation) for more details:
+The text loading, chat-template, and generation flow above also applies to older text models. Change the model ID, omit `trust_remote_code`, and use that checkpoint's sampling settings:
 
-<Note>
-  Batching is not automatically a win for performance. For high-performance batching with optimized throughput, consider using [vLLM](/deployment/gpu-inference/vllm).
-</Note>
+| Model | Temperature | Other sampling settings |
+| --- | --- | --- |
+| LFM3-1.7B | 0.1 | `top_k=50`, `repetition_penalty=1.1` |
+| LFM2.5-1.2B-Instruct | 0.1 | `top_k=50`, `repetition_penalty=1.05` |
+| LFM2-1.2B (deprecated) | 0.3 | `min_p=0.15`, `repetition_penalty=1.05` |
 
-```python
-from transformers import AutoModelForCausalLM, AutoTokenizer
+Older VL checkpoints use `AutoModelForImageTextToText` and `AutoProcessor` without remote code. They have different image-processing settings and do not use LFM3's response parser. Follow the selected [vision model page](/lfm/models/vision-models).
 
-# Use the model and tokenizer setup from Basic Usage above
+Keep larger MoEs, Japanese specialists, and smaller models when their task or memory footprint is a better fit. Their model pages specify context limits and generation settings; defaults from one checkpoint are not universal.
 
-# Prepare multiple prompts
-prompts = [
-    [{"role": "user", "content": "Give me a short introduction to large language models."}],
-    [{"role": "user", "content": "Give me a detailed introduction to large language models."}],
-]
-
-# Apply chat templates and tokenize
-inputs = tokenizer.apply_chat_template(
-    prompts,
-    add_generation_prompt=True,
-    return_tensors="pt",
-    tokenize=True,
-    padding=True,
-    return_dict=True,
-).to(model.device)
-
-# Generate for all prompts in batch
-outputs = model.generate(**inputs, do_sample=True, temperature=0.1, top_k=50, repetition_penalty=1.05, max_new_tokens=512)
-
-# Decode outputs
-for output in outputs:
-    print(tokenizer.decode(output, skip_special_tokens=True))
-```
-
-## Vision Models
-
-LFM2-VL models support both text and images as input. Use `generate()` with the vision model and processor:
-
-```python
-from transformers import AutoProcessor, AutoModelForImageTextToText
-from transformers.image_utils import load_image
-
-# Load model and processor
-model_id = "LiquidAI/LFM2.5-VL-1.6B"
-model = AutoModelForImageTextToText.from_pretrained(
-    model_id,
-    device_map="auto",
-    dtype="bfloat16"
-)
-processor = AutoProcessor.from_pretrained(model_id)
-
-# Load image and create conversation
-url = "https://cdn.britannica.com/61/93061-050-99147DCE/Statue-of-Liberty-Island-New-York-Bay.jpg"
-image = load_image(url)  # or use PIL Image: Image.open("path/to/image.jpg")
-
-conversation = [
-    {
-        "role": "user",
-        "content": [
-            {"type": "image", "image": image},
-            {"type": "text", "text": "What is in this image?"},
-        ],
-    },
-]
-
-# Apply chat template and generate
-inputs = processor.apply_chat_template(
-    conversation,
-    add_generation_prompt=True,
-    return_tensors="pt",
-    return_dict=True,
-    tokenize=True,
-).to(model.device)
-
-outputs = model.generate(**inputs, do_sample=True, temperature=0.1, min_p=0.15, repetition_penalty=1.05, max_new_tokens=256)
-response = processor.batch_decode(outputs, skip_special_tokens=True)[0]
-print(response)
-```
-
-<Accordion title="Multiple Images Example">
-  ```python
-  from transformers import AutoProcessor, AutoModelForImageTextToText
-  from transformers.image_utils import load_image
-
-  # Use the model and processor setup from above
-  image1 = load_image("path/to/first.jpg")
-  image2 = load_image("path/to/second.jpg")
-
-  conversation = [
-      {
-          "role": "user",
-          "content": [
-              {"type": "image", "image": image1},
-              {"type": "image", "image": image2},
-              {"type": "text", "text": "What are the differences between these two images?"}
-          ],
-      },
-  ]
-
-  inputs = processor.apply_chat_template(
-      conversation,
-      add_generation_prompt=True,
-      return_tensors="pt",
-      return_dict=True,
-      tokenize=True,
-  ).to(model.device)
-
-  outputs = model.generate(**inputs, do_sample=True, temperature=0.1, min_p=0.15, repetition_penalty=1.05, max_new_tokens=256)
-  response = processor.batch_decode(outputs, skip_special_tokens=True)[0]
-  print(response)
-  ```
-</Accordion>
-
-## FAQ
-
-You may find distributed inference with Transformers is not as fast as you would imagine. Transformers with `device_map="auto"` does not apply tensor parallelism, and it only uses one GPU at a time. For Transformers with tensor parallelism, please refer to [its documentation](https://huggingface.co/docs/transformers/v4.51.3/en/perf_infer_gpu_multi).
+The [older Transformers notebook](https://github.com/Liquid4All/docs/blob/main/notebooks/LFM2_Inference_with_Transformers.ipynb) remains scoped to LFM2/LFM2.5. Use the examples above for LFM3.

@@ -48,12 +48,14 @@ LFM3-VL-2B is a vision-language model in the LFM3 family designed for on-device 
 
 ## Quick Start
 
+On Apple Silicon, use [MLX-VLM 0.8.0](/deployment/on-device/mlx#lfm3-and-d1-models) with the model's MLX weights. The guide includes the current text, image, ASR, and speech-generation commands.
+
 <Tabs>
   <Tab title="Transformers">
     **Install:**
 
     ```bash
-    pip install "transformers>=5.21.0" torch torchvision pillow
+    pip install "transformers==5.23.0" torch torchvision pillow accelerate
     ```
 
     **Download & Run:**
@@ -101,10 +103,20 @@ LFM3-VL-2B is a vision-language model in the LFM3 family designed for on-device 
     ```
   </Tab>
   <Tab title="vLLM">
-    vLLM 0.33.0 cannot load this checkpoint: its Transformers backend does not support LFM3's convolution layers. Use the Transformers, SGLang, or llama.cpp examples on this page.
+    Use vLLM 0.34.0, which adds native LFM3 support.
+
+    ```bash
+    uv pip install "vllm==0.34.0" openai
+    vllm serve LiquidAI/LFM3-VL-2B \
+      --trust-remote-code --reasoning-parser qwen3 \
+      --enable-auto-tool-choice --tool-call-parser qwen3_coder \
+      --max-model-len 4096 --gpu-memory-utilization 0.8 --enforce-eager
+    ```
+
+    Follow the [vLLM guide](/deployment/gpu-inference/vllm) for the client request and output handling. The quickstart context budget is not the model's maximum; leave room for reasoning and the final answer.
   </Tab>
   <Tab title="SGLang">
-    Requires a build containing [LFM3 support](https://github.com/sgl-project/sglang/pull/46858), verified at commit `47361c57`. SGLang 0.5.23 does not run this example correctly. The checkpoint supplies the configuration, processor, and response template, so pass `--trust-remote-code` and use the `auto` parsers.
+    Use the configured CUDA image from the [SGLang guide](/deployment/gpu-inference/sglang#installation). Requires a build containing [LFM3 support](https://github.com/sgl-project/sglang/pull/46858), verified at commit `47361c57`. SGLang 0.5.23 does not run this example correctly. The checkpoint supplies the configuration, processor, and response template, so pass `--trust-remote-code` and use the `auto` parsers.
 
     **Launch server:**
 
@@ -114,6 +126,7 @@ LFM3-VL-2B is a vision-language model in the LFM3 family designed for on-device 
       --reasoning-parser auto \
       --tool-call-parser auto \
       --constrained-json-disable-any-whitespace \
+      --context-length 4096 --mem-fraction-static 0.8 \
       --host 0.0.0.0 --port 30000
     ```
 
@@ -136,6 +149,7 @@ LFM3-VL-2B is a vision-language model in the LFM3 family designed for on-device 
             }
         ],
         temperature=0.1,
+        max_tokens=2048,
         extra_body={"top_k": 50, "repetition_penalty": 1.1},
     )
     print(response.choices[0].message.content)

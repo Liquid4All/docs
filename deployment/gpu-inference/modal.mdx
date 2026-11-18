@@ -3,6 +3,10 @@ title: "Modal"
 description: "Deploy Liquid AI LFM models on Modal with serverless GPU inference and instant autoscaling."
 ---
 
+<Note>
+This integration retains its original LFM2 deployment project and runtime pins. For new LFM3 GPU serving, start with the current [vLLM](/deployment/gpu-inference/vllm) or [SGLang](/deployment/gpu-inference/sglang) guide. Updating a provider script requires testing its image, model architecture, and launch flags together; changing only `MODEL_NAME` is insufficient.
+</Note>
+
 <Tip>
   Use Modal for serverless cloud deployments with instant autoscaling, GPU access, and production-ready inference serving.
 </Tip>
@@ -18,7 +22,7 @@ git clone https://github.com/Liquid4All/lfm-inference
 Launch command:
 
 ```bash
-cd modal
+cd lfm-inference/modal
 
 # deploy LFM2 8B MoE model
 modal deploy deploy-vllm.py

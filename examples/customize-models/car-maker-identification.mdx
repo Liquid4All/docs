@@ -3,6 +3,10 @@ title: "Fine tuning LFM2-VL to identify car makers from images"
 description: "Fine-tune LFM2-VL to identify car makers from images using structured output, LoRA, and an evaluation pipeline."
 ---
 
+<Warning>
+This historical tutorial uses deprecated LFM2-VL checkpoints. It retains the original training workflow for reproducibility. For new projects, start with the [current model library](/lfm/models/complete-library); the [replacement model](/lfm/models/lfm3-vl-2b) has its own runtime and training requirements.
+</Warning>
+
 <Card title="View Source Code" icon="github" iconType="brands" href="https://github.com/Liquid4All/cookbook/tree/main/examples/car-maker-identification">
   Browse the complete example on GitHub
 </Card>
@@ -11,7 +15,7 @@ A step by step guide on fine tuning a Vision Language Model for image identifica
 
 ![Car maker classification: a car photo and the question about its maker go into a vision language model, which answers Audi](/images/examples/customize-models/assets/images/task-01484227e78d02da63eeb840de314523.png)
 
-## This is what you will learn[​](#this-is-what-you-will-learn "Direct link to This is what you will learn")
+## This is what you will learn
 
 In this example, you will learn how to:
 
@@ -19,16 +23,16 @@ In this example, you will learn how to:
 * **Use structured output generation** with Outlines to ensure consistent and reliable model responses and increase model accuracy.
 * **Fine-tune a Vision Language Model** with LoRA to further improve model accuracy.
 
-## Quickstart[​](#quickstart "Direct link to Quickstart")
+## Quickstart
 
-### 1. Clone the repository:[​](#1-clone-the-repository "Direct link to 1. Clone the repository:")
+### 1. Clone the repository:
 
 ```sh
 git clone https://github.com/Liquid4All/cookbook.git
 cd cookbook/examples/car-maker-identification
 ```
 
-### 2. Evaluate base LFM2-VL models without structured generation[​](#2-evaluate-base-lfm2-vl-models-without-structured-generation "Direct link to 2. Evaluate base LFM2-VL models without structured generation")
+### 2. Evaluate base LFM2-VL models without structured generation
 
 ```sh
 make evaluate config=eval_lfm_450M_raw_generation.yaml
@@ -36,7 +40,7 @@ make evaluate config=eval_lfm_1.6B_raw_generation.yaml
 make evaluate config=eval_lfm_3B_raw_generation.yaml
 ```
 
-### 3. Evaluate base LFM2-VL models with structured generation[​](#3-evaluate-base-lfm2-vl-models-with-structured-generation "Direct link to 3. Evaluate base LFM2-VL models with structured generation")
+### 3. Evaluate base LFM2-VL models with structured generation
 
 ```sh
 make evaluate config=eval_lfm_450M_structured_generation.yaml
@@ -44,7 +48,7 @@ make evaluate config=eval_lfm_1.6B_structured_generation.yaml
 make evaluate config=eval_lfm_3B_structured_generation.yaml
 ```
 
-### 4. Fine-tune base LFM2-VL models with LoRA[​](#4-fine-tune-base-lfm2-vl-models-with-lora "Direct link to 4. Fine-tune base LFM2-VL models with LoRA")
+### 4. Fine-tune base LFM2-VL models with LoRA
 
 ```sh
 make fine-tune config=finetune_lfm_450M.yaml
@@ -52,7 +56,7 @@ make fine-tune config=finetune_lfm_1.6B.yaml
 make fine-tune config=finetune_lfm_3B.yaml
 ```
 
-## Environment setup[​](#environment-setup "Direct link to Environment setup")
+## Environment setup
 
 You will need
 
@@ -66,7 +70,7 @@ You will need
 
 Let's go one by one.
 
-### Install UV[​](#install-uv "Direct link to Install UV")
+### Install UV
 
 <Accordion title="Click to see installation instructions for your platform">
   **macOS/Linux:**
@@ -82,7 +86,7 @@ Let's go one by one.
   ```
 </Accordion>
 
-### Modal setup[​](#modal-setup "Direct link to Modal setup")
+### Modal setup
 
 <Accordion title="Click to see installation instructions">
   1. Create an account at [modal.com](https://modal.com/)
@@ -105,7 +109,7 @@ Let's go one by one.
      ```
 </Accordion>
 
-### Weights & Biases setup[​](#weights--biases-setup "Direct link to Weights & Biases setup")
+### Weights & Biases setup
 
 <Accordion title="Click to see installation instructions">
   1. Create an account at [wandb.ai](https://wandb.ai/)
@@ -120,7 +124,7 @@ Let's go one by one.
      This will open a browser window where you can copy your API key and paste it in the terminal.
 </Accordion>
 
-### Install make[​](#install-make "Direct link to Install make")
+### Install make
 
 <Accordion title="Click to see installation instructions">
   1. Install make:
@@ -137,7 +141,7 @@ cd cookbook/examples/car-maker-identification
 uv sync
 ```
 
-## Steps to fine-tune LFM2-VL for this task[​](#steps-to-fine-tune-lfm2-vl-for-this-task "Direct link to Steps to fine-tune LFM2-VL for this task")
+## Steps to fine-tune LFM2-VL for this task
 
 Here's the systematic approach we follow to fine-tune LFM2-VL models for car maker identification:
 
@@ -151,7 +155,7 @@ Here's the systematic approach we follow to fine-tune LFM2-VL models for car mak
 
 Let's go one by one.
 
-## Step 1. Dataset preparation[​](#step-1-dataset-preparation "Direct link to Step 1. Dataset preparation")
+## Step 1. Dataset preparation
 
 A fine tuned Language Model is as **good** as the dataset used to fine tune it
 
@@ -177,7 +181,7 @@ The dataset contains:
 
 The dataset includes additional splits with various image corruptions (gaussian noise, motion blur, etc.) for robustness testing, making it ideal for evaluating model performance under different conditions. In this tutorial we will only use the train and test splits.
 
-## Step 2. Baseline performance of LFM2-VL models[​](#step-2-baseline-performance-of-lfm2-vl-models "Direct link to Step 2. Baseline performance of LFM2-VL models")
+## Step 2. Baseline performance of LFM2-VL models
 
 Before embarking into any fine-tuning experiment, we need to establish a baseline performance for existing models. In this case, we will evaluate the peformance of
 
@@ -276,7 +280,7 @@ Each evaluation run is logged as a Weights & Biases run, and you can see the res
 * the **accuracy** of the model, which is the percentage of images that the model correctly classified. This gives us a general idea of the model performance.
 * the **confusion matrix** of the model. The confusion matrix is a matrix that shows the predicted labels vs the actual labels, and helps us understand better how the model performs for each class.
 
-### Baseline Results[​](#baseline-results "Direct link to Baseline Results")
+### Baseline Results
 
 Accuracy-wise, the 3B model is the only model that seems to work reasonably well out-of-the box, while the 450M and 1.6B models fail terribly.
 
@@ -298,7 +302,7 @@ So, at this point we face the first challenge: how we "force" the model to gener
 
 This is what we will address in the next step.
 
-## Step 3. Structured generation to increase model robustness[​](#step-3-structured-generation-to-increase-model-robustness "Direct link to Step 3. Structured generation to increase model robustness")
+## Step 3. Structured generation to increase model robustness
 
 Structured generation is a technique that allows us to “force” the Language Model to output a specific format, like JSON, or, in our case, a valid entry from a list of car makers.
 
@@ -325,7 +329,7 @@ class CarIdentificationOutputType(BaseModel):
         "Bentley",
         "Bugatti",
         "Buick",
-        ...
+        # Other classes omitted.
         "Tesla",
         "Toyota",
         "Volkswagen",
@@ -351,7 +355,7 @@ make evaluate config=eval_lfm_1.6B_structured_generation.yaml
 make evaluate config=eval_lfm_3B_structured_generation.yaml
 ```
 
-### Structured Generation Results[​](#structured-generation-results "Direct link to Structured Generation Results")
+### Structured Generation Results
 
 | Model        | Accuracy |
 | ------------ | -------- |
@@ -365,7 +369,7 @@ If you inspect the confusion matrix of the 3B model, you will see that the model
 
 At this point you need to decide if the performance is good enough for your use case. If it is, you are done. Otherwis, it is time to fine-tune the model.
 
-## Step 4. Fine tuning with LoRA[​](#step-4-fine-tuning-with-lora "Direct link to Step 4. Fine tuning with LoRA")
+## Step 4. Fine tuning with LoRA
 
 To fine-tune the model, we will use the LoRA technique. LoRA is a parameter-efficient fine-tuning technique that allows us to fine-tune the model by adding and tuning a small number of parameters.
 
@@ -414,7 +418,7 @@ At this point, we can conclude that LFM2-VL-3B is the most promising model for o
 
 So, let's go back to the evaluation step.
 
-### Evaluate the fine-tuned model on the test set[​](#evaluate-the-fine-tuned-model-on-the-test-set "Direct link to Evaluate the fine-tuned model on the test set")
+### Evaluate the fine-tuned model on the test set
 
 To evaluate the fine-tuned model, we will use the `evaluate.py` script again, but this time we will use the last model checkpoint.
 
@@ -422,7 +426,7 @@ To evaluate the fine-tuned model, we will use the `evaluate.py` script again, bu
 make evaluate config=eval_lfm_3B_checkpoint_1000.yaml
 ```
 
-### Fine-tuned Model Results[​](#fine-tuned-model-results "Direct link to Fine-tuned Model Results")
+### Fine-tuned Model Results
 
 | Checkpoint              | Accuracy |
 | ----------------------- | -------- |
@@ -433,7 +437,7 @@ The confusion matrix for the fine-tuned model is the following:
 
 ![Confusion matrix for LFM2-VL-3B fine-tuned to checkpoint 1000, reaching 82% accuracy](/images/examples/customize-models/assets/images/confusion_matrix_lfm2_3b_checkpoint_1000-1a88130657b75f5ad0934c2456f71ca5.png)
 
-## What's next?[​](#whats-next "Direct link to What's next?")
+## What's next?
 
 In this example we showed you the main steps to fine-tune a Vision Language Model for an image identification tasks.
 

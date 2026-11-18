@@ -92,7 +92,7 @@
               {
                 "group": "Liquid Foundation Models",
                 "root": "lfm/models/complete-library",
-                "expanded": false,
+                "expanded": true,
                 "pages": [
                   "lfm/models/text-models",
                   "lfm/models/vision-models",
@@ -174,6 +174,7 @@
           {
             "group": "Deploy",
             "pages": [
+              "deployment/overview",
               {
                 "group": "Edge Inference",
                 "icon": {"name": "mobile", "style": "light"},
@@ -187,7 +188,7 @@
                   "deployment/on-device/atomic-chat",
                   "deployment/on-device/llama"
                 ],
-                "expanded": false
+                "expanded": true
               },
               {
                 "group": "GPU Inference",
@@ -198,7 +199,7 @@
                   "deployment/gpu-inference/vllm",
                   "deployment/gpu-inference/zml-llmd"
                 ],
-                "expanded": false
+                "expanded": true
               },
               {
                 "group": "Cloud Inference",
@@ -208,7 +209,7 @@
                   "deployment/gpu-inference/baseten",
                   "deployment/gpu-inference/fal"
                 ],
-                "expanded": false
+                "expanded": true
               },
               {
                 "group": "Agents",
@@ -216,7 +217,7 @@
                 "pages": [
                   "examples/agent-harnesses"
                 ],
-                "expanded": false
+                "expanded": true
               }
             ]
           }
@@ -268,10 +269,51 @@
                   {
                     "group": "Endpoints",
                     "expanded": true,
-                    "openapi": {
-                      "source": "api/openapi.json",
-                      "directory": "api/reference"
-                    }
+                    "pages": [
+                      {
+                        "group": "Models",
+                        "pages": [
+                          "api/reference/models/list-models",
+                          "api/reference/models/retrieve-model"
+                        ]
+                      },
+                      {
+                        "group": "Chat",
+                        "pages": [
+                          "api/reference/chat/chat-completions"
+                        ]
+                      },
+                      {
+                        "group": "Decision models",
+                        "pages": [
+                          "api/reference/decision-models/make-decisions",
+                          "api/reference/decision-models/list-decision-models"
+                        ]
+                      },
+                      {
+                        "group": "Files",
+                        "pages": [
+                          "api/reference/files/list-files",
+                          "api/reference/files/retrieve-file",
+                          "api/reference/files/retrieve-file-content"
+                        ]
+                      },
+                      {
+                        "group": "Batches",
+                        "pages": [
+                          "api/reference/batches/create-batch",
+                          "api/reference/batches/list-batches",
+                          "api/reference/batches/retrieve-batch",
+                          "api/reference/batches/cancel-batch"
+                        ]
+                      },
+                      {
+                        "group": "Large uploads",
+                        "pages": [
+                          "api/reference/large-uploads/create-upload-url"
+                        ]
+                      }
+                    ]
                   }
                 ],
                 "expanded": false
