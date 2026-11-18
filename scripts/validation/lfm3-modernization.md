@@ -60,7 +60,7 @@ This change does not freshly certify iOS/Android native builds, Python/Node/.NET
 ## Documentation checks
 
 - Mintlify strict validation and internal broken-link check.
-- Public URL snapshot (236 active URLs).
+- Public URL snapshot (250 active URLs, including all 13 API endpoint pages).
 - Generated snippets match their notebook/generator sources.
 - Notebook Ruff and mypy checks.
 - Python syntax checks (54 MDX Python blocks) and `git diff --check`.

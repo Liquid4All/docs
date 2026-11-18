@@ -269,10 +269,51 @@
                   {
                     "group": "Endpoints",
                     "expanded": true,
-                    "openapi": {
-                      "source": "api/openapi.json",
-                      "directory": "api/reference"
-                    }
+                    "pages": [
+                      {
+                        "group": "Models",
+                        "pages": [
+                          "api/reference/models/list-models",
+                          "api/reference/models/retrieve-model"
+                        ]
+                      },
+                      {
+                        "group": "Chat",
+                        "pages": [
+                          "api/reference/chat/chat-completions"
+                        ]
+                      },
+                      {
+                        "group": "Decision models",
+                        "pages": [
+                          "api/reference/decision-models/make-decisions",
+                          "api/reference/decision-models/list-decision-models"
+                        ]
+                      },
+                      {
+                        "group": "Files",
+                        "pages": [
+                          "api/reference/files/list-files",
+                          "api/reference/files/retrieve-file",
+                          "api/reference/files/retrieve-file-content"
+                        ]
+                      },
+                      {
+                        "group": "Batches",
+                        "pages": [
+                          "api/reference/batches/create-batch",
+                          "api/reference/batches/list-batches",
+                          "api/reference/batches/retrieve-batch",
+                          "api/reference/batches/cancel-batch"
+                        ]
+                      },
+                      {
+                        "group": "Large uploads",
+                        "pages": [
+                          "api/reference/large-uploads/create-upload-url"
+                        ]
+                      }
+                    ]
                   }
                 ],
                 "expanded": false

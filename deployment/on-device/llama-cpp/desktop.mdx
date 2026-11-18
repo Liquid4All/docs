@@ -213,6 +213,8 @@ These bindings package their own llama.cpp builds. The examples below retain LFM
 
 Other maintained bindings — Rust (`llama-cpp-2`), Go (`go-llama.cpp`), Java (`java-llama.cpp`), Dart/Flutter, and more — are listed in the [llama.cpp README](https://github.com/ggml-org/llama.cpp?tab=readme-ov-file#description).
 
+<span id="hybrid-on-device--cloud-routing"></span>
+
 ## Hybrid on-device + cloud routing
 
 Because `llama-server` speaks the OpenAI protocol, one client can target a local model and a cloud model interchangeably: route short, latency-sensitive, or private prompts to the local endpoint and fall back to a hosted deployment (for example [vLLM](/deployment/gpu-inference/vllm) or a [cloud provider](/deployment/gpu-inference/modal)) for the rest.

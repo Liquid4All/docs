@@ -171,6 +171,8 @@ Pass `mmprojPath = "..."` for vision models, or `audioDecoderPath = "..."` (and 
 - **Threads.** The engine defaults to a sensible CPU thread count for the host (`CpuThreadAdvisor.getRecommendedThreadCount()`). Override by passing `ModelLoadingOptions(cpuThreads = N)` through `loadModel(...)` if you need to share the box with other workloads.
 - **GPU acceleration.** Available on macOS (Metal, automatic) and on Linux JVM builds with a CUDA-capable GPU when the matching native variant is on the classpath. GPU offload is configured through the `extras` JSON payload on `ModelLoadingOptions` (advanced use only — most desktop workloads run pure-CPU).
 
+<span id="linux-native-kotlin-native"></span>
+
 ## Linux native (Kotlin/Native)
 
 For statically-targeted Linux binaries — CLIs, daemons, embedded server processes — the SDK ships `linuxX64` and `linuxArm64` Kotlin/Native targets. The engine is shipped as a separate `-natives.zip` classifier artifact rather than embedded in a JAR, because Kotlin/Native has no runtime resource-extraction equivalent to JVM's `getResourceAsStream`.
@@ -220,7 +222,7 @@ Build with the usual Kotlin/Native link tasks:
 The resulting binary lives at `build/bin/linuxX64/releaseExecutable/`, alongside the `.so` files the plugin installed (`libinference_engine.so`, `libinference_engine_llamacpp_backend.so`, `libie_zip.so`, plus their transitive dependencies). Keep them co-located when you ship — the cinterop manifest bakes `-rpath=$ORIGIN` into the binary so the dynamic linker resolves siblings.
 
 <Warning>
-**Versions 0.10.0 and 0.10.1 cannot link a working Kotlin/Native executable** due to Maven Central / cinterop issues; v0.10.2 and v0.10.3 were never published, and the fixes shipped across v0.10.4.x, v0.10.6, and v0.10.7. Maven Central is immutable per GAV, so the older versions cannot be republished — pin to **0.10.7 or newer**. See [the changelog](/deployment/on-device/leap-sdk-changelog#kotlin-native-linux-windows) for the full story.
+Early 0.10.x releases had Kotlin/Native linking and packaging issues. Use **v0.10.7** for these archived recipes; fixes accumulated across several releases. Maven Central artifacts are immutable, so updating the version is necessary to pick up those fixes. See [the changelog](/deployment/on-device/leap-sdk-changelog#kotlin-native-linux-windows).
 </Warning>
 
 ### Manual recipe (if you can't apply the plugin)
