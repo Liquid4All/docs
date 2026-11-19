@@ -3,7 +3,6 @@ title: "LFM3-VL-2B"
 description: "2B vision-language model with video understanding, thinking, and spatial reasoning for on-device deployment"
 ---
 
-import { VlLlamacpp } from "/snippets/quickstart/vl-llamacpp.mdx";
 
 <a href="/lfm/models/vision-models" className="back-button">← Back to Vision Models</a>
 
@@ -160,7 +159,38 @@ On Apple Silicon, use [MLX-VLM 0.8.0](/deployment/on-device/mlx#lfm3-and-d1-mode
 
     Requires llama.cpp 0.8.0 (b11960) or later. The `:Q4_0` tag selects the Quantization-Aware Distillation (QAD) checkpoint.
 
-    <VlLlamacpp ggufRepo="LiquidAI/LFM3-VL-2B-GGUF" samplingFlags="--top-p 1.0 --min-p 0.0 --no-reasoning-preserve"></VlLlamacpp>
+    {/* quickstart: {"source":"/snippets/quickstart/vl-llamacpp.mdx","component":"VlLlamacpp","props":{"ggufRepo":"LiquidAI/LFM3-VL-2B-GGUF","samplingFlags":"--top-p 1.0 --min-p 0.0 --no-reasoning-preserve"}} */}
+llama.cpp enables efficient CPU inference for vision models.
+
+**Install:**
+
+```bash
+brew install llama.cpp
+```
+
+Or download pre-built binaries from [llama.cpp releases](https://github.com/ggml-org/llama.cpp/releases).
+
+**Run:**
+
+```bash
+llama cli \
+    -hf LiquidAI/LFM3-VL-2B-GGUF:Q4_0 \
+    --image test_image.jpg \
+    -p "What's in this image?" \
+    --top-p 1.0 --min-p 0.0 --no-reasoning-preserve
+```
+
+**Web chat UI and OpenAI-compatible API** at `http://localhost:9931`:
+
+```bash
+llama serve -hf LiquidAI/LFM3-VL-2B-GGUF:Q4_0 \
+    --top-p 1.0 --min-p 0.0 --no-reasoning-preserve
+```
+
+The `-hf` flag downloads the model and its vision projector directly from Hugging Face. Use `--image-max-tokens` to control image token budget.
+
+For advanced usage, see the [llama.cpp guide](/deployment/on-device/llama-cpp#vision-models).
+{/* /quickstart */}
 
     The GGUF stores the recommended temperature, top-k, and repetition penalty. `--top-p 1.0 --min-p 0.0` sets the two recommended values it doesn't store, and `--no-reasoning-preserve` keeps earlier reasoning out of the conversation history. The server is OpenAI-compatible, so you can query it with the SGLang example above by changing `base_url` to `http://localhost:9931/v1`.
 

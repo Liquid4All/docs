@@ -1,3 +1,9 @@
+# Repository maintenance and validation files, not model/tool documentation.
+/scripts/
+/util/
+/bin/
+**/AGENTS.md
+
 MODEL-MATRIX.md
 DESIGN.md
 CLAUDE.md

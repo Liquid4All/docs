@@ -85,11 +85,13 @@ active:
   - /deployment/on-device/onnx
   - /deployment/on-device/sdk/advanced-features
   - /deployment/on-device/sdk/ai-agent-usage-guide
+  - /deployment/on-device/sdk/android-quick-start-guide
   - /deployment/on-device/sdk/cloud-ai-comparison
   - /deployment/on-device/sdk/constrained-generation
   - /deployment/on-device/sdk/conversation-generation
   - /deployment/on-device/sdk/desktop-platforms
   - /deployment/on-device/sdk/function-calling
+  - /deployment/on-device/sdk/ios-quick-start-guide
   - /deployment/on-device/sdk/messages-content
   - /deployment/on-device/sdk/model-loading
   - /deployment/on-device/sdk/openai-client
@@ -103,17 +105,21 @@ active:
   - /deployment/tools/model-bundling/bundle-creation
   - /deployment/tools/model-bundling/bundle-management
   - /deployment/tools/model-bundling/changelog
+  - /deployment/tools/model-bundling/cli-spec
   - /deployment/tools/model-bundling/configuration
   - /deployment/tools/model-bundling/data-privacy
   - /deployment/tools/model-bundling/download
   - /deployment/tools/model-bundling/quick-start
   - /deployment/tools/model-bundling/reference
+  - /docs
   - /docs/fine-tuning/datasets
   - /docs/fine-tuning/leap-finetune
   - /docs/fine-tuning/trl
   - /docs/fine-tuning/unsloth
   - /docs/fine-tuning/workbench
+  - /docs/frameworks/outlines
   - /docs/getting-started/connect-ai-tools
+  - /docs/getting-started/intro
   - /docs/getting-started/welcome
   - /docs/inference/baseten-deployment
   - /docs/inference/fal-deployment
@@ -126,6 +132,7 @@ active:
   - /docs/inference/sglang
   - /docs/inference/transformers
   - /docs/inference/vllm
+  - /docs/models/lfm25-1.2b-base
   - /examples/agent-harnesses
   - /examples/android/leap-koog-agent
   - /examples/android/recipe-generator-constrained-output
@@ -138,6 +145,7 @@ active:
   - /examples/customize-models/home-assistant
   - /examples/customize-models/satellite-vlm
   - /examples/customize-models/wildfire-prevention
+  - /examples/deploy-models-on-ios/slogan-generator-app
   - /examples/index
   - /examples/laptop-examples/audio-car-cockpit
   - /examples/laptop-examples/audio-to-text-in-real-time
@@ -154,7 +162,17 @@ active:
   - /guides/hardware-evaluation
   - /guides/migration-guide
   - /guides/use-case-evaluation
+  - /leap
+  - /leap/changelog
+  - /leap/edge-sdk/android/android-quick-start-guide
+  - /leap/edge-sdk/ios/ios-quick-start-guide
   - /leap/edge-sdk/overview
+  - /leap/find-model
+  - /leap/finetuning
+  - /leap/index
+  - /leap/laptop-support
+  - /leap/leap-bundle/cli-spec
+  - /leap/vibe-check-models
   - /lfm/fine-tuning
   - /lfm/fine-tuning/datasets
   - /lfm/fine-tuning/halo
@@ -167,6 +185,7 @@ active:
   - /lfm/getting-started/connect-ai-tools
   - /lfm/getting-started/intro
   - /lfm/getting-started/model-license
+  - /lfm/getting-started/quickstart
   - /lfm/getting-started/text-generation-and-prompting
   - /lfm/getting-started/vision
   - /lfm/getting-started/welcome
@@ -224,6 +243,7 @@ active:
   - /lfm/models/lfm2-vl-1.6b
   - /lfm/models/lfm2-vl-3b
   - /lfm/models/lfm2-vl-450m
+  - /lfm/models/lfm25-1.2b-base
   - /lfm/models/lfm25-1.2b-instruct
   - /lfm/models/lfm25-1.2b-jp
   - /lfm/models/lfm25-1.2b-jp-202606
@@ -261,6 +281,4 @@ active:
 #   # Or, if you want the reason inline:
 #   - url: /lfm/another-old-thing
 #     reason: "Page retired in DOC-12; no substitute exists."
-deleted:
-  - url: /lfm/models/lfm25-1.2b-base
-    reason: Base models are not included in the documentation.
+deleted: []

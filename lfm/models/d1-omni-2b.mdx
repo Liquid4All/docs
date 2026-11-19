@@ -1,11 +1,11 @@
 ---
 title: "d1-omni-2B"
-description: "2.17B parameter decision model for text, pictures, and audio, built on LFM3-Omni-2B"
+description: "2.17B parameter decision model for text, pictures, video, and audio, built on LFM3-Omni-2B"
 ---
 
 <a href="/lfm/models/decision-models" className="back-button">← Back to Decision Models</a>
 
-d1-omni-2B is a 2.17B parameter decision model for text, pictures, and audio, built on [LFM3-Omni-2B](/lfm/models/lfm3-omni-2b). It returns calibrated answers in one forward pass, without generating tokens. Clips and spoken questions go through the same pass as text and pictures, so a voice request can be routed, checked, or answered just like a typed one.
+d1-omni-2B is a 2.17B parameter decision model for text, pictures, video, and audio, built on [LFM3-Omni-2B](/lfm/models/lfm3-omni-2b). It returns calibrated answers in one forward pass, without generating tokens. Clips and spoken questions go through the same pass as text and pictures, so a voice request can be routed, checked, or answered just like a typed one.
 
 <div style={{display: 'flex', gap: '0.5rem', margin: '0.5rem 0 1.5rem 0'}}>
   <a href="https://huggingface.co/LiquidAI/d1-Omni-2B" style={{padding: '0.35rem 0.7rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', backgroundColor: '#fbbf24'}}><span style={{color: '#000'}}>HF</span></a>
@@ -101,6 +101,43 @@ d1-omni-2B is designed for decisions that depend on what is heard, such as call 
     ```
 
     A spoken question takes a clip as its instructions: `{"type": "noul", "instructions": {"type": "audio", "path": "question.wav"}}`.
+
+    **Video input:**
+
+    Pass decoded PIL frames and their sampling rate in `media`. The following samples one frame per second; `fps` describes the supplied frames, rather than the source video's original frame rate.
+
+    ```bash
+    pip install opencv-python-headless
+    ```
+
+    ```python
+    import cv2
+    from PIL import Image
+
+    capture = cv2.VideoCapture("clip.mp4")
+    source_fps = capture.get(cv2.CAP_PROP_FPS)
+    if not capture.isOpened() or source_fps <= 0:
+        raise ValueError("Could not open clip.mp4 or determine its frame rate")
+    frames = []
+    second = 0
+    while True:
+        capture.set(cv2.CAP_PROP_POS_MSEC, second * 1000)
+        ok, frame = capture.read()
+        if not ok:
+            break
+        frames.append(Image.fromarray(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)))
+        second += 1
+    capture.release()
+    if not frames:
+        raise ValueError("The video contains no decodable frames")
+
+    output = model.system_one(None, {
+        "outdoors": {"type": "noul", "instructions": "Does this video take place outdoors?"},
+    }, media=[{"type": "video", "video": frames, "fps": 1}])
+    print(output["answers"]["outdoors"]["noul"])
+    ```
+
+    This example supplies video frames only. To include sound, also supply an audio clip using the audio input format above. The hosted [decisions API](/api/guides/decisions) has its own input contract and does not accept video.
 
     **Image input:**
 

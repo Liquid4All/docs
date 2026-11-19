@@ -33,6 +33,7 @@ In this example, you will learn how to:
 ```bash
 git clone https://github.com/Liquid4All/cookbook.git
 cd cookbook/examples/home-assistant
+export HOME_ASSISTANT_DIR="$PWD"
 ```
 
 ### 2. Start the app server
@@ -46,6 +47,8 @@ uv run uvicorn app.server:app --port 5173 --reload
 ```bash
 open http://localhost:5173
 ```
+
+In `app/server.py`, correct the 350M baseline repository from `LiquidAI/LFM2-350M-Instruct-GGUF` to `LiquidAI/LFM2-350M-GGUF`; the former is not the published repository.
 
 The UI includes a model selector. When you pick a model, the app automatically downloads and starts `llama-server` in the background. No manual model server setup is needed.
 
@@ -223,7 +226,7 @@ uv run python benchmark/run.py \
     --hf-file LFM2.5-1.2B-Instruct-Q4_0.gguf
 ```
 
-Run a single task by number (1-101):
+Run a single task by number (1-100):
 
 ```bash
 uv run python benchmark/run.py \
@@ -277,7 +280,9 @@ Generate 500 examples distributed across the benchmark taxonomy (requires `OPENA
 uv run python benchmark/datasets/generate.py --count 500 --output benchmark/datasets/sft_data.jsonl
 ```
 
-Then convert the dataset to the LFM2 text format and push it to Hugging Face so Modal can pull it during training:
+Before uploading, set `REPO_ID_LFM2` in `finetune/prepare_data.py` to a dataset repository in **your own** Hugging Face namespace. Set `dataset.path` in `finetune/configs/LFM2-350M.yaml` to that same repository. The checked-in values belong to the author. Also replace `training_config.trackio_space_id` with your own Space (or set `training_config.tracker: "none"` and remove `trackio_space_id` to disable tracking).
+
+Then convert the dataset to the LFM2 text format and upload it so Modal can read it. The preparation script publishes to the configured repository; review the generated data first:
 
 ```bash
 uv run --group finetune python finetune/prepare_data.py \
@@ -309,38 +314,39 @@ sequenceDiagram
 
 ### Steps
 
-**1. One-time setup.** Clone and install `liquid-finetune`, then authenticate with Hugging Face and Modal.
+**1. One-time setup.** Clone `liquid-finetune` inside the example directory, then authenticate with Hugging Face and Modal.
 
 ```bash
-git clone https://github.com/Liquid4All/liquid-finetune
-cd liquid-finetune && uv sync && cd -
-huggingface-cli login
-modal setup
+cd "$HOME_ASSISTANT_DIR"
+git clone https://github.com/Liquid4All/liquid-finetune.git
+export FINETUNE_DIR="$HOME_ASSISTANT_DIR/liquid-finetune"
+uv sync --project "$FINETUNE_DIR"
+uv run --project "$FINETUNE_DIR" hf auth login
+uv run --project "$FINETUNE_DIR" modal setup
 ```
 
-**2. Kick off training on Modal.** Runs 5 epochs of LoRA SFT on an H100. Takes a few minutes and costs roughly $1.50.
+**2. Start training on Modal.** The config runs five epochs of LoRA SFT on an H100. Runtime and cost depend on your dataset and configuration.
 
 ```bash
-cd liquid-finetune
-uv run liquid-finetune ../finetune/configs/LFM2-350M.yaml
+uv run --project "$FINETUNE_DIR" liquid-finetune "$HOME_ASSISTANT_DIR/finetune/configs/LFM2-350M.yaml"
 ```
 
-**3. Download the checkpoint** from the Modal Volume once training finishes.
+**3. Download the checkpoint** after training finishes. The config names the volume `leap-finetune`. `/outputs` is its container mount point, not a directory prefix in the volume CLI. List the volume root, then replace `<run-directory>` with the run shown in the listing:
 
 ```bash
-cd liquid-finetune
-uv run modal volume get liquid-finetune /outputs/home-assistant-350M ../finetune/output/350M-lora
+uv run --project "$FINETUNE_DIR" modal volume ls leap-finetune /
+uv run --project "$FINETUNE_DIR" modal volume get leap-finetune /<run-directory> "$HOME_ASSISTANT_DIR/finetune/output/350M-lora"
 ```
 
-**4. Export.** Merges the LoRA adapter into the base model, converts to GGUF, and pushes to Hugging Face.
+**4. Export.** Merge the adapter locally first:
 
 ```bash
-uv run --group export python finetune/export.py \
-    --lora-path finetune/output/350M-lora \
-    --output-path finetune/output/350M-merged \
-    --push-to-hub \
-    --quant-type q8_0
+uv run --project "$HOME_ASSISTANT_DIR" --group export python "$HOME_ASSISTANT_DIR/finetune/export.py" \
+    --lora-path "$HOME_ASSISTANT_DIR/finetune/output/350M-lora" \
+    --output-path "$HOME_ASSISTANT_DIR/finetune/output/350M-merged"
 ```
+
+To convert the merged weights without publishing them, follow [Convert to GGUF](/deployment/on-device/llama-cpp#converting-custom-models), using the merged directory as the input. If you choose the example's `--push-to-hub --quant-type q8_0` export option instead, it creates a **public** model repository in your authenticated Hugging Face namespace.
 
 Re-run the benchmark with the flags printed by the export step:
 

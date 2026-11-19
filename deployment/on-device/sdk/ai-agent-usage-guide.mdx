@@ -5,6 +5,8 @@ description: "End-to-end recipes for building AI agents with the LEAP SDK — sa
 
 <Warning>
 The LEAP SDK is deprecated and this page is no longer maintained. Build on llama.cpp directly instead — see [Migrating from LEAP SDK](/deployment/on-device/llama-cpp/migrating-from-leap-sdk).
+
+The hosted LEAP catalog and model-bundling service have been discontinued. Manifest downloads that call `leap.liquid.ai` are historical examples and no longer work against that service. Use a local model with [sideloaded loading](/deployment/on-device/sdk/model-loading#sideloaded-files) in an existing SDK app, or migrate to llama.cpp for new development.
 </Warning>
 
 This guide walks through the patterns for building a real AI agent — multi-turn conversation, function calling with tool dispatch, multimodal inputs, and a complete view-model wiring. The cross-platform pages cover individual APIs in depth — start here for the full picture, then drill into the dedicated references when you need details.
@@ -44,6 +46,8 @@ Every agent has the same shape: send a `ChatMessage`, iterate the response strea
     @MainActor
     private func handle(_ response: MessageResponse) {
         switch onEnum(of: response) {
+        case .error(let failure):
+            print("Generation failed: \(failure.message)")
         case .chunk(let chunk):
             currentText += chunk.text
         case .reasoningChunk(let reasoning):
@@ -55,7 +59,7 @@ Every agent has the same shape: send a `ChatMessage`, iterate the response strea
         case .audioSample(let audio):
             // `audio.samples` is `KotlinFloatArray` — bridge to `[Float]` via
             // `LeapSDK.ArrayConversionsKt.floatArrayToNSData(array:)` if your
-            // renderer expects a Swift array (see the demo in leap-ui-demo/shared/).
+            // renderer expects a Swift array (convert KotlinFloatArray to a native Swift array first).
             audioPlayer.enqueue(audio.samples, sampleRate: Int(audio.sampleRate))
         case .complete(let completion):
             currentText = ""
@@ -70,6 +74,7 @@ Every agent has the same shape: send a `ChatMessage`, iterate the response strea
     ```kotlin
     suspend fun handle(response: MessageResponse) {
         when (response) {
+            is MessageResponse.Error -> throw IllegalStateException(response.message)
             is MessageResponse.Chunk -> _text.value += response.text
             is MessageResponse.ReasoningChunk -> Log.d(TAG, "Reasoning: ${response.reasoning}")
             is MessageResponse.FunctionCalls -> {
@@ -101,6 +106,8 @@ The defining feature of an agent: the model emits `FunctionCalls`, you execute t
             var toolCalls: [LeapFunctionCall] = []
             for try await response in workingConv.generateResponse(message: pending) {
                 switch onEnum(of: response) {
+                case .error(let failure):
+                    print("Generation failed: \(failure.message)")
                 case .chunk(let c):
                     appendUI(c.text)
                 case .functionCalls(let payload):
@@ -141,6 +148,7 @@ The defining feature of an agent: the model emits `FunctionCalls`, you execute t
             val toolCalls = mutableListOf<LeapFunctionCall>()
             workingConv.generateResponse(pending).collect { response ->
                 when (response) {
+                    is MessageResponse.Error -> throw IllegalStateException(response.message)
                     is MessageResponse.Chunk -> appendUI(response.text)
                     is MessageResponse.FunctionCalls -> toolCalls.addAll(response.functionCalls)
                     else -> {}
@@ -179,7 +187,7 @@ Define `runtimeDispatch(_:)` as your tool-call → result router: validate argum
     // Vision-capable model
     let imageMessage = ChatMessage(
       role: .user,
-      content: [.text("Describe what you see."), ChatMessageContent.fromJPEGData(jpegData)],
+      content: [.text("Describe what you see."), try ChatMessageContent.fromJPEGData(jpegData)],
       reasoningContent: nil,
       functionCalls: nil
     )
@@ -187,7 +195,7 @@ Define `runtimeDispatch(_:)` as your tool-call → result router: validate argum
     // Audio-capable model — WAV blob
     let audioMessage = ChatMessage(
       role: .user,
-      content: [.text("Transcribe."), ChatMessageContent.fromWAVData(wavData)],
+      content: [.text("Transcribe."), try ChatMessageContent.fromWAVData(wavData)],
       reasoningContent: nil,
       functionCalls: nil
     )
@@ -196,7 +204,7 @@ Define `runtimeDispatch(_:)` as your tool-call → result router: validate argum
     let pcmMessage = ChatMessage(
       role: .user,
       content: [.text("How's my pronunciation?"),
-                ChatMessageContent.fromFloatSamples(samples, sampleRate: 16000)],
+                try ChatMessageContent.fromFloatSamples(samples, sampleRate: 16000)],
       reasoningContent: nil,
       functionCalls: nil
     )
@@ -256,7 +264,7 @@ A `ChatViewModel` that loads the model, registers a tool, drives generation, and
         private let downloader: ModelDownloader = {
             let caches = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first!.path
             let modelsDir = (caches as NSString).appendingPathComponent("leap_models")
-            return ModelDownloader(config: LeapDownloaderConfig(saveDir: modelsDir))
+            return ModelDownloader(config: LeapDownloaderConfig.with(saveDir: modelsDir))
         }()
         private var modelRunner: ModelRunner?
         private var conversation: Conversation?
@@ -272,7 +280,7 @@ A `ChatViewModel` that loads the model, registers a tool, drives generation, and
                 )
                 modelRunner = runner
                 conversation = runner.createConversation(systemPrompt: "You are a helpful assistant.")
-                conversation?.registerFunction(weatherFunction)
+                conversation?.registerFunction(function: weatherFunction)
             } catch {
                 errorMessage = "Failed to load model: \(error.localizedDescription)"
             }
@@ -311,6 +319,8 @@ A `ChatViewModel` that loads the model, registers a tool, drives generation, and
         @MainActor
         private func handle(_ response: MessageResponse) {
             switch onEnum(of: response) {
+            case .error(let failure):
+                print("Generation failed: \(failure.message)")
             case .chunk(let c): responseText += c.text
             case .reasoningChunk(let r): print("[thinking] \(r.reasoning)")
             case .functionCalls(let f):
@@ -407,6 +417,7 @@ A `ChatViewModel` that loads the model, registers a tool, drives generation, and
 
         private suspend fun handle(response: MessageResponse) {
             when (response) {
+                is MessageResponse.Error -> throw IllegalStateException(response.message)
                 is MessageResponse.Chunk -> _responseText.value += response.text
                 is MessageResponse.ReasoningChunk -> Log.d(TAG, "Reasoning: ${response.reasoning}")
                 is MessageResponse.FunctionCalls -> response.functionCalls.forEach { dispatch(it) }

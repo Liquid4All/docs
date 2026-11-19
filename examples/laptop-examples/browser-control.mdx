@@ -155,6 +155,28 @@ To simplify things a bit, we will run both the `GRPOTrainer` and the `vLLM` on t
 
 We use [Modal](https://modal.com/) for serverless GPU infrastructure. Modal is a great option for AI engineers who don't want to worry too much about infrastructure and prefer to pay per usage. It provides on-demand GPU access with simple Python-based configuration, making it easy to scale training workloads without managing clusters or dealing with complex DevOps setup.
 
+## Setup
+
+Run the experiments from their own project directory:
+
+```bash
+git clone https://github.com/Liquid4All/cookbook.git
+cd cookbook/examples/browser-control
+uv sync
+uv run modal setup
+uv run hf auth login
+```
+
+The Modal image expects a secret named `wandb-secret`. Create it with your own Weights & Biases API key:
+
+```bash
+uv run modal secret create wandb-secret WANDB_API_KEY="$WANDB_API_KEY"
+```
+
+In `configs/lfm2_350m.yaml` and `configs/lfm2_350m_lora.yaml`, set `browsergym_url` to a running BrowserGym/OpenEnv server you control. The author's Space can be asleep or unavailable. The [source project](https://github.com/Liquid4All/cookbook/tree/main/examples/browser-control) contains the environment integration.
+
+For the LoRA config, replace the Llama-style `lora_target_modules` with LFM2's `q_proj`, `k_proj`, `v_proj`, `out_proj`, `in_proj`, `w1`, `w2`, and `w3`. Set `push_to_hf: false` for a local experiment, or configure a writable destination before enabling model uploads. These are historical LFM2 experiments; their reported results do not establish LFM3 performance.
+
 ## Experiments
 
 ### Full-fine tune
@@ -162,7 +184,7 @@ We use [Modal](https://modal.com/) for serverless GPU infrastructure. Modal is a
 The first experiment we run is a full fine-tune of LFM2-350M:
 
 ```bash
-make run config=lfm2_350m.yaml
+make fine-tune config=lfm2_350m.yaml
 ```
 
 The `click-test` task is an easy one, and the model is capable of solving it in less than 10 attempts from the beginning.
@@ -176,7 +198,7 @@ The final checkpoint is available on HF:
 With LoRA we can match full fine-tune results with way less compute and time:
 
 ```bash
-make run config=lfm2_350m_lora.yaml
+make fine-tune config=lfm2_350m_lora.yaml
 ```
 
 ## Next Steps

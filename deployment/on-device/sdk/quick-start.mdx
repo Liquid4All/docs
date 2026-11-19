@@ -5,9 +5,11 @@ description: "Install the LEAP SDK on iOS, macOS, Android, JVM, Linux, or Window
 
 <Warning>
 The LEAP SDK is deprecated and this page is no longer maintained. Build on llama.cpp directly instead — see [Migrating from LEAP SDK](/deployment/on-device/llama-cpp/migrating-from-leap-sdk).
+
+The hosted LEAP catalog and model-bundling service have been discontinued. Manifest downloads that call `leap.liquid.ai` are historical examples and no longer work against that service. Use a local model with [sideloaded loading](/deployment/on-device/sdk/model-loading#sideloaded-files) in an existing SDK app, or migrate to llama.cpp for new development.
 </Warning>
 
-Latest version: `v0.10.7`
+Archived stable version: `v0.10.9`. On Apple platforms, avoid v0.10.5–v0.10.8: v0.10.9 fixes the iOS launch crash and recursive downloader-config initializer. Swift configuration uses `LeapDownloaderConfig.with(...)`, and image/audio factories now require `try`. See the [release notes](https://github.com/Liquid4All/leap-sdk/releases/tag/v0.10.9).
 
 The Leap SDK is a Kotlin Multiplatform library: the same `ModelRunner` / `Conversation` / `MessageResponse` API runs on every supported target. The code differs only in **language** (Swift vs. Kotlin) and **packaging** (SPM, Gradle, or Kotlin/Native plugin) — the call shapes are identical. For background on what the SDK is and what first-class LFM support means in practice, see the [Overview](/deployment/on-device/sdk/overview).
 
@@ -19,7 +21,7 @@ The Leap SDK is a Kotlin Multiplatform library: the same `ModelRunner` / `Conver
 
 <Tabs>
   <Tab title="iOS / macOS">
-    - Xcode 16.0+ with Swift 6.0.
+    - Xcode with Swift **6.2.3 or newer** for the v0.10.9 binary overlays.
     - iOS **17.0+** or macOS **15.0+** (Apple Silicon only — Mac Catalyst is **not** supported; the shipped XCFrameworks contain only `ios-arm64`, `ios-arm64-simulator`, and `macos-arm64` slices, and `Package.swift` declares only `.iOS(.v17)` / `.macOS(.v15)` platforms).
     - A physical iPhone or iPad with at least 3 GB RAM for best performance. The simulator works for development but runs models much slower.
 
@@ -59,7 +61,7 @@ The Leap SDK is a Kotlin Multiplatform library: the same `ModelRunner` / `Conver
     - **Windows runtime:** Windows 10+.
 
     <Warning>
-    Early 0.10.x releases had Kotlin/Native linking and packaging issues. Use **v0.10.7** for these archived recipes, consistent with the [desktop guide](/deployment/on-device/sdk/desktop-platforms). See the [changelog](/deployment/on-device/leap-sdk-changelog#kotlin-native-linux-windows) for the release history.
+    Early 0.10.x releases had Kotlin/Native linking and packaging issues. Use **v0.10.9** for these archived recipes, consistent with the [desktop guide](/deployment/on-device/sdk/desktop-platforms). See the [changelog](/deployment/on-device/leap-sdk-changelog#kotlin-native-linux-windows) for the release history.
     </Warning>
   </Tab>
 </Tabs>
@@ -72,7 +74,7 @@ The Leap SDK is a Kotlin Multiplatform library: the same `ModelRunner` / `Conver
 
     1. In Xcode choose **File → Add Package Dependencies**.
     2. Enter `https://github.com/Liquid4All/leap-sdk.git`.
-    3. Select the `0.10.7` release (or newer).
+    3. Select the `0.10.9` release (or newer).
     4. Add the products you need to your app target.
 
     The package vends five products. Most apps only need one or two:
@@ -98,7 +100,7 @@ The Leap SDK is a Kotlin Multiplatform library: the same `ModelRunner` / `Conver
     </Info>
 
     <Accordion title="Pin to explicit binary XCFrameworks">
-      For explicit pinning, declare each framework as a `.binaryTarget` in your `Package.swift`. The XCFramework assets live on the `Liquid4All/leap-sdk` v0.10.7 release page — copy the SHA-256 values from there.
+      For explicit pinning, declare each framework as a `.binaryTarget` in your `Package.swift`. The XCFramework assets live on the `Liquid4All/leap-sdk` v0.10.9 release page — copy the SHA-256 values from there.
 
       <Warning>
       The constrained-generation macros (`@Generatable`, `@Guide`) are Swift macros, not XCFrameworks — they ship as the `LeapSDKMacros` source target inside the SPM package and **cannot be installed as a `.binaryTarget`**. If you need them, use the standard SPM package URL above (or add the `LeapSDKMacros` source target separately on top of your binary targets).
@@ -107,23 +109,23 @@ The Leap SDK is a Kotlin Multiplatform library: the same `ModelRunner` / `Conver
       ```swift
       .binaryTarget(
         name: "LeapSDK",
-        url: "https://github.com/Liquid4All/leap-sdk/releases/download/v0.10.7/LeapSDK.xcframework.zip",
-        checksum: "6f2721aa45d7555646f78cbcaedb57aba3d869f56b24d681ad332846e131ae3d"
+        url: "https://github.com/Liquid4All/leap-sdk/releases/download/v0.10.9/LeapSDK.xcframework.zip",
+        checksum: "1fdea67fe208ee56db3aba4313809b03a469e6520a49a855c212ebcfef4cea2e"
       ),
       .binaryTarget(
         name: "LeapModelDownloader",
-        url: "https://github.com/Liquid4All/leap-sdk/releases/download/v0.10.7/LeapModelDownloader.xcframework.zip",
-        checksum: "f649aa6c1aa3e87bbeb1073d5aeeb7224879359a24b18eeccc665d24abc725d8"
+        url: "https://github.com/Liquid4All/leap-sdk/releases/download/v0.10.9/LeapModelDownloader.xcframework.zip",
+        checksum: "41bc9a67b1a70c6b5bc42cc1433feb4c346b9f3ecb6bc831eae4ae8f81cdb2a0"
       ),
       .binaryTarget(
         name: "LeapOpenAIClient",
-        url: "https://github.com/Liquid4All/leap-sdk/releases/download/v0.10.7/LeapOpenAIClient.xcframework.zip",
-        checksum: "79bc5443a1cce6fcd4c49c91eeb85727034aaca10d3ef69582c061989c3d9b70"
+        url: "https://github.com/Liquid4All/leap-sdk/releases/download/v0.10.9/LeapOpenAIClient.xcframework.zip",
+        checksum: "fabdc0ebc3f355676271f6811bfe736af2b4486b49afdb344d2596108cb25a8e"
       ),
       .binaryTarget(
         name: "LeapUi",
-        url: "https://github.com/Liquid4All/leap-sdk/releases/download/v0.10.7/LeapUi.xcframework.zip",
-        checksum: "f1b198cef88c2a37eaf6dc1f36395d6aed024b0c6c2b43724d942e25b60d22e0"
+        url: "https://github.com/Liquid4All/leap-sdk/releases/download/v0.10.9/LeapUi.xcframework.zip",
+        checksum: "72247e66ce53ba9439f75af339540570172edd7f26ad2621db022889e23af696"
       ),
       ```
 
@@ -135,14 +137,14 @@ The Leap SDK is a Kotlin Multiplatform library: the same `ModelRunner` / `Conver
 
     ```kotlin
     dependencies {
-      implementation("ai.liquid.leap:leap-sdk:0.10.7")
-      implementation("ai.liquid.leap:leap-model-downloader:0.10.7") // Android background downloads
+      implementation("ai.liquid.leap:leap-sdk:0.10.9")
+      implementation("ai.liquid.leap:leap-model-downloader:0.10.9") // Android background downloads
 
       // Optional: OpenAI-compatible cloud chat client
-      // implementation("ai.liquid.leap:leap-openai-client:0.10.7")
+      // implementation("ai.liquid.leap:leap-openai-client:0.10.9")
 
       // Optional: Voice assistant widget (Compose Multiplatform)
-      // implementation("ai.liquid.leap:leap-ui:0.10.7")
+      // implementation("ai.liquid.leap:leap-ui:0.10.9")
     }
     ```
 
@@ -151,7 +153,7 @@ The Leap SDK is a Kotlin Multiplatform library: the same `ModelRunner` / `Conver
 
       ```toml
       [versions]
-      leapSdk = "0.10.7"
+      leapSdk = "0.10.9"
 
       [libraries]
       leap-sdk = { module = "ai.liquid.leap:leap-sdk", version.ref = "leapSdk" }
@@ -195,11 +197,11 @@ The Leap SDK is a Kotlin Multiplatform library: the same `ModelRunner` / `Conver
     }
 
     dependencies {
-        implementation("ai.liquid.leap:leap-sdk:0.10.7")
+        implementation("ai.liquid.leap:leap-sdk:0.10.9")
 
         // Optional:
-        // implementation("ai.liquid.leap:leap-openai-client:0.10.7")
-        // implementation("ai.liquid.leap:leap-ui:0.10.7") // Compose for Desktop voice widget
+        // implementation("ai.liquid.leap:leap-openai-client:0.10.9")
+        // implementation("ai.liquid.leap:leap-ui:0.10.9") // Compose for Desktop voice widget
     }
     ```
 
@@ -226,11 +228,11 @@ The Leap SDK is a Kotlin Multiplatform library: the same `ModelRunner` / `Conver
     // build.gradle.kts
     plugins {
         kotlin("multiplatform") version "2.3.20"
-        id("ai.liquid.leap.nativelibs") version "0.10.7"
+        id("ai.liquid.leap.nativelibs") version "0.10.9"
     }
 
     dependencies {
-        implementation("ai.liquid.leap:leap-sdk:0.10.7")
+        implementation("ai.liquid.leap:leap-sdk:0.10.9")
     }
 
     kotlin {
@@ -264,7 +266,7 @@ The recommended path is **manifest-based** loading. On every platform, the platf
             return (caches as NSString).appendingPathComponent("leap_models")
         }()
         private lazy var downloader = ModelDownloader(
-            config: LeapDownloaderConfig(saveDir: modelsDir)
+            config: LeapDownloaderConfig.with(saveDir: modelsDir)
             // For background transfers, pass:
             // sessionConfiguration: .background(withIdentifier: "com.myapp.leap.downloads")
         )
@@ -404,9 +406,15 @@ When you already have a model file on disk — shipped as an app asset, `adb pus
     let runner = try await downloader.loadSimpleModel(
       model: ModelSource(
         modelPath: bundledURL.path,
+        mmprojPath: nil,
+        audioDecoderPath: nil,
+        audioTokenizerPath: nil,
         modelName: "LFM2-1.2B-Instruct",
         quantizationId: "Q4_K_M"
-      )
+      ),
+      options: nil,
+      generationTimeParameters: nil,
+      downloadProgress: nil
     )
     ```
 
@@ -460,6 +468,8 @@ Both platforms expose the same streaming shape: an async sequence of `MessageRes
     private func handle(_ response: MessageResponse) {
         // `onEnum(of:)` (v0.10.0+) gives exhaustive switching without a `default`.
         switch onEnum(of: response) {
+        case .error(let failure):
+            print("Generation failed: \(failure.message)")
         case .chunk(let chunk):
             print(chunk.text, terminator: "")
         case .reasoningChunk(let reasoning):
@@ -488,6 +498,7 @@ Both platforms expose the same streaming shape: an async sequence of `MessageRes
             conversation?.generateResponse(userMessage)
                 ?.onEach { response ->
                     when (response) {
+                        is MessageResponse.Error -> throw IllegalStateException(response.message)
                         is MessageResponse.Chunk -> _responseText.value += response.text
                         is MessageResponse.ReasoningChunk -> Log.d(TAG, "Reasoning: ${response.reasoning}")
                         is MessageResponse.FunctionCalls -> handleFunctionCalls(response.functionCalls)
@@ -517,11 +528,11 @@ If the loaded model is multimodal (and its companion files were detected), you c
 <Tabs>
   <Tab title="Swift (iOS / macOS)">
     ```swift
-    // Text + image (vision-capable model). Use `ChatMessageContent.fromJPEGData(_:)`
+    // Text + image (vision-capable model). Use `try ChatMessageContent.fromJPEGData(_:)`
     // for raw JPEG bytes, or `.image(url:)` for a data URL / remote URL.
     let imageMessage = ChatMessage(
       role: .user,
-      content: [.text("Describe what you see."), ChatMessageContent.fromJPEGData(jpegData)],
+      content: [.text("Describe what you see."), try ChatMessageContent.fromJPEGData(jpegData)],
       reasoningContent: nil,
       functionCalls: nil
     )
@@ -530,7 +541,7 @@ If the loaded model is multimodal (and its companion files were detected), you c
     // use `.audio(data:format:)` if you already know the bytes are a supported format.
     let wavMessage = ChatMessage(
       role: .user,
-      content: [.text("Transcribe and summarize this clip."), ChatMessageContent.fromWAVData(wavData)],
+      content: [.text("Transcribe and summarize this clip."), try ChatMessageContent.fromWAVData(wavData)],
       reasoningContent: nil,
       functionCalls: nil
     )
@@ -540,7 +551,7 @@ If the loaded model is multimodal (and its companion files were detected), you c
       role: .user,
       content: [
         .text("Give feedback on my pronunciation."),
-        ChatMessageContent.fromFloatSamples(samples, sampleRate: 16000)
+        try ChatMessageContent.fromFloatSamples(samples, sampleRate: 16000)
       ],
       reasoningContent: nil,
       functionCalls: nil

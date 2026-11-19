@@ -92,7 +92,7 @@ def run_agent(user_text: str, max_steps: int = 5) -> str:
         if not message.tool_calls:
             return message.content                    # final answer
 
-        for call in message.tool_calls:               # LFM2.5 may request several calls at once
+        for call in message.tool_calls:               # A response may request several calls at once
             args = json.loads(call.function.arguments)
             result = TOOL_IMPLS[call.function.name](**args)
             messages.append({

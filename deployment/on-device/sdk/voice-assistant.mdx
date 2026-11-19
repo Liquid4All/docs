@@ -7,6 +7,8 @@ description: "Drop-in Compose Multiplatform voice UI — runs on iOS, macOS, And
 The LEAP SDK is deprecated and this page is no longer maintained. Build on llama.cpp directly instead — see [Migrating from LEAP SDK](/deployment/on-device/llama-cpp/migrating-from-leap-sdk).
 </Warning>
 
+This page describes integration APIs, not a complete downloadable sample app. The public `leap-sdk` repository distributes packages and binaries; it does not include the `leap-ui-demo` source tree referenced by older versions of this guide.
+
 The `leap-ui` module (introduced in v0.10.0) ships a ready-to-use voice assistant widget — an animated orb, mic button, and status label — backed by a state machine that handles recording, generation, and audio playback. Wire it to a model and it handles the rest.
 
 `leap-ui` is a Compose Multiplatform module, so the same widget runs on:
@@ -15,7 +17,7 @@ The `leap-ui` module (introduced in v0.10.0) ships a ready-to-use voice assistan
 - **macOS** — bridged to AppKit via `VoiceAssistantNSViewController`. SwiftUI hosts via `NSViewControllerRepresentable` + `NSHostingController`.
 - **Android** — direct Compose for Android.
 - **JVM Desktop** — Compose for Desktop. Same Maven artifact; you provide audio I/O implementations (the demo apps in `leap-ui-demo/` ship patterns you can adapt).
-- **Web (Wasm, experimental)** — present in the source tree (`leap-ui-demo/web`) but not yet covered by the stable release notes through v0.10.7 — treat as preview.
+Web/Wasm is not covered by this archived binary integration guide.
 
 ## Add the dependency
 
@@ -25,7 +27,7 @@ The `leap-ui` module (introduced in v0.10.0) ships a ready-to-use voice assistan
 
     ```swift
     dependencies: [
-        .package(url: "https://github.com/Liquid4All/leap-sdk.git", from: "0.10.7")
+        .package(url: "https://github.com/Liquid4All/leap-sdk.git", from: "0.10.9")
     ]
 
     targets: [
@@ -50,8 +52,8 @@ The `leap-ui` module (introduced in v0.10.0) ships a ready-to-use voice assistan
   <Tab title="Android / JVM (Gradle)">
     ```kotlin
     dependencies {
-        implementation("ai.liquid.leap:leap-sdk:0.10.7")
-        implementation("ai.liquid.leap:leap-ui:0.10.7")
+        implementation("ai.liquid.leap:leap-sdk:0.10.9")
+        implementation("ai.liquid.leap:leap-ui:0.10.9")
     }
     ```
 
@@ -71,7 +73,7 @@ VoiceAudioRecorder + VoiceAudioPlayer + VoiceConversation
 
 - **`VoiceAssistantStore`** owns the session lifecycle. Instantiate once when the screen appears; `close()` it when it goes away.
 - **`VoiceConversation`** is a thin interface you implement to bridge the store to your model. Wrap the SDK's `Conversation.generateResponse` and forward `AudioSample` chunks to `onAudioChunk`.
-- **Audio I/O** uses `VoiceAudioRecorder` / `VoiceAudioPlayer` interfaces. iOS / macOS ship `AppleAudioRecorder` and `AppleAudioPlayer` defaults; Android / JVM reference implementations live in `leap-ui-demo/`.
+- **Audio I/O** uses `VoiceAudioRecorder` / `VoiceAudioPlayer` interfaces. iOS / macOS ship `AppleAudioRecorder` and `AppleAudioPlayer` defaults; Android / JVM implementations must be supplied by your app.
 
 ## Wire the model
 
@@ -91,7 +93,7 @@ The `VoiceConversation` adapter looks similar on every platform — both impleme
         private let downloader: ModelDownloader = {
             let caches = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first!.path
             let modelsDir = (caches as NSString).appendingPathComponent("leap_models")
-            return ModelDownloader(config: LeapDownloaderConfig(saveDir: modelsDir))
+            return ModelDownloader(config: LeapDownloaderConfig.with(saveDir: modelsDir))
         }()
 
         init() {
@@ -152,9 +154,13 @@ The `VoiceConversation` adapter looks similar on every platform — both impleme
     import kotlinx.coroutines.flow.StateFlow
     import kotlinx.coroutines.launch
 
-    class VoiceAssistantViewModel(application: Application) : AndroidViewModel(application) {
-        private val recorder = AndroidAudioRecorder()    // see "Audio I/O implementations" below
-        private val player = AndroidAudioPlayer()
+    // Inject your own VoiceAudioRecorder and VoiceAudioPlayer implementations.
+    // Construct this ViewModel through an application-provided factory.
+    class VoiceAssistantViewModel(
+        application: Application,
+        private val recorder: ai.liquid.leap.ui.VoiceAudioRecorder,
+        private val player: ai.liquid.leap.ui.VoiceAudioPlayer,
+    ) : AndroidViewModel(application) {
 
         val store = VoiceAssistantStore(recorder = recorder, player = player, scope = viewModelScope)
         val state: StateFlow<VoiceAssistantStoreState> = store.state
@@ -282,7 +288,7 @@ The `VoiceConversation` adapter looks similar on every platform — both impleme
             super.onCreate(savedInstanceState)
             setContent {
                 MaterialTheme(colorScheme = darkColorScheme(background = Color.Black)) {
-                    val vm = viewModel<VoiceAssistantViewModel>()
+                    val vm = viewModel<VoiceAssistantViewModel>(factory = voiceAssistantFactory) // your factory supplies audio I/O
                     val state by vm.state.collectAsState()
 
                     VoiceAssistantWidget(
@@ -306,7 +312,7 @@ The store calls into a `VoiceConversation` you provide. A minimal adapter that w
 
 <Tabs>
   <Tab title="Swift (iOS / macOS)">
-    The `VoiceConversation` protocol comes from `LeapUI`, so its `audioSamples` and `onAudioChunk` parameters use `LeapUi.KotlinFloatArray` / `LeapUi.KotlinInt` — not native Swift `[Float]` / `Int32`. The on-device runner lives in `LeapSDK`, which has its own `LeapSDK.KotlinFloatArray`. Bridge between the two via the `floatArrayToNSData` / `nsDataToFloatArray` helpers exposed in both frameworks (see `leap-ui-demo/shared/AppleVoiceConversation.swift` for the canonical pattern).
+    The `VoiceConversation` protocol comes from `LeapUI`, so its `audioSamples` and `onAudioChunk` parameters use `LeapUi.KotlinFloatArray` / `LeapUi.KotlinInt` — not native Swift `[Float]` / `Int32`. The on-device runner lives in `LeapSDK`, which has its own `LeapSDK.KotlinFloatArray`. Bridge between the two via the `floatArrayToNSData` / `nsDataToFloatArray` helpers exposed in both frameworks (as in the adapter below).
 
     ```swift
     import LeapModelDownloader
@@ -332,7 +338,7 @@ The store calls into a `VoiceConversation` you provide. A minimal adapter that w
             let nsData = LeapUi.ArrayConversionsKt.floatArrayToNSData(array: audioSamples)
             let samples: [Float] = nsData.withUnsafeBytes { Array($0.bindMemory(to: Float.self)) }
 
-            let audioContent = ChatMessageContent.fromFloatSamples(samples, sampleRate: Int(sampleRate))
+            let audioContent = try ChatMessageContent.fromFloatSamples(samples, sampleRate: Int(sampleRate))
             let userMessage = ChatMessage(
                 role: .user,
                 content: [audioContent as ChatMessageContent],
@@ -343,6 +349,8 @@ The store calls into a `VoiceConversation` you provide. A minimal adapter that w
             var stats: Leap_sdkGenerationStats?
             for try await response in conversation.generateResponse(message: userMessage) {
                 switch onEnum(of: response) {
+                case .error(let failure):
+                    print("Generation failed: \(failure.message)")
                 case .audioSample(let chunk):
                     // Bridge LeapSDK.KotlinFloatArray -> LeapUi.KotlinFloatArray via NSData.
                     let data = LeapSDK.ArrayConversionsKt.floatArrayToNSData(array: chunk.samples)
@@ -391,6 +399,7 @@ The store calls into a `VoiceConversation` you provide. A minimal adapter that w
             var stats: GenerationStats? = null
             conv.generateResponse(userMessage).collect { response ->
                 when (response) {
+                    is MessageResponse.Error -> throw IllegalStateException(response.message)
                     is MessageResponse.AudioSample -> onAudioChunk(response.samples, response.sampleRate)
                     is MessageResponse.Complete -> stats = response.stats
                     else -> Unit
@@ -445,7 +454,7 @@ interface VoiceAudioPlayer {
     Add `NSMicrophoneUsageDescription` to your `Info.plist`.
   </Tab>
   <Tab title="Android">
-    `AndroidAudioRecorder` and `AndroidAudioPlayer` aren't part of `leap-ui` — they're reference implementations shipped with the demo app at `leap-ui-demo/android/src/main/kotlin/ai/liquid/leap/uidemo/AudioPipeline.kt`. Copy the file into your project, or implement the contracts against your own audio stack.
+    No Android recorder/player implementation is included in the public `leap-ui` distribution. Implement `VoiceAudioRecorder` using Android `AudioRecord` and `VoiceAudioPlayer` using `AudioTrack`, then inject them through your ViewModel factory. The names `AndroidAudioRecorder` and `AndroidAudioPlayer` in older guides referred to unpublished demo classes; there is no public file to copy.
 
     Required permissions:
 
@@ -457,7 +466,7 @@ interface VoiceAudioPlayer {
     Request `RECORD_AUDIO` at runtime via the standard `ActivityResultContracts.RequestPermission()` pattern (see [Quick Start](./quick-start)).
   </Tab>
   <Tab title="JVM Desktop">
-    No bundled implementations — use `javax.sound.sampled.TargetDataLine` for capture and `SourceDataLine` for playback, wrapped to match the `VoiceAudioRecorder` / `VoiceAudioPlayer` contracts. The demo at `leap-ui-demo/jvm` (if present in your release) ships a working reference.
+    No bundled implementations — use `javax.sound.sampled.TargetDataLine` for capture and `SourceDataLine` for playback, wrapped to match the `VoiceAudioRecorder` / `VoiceAudioPlayer` contracts. There is no public `leap-ui-demo/jvm` project to copy.
   </Tab>
 </Tabs>
 

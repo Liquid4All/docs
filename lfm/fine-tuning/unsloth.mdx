@@ -10,7 +10,7 @@ For a new LFM3 text adaptation, start with the [tested TRL path](/lfm/fine-tunin
   Use Unsloth for faster training with optimized kernels, reduced memory usage, and built-in quantization support.
 </Tip>
 
-LFM2.5 models are fully supported by Unsloth. For comprehensive guides and tutorials, see the [official Unsloth LFM2.5 documentation](https://unsloth.ai/docs/models/tutorials/lfm2.5).
+The example below fine-tunes LFM2.5-1.2B-Instruct with Unsloth. For comprehensive guides and tutorials, see the [official Unsloth LFM2.5 documentation](https://unsloth.ai/docs/models/tutorials/lfm2.5).
 
 Different training methods require specific dataset formats. See [Datasets](/lfm/fine-tuning/datasets) for format requirements for [SFT](/lfm/fine-tuning/datasets#instruction-datasets-sft) and [GRPO](/lfm/fine-tuning/datasets#prompt-only-datasets-grpo).
 
@@ -40,50 +40,67 @@ Get started quickly with these ready-to-run Colab notebooks:
 
 ## Quick Start
 
-```python
-from unsloth import FastLanguageModel
-from trl import SFTTrainer, SFTConfig
+This two-step setup check was run on an H100 with Python 3.12. It verifies that LoRA adapters attach and training saves an adapter; use a real dataset and a longer run for useful adaptation.
 
-# Load model with Unsloth optimizations
-model, tokenizer = FastLanguageModel.from_pretrained(
-    model_name="LiquidAI/LFM2.5-1.2B-Instruct",
-    max_seq_length=2048,
-    load_in_4bit=True,  # Enable QLoRA for memory efficiency
-)
-
-# Apply LoRA with Unsloth's optimized gradient checkpointing
-model = FastLanguageModel.get_peft_model(
-    model,
-    r=16,
-    target_modules=["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj"],
-    lora_alpha=32,
-    use_gradient_checkpointing="unsloth",  # 2x faster than default
-)
-
-# Train with TRL's SFTTrainer
-trainer = SFTTrainer(
-    model=model,
-    args=SFTConfig(output_dir="./lfm2-unsloth", num_train_epochs=1, bf16=True),
-    train_dataset=dataset["train"],
-    tokenizer=tokenizer,
-)
-trainer.train()
-
-# Fast inference
-FastLanguageModel.for_inference(model)
+```bash
+pip install "unsloth==2026.11.7" "unsloth_zoo==2026.11.7" "torch==2.14.0" "transformers==5.17.0" "trl==1.15.0" "peft==0.21.3"
 ```
 
-## Key Features
+```python
+from unsloth import FastLanguageModel
+from datasets import Dataset
+from trl import SFTConfig, SFTTrainer
 
-* **`load_in_4bit=True`**: Enable QLoRA to reduce memory by ~4x with minimal quality loss
-* **`use_gradient_checkpointing="unsloth"`**: Optimized checkpointing that's 2x faster than default
-* **`FastLanguageModel.for_inference()`**: Switch to optimized inference mode after training
+model, tokenizer = FastLanguageModel.from_pretrained(
+    model_name="LiquidAI/LFM2.5-1.2B-Instruct",
+    max_seq_length=512,
+    load_in_4bit=True,
+)
+model = FastLanguageModel.get_peft_model(
+    model,
+    r=8,
+    target_modules=r".*\.(q_proj|k_proj|v_proj|out_proj|in_proj|w1|w2|w3)$",
+    lora_alpha=16,
+    use_gradient_checkpointing="unsloth",
+    random_state=42,
+)
+adapter_modules = [name for name, module in model.named_modules() if hasattr(module, "lora_A")]
+assert all(any(name.endswith("." + part) for name in adapter_modules) for part in
+           ("q_proj", "k_proj", "v_proj", "out_proj", "in_proj", "w1", "w2", "w3"))
 
-## Tips
+rows = [
+    [{"role": "user", "content": "What is the capital of France?"},
+     {"role": "assistant", "content": "Paris."}],
+    [{"role": "user", "content": "What is two plus two?"},
+     {"role": "assistant", "content": "Four."}],
+]
+dataset = Dataset.from_dict({
+    "text": [tokenizer.apply_chat_template(messages, tokenize=False) for messages in rows]
+})
+trainer = SFTTrainer(
+    model=model,
+    processing_class=tokenizer,
+    train_dataset=dataset,
+    args=SFTConfig(
+        output_dir="lfm25-unsloth",
+        max_steps=2,
+        max_length=256,
+        dataset_text_field="text",
+        per_device_train_batch_size=1,
+        gradient_accumulation_steps=1,
+        learning_rate=2e-4,
+        bf16=True,
+        report_to="none",
+        save_strategy="no",
+    ),
+)
+trainer.train()
+trainer.save_model("lfm25-unsloth")
+```
 
-* **`max_seq_length`**: Set to your expected maximum sequence length; Unsloth pre-allocates memory for efficiency
-* **Target modules**: Include MLP layers (`gate_proj`, `up_proj`, `down_proj`) for better quality on smaller models
-* **Batch size**: Unsloth's optimizations allow larger batch sizes; experiment to maximize GPU utilization
+LFM2.5 uses `out_proj`, `in_proj`, and `w1`/`w2`/`w3`, rather than Llama's `o_proj` and `gate_proj`/`up_proj`/`down_proj`. The regular expression selects those modules explicitly. The assertion catches changes that would silently leave some of them without adapters.
+
+Import Unsloth before Transformers or TRL. Keep the tested versions together: newer Transformers and TRL releases can exceed Unsloth's supported version range.
 
 ## Resources
 

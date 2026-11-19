@@ -46,14 +46,14 @@ LFM2.5-Audio-1.5B-JP is the Japanese-focused variant of LFM2.5-Audio-1.5B. It us
   <Tab title="liquid-audio">
     **Install:**
     ```bash
-    pip install liquid-audio torchcodec
+    pip install "liquid-audio==1.3.0" torchcodec
     pip install "liquid-audio[demo]"  # optional, for demo dependencies
     pip install flash-attn --no-build-isolation  # optional, for flash attention 2
     ```
 
     `torchaudio` loads audio files through `torchcodec`, which needs FFmpeg installed on the system (for example `brew install ffmpeg` or `apt install ffmpeg`).
 
-    **Multi-Turn Chat:**
+    **Voice chat:**
     ```python
     import torch
     import soundfile as sf
@@ -69,8 +69,8 @@ LFM2.5-Audio-1.5B-JP is the Japanese-focused variant of LFM2.5-Audio-1.5B. It us
     chat.end_turn()
 
     chat.new_turn("user")
-    wav, sampling_rate = sf.read("question_jp.wav", dtype="float32")
-    wav = torch.from_numpy(wav).unsqueeze(0)
+    wav, sampling_rate = sf.read("question_jp.wav", dtype="float32", always_2d=True)
+    wav = torch.from_numpy(wav.mean(axis=1)).unsqueeze(0)
     chat.add_audio(wav, sampling_rate)
     chat.end_turn()
 
@@ -79,17 +79,22 @@ LFM2.5-Audio-1.5B-JP is the Japanese-focused variant of LFM2.5-Audio-1.5B. It us
     text_out, audio_out, modality_out = [], [], []
     for t in model.generate_interleaved(**chat, max_new_tokens=512, audio_temperature=1.0, audio_top_k=4):
         if t.numel() == 1:
-            print(processor.text.decode(t), end="", flush=True)
             text_out.append(t)
             modality_out.append(LFMModality.TEXT)
         else:
             audio_out.append(t)
             modality_out.append(LFMModality.AUDIO_OUT)
 
+    if text_out:
+        print(processor.text.decode(torch.stack(text_out).reshape(-1), skip_special_tokens=True))
+    if len(audio_out) < 2:
+        raise RuntimeError("No complete audio was generated; increase max_new_tokens")
     audio_codes = torch.stack(audio_out[:-1], 1).unsqueeze(0)
     waveform = processor.decode(audio_codes)
     sf.write("answer_jp.wav", waveform.cpu()[0], 24_000)
     ```
+
+    The following ASR and TTS examples reuse the imports, `processor`, and `model` initialized above.
 
     **Japanese ASR:**
     ```python
@@ -97,6 +102,18 @@ LFM2.5-Audio-1.5B-JP is the Japanese-focused variant of LFM2.5-Audio-1.5B. It us
     chat.new_turn("system")
     chat.add_text("Perform ASR in japanese.")
     chat.end_turn()
+    chat.new_turn("user")
+    wav, sampling_rate = sf.read("question_jp.wav", dtype="float32", always_2d=True)
+    chat.add_audio(torch.from_numpy(wav.mean(axis=1)).unsqueeze(0), sampling_rate)
+    chat.end_turn()
+    chat.new_turn("assistant")
+    text_tokens = [
+        token for token in model.generate_sequential(**chat, max_new_tokens=512)
+        if token.numel() == 1
+    ]
+    if not text_tokens:
+        raise RuntimeError("No transcript was generated")
+    print(processor.text.decode(torch.stack(text_tokens).reshape(-1), skip_special_tokens=True))
     ```
 
     **Japanese TTS:**
@@ -105,6 +122,20 @@ LFM2.5-Audio-1.5B-JP is the Japanese-focused variant of LFM2.5-Audio-1.5B. It us
     chat.new_turn("system")
     chat.add_text("Perform TTS in japanese.")
     chat.end_turn()
+    chat.new_turn("user")
+    chat.add_text("こんにちは。今日はどのようなご用件でしょうか。")
+    chat.end_turn()
+    chat.new_turn("assistant")
+    audio_out = [
+        token for token in model.generate_sequential(
+            **chat, max_new_tokens=512, audio_temperature=0.8, audio_top_k=64
+        ) if token.numel() > 1
+    ]
+    if len(audio_out) < 2:
+        raise RuntimeError("No complete audio was generated; increase max_new_tokens")
+    audio_codes = torch.stack(audio_out[:-1], 1).unsqueeze(0)
+    waveform = processor.decode(audio_codes)
+    sf.write("tts_jp.wav", waveform.cpu()[0], 24_000)
     ```
   </Tab>
 

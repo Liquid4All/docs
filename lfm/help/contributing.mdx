@@ -53,7 +53,7 @@ Always specify the language for syntax highlighting:
 ````markdown
 ```python
 from transformers import AutoModelForCausalLM
-model = AutoModelForCausalLM.from_pretrained("LiquidAI/LFM2.5-1.2B-Instruct")
+model = AutoModelForCausalLM.from_pretrained("LiquidAI/LFM3-1.7B", trust_remote_code=True)
 ```
 ````
 
@@ -61,7 +61,7 @@ For bash commands:
 
 ````markdown
 ```bash
-pip install transformers torch
+uv pip install "transformers==5.23.0" torch accelerate
 ```
 ````
 

@@ -143,24 +143,32 @@ Install the OpenAI Python client (`uv pip install openai`) for the request examp
 
 <Tabs>
   <Tab title="vLLM">
-    vLLM 0.33.0 does not support the LFM3 convolution layers. This example uses **LFM2.5-1.2B-Thinking**, which supports vLLM's reasoning parser. Use Transformers or a supported SGLang/llama.cpp build for LFM3.
+    Use **vLLM 0.34.0**, which includes native LFM3 support. Install the isolated environment in the [vLLM guide](/deployment/gpu-inference/vllm#installation), then launch:
 
     ```bash
-    vllm serve LiquidAI/LFM2.5-1.2B-Thinking --reasoning-parser qwen3
+    vllm serve LiquidAI/LFM3-1.7B \
+      --reasoning-parser qwen3 \
+      --enable-auto-tool-choice --tool-call-parser qwen3_coder \
+      --max-model-len 8192
     ```
 
     ```python
     from openai import OpenAI
 
     client = OpenAI(base_url="http://localhost:8000/v1", api_key="EMPTY")
-
     response = client.chat.completions.create(
-        model="LiquidAI/LFM2.5-1.2B-Thinking",
+        model="LiquidAI/LFM3-1.7B",
         messages=[{"role": "user", "content": "What is 17 * 23 - 45?"}],
         temperature=0.1,
-        extra_body={"top_k": 50, "repetition_penalty": 1.05},
+        max_tokens=4096,
+        extra_body={"top_k": 50, "repetition_penalty": 1.1},
     )
+    reasoning = getattr(response.choices[0].message, "reasoning", None)
+    print(reasoning)
+    print(response.choices[0].message.content)
     ```
+
+    Older thinking checkpoints use their own sampling and tool parsers. Follow the selected model's quickstart instead of reusing LFM3's tool parser.
   </Tab>
   <Tab title="SGLang">
     Use a build containing [LFM3 support](https://github.com/sgl-project/sglang/pull/46858), verified at commit `47361c57`. SGLang 0.5.23 does not run these LFM3 examples correctly.

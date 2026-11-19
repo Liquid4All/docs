@@ -19,12 +19,15 @@ Some checkpoints require `trust_remote_code=True` when loading the model, tokeni
 Try these solutions in order:
 
 1. **Use a smaller model**: If [LFM3-1.7B](/lfm/models/lfm3-1.7b) exceeds your memory budget, evaluate [LFM2.5-350M](/lfm/models/lfm25-350m) or [LFM2.5-230M](/lfm/models/lfm25-230m) for a smaller footprint
-2. **Enable quantization**:
+2. **Enable quantization** on a compatible GPU with `bitsandbytes` installed. Use `quantization_config` with Transformers 5; review the selected checkpoint before enabling its custom code:
 ```python
+from transformers import AutoModelForCausalLM, BitsAndBytesConfig
+
 model = AutoModelForCausalLM.from_pretrained(
     model_id,
-    load_in_4bit=True,
-    device_map="auto"
+    quantization_config=BitsAndBytesConfig(load_in_4bit=True),
+    device_map="auto",
+    trust_remote_code=True,
 )
 ```
 3. **Reduce batch size or sequence length**
@@ -36,7 +39,7 @@ model.gradient_checkpointing_enable()
 
 <Accordion title="Model download fails or times out">
 - Check your internet connection
-- Try using `huggingface-cli login` if the model requires authentication
+- Try using `hf auth login` if the model requires authentication
 - Set a longer timeout: `HF_HUB_DOWNLOAD_TIMEOUT=600`
 - Try downloading with `snapshot_download`:
 ```python

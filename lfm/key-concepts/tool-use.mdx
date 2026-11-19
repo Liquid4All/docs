@@ -118,8 +118,15 @@ def get_candidate_status(candidate_id: str):
         "date": "2023-11-20",
     }]
 
+reasoning, separator, answer = response.partition("</think>")
+if not separator:
+    raise ValueError("The reasoning turn is incomplete; allow more output tokens.")
+reasoning = reasoning.removeprefix("<think>").strip()
+
 messages.append({
     "role": "assistant",
+    "content": "",
+    "reasoning": reasoning,
     "tool_calls": [{
         "type": "function",
         "function": {"name": "get_candidate_status", "arguments": {"candidate_id": "12345"}},

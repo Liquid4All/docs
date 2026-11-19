@@ -350,16 +350,17 @@ llama-tts -m LFM3-Audio-2B-Q4_K_M.gguf -mm mmproj-LFM3-Audio-2B-Q8_0.gguf \
 
 ## Speculative Decoding
 
-Some LFM2.5 models have DSpark draft models that make generation faster without changing the output. In llama.cpp, the drafter is a GGUF sidecar that you load next to the target with `-hfd` (or `-md` for a local file):
+[LFM3-1.7B](/lfm/models/lfm3-1.7b) has a community-maintained [DSpark drafter](https://huggingface.co/rasyosef/LFM3-1.7B-DSpark-GGUF). It is a GGUF sidecar that you load next to the matching target with `-hfd` (or `-md` for a local file). This is a community checkpoint, not an official LiquidAI release:
 
 ```bash
-llama serve -hf LiquidAI/LFM2.5-1.2B-Instruct-GGUF:F16 \
-  -hfd LiquidAI/LFM2.5-1.2B-Instruct-DSpark-GGUF:F16 \
-  --spec-type draft-dspark --spec-draft-n-max 10 --spec-draft-n-min 0 \
-  -ngl 99 -ngld 99 -fa on
+llama serve -hf LiquidAI/LFM3-1.7B-GGUF:Q4_K_M \
+  -hfd rasyosef/LFM3-1.7B-DSpark-GGUF:F16 \
+  --spec-type draft-dspark --spec-draft-n-max 8 --spec-draft-n-min 0 \
+  -c 4096 -ngl 99 -ngld 99 -fa on \
+  --temp 0.1 --top-k 50 --repeat-penalty 1.1
 ```
 
-The sidecar cannot run on its own. Speedups are largest with a 16-bit target. Each response's `timings` report `draft_n` and `draft_n_accepted`. See [Speculative Decoding](/lfm/key-concepts/speculative-decoding) for which models have drafters.
+This pair was checked with b12359 on Apple silicon and accepted drafted tokens. The sidecar cannot run on its own. Each response's `timings` report `draft_n` and `draft_n_accepted`; measure speed and output behavior on your own workload. See [Speculative Decoding](/lfm/key-concepts/speculative-decoding) for the LFM3 path, official LFM2.5 drafters, and output-equivalence limits.
 
 ## Converting Custom Models
 
@@ -367,14 +368,15 @@ If you have a finetuned model or need to create a GGUF from a Hugging Face model
 
 ```bash
 # Clone llama.cpp if you haven't already
-git clone https://github.com/ggerganov/llama.cpp
+git clone https://github.com/ggml-org/llama.cpp
 cd llama.cpp
 
-# Convert model with quantization
-python convert_hf_to_gguf.py /path/to/your/model --outfile model.gguf --outtype q4_k_m
+# Export a floating-point GGUF, then quantize it
+python convert_hf_to_gguf.py /path/to/your/model --outfile model-f16.gguf --outtype f16
+llama-quantize model-f16.gguf model-q4_k_m.gguf Q4_K_M
 ```
 
-Use `--outtype` to specify the quantization level (e.g., `q4_0`, `q4_k_m`, `q5_k_m`, `q6_k`, `q8_0`, `f16`).
+Install the converter's Python dependencies from the llama.cpp repository and use a build of `llama-quantize` from the same revision. The converter's `--outtype` selects an export format such as `f16`, `bf16`, or `q8_0`; it does not accept `q4_k_m`. Use `llama-quantize` for K-quants such as `Q4_K_M`, `Q5_K_M`, and `Q6_K`.
 
 ## Building Applications
 

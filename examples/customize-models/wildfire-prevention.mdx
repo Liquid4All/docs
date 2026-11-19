@@ -178,10 +178,13 @@ The system monitors 22 fixed locations. Each location is a single 5 km tile cent
 
 3. Open the SimSat dashboard at `http://localhost:8000`, click **Start**, and verify the satellite position is moving.
 
-4. Install Python dependencies:
+4. In a second terminal, clone the cookbook and enter the wildfire example. Install [llama.cpp](/deployment/on-device/llama-cpp#installation) and confirm `llama-server` is on your PATH before selecting the local backend:
 
    ```bash
+   git clone https://github.com/Liquid4All/cookbook.git
+   cd cookbook/examples/wildfire-prevention
    uv sync
+   llama-server --version
    ```
 
 5. Start the watch loop:

@@ -25,7 +25,7 @@ stream = client.chat.completions.create(
 
 for chunk in stream:
     if chunk.choices:
-        delta = chunk.choices[0].delta.get("content")
+        delta = chunk.choices[0].delta.content
         if delta:
             print(delta, end="", flush=True)
 print("\nGeneration done!")
@@ -47,7 +47,7 @@ Cloud APIs create a thin client that points at a remote endpoint. LEAP downloads
 
     let caches = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first!.path
     let modelsDir = (caches as NSString).appendingPathComponent("leap_models")
-    let downloader = ModelDownloader(config: LeapDownloaderConfig(saveDir: modelsDir))
+    let downloader = ModelDownloader(config: LeapDownloaderConfig.with(saveDir: modelsDir))
 
     let runner = try await downloader.loadModel(
         modelName: "LFM2.5-1.2B-Instruct",
@@ -94,7 +94,7 @@ The cloud API takes a `messages` array and returns a stream. LEAP attaches messa
   <Tab title="Swift (iOS / macOS)">
     ```swift
     let conversation = runner.createConversation()
-    let stream = conversation.generateResponse(userTextMessage: "Say 'double bubble bath' ten times fast.")
+    let stream = conversation.generateResponse(message: ChatMessage(role: .user, textContent: "Say 'double bubble bath' ten times fast."))
     ```
   </Tab>
   <Tab title="Kotlin (all platforms)">
@@ -116,7 +116,7 @@ Cloud APIs deliver deltas; you concatenate them. LEAP delivers `MessageResponse`
     ```python
     for chunk in stream:
         if chunk.choices:
-            delta = chunk.choices[0].delta.get("content")
+            delta = chunk.choices[0].delta.content
             if delta:
                 print(delta, end="", flush=True)
     ```
@@ -125,6 +125,8 @@ Cloud APIs deliver deltas; you concatenate them. LEAP delivers `MessageResponse`
     ```swift
     for try await response in stream {
         switch onEnum(of: response) {
+        case .error(let failure):
+            print("Generation failed: \(failure.message)")
         case .chunk(let chunk):
             print(chunk.text, terminator: "")
         case .complete(let completion):
@@ -139,6 +141,7 @@ Cloud APIs deliver deltas; you concatenate them. LEAP delivers `MessageResponse`
     ```kotlin
     flow.onEach { response ->
         when (response) {
+            is MessageResponse.Error -> throw IllegalStateException(response.message)
             is MessageResponse.Chunk -> print(response.text)
             is MessageResponse.Complete -> println("\nDone! Tokens: ${response.stats?.totalTokens}")
             else -> {}
@@ -165,7 +168,7 @@ Both LEAP and the OpenAI Python streaming client run inside an async context. Th
         private let downloader: ModelDownloader = {
             let caches = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first!.path
             let modelsDir = (caches as NSString).appendingPathComponent("leap_models")
-            return ModelDownloader(config: LeapDownloaderConfig(saveDir: modelsDir))
+            return ModelDownloader(config: LeapDownloaderConfig.with(saveDir: modelsDir))
         }()
 
         func loadModel() async {
@@ -179,7 +182,7 @@ Both LEAP and the OpenAI Python streaming client run inside an async context. Th
         func sendMessage(_ text: String) {
             guard let conversation else { return }
             Task {
-                let message = ChatMessage(role: .user, content: [.text(text)])
+                let message = ChatMessage(role: .user, textContent: text)
                 for try await response in conversation.generateResponse(message: message) {
                     if case .chunk(let c) = onEnum(of: response) {
                         currentResponse += c.text

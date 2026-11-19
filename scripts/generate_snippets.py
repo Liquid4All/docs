@@ -27,7 +27,7 @@ REPLACEMENTS = {
 SNIPPET_CONFIG = {
     "text-transformers": {
         "component_name": "TextTransformers",
-        "props": "{ modelId, samplingParams }",
+        "props": "{ modelId, samplingParams, maxTokens = 512 }",
         "replacement_group": "text",
         "source": "config",
         "sections": [
@@ -55,7 +55,7 @@ SNIPPET_CONFIG = {
                  "    return_dict=True,\n"
                  ").to(model.device)\n"
                  "\n"
-                 "output = model.generate(**inputs, ${samplingParams}max_new_tokens=512)\n"
+                 "output = model.generate(**inputs, ${samplingParams}max_new_tokens=${maxTokens})\n"
                  'input_length = inputs["input_ids"].shape[1]\n'
                  "response = tokenizer.decode(output[0][input_length:], skip_special_tokens=True)\n"
                  "print(response)"

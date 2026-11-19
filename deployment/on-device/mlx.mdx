@@ -99,7 +99,7 @@ For an existing LFM2 deployment, keep its own model repository and sampling sett
 
 ## Speculative Decoding
 
-Some LFM2.5 vision models have DSpark draft models that make generation faster without changing the output. Pass the drafter to MLX-VLM (v0.7.2 or newer) with `--draft-model`:
+For LFM3, the [community DSpark example](/lfm/key-concepts/speculative-decoding#lfm3-speculative-decoding) uses llama.cpp. The MLX-VLM example below is specifically for **LFM2.5-VL-3B** and its official drafter; it does not establish support for the LFM3 drafter. DSpark can accelerate generation by verifying proposed tokens together. Pass the drafter to MLX-VLM (v0.7.2 or newer) with `--draft-model`:
 
 ```bash
 python -m mlx_vlm.generate \

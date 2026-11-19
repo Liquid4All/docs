@@ -87,7 +87,7 @@ curl https://api.liquid.ai/decisions/v1/systemone \
 | ---- | ------- | ---------- |
 | Noul | One probability that the answer is yes. | Yes/no gates, moderation, flags. |
 | Choice | The most likely option, its confidence, and the full distribution over options. | Classification and routing. |
-| Score | The most likely level, its confidence, and the full distribution over ordered levels. | Rating and prioritization. |
+| Score | A probability-weighted value across ordered levels, its confidence, and the full distribution. | Rating and prioritization. |
 | Choice with `multiple` | Every option that applies, each with its own probability. | Tagging and multi-label classification. |
 | Text, Number, Date | A value read from the state, with the characters it came from, or "not found". | Extraction from documents, forms, and messages. |
 | Number with `range` | An estimate with a likely range. | Counts and quantities. |

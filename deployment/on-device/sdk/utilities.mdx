@@ -5,6 +5,8 @@ description: "Error handling, serialization, Android-specific downloader interna
 
 <Warning>
 The LEAP SDK is deprecated and this page is no longer maintained. Build on llama.cpp directly instead — see [Migrating from LEAP SDK](/deployment/on-device/llama-cpp/migrating-from-leap-sdk).
+
+The hosted LEAP catalog and model-bundling service have been discontinued. Manifest downloads that call `leap.liquid.ai` are historical examples and no longer work against that service. Use a local model with [sideloaded loading](/deployment/on-device/sdk/model-loading#sideloaded-files) in an existing SDK app, or migrate to llama.cpp for new development.
 </Warning>
 
 This page covers error types, serialization helpers, and a few platform-specific entry points that don't fit in the main reference pages.
@@ -214,7 +216,7 @@ A minimal end-to-end snippet exercising load → conversation → tool registrat
     ```swift
     let caches = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first!.path
     let modelsDir = (caches as NSString).appendingPathComponent("leap_models")
-    let downloader = ModelDownloader(config: LeapDownloaderConfig(saveDir: modelsDir))
+    let downloader = ModelDownloader(config: LeapDownloaderConfig.with(saveDir: modelsDir))
 
     let runner = try await downloader.loadModel(
       modelName: "LFM2.5-1.2B-Instruct",

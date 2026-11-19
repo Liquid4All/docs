@@ -73,7 +73,7 @@ The Batch API runs a file of requests asynchronously, for work that doesn't need
     A completed batch has an `output_file_id`, and an `error_file_id` if any requests failed. Download each with [`GET /openai/v1/files/{id}/content`](/api/reference/files/retrieve-file-content). Each line of the output is one result, with the `custom_id` of its request, so match results to requests by `custom_id`.
 
     ```bash
-    curl https://api.liquid.ai/openai/v1/files/$OUTPUT_FILE_ID/content \
+    curl -L "https://api.liquid.ai/openai/v1/files/$OUTPUT_FILE_ID/content" \
       -H "Authorization: Bearer $LIQUID_API_KEY" > batch_output.jsonl
     ```
 

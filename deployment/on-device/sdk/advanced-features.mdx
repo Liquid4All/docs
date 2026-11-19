@@ -158,36 +158,20 @@ The full surface is documented in [Function Calling](./function-calling); the ty
 <Tabs>
   <Tab title="Swift (iOS / macOS)">
     ```swift
-    public struct LeapFunction {
-      public let name: String
-      public let description: String
-      public let parameters: [LeapFunctionParameter]
-    }
-
-    public struct LeapFunctionParameter {
-      public let name: String
-      public let type: LeapFunctionParameterType
-      public let description: String
-      public let optional: Bool
-    }
-
-    public indirect enum LeapFunctionParameterType: Codable, Equatable {
-      case string(StringType)
-      case number(NumberType)
-      case integer(IntegerType)
-      case boolean(BooleanType)
-      case array(ArrayType)
-      case object(ObjectType)
-      case null(NullType)
-    }
-
-    public struct LeapFunctionCall {
-      public let name: String
-      public let arguments: [String: Any?]
-    }
+    let parameter = LeapFunctionParameter(
+        name: "city",
+        type: LeapFunctionParameterType.LeapStr(enumValues: nil, description: nil),
+        parameterDescription: "The city to query",
+        optional: false
+    )
+    let function = LeapFunction(
+        name: "get_weather",
+        functionDescription: "Query the weather",
+        parameters: [parameter]
+    )
     ```
 
-    Type wrappers (`StringType`, `NumberType`, etc.) carry per-type metadata like `enumValues` for restricting valid inputs and `description` for prompt-time hints (used when the type is nested inside an array or object).
+    These are Kotlin classes bridged to Swift. `LeapFunctionParameterType` exposes nested classes such as `LeapStr`, `LeapInt`, `LeapArr`, and `LeapObj`; it is not a Swift enum with `.string`/`.number` cases. See [Function Calling](./function-calling) for registration and response handling.
   </Tab>
   <Tab title="Kotlin (all platforms)">
     ```kotlin
