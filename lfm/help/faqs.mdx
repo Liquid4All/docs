@@ -59,6 +59,10 @@ Start with LFM3 for general use, then consider an older model when its size, spe
 Yes! llama.cpp runs natively on iOS and Android with quantized GGUF models. See [iOS & Android](/deployment/on-device/llama-cpp/mobile) for embedding it in an app, and [Vision & Audio](/deployment/on-device/llama-cpp/multimodal) for multimodal models.
 </Accordion>
 
+<Accordion title="How fast is a model on my device, and how much memory does it need?">
+See [Pipette](https://pipette.liquid.ai) for speed and memory measured on real devices, by quantization and runtime. To measure on your own hardware, follow [Hardware Evaluation](/guides/hardware-evaluation).
+</Accordion>
+
 <Accordion title="What quantization formats are available?">
 - **GGUF**: For llama.cpp, LM Studio, Ollama, Atomic Chat (Q4_0, Q4_K_M, Q5_K_M, Q6_K, Q8_0, BF16, F16; some repositories ship a subset)
 - **MLX**: For Apple Silicon (4-bit, 5-bit, 6-bit, 8-bit, bf16)
