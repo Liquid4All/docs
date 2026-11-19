@@ -21,6 +21,10 @@ jobs:
           node-version: '22'
       - name: Install Mintlify CLI
         run: npm install --global mint@4.3.51
+      - name: Check publication exclusions
+        run: |
+          node --test scripts/checkPublishedContent.test.mjs
+          node scripts/checkPublishedContent.mjs
       - name: Validate all MDX pages and navigation
         run: mint validate
       - name: Check internal documentation links
