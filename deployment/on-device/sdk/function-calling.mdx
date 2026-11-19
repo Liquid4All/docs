@@ -105,6 +105,8 @@ Function calls arrive as the `MessageResponse.FunctionCalls` variant on both pla
 
     for try await response in conversation.generateResponse(message: userMessage) {
         switch onEnum(of: response) {
+        case .error(let failure):
+            print("Generation failed: \(failure.message)")
         case .functionCalls(let payload):
             for call in payload.functionCalls {
                 print("Function call: \(call.name) \(call.arguments)")
@@ -127,6 +129,7 @@ Function calls arrive as the `MessageResponse.FunctionCalls` variant on both pla
     ```kotlin
     conversation.generateResponse(userMessage).onEach { response ->
         when (response) {
+            is MessageResponse.Error -> throw IllegalStateException(response.message)
             is MessageResponse.Chunk -> { /* text chunk */ }
             is MessageResponse.FunctionCalls -> {
                 response.functionCalls.forEach { call ->

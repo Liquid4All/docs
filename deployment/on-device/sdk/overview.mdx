@@ -5,6 +5,8 @@ description: "The LEAP SDK is deprecated. This archived reference is kept for te
 
 <Warning>
 The **LEAP SDK is deprecated** and no longer receives new releases. It was a Kotlin Multiplatform wrapper around llama.cpp, and everything it provided is available from llama.cpp directly. New projects should follow the [Build with llama.cpp](/deployment/on-device/llama-cpp/mobile) guides; existing users can find a concept-by-concept mapping in [Migrating from LEAP SDK](/deployment/on-device/llama-cpp/migrating-from-leap-sdk).
+
+The hosted LEAP catalog and model-bundling service have been discontinued. Manifest downloads that call `leap.liquid.ai` are historical examples and no longer work against that service. Use a local model with [sideloaded loading](/deployment/on-device/sdk/model-loading#sideloaded-files) in an existing SDK app, or migrate to llama.cpp for new development.
 </Warning>
 
 Published LEAP SDK artifacts remain available (Swift Package Manager via [`Liquid4All/leap-sdk`](https://github.com/Liquid4All/leap-sdk), Maven Central under `ai.liquid.leap:*`), but they are frozen at their last release and are not updated for new LFM checkpoints. Sampling defaults, chat templates, and tool-call parsing for current models are maintained upstream in llama.cpp.

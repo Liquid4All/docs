@@ -3,7 +3,7 @@
   "info": {
     "title": "Liquid inference API",
     "version": "1.0.0",
-    "description": "OpenAI-compatible inference API plus native endpoints.\n\n**Authentication** — Every request needs an API key, sent as a bearer token: `Authorization: Bearer $LIQUID_API_KEY`. Create a key on the [API keys](https://console.liquid.ai/dashboard/api-keys) page of Liquid Console; it is shown once.\n\n**Batch uploads** — Batch input files are uploaded through a presigned URL from `POST /v1/files`; see the [Batch guide](https://docs.liquid.ai/api/guides/batch).\n\n**Decision models** — `POST /decisions/v1/systemone` implements TypeSafe's System One API for typed Choice, Score, and Noul decisions from decision models such as `d1.1` and `d1-ultra`."
+    "description": "OpenAI-compatible inference API plus native endpoints.\n\n**Authentication** — Every request needs an API key, sent as a bearer token: `Authorization: Bearer $LIQUID_API_KEY`. Create a key on the [API keys](https://console.liquid.ai/dashboard/api-keys) page of Liquid Console; it is shown once.\n\n**Batch uploads** — Batch input files are uploaded through a presigned URL from `POST /v1/files`; see the [Batch guide](https://docs.liquid.ai/api/guides/batch).\n\n**Decision models** — `POST /decisions/v1/systemone` answers typed questions using models such as `d1.2` and `d1.2-ultra`."
   },
   "servers": [
     {
@@ -42,6 +42,1620 @@
         "scheme": "bearer",
         "description": "A Liquid API key from the [API keys](https://console.liquid.ai/dashboard/api-keys) page of Liquid Console, sent as `Authorization: Bearer $LIQUID_API_KEY`."
       }
+    },
+    "schemas": {
+      "FunctionToolCall": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "type": {
+            "const": "function",
+            "type": "string"
+          },
+          "function": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "arguments": {
+                "type": "string",
+                "description": "JSON-encoded function arguments."
+              }
+            },
+            "required": [
+              "name",
+              "arguments"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "function"
+        ]
+      },
+      "FunctionTool": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "const": "function",
+            "type": "string"
+          },
+          "function": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "description": {
+                "type": "string"
+              },
+              "parameters": {
+                "type": "object",
+                "additionalProperties": true,
+                "description": "JSON Schema for function arguments."
+              },
+              "strict": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "name"
+            ]
+          }
+        },
+        "required": [
+          "type",
+          "function"
+        ]
+      },
+      "ChatMessage": {
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "role": {
+                "type": "string",
+                "enum": [
+                  "system",
+                  "developer"
+                ]
+              },
+              "content": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "type": {
+                          "const": "text"
+                        },
+                        "text": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "type",
+                        "text"
+                      ]
+                    }
+                  }
+                ]
+              },
+              "name": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "role",
+              "content"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "role": {
+                "const": "user",
+                "type": "string"
+              },
+              "content": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "array",
+                    "items": {
+                      "oneOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "type": {
+                              "const": "text"
+                            },
+                            "text": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "type",
+                            "text"
+                          ]
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "type": {
+                              "const": "image_url"
+                            },
+                            "image_url": {
+                              "type": "object",
+                              "properties": {
+                                "url": {
+                                  "type": "string",
+                                  "description": "Public HTTP(S) image URL or base64 image data URL."
+                                },
+                                "detail": {
+                                  "type": "string",
+                                  "enum": [
+                                    "auto",
+                                    "low",
+                                    "high"
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "url"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "type",
+                            "image_url"
+                          ]
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "type": {
+                              "const": "input_audio"
+                            },
+                            "input_audio": {
+                              "type": "object",
+                              "properties": {
+                                "data": {
+                                  "type": "string",
+                                  "description": "Base64 WAV bytes, without a data URL prefix."
+                                },
+                                "format": {
+                                  "const": "wav",
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "data",
+                                "format"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "type",
+                            "input_audio"
+                          ]
+                        }
+                      ]
+                    }
+                  }
+                ]
+              },
+              "name": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "role",
+              "content"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "role": {
+                "const": "assistant",
+                "type": "string"
+              },
+              "content": {
+                "anyOf": [
+                  {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "type": {
+                              "const": "text"
+                            },
+                            "text": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "type",
+                            "text"
+                          ]
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "reasoning": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "reasoning_content": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "tool_calls": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/FunctionToolCall"
+                }
+              },
+              "name": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "role"
+            ],
+            "anyOf": [
+              {
+                "required": [
+                  "content"
+                ]
+              },
+              {
+                "required": [
+                  "tool_calls"
+                ]
+              }
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "role": {
+                "const": "tool",
+                "type": "string"
+              },
+              "content": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "array",
+                    "items": {
+                      "oneOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "type": {
+                              "const": "text"
+                            },
+                            "text": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "type",
+                            "text"
+                          ]
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "type": {
+                              "const": "image_url"
+                            },
+                            "image_url": {
+                              "type": "object",
+                              "properties": {
+                                "url": {
+                                  "type": "string",
+                                  "description": "Public HTTP(S) image URL or base64 image data URL."
+                                },
+                                "detail": {
+                                  "type": "string",
+                                  "enum": [
+                                    "auto",
+                                    "low",
+                                    "high"
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "url"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "type",
+                            "image_url"
+                          ]
+                        }
+                      ]
+                    }
+                  }
+                ]
+              },
+              "tool_call_id": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "role",
+              "content",
+              "tool_call_id"
+            ]
+          }
+        ],
+        "description": "Role-specific OpenAI-compatible messages. Tool results must use the corresponding tool_call_id. Preserve returned reasoning with an assistant tool-call turn when the model requires it. Earlier spoken replies must be sent as their transcript in content; audio.id alone is not supported."
+      },
+      "ReplyAudio": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "data": {
+            "type": "string",
+            "description": "Base64 audio bytes."
+          },
+          "transcript": {
+            "type": "string"
+          },
+          "expires_at": {
+            "type": "integer"
+          }
+        }
+      },
+      "DecisionQuestion": {
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "const": "noul",
+                "type": "string"
+              },
+              "instructions": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "object",
+                    "additionalProperties": true
+                  },
+                  {
+                    "type": "array",
+                    "items": {}
+                  }
+                ]
+              },
+              "criteria": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "true": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "object",
+                            "additionalProperties": true
+                          },
+                          {
+                            "type": "array",
+                            "items": {}
+                          }
+                        ]
+                      },
+                      "false": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "object",
+                            "additionalProperties": true
+                          },
+                          {
+                            "type": "array",
+                            "items": {}
+                          }
+                        ]
+                      }
+                    }
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "type",
+              "instructions"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "const": "choice",
+                "type": "string"
+              },
+              "instructions": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "object",
+                    "additionalProperties": true
+                  },
+                  {
+                    "type": "array",
+                    "items": {}
+                  }
+                ]
+              },
+              "multiple": {
+                "type": "boolean",
+                "default": false
+              },
+              "criteria": {
+                "type": "object",
+                "additionalProperties": {
+                  "anyOf": [
+                    {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "object",
+                          "additionalProperties": true
+                        },
+                        {
+                          "type": "array",
+                          "items": {}
+                        }
+                      ]
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "minProperties": 2,
+                "maxProperties": 255
+              }
+            },
+            "required": [
+              "type",
+              "instructions",
+              "criteria"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "const": "score",
+                "type": "string"
+              },
+              "instructions": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "object",
+                    "additionalProperties": true
+                  },
+                  {
+                    "type": "array",
+                    "items": {}
+                  }
+                ]
+              },
+              "criteria": {
+                "type": "array",
+                "items": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "object",
+                      "additionalProperties": true
+                    },
+                    {
+                      "type": "array",
+                      "items": {}
+                    }
+                  ]
+                },
+                "minItems": 2,
+                "maxItems": 10
+              }
+            },
+            "required": [
+              "type",
+              "instructions",
+              "criteria"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "const": "text",
+                "type": "string"
+              },
+              "instructions": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "object",
+                    "additionalProperties": true
+                  },
+                  {
+                    "type": "array",
+                    "items": {}
+                  }
+                ]
+              }
+            },
+            "required": [
+              "type",
+              "instructions"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "const": "date",
+                "type": "string"
+              },
+              "instructions": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "object",
+                    "additionalProperties": true
+                  },
+                  {
+                    "type": "array",
+                    "items": {}
+                  }
+                ]
+              }
+            },
+            "required": [
+              "type",
+              "instructions"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "const": "number",
+                "type": "string"
+              },
+              "instructions": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "object",
+                    "additionalProperties": true
+                  },
+                  {
+                    "type": "array",
+                    "items": {}
+                  }
+                ]
+              },
+              "unit": {
+                "type": "string"
+              },
+              "range": {
+                "type": "array",
+                "items": {
+                  "type": "number"
+                },
+                "minItems": 2,
+                "maxItems": 2,
+                "description": "Ascending [low, high] interval for estimation. Without range, read a number from the state."
+              },
+              "step": {
+                "type": "number",
+                "exclusiveMinimum": 0,
+                "description": "Requires range and must divide it into equal parts."
+              }
+            },
+            "required": [
+              "type",
+              "instructions"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "const": "box",
+                "type": "string"
+              },
+              "instructions": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "object",
+                    "additionalProperties": true
+                  },
+                  {
+                    "type": "array",
+                    "items": {}
+                  }
+                ]
+              }
+            },
+            "required": [
+              "type",
+              "instructions"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "const": "boxes",
+                "type": "string"
+              },
+              "instructions": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "object",
+                    "additionalProperties": true
+                  },
+                  {
+                    "type": "array",
+                    "items": {}
+                  }
+                ]
+              },
+              "max": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 64
+              }
+            },
+            "required": [
+              "type",
+              "instructions"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "const": "spans",
+                "type": "string"
+              },
+              "instructions": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "object",
+                    "additionalProperties": true
+                  },
+                  {
+                    "type": "array",
+                    "items": {}
+                  }
+                ]
+              },
+              "max": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 64
+              }
+            },
+            "required": [
+              "type",
+              "instructions"
+            ]
+          }
+        ],
+        "description": "Named typed question. box and boxes require exactly one image. Instructions are written text or JSON; send audio clips in the request audio array, not as spoken instructions."
+      },
+      "DecisionAnswer": {
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "const": "noul",
+                "type": "string"
+              },
+              "noul": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              }
+            },
+            "required": [
+              "type",
+              "noul"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "const": "choice",
+                "type": "string"
+              },
+              "choice": {
+                "type": "string"
+              },
+              "probabilities": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                }
+              },
+              "confidence": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              }
+            },
+            "required": [
+              "type",
+              "choice",
+              "probabilities",
+              "confidence"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "const": "choice",
+                "type": "string"
+              },
+              "choices": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "probabilities": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                }
+              }
+            },
+            "required": [
+              "type",
+              "choices",
+              "probabilities"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "const": "score",
+                "type": "string"
+              },
+              "score": {
+                "type": "number"
+              },
+              "legend": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string"
+                }
+              },
+              "probabilities": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                }
+              },
+              "confidence": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              }
+            },
+            "required": [
+              "type",
+              "score",
+              "legend",
+              "probabilities",
+              "confidence"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "const": "text",
+                "type": "string"
+              },
+              "text": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "span": {
+                "anyOf": [
+                  {
+                    "type": "array",
+                    "items": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "minItems": 2,
+                    "maxItems": 2
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "found": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              },
+              "path": {
+                "type": "string",
+                "description": "JSON Pointer for a span in a JSON state, when provided."
+              }
+            },
+            "required": [
+              "type",
+              "text",
+              "span",
+              "found"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "const": "date",
+                "type": "string"
+              },
+              "date": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "text": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "span": {
+                "anyOf": [
+                  {
+                    "type": "array",
+                    "items": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "minItems": 2,
+                    "maxItems": 2
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "found": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              },
+              "path": {
+                "type": "string",
+                "description": "JSON Pointer for a span in a JSON state, when provided."
+              }
+            },
+            "required": [
+              "type",
+              "date",
+              "text",
+              "span",
+              "found"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "const": "number",
+                "type": "string"
+              },
+              "number": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "unit": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "text": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "span": {
+                "anyOf": [
+                  {
+                    "type": "array",
+                    "items": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "minItems": 2,
+                    "maxItems": 2
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "found": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              },
+              "path": {
+                "type": "string",
+                "description": "JSON Pointer for a span in a JSON state, when provided."
+              }
+            },
+            "required": [
+              "type",
+              "number",
+              "unit",
+              "text",
+              "span",
+              "found"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "const": "number",
+                "type": "string"
+              },
+              "number": {
+                "type": "number"
+              },
+              "interval": {
+                "type": "array",
+                "items": {
+                  "type": "number"
+                },
+                "minItems": 2,
+                "maxItems": 2
+              },
+              "unit": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "type",
+              "number",
+              "interval",
+              "unit"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "const": "box",
+                "type": "string"
+              },
+              "box": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "top": {
+                        "type": "number",
+                        "minimum": 0,
+                        "maximum": 1
+                      },
+                      "bottom": {
+                        "type": "number",
+                        "minimum": 0,
+                        "maximum": 1
+                      },
+                      "left": {
+                        "type": "number",
+                        "minimum": 0,
+                        "maximum": 1
+                      },
+                      "right": {
+                        "type": "number",
+                        "minimum": 0,
+                        "maximum": 1
+                      }
+                    },
+                    "required": [
+                      "top",
+                      "bottom",
+                      "left",
+                      "right"
+                    ]
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "found": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              },
+              "confidence": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              }
+            },
+            "required": [
+              "type",
+              "box",
+              "found",
+              "confidence"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "const": "boxes",
+                "type": "string"
+              },
+              "boxes": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "box": {
+                      "type": "object",
+                      "properties": {
+                        "top": {
+                          "type": "number",
+                          "minimum": 0,
+                          "maximum": 1
+                        },
+                        "bottom": {
+                          "type": "number",
+                          "minimum": 0,
+                          "maximum": 1
+                        },
+                        "left": {
+                          "type": "number",
+                          "minimum": 0,
+                          "maximum": 1
+                        },
+                        "right": {
+                          "type": "number",
+                          "minimum": 0,
+                          "maximum": 1
+                        }
+                      },
+                      "required": [
+                        "top",
+                        "bottom",
+                        "left",
+                        "right"
+                      ]
+                    },
+                    "found": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1
+                    },
+                    "confidence": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1
+                    }
+                  },
+                  "required": [
+                    "box",
+                    "found",
+                    "confidence"
+                  ]
+                }
+              },
+              "count": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "at_least": {
+                "type": "boolean"
+              },
+              "presence": {
+                "type": "array",
+                "items": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                }
+              }
+            },
+            "required": [
+              "type",
+              "boxes",
+              "count",
+              "at_least",
+              "presence"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "const": "spans",
+                "type": "string"
+              },
+              "spans": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "text": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "span": {
+                      "anyOf": [
+                        {
+                          "type": "array",
+                          "items": {
+                            "type": "integer",
+                            "minimum": 0
+                          },
+                          "minItems": 2,
+                          "maxItems": 2
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "found": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1
+                    },
+                    "path": {
+                      "type": "string",
+                      "description": "JSON Pointer for a span in a JSON state, when provided."
+                    }
+                  },
+                  "required": [
+                    "text",
+                    "span",
+                    "found"
+                  ]
+                }
+              },
+              "count": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "at_least": {
+                "type": "boolean"
+              },
+              "presence": {
+                "type": "array",
+                "items": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                }
+              }
+            },
+            "required": [
+              "type",
+              "spans",
+              "count",
+              "at_least",
+              "presence"
+            ]
+          }
+        ],
+        "description": "An answer for the question under the same key. Read values are null when found < 0.5. Spans are [start, end) Unicode code-point offsets into the state (JSON states use two-space indentation). Box edges are fractions of the image. Estimate interval is [p10, p90]."
+      },
+      "ApiError": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "object",
+            "properties": {
+              "message": {
+                "type": "string"
+              },
+              "type": {
+                "type": "string"
+              },
+              "param": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "code": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "message",
+              "type",
+              "param",
+              "code"
+            ]
+          }
+        },
+        "required": [
+          "error"
+        ]
+      },
+      "Model": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "object": {
+            "const": "model"
+          },
+          "created": {
+            "type": "integer"
+          },
+          "owned_by": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "object",
+          "created",
+          "owned_by"
+        ]
+      },
+      "DecisionModel": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Model id to pass in the request."
+          },
+          "description": {
+            "type": "string"
+          },
+          "release_date": {
+            "type": "string",
+            "format": "date"
+          },
+          "input_modalities": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "text",
+                "image",
+                "audio"
+              ]
+            }
+          }
+        },
+        "required": [
+          "name",
+          "description",
+          "release_date",
+          "input_modalities"
+        ]
+      },
+      "File": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The file id, referenced when creating a batch."
+          },
+          "object": {
+            "type": "string",
+            "description": "Always \"file\"."
+          },
+          "bytes": {
+            "type": "integer",
+            "description": "Size of the file in bytes."
+          },
+          "created_at": {
+            "type": "integer",
+            "description": "Unix timestamp (seconds) of creation."
+          },
+          "filename": {
+            "type": "string",
+            "description": "The name the file was uploaded with."
+          },
+          "purpose": {
+            "type": "string",
+            "description": "Either \"batch\" (an input) or \"batch_output\" (a generated result/error file)."
+          },
+          "status": {
+            "type": "string",
+            "description": "Always \"processed\"; stored files are ready."
+          },
+          "expires_at": {
+            "type": "integer",
+            "description": "Unix expiry timestamp, when an expiry is set."
+          }
+        }
+      },
+      "Batch": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The batch id."
+          },
+          "object": {
+            "type": "string",
+            "description": "Always \"batch\"."
+          },
+          "endpoint": {
+            "type": "string",
+            "description": "The endpoint each request targets."
+          },
+          "input_file_id": {
+            "type": "string",
+            "description": "The uploaded input file id."
+          },
+          "output_file_id": {
+            "type": "string",
+            "description": "Result file id, once completed."
+          },
+          "error_file_id": {
+            "type": "string",
+            "description": "Error file id, if any requests failed."
+          },
+          "status": {
+            "type": "string",
+            "description": "One of validating, in_progress, finalizing, completed, failed, expired, cancelling, cancelled."
+          },
+          "completion_window": {
+            "type": "string",
+            "description": "The requested completion window."
+          },
+          "request_counts": {
+            "type": "object",
+            "properties": {
+              "total": {
+                "type": "integer"
+              },
+              "completed": {
+                "type": "integer"
+              },
+              "failed": {
+                "type": "integer"
+              }
+            },
+            "required": [
+              "total",
+              "completed",
+              "failed"
+            ]
+          },
+          "created_at": {
+            "type": "integer",
+            "description": "Unix timestamp in seconds; optional until the corresponding event occurs."
+          },
+          "errors": {
+            "type": "object",
+            "properties": {
+              "object": {
+                "const": "list"
+              },
+              "data": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "param": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "line": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "metadata": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "in_progress_at": {
+            "type": "integer",
+            "description": "Unix timestamp in seconds; optional until the corresponding event occurs."
+          },
+          "finalizing_at": {
+            "type": "integer",
+            "description": "Unix timestamp in seconds; optional until the corresponding event occurs."
+          },
+          "completed_at": {
+            "type": "integer",
+            "description": "Unix timestamp in seconds; optional until the corresponding event occurs."
+          },
+          "failed_at": {
+            "type": "integer",
+            "description": "Unix timestamp in seconds; optional until the corresponding event occurs."
+          },
+          "expires_at": {
+            "type": "integer",
+            "description": "Unix timestamp in seconds; optional until the corresponding event occurs."
+          },
+          "cancelled_at": {
+            "type": "integer",
+            "description": "Unix timestamp in seconds; optional until the corresponding event occurs."
+          }
+        }
+      }
     }
   },
   "paths": {
@@ -62,7 +1676,7 @@
                   "object": "list",
                   "data": [
                     {
-                      "id": "$MODEL_ID",
+                      "id": "lfm3-1.7b",
                       "object": "model",
                       "created": 1730419200,
                       "owned_by": "liquid"
@@ -79,25 +1693,7 @@
                     "data": {
                       "type": "array",
                       "items": {
-                        "type": "object",
-                        "properties": {
-                          "id": {
-                            "type": "string",
-                            "description": "The model id to pass as `model`."
-                          },
-                          "object": {
-                            "type": "string",
-                            "description": "Always \"model\"."
-                          },
-                          "created": {
-                            "type": "integer",
-                            "description": "Unix timestamp (seconds)."
-                          },
-                          "owned_by": {
-                            "type": "string",
-                            "description": "Always \"liquid\"."
-                          }
-                        }
+                        "$ref": "#/components/schemas/Model"
                       },
                       "description": "The list of model objects."
                     }
@@ -130,31 +1726,13 @@
             "content": {
               "application/json": {
                 "example": {
-                  "id": "$MODEL_ID",
+                  "id": "lfm3-1.7b",
                   "object": "model",
                   "created": 1730419200,
                   "owned_by": "liquid"
                 },
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "id": {
-                      "type": "string",
-                      "description": "The model id to pass as `model`."
-                    },
-                    "object": {
-                      "type": "string",
-                      "description": "Always \"model\"."
-                    },
-                    "created": {
-                      "type": "integer",
-                      "description": "Unix timestamp (seconds)."
-                    },
-                    "owned_by": {
-                      "type": "string",
-                      "description": "Always \"liquid\"."
-                    }
-                  }
+                  "$ref": "#/components/schemas/Model"
                 }
               }
             }
@@ -164,7 +1742,7 @@
           {
             "lang": "curl",
             "label": "cURL",
-            "source": "curl https://api.liquid.ai/openai/v1/models/$MODEL_ID \\\n  -H \"Authorization: Bearer $LIQUID_API_KEY\""
+            "source": "curl https://api.liquid.ai/openai/v1/models/lfm3-1.7b \\\n  -H \"Authorization: Bearer $LIQUID_API_KEY\""
           }
         ],
         "parameters": [
@@ -175,7 +1753,7 @@
             "description": "The model id.",
             "schema": {
               "type": "string",
-              "example": "$MODEL_ID"
+              "example": "lfm3-1.7b"
             }
           }
         ]
@@ -185,7 +1763,7 @@
       "post": {
         "operationId": "chat-completions",
         "summary": "Chat completions",
-        "description": "Generate a model response for a chat conversation. See [Text generation](https://docs.liquid.ai/api/guides/text-generation).",
+        "description": "Generate a model response for a chat conversation. See [Text generation](https://docs.liquid.ai/api/guides/text-generation). Sampling, tool calling, reasoning, and structured output support depend on the selected model. With stream=true the response is text/event-stream, rather than a JSON completion.",
         "tags": [
           "Chat"
         ],
@@ -198,7 +1776,7 @@
                   "id": "chatcmpl-abc123",
                   "object": "chat.completion",
                   "created": 1730419200,
-                  "model": "$MODEL_ID",
+                  "model": "lfm3-1.7b",
                   "choices": [
                     {
                       "index": 0,
@@ -236,7 +1814,81 @@
                     },
                     "choices": {
                       "type": "array",
-                      "items": {},
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "index": {
+                            "type": "integer"
+                          },
+                          "message": {
+                            "type": "object",
+                            "properties": {
+                              "role": {
+                                "const": "assistant"
+                              },
+                              "content": {
+                                "anyOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              },
+                              "reasoning": {
+                                "anyOf": [
+                                  {
+                                    "type": "string",
+                                    "description": "Reasoning text when returned by the model/parser."
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              },
+                              "reasoning_content": {
+                                "anyOf": [
+                                  {
+                                    "type": "string",
+                                    "description": "Provider-compatible reasoning field, when returned."
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              },
+                              "tool_calls": {
+                                "type": "array",
+                                "items": {
+                                  "$ref": "#/components/schemas/FunctionToolCall"
+                                }
+                              },
+                              "audio": {
+                                "$ref": "#/components/schemas/ReplyAudio"
+                              }
+                            },
+                            "required": [
+                              "role"
+                            ]
+                          },
+                          "finish_reason": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          }
+                        },
+                        "required": [
+                          "index",
+                          "message",
+                          "finish_reason"
+                        ]
+                      },
                       "description": "The generated choices."
                     },
                     "usage": {
@@ -245,6 +1897,83 @@
                       "description": "Token counts: { prompt_tokens, completion_tokens, total_tokens }, plus `cost` in USD when the model is priced. Audio models also report OpenAI's `prompt_tokens_details` and `completion_tokens_details`, whose `audio_tokens` say how much of each total was audio. Some vision models bill each image as a multiple of its tokens, counted in `prompt_tokens` as OpenAI does. Streaming responses report it on the final usage chunk."
                     }
                   }
+                }
+              },
+              "text/event-stream": {
+                "schema": {
+                  "type": "string",
+                  "description": "Server-sent events when stream=true. Each data event is a chat.completion.chunk with choices[].delta (content, reasoning, tool_calls, or audio) and finish_reason. A usage chunk may have an empty choices array. The stream ends with data: [DONE]."
+                },
+                "example": "data: {\"object\":\"chat.completion.chunk\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"Hello\"},\"finish_reason\":null}]}\n\ndata: [DONE]\n\n"
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request or unsupported modality.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid API key.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "Insufficient credit.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown or unavailable model id.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Request body exceeds the endpoint limit.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request validation failed or the model input limit was exceeded.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             }
@@ -306,11 +2035,44 @@
               "application/json": {
                 "example": {
                   "error": {
-                    "message": "Rate limit exceeded for model `$MODEL_ID`. To request a higher limit, contact us at https://www.liquid.ai/connect.",
+                    "message": "Rate limit exceeded for model `lfm3-1.7b`. To request a higher limit, contact us at https://www.liquid.ai/connect.",
                     "type": "rate_limit_error",
                     "param": null,
                     "code": "rate_limit_exceeded"
                   }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Inference backend failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Model temporarily unavailable.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "504": {
+            "description": "Inference deadline exceeded.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             }
@@ -320,7 +2082,7 @@
           {
             "lang": "curl",
             "label": "cURL",
-            "source": "curl https://api.liquid.ai/openai/v1/chat/completions \\\n  -H \"Authorization: Bearer $LIQUID_API_KEY\" \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\n    \"model\": \"$MODEL_ID\",\n    \"messages\": [\n      {\"role\": \"system\", \"content\": \"You are a helpful assistant.\"},\n      {\"role\": \"user\", \"content\": \"Hello!\"}\n    ]\n  }'"
+            "source": "curl https://api.liquid.ai/openai/v1/chat/completions \\\n  -H \"Authorization: Bearer $LIQUID_API_KEY\" \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\n    \"model\": \"lfm3-1.7b\",\n    \"messages\": [\n      {\"role\": \"system\", \"content\": \"You are a helpful assistant.\"},\n      {\"role\": \"user\", \"content\": \"Hello!\"}\n    ]\n  }'"
           }
         ],
         "requestBody": {
@@ -333,12 +2095,15 @@
                   "model": {
                     "type": "string",
                     "description": "The model id to use.",
-                    "example": "$MODEL_ID"
+                    "example": "lfm3-1.7b"
                   },
                   "messages": {
                     "type": "array",
-                    "items": {},
-                    "description": "The conversation so far. Messages follow OpenAI role-specific content requirements. User messages may include `image_url` parts for models that take images, each a base64 `data:` URL or an http(s) URL, and `input_audio` parts (base64 WAV, `format: \"wav\"`) for models that take audio; other models return 400. Liquid downloads linked images itself before the request reaches the model, from public addresses only, and returns 400 when one cannot be downloaded or is not a PNG, JPEG, WebP, or GIF image; a request may link up to 8 images, of at most 10 MB each and 20 MB together."
+                    "items": {
+                      "$ref": "#/components/schemas/ChatMessage"
+                    },
+                    "description": "The conversation so far. Messages follow OpenAI role-specific content requirements. User messages may include `image_url` parts for models that take images, each a base64 `data:` URL or an http(s) URL, and `input_audio` parts (base64 WAV, `format: \"wav\"`) for models that take audio; other models return 400. Liquid downloads linked images itself before the request reaches the model, from public addresses only, and returns 400 when one cannot be downloaded or is not a PNG, JPEG, WebP, or GIF image; a request may link up to 8 images, of at most 10 MB each and 20 MB together.",
+                    "minItems": 1
                   },
                   "stream": {
                     "type": "boolean",
@@ -346,13 +2111,199 @@
                   },
                   "modalities": {
                     "type": "array",
-                    "items": {},
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "text",
+                        "audio"
+                      ]
+                    },
                     "description": "Output types. [\"text\", \"audio\"] asks a model with speech output for a spoken reply, returned in `message.audio` (or streamed in `delta.audio`) beside the text. Defaults to [\"text\"]; models without speech output return 400."
                   },
                   "audio": {
                     "type": "object",
                     "additionalProperties": true,
-                    "description": "Spoken reply options when `modalities` includes \"audio\", as in OpenAI: `{ \"voice\", \"format\" }`. `format` is `pcm16` (headerless 16-bit PCM, 24 kHz mono), or `wav` (each streamed chunk a complete WAV file); other formats return 400. The reply arrives in `message.audio` or streamed `delta.audio`, with its words in `transcript`. `voice` is accepted but does not change the voice."
+                    "description": "Spoken reply options when `modalities` includes \"audio\", as in OpenAI: `{ \"voice\", \"format\" }`. `format` is `pcm16` (headerless 16-bit PCM, 24 kHz mono), or `wav` (each streamed chunk a complete WAV file); other formats return 400. The reply arrives in `message.audio` or streamed `delta.audio`, with its words in `transcript`. `voice` is accepted but does not change the voice.",
+                    "properties": {
+                      "format": {
+                        "type": "string",
+                        "enum": [
+                          "pcm16",
+                          "wav"
+                        ]
+                      },
+                      "voice": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "id"
+                            ]
+                          }
+                        ],
+                        "description": "Accepted for compatibility; does not change the voice."
+                      }
+                    }
+                  },
+                  "temperature": {
+                    "type": "number",
+                    "description": "Sampling temperature; supported values depend on the model."
+                  },
+                  "top_p": {
+                    "type": "number",
+                    "description": "Nucleus sampling probability."
+                  },
+                  "top_k": {
+                    "type": "integer",
+                    "description": "Top-k sampling, when supported by the model."
+                  },
+                  "repetition_penalty": {
+                    "type": "number"
+                  },
+                  "max_tokens": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "description": "Maximum generated tokens, including reasoning. Leave enough room for a final answer."
+                  },
+                  "max_completion_tokens": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "description": "OpenAI-compatible output budget; model support may vary. Use one output-budget field per request."
+                  },
+                  "stop": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      }
+                    ]
+                  },
+                  "tools": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/FunctionTool"
+                    }
+                  },
+                  "tool_choice": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "enum": [
+                          "none",
+                          "auto",
+                          "required"
+                        ]
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "const": "function"
+                          },
+                          "function": {
+                            "type": "object",
+                            "properties": {
+                              "name": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "name"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "type",
+                          "function"
+                        ]
+                      }
+                    ]
+                  },
+                  "response_format": {
+                    "oneOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "const": "text"
+                          }
+                        },
+                        "required": [
+                          "type"
+                        ]
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "const": "json_object"
+                          }
+                        },
+                        "required": [
+                          "type"
+                        ]
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "const": "json_schema"
+                          },
+                          "json_schema": {
+                            "type": "object",
+                            "properties": {
+                              "name": {
+                                "type": "string"
+                              },
+                              "description": {
+                                "type": "string"
+                              },
+                              "schema": {
+                                "type": "object",
+                                "additionalProperties": true
+                              },
+                              "strict": {
+                                "type": "boolean"
+                              }
+                            },
+                            "required": [
+                              "name",
+                              "schema"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "type",
+                          "json_schema"
+                        ]
+                      }
+                    ],
+                    "description": "Structured output format, where supported by the selected model."
+                  },
+                  "stream_options": {
+                    "type": "object",
+                    "properties": {
+                      "include_usage": {
+                        "type": "boolean"
+                      }
+                    }
+                  },
+                  "user": {
+                    "type": "string",
+                    "description": "Optional caller identifier."
                   }
                 },
                 "required": [
@@ -361,7 +2312,7 @@
                 ]
               },
               "example": {
-                "model": "$MODEL_ID",
+                "model": "lfm3-1.7b",
                 "messages": [
                   {
                     "role": "system",
@@ -382,7 +2333,7 @@
       "post": {
         "operationId": "decisions",
         "summary": "Make decisions",
-        "description": "Answer typed questions about a state with calibrated probabilities, using TypeSafe's System One API. See [Decisions](https://docs.liquid.ai/api/guides/decisions).",
+        "description": "Answer named typed questions about text, JSON, images, or audio. Supports noul, choice (including multiple=true), score, text, date, number, box, boxes, and spans. See [Decisions](https://docs.liquid.ai/api/guides/decisions) for examples. The hosted endpoint does not accept video or spoken question instructions; open-weight model APIs have different input shapes.",
         "tags": [
           "Decision models"
         ],
@@ -392,7 +2343,7 @@
             "content": {
               "application/json": {
                 "example": {
-                  "model": "$DECISION_MODEL_ID",
+                  "model": "d1.2",
                   "answers": {
                     "department": {
                       "type": "choice",
@@ -438,8 +2389,10 @@
                     },
                     "answers": {
                       "type": "object",
-                      "additionalProperties": true,
-                      "description": "One answer per question id. Choice: `choice`, `probabilities` per option, `confidence`. Score: `score` (probability-weighted, may fall between levels), `legend`, `probabilities` per level, `confidence`. Noul: `noul`, the probability of yes. Confidence runs from 0 (probability spread evenly) to 1 (all on one answer); for a Score it also counts how far the probability sits from the most likely level, so a split between the two ends of the scale is 0."
+                      "additionalProperties": {
+                        "$ref": "#/components/schemas/DecisionAnswer"
+                      },
+                      "description": "One typed answer per question id, under the same keys."
                     },
                     "usage": {
                       "type": "object",
@@ -447,6 +2400,76 @@
                       "description": "Token counts: { input_tokens, output_tokens }, plus `cost` in USD when the model is priced. `input_tokens` counts the state and images once and each question's own tokens. Output is always 0."
                     }
                   }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request or unsupported modality.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid API key.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "Insufficient credit.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown or unavailable model id.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Request body exceeds the endpoint limit.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request validation failed or the model input limit was exceeded.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             }
@@ -508,11 +2531,44 @@
               "application/json": {
                 "example": {
                   "error": {
-                    "message": "Rate limit exceeded for model `$MODEL_ID`. To request a higher limit, contact us at https://www.liquid.ai/connect.",
+                    "message": "Rate limit exceeded for model `lfm3-1.7b`. To request a higher limit, contact us at https://www.liquid.ai/connect.",
                     "type": "rate_limit_error",
                     "param": null,
                     "code": "rate_limit_exceeded"
                   }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Inference backend failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Model temporarily unavailable.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "504": {
+            "description": "Inference deadline exceeded.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             }
@@ -522,7 +2578,7 @@
           {
             "lang": "curl",
             "label": "cURL",
-            "source": "curl https://api.liquid.ai/decisions/v1/systemone \\\n  -H \"Authorization: Bearer $LIQUID_API_KEY\" \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\n    \"model\": \"$DECISION_MODEL_ID\",\n    \"state\": \"Help! My payouts have been failing for 3 days.\",\n    \"questions\": {\n      \"department\": {\n        \"type\": \"choice\",\n        \"instructions\": \"Which team should handle this?\",\n        \"criteria\": {\n          \"billing\": \"Payments, invoicing, refunds\",\n          \"technical\": \"Bugs, outages, integrations\",\n          \"sales\": \"Pricing, upgrades, new accounts\"\n        }\n      },\n      \"is_urgent\": { \"type\": \"noul\", \"instructions\": \"Does this convey urgency?\" },\n      \"frustration\": {\n        \"type\": \"score\",\n        \"instructions\": \"How frustrated is the customer?\",\n        \"criteria\": [\"Calm\", \"Frustrated\", \"Very angry\"]\n      }\n    }\n  }'"
+            "source": "curl https://api.liquid.ai/decisions/v1/systemone \\\n  -H \"Authorization: Bearer $LIQUID_API_KEY\" \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\n    \"model\": \"d1.2\",\n    \"state\": \"Help! My payouts have been failing for 3 days.\",\n    \"questions\": {\n      \"department\": {\n        \"type\": \"choice\",\n        \"instructions\": \"Which team should handle this?\",\n        \"criteria\": {\n          \"billing\": \"Payments, invoicing, refunds\",\n          \"technical\": \"Bugs, outages, integrations\",\n          \"sales\": \"Pricing, upgrades, new accounts\"\n        }\n      },\n      \"is_urgent\": { \"type\": \"noul\", \"instructions\": \"Does this convey urgency?\" },\n      \"frustration\": {\n        \"type\": \"score\",\n        \"instructions\": \"How frustrated is the customer?\",\n        \"criteria\": [\"Calm\", \"Frustrated\", \"Very angry\"]\n      }\n    }\n  }'"
           }
         ],
         "requestBody": {
@@ -534,21 +2590,89 @@
                 "properties": {
                   "model": {
                     "type": "string",
-                    "description": "The decision model id to use. `d1:latest` and `d1-ultra:latest` always point to the newest model of their family; pin an exact id such as `d1-ultra` to keep the same model.",
-                    "example": "$DECISION_MODEL_ID"
+                    "description": "A decision model id from GET /decisions/v1/models, such as d1.2 or d1.2-ultra. Use the exact id returned for your organization.",
+                    "example": "d1.2"
                   },
                   "state": {
                     "description": "The content the questions are about: plain text, or structured JSON such as a chat log or record. Omit or send null when the questions stand alone. As in Perplexity's Decisions API, an array state may also hold images as OpenAI-style `{ \"type\": \"image_url\", \"image_url\": { \"url\": \"data:…\" } }` parts: they are taken out of the state and checked under the same rules as `images`, which the request must then leave out (sending both returns 422), and a single string left beside them becomes the text state."
                   },
                   "images": {
                     "type": "array",
-                    "items": {},
-                    "description": "Up to 8 images the questions are about, for decision models that accept images: those listing `image` in `input_modalities` from GET /decisions/v1/models, such as `d1`. Other models return 422. Each is a base64 `data:image/…;base64,` URL or a `{ \"content_type\", \"base64\" }` object: JPEG, PNG, or WebP, 5 MB each, within the 4.5 MB request body limit. Remote image URLs are not accepted. Images come before the state in the prompt, in the order sent, and every question sees all of them. On `d1` and `d1-ultra`, an image costs 1.5 input tokens per 32×32-pixel patch that covers it (`ceil(width / 32) × ceil(height / 32)` patches), rounded up per image, and a request is billed its images once, however many questions it asks. The images of a request may cover at most 10,000 patches in all, and no image may be more than 100 times as long as it is wide; either returns 422. This is an extension to the System One API; omit it to stay TypeSafe-compatible."
+                    "items": {
+                      "oneOf": [
+                        {
+                          "type": "string",
+                          "description": "Base64 data URL with a matching media content type."
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "content_type": {
+                              "type": "string",
+                              "enum": [
+                                "image/jpeg",
+                                "image/png",
+                                "image/webp"
+                              ]
+                            },
+                            "base64": {
+                              "type": "string",
+                              "description": "Base64-encoded file bytes."
+                            }
+                          },
+                          "required": [
+                            "content_type",
+                            "base64"
+                          ]
+                        }
+                      ]
+                    },
+                    "description": "Up to 8 JPEG, PNG, or WebP images as base64 data URLs or {content_type, base64} objects. Remote URLs are not accepted. Each image is at most 5 MiB, subject to the smaller 4.5 MiB whole-request limit. box and boxes require exactly one image. Check input_modalities in GET /decisions/v1/models for model support.",
+                    "maxItems": 8
                   },
                   "questions": {
                     "type": "object",
-                    "additionalProperties": true,
-                    "description": "Up to 128 named questions; answers come back under the same keys. Each has a `type` (\"choice\", \"score\", or \"noul\") and `instructions` (a string or JSON). A Choice takes `criteria` mapping 2–255 option names to a description or null; a Score takes `criteria` as an ordered list of 2–10 level descriptions; a Noul takes optional `criteria` of `{ \"true\": …, \"false\": … }`, used only when both are given and say more than a bare yes and no. A request is billed its state and images once plus each question's own tokens, so asking a state several questions in one request costs far less than asking them in separate requests. Every question still reads the whole state, so the input limits apply to the state, images, and one question together: `d1` and `d1.1` allow 65,536 tokens and `d1-ultra` 32,768, and all three 250 KB of text, and they return 422 over either."
+                    "additionalProperties": {
+                      "$ref": "#/components/schemas/DecisionQuestion"
+                    },
+                    "minProperties": 1,
+                    "maxProperties": 128,
+                    "description": "Up to 128 named questions. Each question reads the state and media. d1.2 and d1.2-ultra allow 65,536 input tokens per question and 250,000 bytes of text; the entire request must fit the 4.5 MiB body limit."
+                  },
+                  "audio": {
+                    "type": "array",
+                    "items": {
+                      "oneOf": [
+                        {
+                          "type": "string",
+                          "description": "Base64 data URL with a matching media content type."
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "content_type": {
+                              "type": "string",
+                              "enum": [
+                                "audio/wav",
+                                "audio/mpeg",
+                                "audio/flac",
+                                "audio/ogg"
+                              ]
+                            },
+                            "base64": {
+                              "type": "string",
+                              "description": "Base64-encoded file bytes."
+                            }
+                          },
+                          "required": [
+                            "content_type",
+                            "base64"
+                          ]
+                        }
+                      ]
+                    },
+                    "maxItems": 8,
+                    "description": "Up to 8 WAV, MP3, FLAC, or OGG clips, at most 300 seconds combined, subject to the whole-request body limit. The declared content type must match the bytes. Check input_modalities for model support. Video is not accepted."
                   }
                 },
                 "required": [
@@ -557,7 +2681,7 @@
                 ]
               },
               "example": {
-                "model": "$DECISION_MODEL_ID",
+                "model": "d1.2",
                 "state": "Help! My payouts have been failing for 3 days.",
                 "questions": {
                   "department": {
@@ -605,11 +2729,13 @@
                 "example": {
                   "models": [
                     {
-                      "name": "$DECISION_MODEL_ID",
-                      "description": "Fast, calibrated Choice, Score, and Noul decisions.",
+                      "name": "d1.2",
+                      "description": "Typed decisions over text, images, and audio.",
                       "release_date": "2026-09-22",
                       "input_modalities": [
-                        "text"
+                        "text",
+                        "image",
+                        "audio"
                       ]
                     }
                   ]
@@ -619,8 +2745,10 @@
                   "properties": {
                     "models": {
                       "type": "array",
-                      "items": {},
-                      "description": "One entry per model: { name, description, release_date, input_modalities }. `input_modalities` is [\"text\"], or [\"text\", \"image\"] for a model that accepts `images`."
+                      "items": {
+                        "$ref": "#/components/schemas/DecisionModel"
+                      },
+                      "description": "Decision models available to your organization, including accepted input modalities. Current d1.2 models accept text, images, and audio."
                     }
                   }
                 }
@@ -641,7 +2769,7 @@
       "get": {
         "operationId": "list-files",
         "summary": "List files",
-        "description": "List the files your organization has uploaded.",
+        "description": "List all files for the organization in descending creation order. Pagination parameters are not supported.",
         "tags": [
           "Files"
         ],
@@ -673,7 +2801,9 @@
                     },
                     "data": {
                       "type": "array",
-                      "items": {},
+                      "items": {
+                        "$ref": "#/components/schemas/File"
+                      },
                       "description": "The list of file objects."
                     }
                   }
@@ -714,41 +2844,7 @@
                   "status": "processed"
                 },
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "id": {
-                      "type": "string",
-                      "description": "The file id, referenced when creating a batch."
-                    },
-                    "object": {
-                      "type": "string",
-                      "description": "Always \"file\"."
-                    },
-                    "bytes": {
-                      "type": "integer",
-                      "description": "Size of the file in bytes."
-                    },
-                    "created_at": {
-                      "type": "integer",
-                      "description": "Unix timestamp (seconds) of creation."
-                    },
-                    "filename": {
-                      "type": "string",
-                      "description": "The name the file was uploaded with."
-                    },
-                    "purpose": {
-                      "type": "string",
-                      "description": "Either \"batch\" (an input) or \"batch_output\" (a generated result/error file)."
-                    },
-                    "status": {
-                      "type": "string",
-                      "description": "Always \"processed\"; stored files are ready."
-                    },
-                    "expires_at": {
-                      "type": "integer",
-                      "description": "Unix timestamp (seconds) when the file expires, if set."
-                    }
-                  }
+                  "$ref": "#/components/schemas/File"
                 }
               }
             }
@@ -784,14 +2880,16 @@
           "Files"
         ],
         "responses": {
-          "200": {
-            "description": "Successful response.",
-            "content": {
-              "application/jsonl": {
+          "302": {
+            "description": "Redirect to a short-lived presigned download URL. Use curl -L to retrieve the file bytes.",
+            "headers": {
+              "Location": {
+                "required": true,
                 "schema": {
-                  "type": "string"
+                  "type": "string",
+                  "format": "uri"
                 },
-                "example": "{\"id\": \"batch_req_abc\", \"custom_id\": \"task-1\", \"response\": {\"status_code\": 200, \"body\": {\"id\": \"chatcmpl-1\", \"choices\": [{\"index\": 0, \"message\": {\"role\": \"assistant\", \"content\": \"Hi!\"}, \"finish_reason\": \"stop\"}]}}, \"error\": null}\n{\"id\": \"batch_req_def\", \"custom_id\": \"task-2\", \"response\": {\"status_code\": 200, \"body\": {\"id\": \"chatcmpl-2\", \"choices\": [{\"index\": 0, \"message\": {\"role\": \"assistant\", \"content\": \"Hello!\"}, \"finish_reason\": \"stop\"}]}}, \"error\": null}"
+                "description": "Presigned file download URL."
               }
             }
           }
@@ -846,60 +2944,7 @@
                   }
                 },
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "id": {
-                      "type": "string",
-                      "description": "The batch id."
-                    },
-                    "object": {
-                      "type": "string",
-                      "description": "Always \"batch\"."
-                    },
-                    "endpoint": {
-                      "type": "string",
-                      "description": "The endpoint each request targets."
-                    },
-                    "input_file_id": {
-                      "type": "string",
-                      "description": "The uploaded input file id."
-                    },
-                    "output_file_id": {
-                      "type": "string",
-                      "description": "Result file id, once completed."
-                    },
-                    "error_file_id": {
-                      "type": "string",
-                      "description": "Error file id, if any requests failed."
-                    },
-                    "status": {
-                      "type": "string",
-                      "description": "One of validating, in_progress, finalizing, completed, failed, expired, cancelling, cancelled."
-                    },
-                    "completion_window": {
-                      "type": "string",
-                      "description": "The requested completion window."
-                    },
-                    "request_counts": {
-                      "type": "object",
-                      "additionalProperties": true,
-                      "description": "Live counts: { total, completed, failed }."
-                    },
-                    "created_at": {
-                      "type": "integer",
-                      "description": "Unix timestamp (seconds) of creation."
-                    },
-                    "errors": {
-                      "type": "object",
-                      "additionalProperties": true,
-                      "description": "Present when the input failed validation: { object: \"list\", data: [...] }."
-                    },
-                    "metadata": {
-                      "type": "object",
-                      "additionalProperties": true,
-                      "description": "Any metadata supplied at creation."
-                    }
-                  }
+                  "$ref": "#/components/schemas/Batch"
                 }
               }
             }
@@ -992,7 +3037,9 @@
                     },
                     "data": {
                       "type": "array",
-                      "items": {},
+                      "items": {
+                        "$ref": "#/components/schemas/Batch"
+                      },
                       "description": "The list of batch objects."
                     }
                   }
@@ -1042,60 +3089,7 @@
                   }
                 },
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "id": {
-                      "type": "string",
-                      "description": "The batch id."
-                    },
-                    "object": {
-                      "type": "string",
-                      "description": "Always \"batch\"."
-                    },
-                    "endpoint": {
-                      "type": "string",
-                      "description": "The endpoint each request targets."
-                    },
-                    "input_file_id": {
-                      "type": "string",
-                      "description": "The uploaded input file id."
-                    },
-                    "output_file_id": {
-                      "type": "string",
-                      "description": "Result file id, once completed."
-                    },
-                    "error_file_id": {
-                      "type": "string",
-                      "description": "Error file id, if any requests failed."
-                    },
-                    "status": {
-                      "type": "string",
-                      "description": "One of validating, in_progress, finalizing, completed, failed, expired, cancelling, cancelled."
-                    },
-                    "completion_window": {
-                      "type": "string",
-                      "description": "The requested completion window."
-                    },
-                    "request_counts": {
-                      "type": "object",
-                      "additionalProperties": true,
-                      "description": "Live counts: { total, completed, failed }."
-                    },
-                    "created_at": {
-                      "type": "integer",
-                      "description": "Unix timestamp (seconds) of creation."
-                    },
-                    "errors": {
-                      "type": "object",
-                      "additionalProperties": true,
-                      "description": "Present when the input failed validation: { object: \"list\", data: [...] }."
-                    },
-                    "metadata": {
-                      "type": "object",
-                      "additionalProperties": true,
-                      "description": "Any metadata supplied at creation."
-                    }
-                  }
+                  "$ref": "#/components/schemas/Batch"
                 }
               }
             }
@@ -1151,60 +3145,7 @@
                   }
                 },
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "id": {
-                      "type": "string",
-                      "description": "The batch id."
-                    },
-                    "object": {
-                      "type": "string",
-                      "description": "Always \"batch\"."
-                    },
-                    "endpoint": {
-                      "type": "string",
-                      "description": "The endpoint each request targets."
-                    },
-                    "input_file_id": {
-                      "type": "string",
-                      "description": "The uploaded input file id."
-                    },
-                    "output_file_id": {
-                      "type": "string",
-                      "description": "Result file id, once completed."
-                    },
-                    "error_file_id": {
-                      "type": "string",
-                      "description": "Error file id, if any requests failed."
-                    },
-                    "status": {
-                      "type": "string",
-                      "description": "One of validating, in_progress, finalizing, completed, failed, expired, cancelling, cancelled."
-                    },
-                    "completion_window": {
-                      "type": "string",
-                      "description": "The requested completion window."
-                    },
-                    "request_counts": {
-                      "type": "object",
-                      "additionalProperties": true,
-                      "description": "Live counts: { total, completed, failed }."
-                    },
-                    "created_at": {
-                      "type": "integer",
-                      "description": "Unix timestamp (seconds) of creation."
-                    },
-                    "errors": {
-                      "type": "object",
-                      "additionalProperties": true,
-                      "description": "Present when the input failed validation: { object: \"list\", data: [...] }."
-                    },
-                    "metadata": {
-                      "type": "object",
-                      "additionalProperties": true,
-                      "description": "Any metadata supplied at creation."
-                    }
-                  }
+                  "$ref": "#/components/schemas/Batch"
                 }
               }
             }

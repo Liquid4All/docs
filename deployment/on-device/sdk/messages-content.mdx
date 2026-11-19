@@ -95,20 +95,20 @@ Round-trip the message through `kotlinx.serialization` — there is no separate 
 
 <Tabs>
   <Tab title="Swift (iOS / macOS)">
-    `ChatMessageContent` is the Kotlin `sealed class` bridged to Swift — switch on its subclasses with SKIE's `onEnum(of:)` helper. There is no native Swift `enum`, no positional `.image(_:)` / `.audio(_:)` factory, and no `init(from json:)`. Use the static factories on the Swift overlay:
+    `ChatMessageContent` is the Kotlin `sealed class` bridged to Swift — switch on its subclasses with SKIE's `onEnum(of:)` helper. There is no native Swift `enum`, no positional `.image(_:)` / `.audio(_:)` factory, and no `init(from json:)`. Use the static factories on the Swift overlay. In v0.10.9 image/audio conversion can throw: call these factories with `try` inside a throwing function or `do`/`catch` block:
 
     ```swift
     // Text (cross-platform):
     ChatMessageContent.text(_ text: String) -> ChatMessageContent
 
     // Image:
-    ChatMessageContent.fromJPEGData(_ jpegData: Data) -> ChatMessageContent.Image
+    ChatMessageContent.fromJPEGData(_ jpegData: Data) throws -> ChatMessageContent.Image
     ChatMessageContent.image(url: String) -> ChatMessageContent.Image           // data URL or remote URL
 
     // Audio:
-    ChatMessageContent.fromWAVData(_ wavData: Data) -> ChatMessageContent.Audio
-    ChatMessageContent.audio(data: Data, format: String = "wav") -> ChatMessageContent.Audio
-    ChatMessageContent.fromFloatSamples(_ samples: [Float], sampleRate: Int, channelCount: Int = 1)
+    ChatMessageContent.fromWAVData(_ wavData: Data) throws -> ChatMessageContent.Audio
+    ChatMessageContent.audio(data: Data, format: String = "wav") throws -> ChatMessageContent.Audio
+    ChatMessageContent.fromFloatSamples(_ samples: [Float], sampleRate: Int, channelCount: Int = 1) throws
         -> ChatMessageContent.Audio
 
     // iOS only — UIKit:
@@ -213,7 +213,7 @@ The engine **only accepts WAV**. M4A, MP3, AAC, OGG, and other compressed format
         role: .user,
         content: [
             .text("What is being said in this audio?"),
-            ChatMessageContent.fromWAVData(wavData)
+            try ChatMessageContent.fromWAVData(wavData)
         ],
         reasoningContent: nil,
         functionCalls: nil
@@ -244,7 +244,7 @@ The engine **only accepts WAV**. M4A, MP3, AAC, OGG, and other compressed format
     // Float samples normalized to [-1.0, 1.0]
     let samples: [Float] = [0.1, 0.2, 0.15, -0.3 /* ... */]
 
-    let audioContent = ChatMessageContent.fromFloatSamples(
+    let audioContent = try ChatMessageContent.fromFloatSamples(
         samples,
         sampleRate: 16000,
         channelCount: 1
@@ -301,7 +301,7 @@ The engine **only accepts WAV**. M4A, MP3, AAC, OGG, and other compressed format
     recorder.stop()
 
     let wavData = try Data(contentsOf: audioURL)
-    let audioContent: ChatMessageContent = ChatMessageContent.fromWAVData(wavData)
+    let audioContent: ChatMessageContent = try ChatMessageContent.fromWAVData(wavData)
     ```
   </Tab>
   <Tab title="Kotlin (Android)">

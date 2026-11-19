@@ -3,13 +3,6 @@ title: "LFM2.5-VL-3B"
 description: "Largest LFM2.5-VL vision-language model with grounding, screen understanding, and function calling"
 ---
 
-import { VlTransformers } from "/snippets/quickstart/vl-transformers.mdx";
-import { VlVllm } from "/snippets/quickstart/vl-vllm.mdx";
-import { VlSglang } from "/snippets/quickstart/vl-sglang.mdx";
-import { VlLlamacpp } from "/snippets/quickstart/vl-llamacpp.mdx";
-import { DsparkSglang } from "/snippets/quickstart/dspark-sglang.mdx";
-import { DsparkLlamacpp } from "/snippets/quickstart/dspark-llamacpp.mdx";
-import { DsparkMlxVlm } from "/snippets/quickstart/dspark-mlx-vlm.mdx";
 
 <a href="/lfm/models/vision-models" className="back-button">← Back to Vision Models</a>
 
@@ -57,16 +50,165 @@ For new applications, start with [LFM3-VL-2B](/lfm/models/lfm3-vl-2b), which add
 
 <Tabs>
   <Tab title="Transformers">
-    <VlTransformers modelId="LiquidAI/LFM2.5-VL-3B" samplingArgs="temperature=0.2, top_k=50, repetition_penalty=1.0"></VlTransformers>
+    {/* quickstart: {"source":"/snippets/quickstart/vl-transformers.mdx","component":"VlTransformers","props":{"modelId":"LiquidAI/LFM2.5-VL-3B","samplingArgs":"temperature=0.2, top_k=50, repetition_penalty=1.0"}} */}
+**Install:**
+
+```bash
+pip install "transformers==5.23.0" pillow torch torchvision accelerate
+```
+
+**Download & Run:**
+
+```python
+from transformers import AutoProcessor, AutoModelForImageTextToText
+from transformers.image_utils import load_image
+
+model_id = "LiquidAI/LFM2.5-VL-3B"
+model = AutoModelForImageTextToText.from_pretrained(
+    model_id,
+    device_map="auto",
+    dtype="bfloat16",
+)
+
+processor = AutoProcessor.from_pretrained(model_id)
+
+url = "https://cdn.britannica.com/61/93061-050-99147DCE/Statue-of-Liberty-Island-New-York-Bay.jpg"
+image = load_image(url)
+
+conversation = [
+    {
+        "role": "user",
+        "content": [
+            {"type": "image", "image": image},
+            {"type": "text", "text": "What is in this image?"},
+        ],
+    },
+]
+
+inputs = processor.apply_chat_template(
+    conversation,
+    add_generation_prompt=True,
+    return_tensors="pt",
+    return_dict=True,
+    tokenize=True,
+).to(model.device)
+
+outputs = model.generate(**inputs, do_sample=True, temperature=0.2, top_k=50, repetition_penalty=1.0, max_new_tokens=256)
+input_length = inputs["input_ids"].shape[1]
+response = processor.batch_decode(outputs[:, input_length:], skip_special_tokens=True)[0]
+print(response)
+```
+{/* /quickstart */}
   </Tab>
   <Tab title="vLLM">
-    <VlVllm modelId="LiquidAI/LFM2.5-VL-3B" samplingArgs="temperature=0.2, top_k=50, repetition_penalty=1.0"></VlVllm>
+    {/* quickstart: {"source":"/snippets/quickstart/vl-vllm.mdx","component":"VlVllm","props":{"modelId":"LiquidAI/LFM2.5-VL-3B","samplingArgs":"temperature=0.2, top_k=50, repetition_penalty=1.0"}} */}
+**Install:**
+
+```bash
+uv pip install "vllm==0.34.0" pillow
+```
+
+**Run:**
+
+```python
+from vllm import LLM, SamplingParams
+
+IMAGE_URL = "http://images.cocodataset.org/val2017/000000039769.jpg"
+
+llm = LLM(
+    model="LiquidAI/LFM2.5-VL-3B",
+    max_model_len=1024,
+    enforce_eager=True,
+)
+
+sampling_params = SamplingParams(
+    temperature=0.2, top_k=50, repetition_penalty=1.0,
+    max_tokens=256,
+)
+
+messages = [{
+    "role": "user",
+    "content": [
+        {"type": "image_url", "image_url": {"url": IMAGE_URL}},
+        {"type": "text", "text": "Describe what you see in this image."},
+    ],
+}]
+
+outputs = llm.chat(messages, sampling_params)
+print(outputs[0].outputs[0].text)
+```
+{/* /quickstart */}
   </Tab>
   <Tab title="SGLang">
-    <VlSglang modelId="LiquidAI/LFM2.5-VL-3B" samplingArgs={'temperature=0.2, extra_body={"top_k": 50, "repetition_penalty": 1.0}'}></VlSglang>
+    {/* quickstart: {"source":"/snippets/quickstart/vl-sglang.mdx","component":"VlSglang","props":{"modelId":"LiquidAI/LFM2.5-VL-3B","samplingArgs":"temperature=0.2, extra_body={\"top_k\": 50, \"repetition_penalty\": 1.0}"}} */}
+Use the configured CUDA image from the [SGLang installation guide](/deployment/gpu-inference/sglang#installation). Run the following launch command inside that image, or pass its model flags to the guide's Docker command.
+
+**Launch server:**
+
+```bash
+sglang serve \
+    --model-path LiquidAI/LFM2.5-VL-3B \
+    --host 0.0.0.0 \
+    --port 30000
+```
+
+**Query (OpenAI-compatible):**
+
+```python
+from openai import OpenAI
+
+client = OpenAI(base_url="http://localhost:30000/v1", api_key="None")
+
+response = client.chat.completions.create(
+    model="LiquidAI/LFM2.5-VL-3B",
+    messages=[{
+        "role": "user",
+        "content": [
+            {"type": "image_url", "image_url": {"url": "http://images.cocodataset.org/val2017/000000039769.jpg"}},
+            {"type": "text", "text": "Describe what you see in this image."},
+        ],
+    }],
+    temperature=0.2, extra_body={"top_k": 50, "repetition_penalty": 1.0},
+    max_tokens=256,
+)
+
+print(response.choices[0].message.content)
+```
+{/* /quickstart */}
   </Tab>
   <Tab title="llama.cpp">
-    <VlLlamacpp ggufRepo="LiquidAI/LFM2.5-VL-3B-GGUF" samplingFlags="--temp 0.2 --top-k 50 --repeat-penalty 1.0"></VlLlamacpp>
+    {/* quickstart: {"source":"/snippets/quickstart/vl-llamacpp.mdx","component":"VlLlamacpp","props":{"ggufRepo":"LiquidAI/LFM2.5-VL-3B-GGUF","samplingFlags":"--temp 0.2 --top-k 50 --repeat-penalty 1.0"}} */}
+llama.cpp enables efficient CPU inference for vision models.
+
+**Install:**
+
+```bash
+brew install llama.cpp
+```
+
+Or download pre-built binaries from [llama.cpp releases](https://github.com/ggml-org/llama.cpp/releases).
+
+**Run:**
+
+```bash
+llama cli \
+    -hf LiquidAI/LFM2.5-VL-3B-GGUF:Q4_0 \
+    --image test_image.jpg \
+    -p "What's in this image?" \
+    --temp 0.2 --top-k 50 --repeat-penalty 1.0
+```
+
+**Web chat UI and OpenAI-compatible API** at `http://localhost:9931`:
+
+```bash
+llama serve -hf LiquidAI/LFM2.5-VL-3B-GGUF:Q4_0 \
+    --temp 0.2 --top-k 50 --repeat-penalty 1.0
+```
+
+The `-hf` flag downloads the model and its vision projector directly from Hugging Face. Use `--image-max-tokens` to control image token budget.
+
+For advanced usage, see the [llama.cpp guide](/deployment/on-device/llama-cpp#vision-models).
+{/* /quickstart */}
   </Tab>
 </Tabs>
 
@@ -74,12 +216,114 @@ For new applications, start with [LFM3-VL-2B](/lfm/models/lfm3-vl-2b), which add
 
 <Tabs>
   <Tab title="SGLang">
-    <DsparkSglang modelId="LiquidAI/LFM2.5-VL-3B" draftModelId="LiquidAI/LFM2.5-VL-3B-DSpark" vision={true} samplingParams={'temperature=0.2,\n    extra_body={"top_k": 50, "repetition_penalty": 1.0},'}></DsparkSglang>
+    {/* quickstart: {"source":"/snippets/quickstart/dspark-sglang.mdx","component":"DsparkSglang","props":{"modelId":"LiquidAI/LFM2.5-VL-3B","draftModelId":"LiquidAI/LFM2.5-VL-3B-DSpark","vision":true,"samplingParams":"temperature=0.2,\n    extra_body={\"top_k\": 50, \"repetition_penalty\": 1.0},"}} */}
+**Install:**
+
+Requires [SGLang v0.5.19](https://github.com/sgl-project/sglang/releases/tag/v0.5.19) or newer.
+
+**Launch server with the drafter attached:**
+
+```bash
+python -m sglang.launch_server \
+    --model-path LiquidAI/LFM2.5-VL-3B \
+    --speculative-algorithm DSPARK \
+    --speculative-draft-model-path LiquidAI/LFM2.5-VL-3B-DSpark \
+    --speculative-draft-attention-backend flashinfer \
+    --speculative-dspark-block-size 9 \
+    --disable-radix-cache --mem-fraction-static 0.8 --port 30000
+```
+
+**Query (OpenAI-compatible):**
+
+```python
+from openai import OpenAI
+
+client = OpenAI(base_url="http://localhost:30000/v1", api_key="None")
+
+response = client.chat.completions.create(
+    model="LiquidAI/LFM2.5-VL-3B",
+    messages=[{
+        "role": "user",
+        "content": [
+            {"type": "image_url", "image_url": {"url": "http://images.cocodataset.org/val2017/000000039769.jpg"}},
+            {"type": "text", "text": "Describe what you see in this image."},
+        ],
+    }],
+    temperature=0.2,
+    extra_body={"top_k": 50, "repetition_penalty": 1.0},
+)
+
+print(response.choices[0].message.content)
+```
+
+**Flags:**
+
+- `--speculative-algorithm DSPARK`: turns on DSpark speculative decoding.
+- `--speculative-draft-model-path`: the drafter repo on Hugging Face, or a local path.
+- `--speculative-draft-attention-backend flashinfer`: the attention backend the drafter runs on.
+- `--speculative-dspark-block-size`: how many tokens the drafter proposes per step. Use 9, the block size the drafter was trained with.
+- `--disable-radix-cache`: turns off SGLang's prefix cache, as in the drafter's model card.
+- `--mem-fraction-static`: the share of GPU memory SGLang reserves for weights and the KV cache.
+{/* /quickstart */}
   </Tab>
   <Tab title="llama.cpp">
-    <DsparkLlamacpp ggufRepo="LiquidAI/LFM2.5-VL-3B-GGUF" draftRepo="LiquidAI/LFM2.5-VL-3B-DSpark-GGUF" vision={true} samplingFlags="--temp 0.2 --top-k 50 --repeat-penalty 1.0"></DsparkLlamacpp>
+    {/* quickstart: {"source":"/snippets/quickstart/dspark-llamacpp.mdx","component":"DsparkLlamacpp","props":{"ggufRepo":"LiquidAI/LFM2.5-VL-3B-GGUF","draftRepo":"LiquidAI/LFM2.5-VL-3B-DSpark-GGUF","vision":true,"samplingFlags":"--temp 0.2 --top-k 50 --repeat-penalty 1.0"}} */}
+**Install:**
+
+```bash
+brew install llama.cpp
+```
+
+DSpark needs a recent build. Check that `llama serve --help` lists `draft-dspark` under `--spec-type`.
+
+**Run the target with the draft sidecar:**
+
+```bash
+llama serve \
+    -hf LiquidAI/LFM2.5-VL-3B-GGUF:F16 \
+    -hfd LiquidAI/LFM2.5-VL-3B-DSpark-GGUF:F16 \
+    --spec-type draft-dspark --spec-draft-n-max 8 --spec-draft-n-min 0 \
+    -ngl 99 -ngld 99 -fa on \
+    --temp 0.2 --top-k 50 --repeat-penalty 1.0
+```
+
+**Flags:**
+
+- `-hf`: the target GGUF on Hugging Face, with its quantization tag. Use `-m` for a local file.
+- `-hfd`: the draft sidecar GGUF. Use `-md` for a local file. The sidecar has no embeddings or LM head, so it cannot run on its own.
+- `--spec-type draft-dspark`: turns on DSpark speculative decoding.
+- `--spec-draft-n-max`: the most tokens the drafter proposes per step. The drafter was trained with block size 9. Use 8 on Apple silicon.
+- `--spec-draft-n-min`: the fewest tokens the drafter proposes per step.
+- `-ngl 99` / `-ngld 99`: offload all target and drafter layers to the GPU.
+- `-fa on`: turns on flash attention.
+{/* /quickstart */}
   </Tab>
   <Tab title="MLX-VLM">
-    <DsparkMlxVlm modelId="LiquidAI/LFM2.5-VL-3B" draftModelId="LiquidAI/LFM2.5-VL-3B-DSpark"></DsparkMlxVlm>
+    {/* quickstart: {"source":"/snippets/quickstart/dspark-mlx-vlm.mdx","component":"DsparkMlxVlm","props":{"modelId":"LiquidAI/LFM2.5-VL-3B","draftModelId":"LiquidAI/LFM2.5-VL-3B-DSpark"}} */}
+**Install:**
+
+```bash
+pip install "mlx-vlm>=0.7.2"
+```
+
+**Run with the drafter:**
+
+```bash
+python -m mlx_vlm.generate \
+    --model LiquidAI/LFM2.5-VL-3B \
+    --draft-model LiquidAI/LFM2.5-VL-3B-DSpark \
+    --draft-block-size 8 \
+    --image /path/to/image.jpg \
+    --prompt "Describe this image." \
+    --max-tokens 256 \
+    --temperature 0
+```
+
+**Flags:**
+
+- `--draft-model`: the drafter repo on Hugging Face. MLX-VLM detects that it is a DSpark drafter.
+- `--draft-block-size`: how many tokens the drafter proposes per step. Use 8 on Apple silicon.
+- `--temperature 0`: DSpark in MLX-VLM currently supports greedy sampling only.
+{/* /quickstart */}
   </Tab>
 </Tabs>

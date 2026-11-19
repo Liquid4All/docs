@@ -3,7 +3,6 @@ title: "LFM3-Omni-2B"
 description: "2B omni model that understands text, images, video, and audio, and answers in text, speech, or both"
 ---
 
-import { OmniLlamacpp } from "/snippets/quickstart/omni-llamacpp.mdx";
 
 <a href="/lfm/models/omni-models" className="back-button">← Back to Omni Models</a>
 
@@ -163,7 +162,58 @@ On Apple Silicon, use [MLX-VLM 0.8.0](/deployment/on-device/mlx#lfm3-and-d1-mode
 
     LFM3-Omni-2B is a non-reasoning model, so the server command uses `--reasoning off`.
 
-    <OmniLlamacpp ggufRepo="LiquidAI/LFM3-Omni-2B-GGUF" serveFlags="--reasoning off"></OmniLlamacpp>
+    {/* quickstart: {"source":"/snippets/quickstart/omni-llamacpp.mdx","component":"OmniLlamacpp","props":{"ggufRepo":"LiquidAI/LFM3-Omni-2B-GGUF","serveFlags":"--reasoning off"}} */}
+Requires llama.cpp 0.8.0 (b11960) or later. Add a quantization tag to pick a file; with `-hf`, llama.cpp also downloads the vision and audio projector.
+
+**Web chat and API server:**
+
+Start a web chat UI and an OpenAI-compatible API at `http://localhost:9931`:
+
+```bash
+llama serve -hf LiquidAI/LFM3-Omni-2B-GGUF:Q4_K_M --reasoning off
+```
+
+The server also handles real-time voice conversations, including tool calls, on its `/v1/realtime` WebSocket API. The recommended sampling parameters are stored in the GGUF, so no sampling flags are needed. To ask one question from the command line, use `llama cli`.
+
+**ASR (Audio to Text):**
+
+Use the system prompt `Perform ASR in <language>.` Pass it with `-sys`: as a regular prompt, the model describes the audio instead of transcribing it.
+
+```bash
+llama cli -hf LiquidAI/LFM3-Omni-2B-GGUF:Q4_K_M \
+  --audio speech.wav -sys "Perform ASR in English." -p "<__media__>"
+```
+
+**Image understanding:**
+
+```bash
+llama cli -hf LiquidAI/LFM3-Omni-2B-GGUF:Q4_K_M \
+  --image photo.png -p "Describe this image."
+```
+
+**Video understanding:** the model sees the frames and hears the soundtrack of the video. Use the system prompt `Answer questions about the video using what you see and hear.` Video input needs `ffmpeg` in `PATH`.
+
+```bash
+curl -sL -o reading.mp4 https://huggingface.co/datasets/raushan-testing-hf/videos-test/resolve/4cba700bd771f44d72b549253da025c32e944d42/sample_demo_1.mp4  # a child reading a book
+
+llama cli -hf LiquidAI/LFM3-Omni-2B-GGUF:Q4_K_M \
+  --video reading.mp4 -sys "Answer questions about the video using what you see and hear." \
+  -p "What happens here, and what can you hear?"
+```
+
+**TTS (Text to Audio):**
+
+`--tts-lang` takes a language code (default `en`) and `--tts-voice` is `female` (default) or `male`. The audio sampling parameters from the model card are stored in the GGUF.
+
+```bash
+hf download LiquidAI/LFM3-Omni-2B-GGUF LFM3-Omni-2B-Q4_K_M.gguf mmproj-LFM3-Omni-2B-Q8_0.gguf --local-dir .
+
+llama-tts -m LFM3-Omni-2B-Q4_K_M.gguf -mm mmproj-LFM3-Omni-2B-Q8_0.gguf \
+  -p "Hello world" -o out.wav
+```
+
+For more options, see the [llama.cpp guide](/deployment/on-device/llama-cpp#audio-and-omni-models).
+{/* /quickstart */}
   </Tab>
 
   <Tab title="SGLang">

@@ -9,7 +9,7 @@ Start with **LFM3** for a new application: [LFM3-1.7B](/lfm/models/lfm3-1.7b) fo
 
 Across the library:
 
-- Context length depends on the model: 32K tokens for most text, vision, audio, and omni models, 256K for LFM3-1.7B, 128K for LFM3-VL-2B, LFM2.5-8B-A1B, d1-2B, and d1-omni-2B, 131K for LFM2.5-24B-A2B, 8K for the LFM2.5 encoders, and 16K for d1-omni-600M. Each model page lists its exact limit.
+- Context length depends on the model: 32K tokens for most text, vision, audio, and omni models, 256K for LFM3-1.7B, 128K for LFM3-VL-2B, the LFM2.5-VL Extract models, LFM2.5-8B-A1B, d1-2B, and d1-omni-2B, 131K for LFM2.5-24B-A2B, 8K for the LFM2.5 encoders, and 16K for d1-omni-600M. Each model page lists its exact limit.
 - Runtime support varies by checkpoint and modality. Start with the model page's supported [Transformers](/deployment/gpu-inference/transformers), [llama.cpp](/deployment/on-device/llama-cpp), [vLLM](/deployment/gpu-inference/vllm), [SGLang](/deployment/gpu-inference/sglang), [zml/llmd](/deployment/gpu-inference/zml-llmd), [MLX](/deployment/on-device/mlx), or app-based path. A downloadable format does not establish every runtime's support for it.
 - Training is also model-specific. Start with [TRL](/lfm/fine-tuning/trl) for LFM3 text LoRA; use [Liquid Finetune](/lfm/fine-tuning/liquid-finetune), [Unsloth](/lfm/fine-tuning/unsloth), or [Halo](/lfm/fine-tuning/halo) for their documented checkpoints and workflows. The **Trainable?** column below links the model's path.
 
@@ -142,3 +142,5 @@ To compare speed and memory across quantizations and runtimes on real devices, s
 </div>
 
 <Note>Looking for an older model? Deprecated models and their recommended replacements are listed on the [Deprecations](/lfm/help/deprecations) page.</Note>
+
+For continued pre-training, [LFM2.5-1.2B-Base](/lfm/models/lfm25-1.2b-base) provides the pre-trained checkpoint without instruction tuning.

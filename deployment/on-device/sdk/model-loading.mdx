@@ -5,6 +5,8 @@ description: "Reference for ModelDownloader, LeapDownloader, loadModel, loadSimp
 
 <Warning>
 The LEAP SDK is deprecated and this page is no longer maintained. Build on llama.cpp directly instead — see [Migrating from LEAP SDK](/deployment/on-device/llama-cpp/migrating-from-leap-sdk).
+
+The hosted LEAP catalog and model-bundling service have been discontinued. Manifest downloads that call `leap.liquid.ai` are historical examples and no longer work against that service. Use a local model with [sideloaded loading](/deployment/on-device/sdk/model-loading#sideloaded-files) in an existing SDK app, or migrate to llama.cpp for new development.
 </Warning>
 
 The LEAP SDK ships two downloader classes built on the same pipeline. They differ by what platform integration they add:
@@ -62,7 +64,7 @@ All downloader classes return the same `ModelRunner` type. They share an on-disk
 
       ```swift
       let downloader = LeapDownloader(
-        config: LeapDownloaderConfig(saveDir: modelsDir, validateSha256: true)
+        config: LeapDownloaderConfig.with(saveDir: modelsDir, validateSha256: true)
       )
       ```
     </Accordion>
@@ -128,7 +130,7 @@ Resolves the GGUF manifest for the given model + quantization slug, downloads an
 
     ```swift
     let downloader = ModelDownloader(
-      config: LeapDownloaderConfig(saveDir: modelsDir, validateSha256: true)
+      config: LeapDownloaderConfig.with(saveDir: modelsDir, validateSha256: true)
     )
 
     let runner = try await downloader.loadModel(
@@ -150,7 +152,7 @@ Resolves the GGUF manifest for the given model + quantization slug, downloads an
 
       ```swift
       let downloader = LeapDownloader(
-        config: LeapDownloaderConfig(saveDir: modelsDir, validateSha256: true)
+        config: LeapDownloaderConfig.with(saveDir: modelsDir, validateSha256: true)
       )
 
       let runner = try await downloader.loadModel(
@@ -235,7 +237,7 @@ Resolves the GGUF manifest for the given model + quantization slug, downloads an
   </Tab>
 </Tabs>
 
-Find available model and quantization slugs in the [LEAP Model Library](https://leap.liquid.ai/models).
+The hosted LEAP model library is no longer available. For current checkpoints and format repositories, use the [model library](/lfm/models/complete-library); catalog slugs in the manifest examples above are historical.
 
 ## Sideloaded files
 
@@ -244,7 +246,7 @@ Use this path when you ship the model as an app asset, `adb push` it for develop
 <Tabs>
   <Tab title="Swift (iOS / macOS)">
     ```swift
-    public struct ModelSource {
+    public class ModelSource {
       public let modelPath: String
       public let mmprojPath: String?
       public let audioDecoderPath: String?
@@ -274,9 +276,15 @@ Use this path when you ship the model as an app asset, `adb push` it for develop
     let runner = try await downloader.loadSimpleModel(
       model: ModelSource(
         modelPath: ggufURL.path,
+        mmprojPath: nil,
+        audioDecoderPath: nil,
+        audioTokenizerPath: nil,
         modelName: "LFM2-1.2B-Instruct",
         quantizationId: "Q4_K_M"
-      )
+      ),
+      options: nil,
+      generationTimeParameters: nil,
+      downloadProgress: nil
     )
 
     // Vision model with companion mmproj
@@ -284,20 +292,29 @@ Use this path when you ship the model as an app asset, `adb push` it for develop
       model: ModelSource(
         modelPath: visionURL.path,
         mmprojPath: mmprojURL.path,
+        audioDecoderPath: nil,
+        audioTokenizerPath: nil,
         modelName: "LFM2.5-VL-1.6B",
         quantizationId: "Q4_K_M"
-      )
+      ),
+      options: nil,
+      generationTimeParameters: nil,
+      downloadProgress: nil
     )
 
     // Audio model with decoder + tokenizer
     let audioRunner = try await downloader.loadSimpleModel(
       model: ModelSource(
         modelPath: audioURL.path,
+        mmprojPath: nil,
         audioDecoderPath: decoderURL.path,
         audioTokenizerPath: tokenizerURL.path,
         modelName: "LFM2.5-Audio-1.5B",
         quantizationId: "Q4_0"
-      )
+      ),
+      options: nil,
+      generationTimeParameters: nil,
+      downloadProgress: nil
     )
     ```
 

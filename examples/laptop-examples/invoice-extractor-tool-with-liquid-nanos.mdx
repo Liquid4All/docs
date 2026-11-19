@@ -1,6 +1,6 @@
 ---
 title: "Invoice extractor tool"
-description: "Extract structured payment details from invoice PDFs using LFM2.5-VL-1.6B and llama.cpp, running fully local."
+description: "Extract structured payment details from invoice images using LFM2.5-VL-1.6B and llama.cpp, running fully local."
 ---
 
 <Card title="View Source Code" icon="github" iconType="brands" href="https://github.com/Liquid4All/cookbook/tree/main/examples/invoice-parser">
@@ -11,7 +11,7 @@ description: "Extract structured payment details from invoice PDFs using LFM2.5-
 **Newer model available:** This example uses LFM2.5-VL-1.6B. For new projects, see [LFM3-VL-2B](/lfm/models/lfm3-vl-2b).
 </Note>
 
-A Python CLI that extracts payment details from invoice PDFs.
+A Python CLI that extracts payment details from invoice images.
 
 ![Invoice extraction: a utility bill image goes through LFM2.5-VL-1.6B on llama.cpp and comes out as structured JSON](https://github.com/Liquid4All/cookbook/raw/main/examples/invoice-parser/media/diagram.jpg)
 
@@ -95,13 +95,12 @@ The tool automatically starts and stops `llama-server` for you — no need to ru
 
 ### Watch mode
 
-Run it as a background service that continuously monitors a directory and automatically parses invoice images as they land in the folder:
+Run it as a background service that continuously monitors a directory and automatically parses invoice images as they land in the folder. Watch mode writes to `<watched-directory>/bills.csv`; `--output` is available only in process mode:
 
 ```sh
 uv run python src/invoice_parser/main.py watch \
     --dir invoices/ \
     --image-model LiquidAI/LFM2.5-VL-1.6B-GGUF:Q8_0 \
-    --output bills.csv \
     --process-existing
 ```
 

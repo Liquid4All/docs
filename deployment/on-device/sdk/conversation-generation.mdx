@@ -151,6 +151,8 @@ The async stream is the recommended way to drive generation — both platforms e
           generationOptions: options
         ) {
           switch onEnum(of: response) {
+          case .error(let failure):
+              print("Generation failed: \(failure.message)")
           case .chunk(let c):
             print(c.text, terminator: "")
           case .reasoningChunk(let r):
@@ -198,6 +200,7 @@ The async stream is the recommended way to drive generation — both platforms e
                 conversation?.generateResponse(userInput)
                     ?.onEach { response ->
                         when (response) {
+                            is MessageResponse.Error -> throw IllegalStateException(response.message)
                             is MessageResponse.Chunk -> _generatedText.value += response.text
                             is MessageResponse.ReasoningChunk -> Log.d(TAG, "Reasoning: ${response.reasoning}")
                             is MessageResponse.FunctionCalls -> handleFunctionCalls(response.functionCalls)
@@ -257,20 +260,24 @@ A sealed type with one case per kind of incremental output the engine emits.
 <Tabs>
   <Tab title="Swift (iOS / macOS)">
     ```swift
-    public enum MessageResponse {
-      case chunk(Chunk)                        // Chunk.text — partial assistant text
-      case reasoningChunk(ReasoningChunk)      // ReasoningChunk.reasoning — thinking tokens
-      case functionCalls(FunctionCalls)        // FunctionCalls.functionCalls — [LeapFunctionCall]
-      case audioSample(AudioSample)            // AudioSample.samples, .sampleRate — PCM frames
-      case complete(Complete)                  // Complete.fullMessage, .finishReason, .stats
+    func handle(_ response: MessageResponse) {
+        switch onEnum(of: response) {
+        case .chunk(let value): print(value.text)
+        case .reasoningChunk(let value): print(value.reasoning)
+        case .functionCalls(let value): print(value.functionCalls)
+        case .audioSample(let value): print(value.sampleRate)
+        case .complete(let value): print(value.fullMessage)
+        case .error(let value): print("Generation failed: \(value.message)")
+        }
     }
     ```
 
-    Each case wraps a small struct so SKIE can bridge Kotlin sealed classes losslessly. Use `onEnum(of:)` for exhaustive switching.
+    `MessageResponse` is a Kotlin interface. `onEnum(of:)` exposes its six variants as a Swift enum for exhaustive switching; the payloads are bridged classes.
   </Tab>
   <Tab title="Kotlin (all platforms)">
     ```kotlin
     sealed interface MessageResponse {
+      data class Error(val throwable: Throwable, val message: String) : MessageResponse
       data class Chunk(val text: String) : MessageResponse
       data class ReasoningChunk(val reasoning: String) : MessageResponse
       data class FunctionCalls(val functionCalls: List<LeapFunctionCall>) : MessageResponse
@@ -289,7 +296,8 @@ A sealed type with one case per kind of incremental output the engine emits.
 - **`ReasoningChunk`** — thinking-style tokens emitted by reasoning models (wrapped between `<think>` / `</think>` upstream). Only fires when `GenerationOptions.enableThinking = true` *and* the model supports it.
 - **`FunctionCalls`** — one or more tool invocations the model wants you to execute. See [Function Calling](./function-calling).
 - **`AudioSample`** — float32 mono PCM frames from audio-capable checkpoints. The sample rate is constant for a generation; route the frames to a renderer.
-- **`Complete`** — final marker. `fullMessage` is the assembled assistant `ChatMessage` (also present in `conversation.history`). `stats` is nullable (`GenerationStats?`); when present it holds `promptTokens`, `completionTokens`, `totalTokens`, `tokenPerSecond` (non-nullable `Float`), and `cachedPromptTokens`.
+- **`Error`** — terminal generation failure. Swift consumers must handle this event: the bridged flow can otherwise end without throwing the failure.
+- **`Complete`** — final success marker. `fullMessage` is the assembled assistant `ChatMessage` (also present in `conversation.history`). `stats` is nullable (`GenerationStats?`); when present it holds `promptTokens`, `completionTokens`, `totalTokens`, `tokenPerSecond` (non-nullable `Float`), and `cachedPromptTokens`.
 
 ### `GenerationFinishReason`
 

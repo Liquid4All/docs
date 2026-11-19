@@ -3,7 +3,6 @@ title: "LFM3-1.7B"
 description: "1.7B text model for local agents and specialized applications, with a 256K context window and native tool calling"
 ---
 
-import { TextLlamacpp } from "/snippets/quickstart/text-llamacpp.mdx";
 
 <a href="/lfm/models/text-models" className="back-button">← Back to Text Models</a>
 
@@ -91,7 +90,27 @@ On Apple Silicon, use [MLX-VLM 0.8.0](/deployment/on-device/mlx#lfm3-and-d1-mode
 
     Requires llama.cpp 0.8.0 (b11960) or later. Add a quantization tag to pick a file.
 
-    <TextLlamacpp ggufRepo="LiquidAI/LFM3-1.7B-GGUF:Q4_K_M"></TextLlamacpp>
+    {/* quickstart: {"source":"/snippets/quickstart/text-llamacpp.mdx","component":"TextLlamacpp","props":{"ggufRepo":"LiquidAI/LFM3-1.7B-GGUF:Q4_K_M"}} */}
+**Install:**
+
+```bash
+brew install llama.cpp
+```
+
+**Run:**
+
+```bash
+llama cli -hf LiquidAI/LFM3-1.7B-GGUF:Q4_K_M
+```
+
+**Web chat UI and OpenAI-compatible API** at `http://localhost:9931`:
+
+```bash
+llama serve -hf LiquidAI/LFM3-1.7B-GGUF:Q4_K_M
+```
+
+The `-hf` flag downloads the model directly from Hugging Face. For other installation methods and advanced usage, see the [llama.cpp guide](/deployment/on-device/llama-cpp).
+{/* /quickstart */}
 
     The recommended sampling parameters are stored in the GGUF, so no sampling flags are needed. For math and science, override them with `--temp 1.0 --top-p 0.95 --top-k 20 --repeat-penalty 1.0`.
 

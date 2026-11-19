@@ -3,12 +3,6 @@ title: "LFM2.5-8B-A1B"
 description: "8B parameter Mixture-of-Experts model with 1.5B active parameters for fast, reliable tool calling and 128K context"
 ---
 
-import { TextTransformers } from "/snippets/quickstart/text-transformers.mdx";
-import { TextVllm } from "/snippets/quickstart/text-vllm.mdx";
-import { TextSglang } from "/snippets/quickstart/text-sglang.mdx";
-import { TextLlamacpp } from "/snippets/quickstart/text-llamacpp.mdx";
-import { DsparkSglang } from "/snippets/quickstart/dspark-sglang.mdx";
-import { DsparkLlamacpp } from "/snippets/quickstart/dspark-llamacpp.mdx";
 
 <a href="/lfm/models/text-models" className="back-button">← Back to Text Models</a>
 
@@ -94,13 +88,84 @@ LFM2.5-8B-A1B is Liquid AI's Mixture-of-Experts reasoning model, combining 8B to
     ```
   </Tab>
   <Tab title="llama.cpp">
-    <TextLlamacpp ggufRepo="LiquidAI/LFM2.5-8B-A1B-GGUF" samplingFlags="--temp 0.2 --top-k 80 --repeat-penalty 1.05"></TextLlamacpp>
+    {/* quickstart: {"source":"/snippets/quickstart/text-llamacpp.mdx","component":"TextLlamacpp","props":{"ggufRepo":"LiquidAI/LFM2.5-8B-A1B-GGUF","samplingFlags":"--temp 0.2 --top-k 80 --repeat-penalty 1.05"}} */}
+**Install:**
+
+```bash
+brew install llama.cpp
+```
+
+**Run:**
+
+```bash
+llama cli -hf LiquidAI/LFM2.5-8B-A1B-GGUF \
+    --temp 0.2 --top-k 80 --repeat-penalty 1.05
+```
+
+**Web chat UI and OpenAI-compatible API** at `http://localhost:9931`:
+
+```bash
+llama serve -hf LiquidAI/LFM2.5-8B-A1B-GGUF \
+    --temp 0.2 --top-k 80 --repeat-penalty 1.05
+```
+
+The `-hf` flag downloads the model directly from Hugging Face. For other installation methods and advanced usage, see the [llama.cpp guide](/deployment/on-device/llama-cpp).
+{/* /quickstart */}
   </Tab>
   <Tab title="vLLM">
-    <TextVllm modelId="LiquidAI/LFM2.5-8B-A1B" samplingParams="temperature=0.2, top_k=80, repetition_penalty=1.05, " maxTokens="8192"></TextVllm>
+    {/* quickstart: {"source":"/snippets/quickstart/text-vllm.mdx","component":"TextVllm","props":{"modelId":"LiquidAI/LFM2.5-8B-A1B","samplingParams":"temperature=0.2, top_k=80, repetition_penalty=1.05, ","maxTokens":"8192"}} */}
+**Install:**
+
+```bash
+uv pip install vllm==0.34.0
+```
+
+**Run:**
+
+```python
+from vllm import LLM, SamplingParams
+
+llm = LLM(model="LiquidAI/LFM2.5-8B-A1B", enforce_eager=True)
+
+sampling_params = SamplingParams(temperature=0.2, top_k=80, repetition_penalty=1.05, max_tokens=8192)
+
+output = llm.chat([{"role": "user", "content": "What is machine learning?"}], sampling_params)
+print(output[0].outputs[0].text)
+```
+{/* /quickstart */}
   </Tab>
   <Tab title="SGLang">
-    <TextSglang modelId="LiquidAI/LFM2.5-8B-A1B" reasoningParser="qwen3" toolCallParser="lfm2" samplingParams={'temperature=0.2,\n    extra_body={"top_k": 80, "repetition_penalty": 1.05},'}></TextSglang>
+    {/* quickstart: {"source":"/snippets/quickstart/text-sglang.mdx","component":"TextSglang","props":{"modelId":"LiquidAI/LFM2.5-8B-A1B","reasoningParser":"qwen3","toolCallParser":"lfm2","samplingParams":"temperature=0.2,\n    extra_body={\"top_k\": 80, \"repetition_penalty\": 1.05},"}} */}
+Use the configured CUDA image from the [SGLang installation guide](/deployment/gpu-inference/sglang#installation). Run the following launch command inside that image, or pass its model flags to the guide's Docker command.
+
+**Launch server:**
+
+```bash
+sglang serve \
+    --model-path LiquidAI/LFM2.5-8B-A1B \
+    --host 0.0.0.0 \
+    --port 30000 \
+    --reasoning-parser qwen3 \
+    --tool-call-parser lfm2
+```
+
+**Query (OpenAI-compatible):**
+
+```python
+from openai import OpenAI
+
+client = OpenAI(base_url="http://localhost:30000/v1", api_key="None")
+
+response = client.chat.completions.create(
+    model="LiquidAI/LFM2.5-8B-A1B",
+    messages=[{"role": "user", "content": "What is machine learning?"}],
+    temperature=0.2,
+    extra_body={"top_k": 80, "repetition_penalty": 1.05},
+)
+
+print(response.choices[0].message.content)
+```
+{/* /quickstart */}
   </Tab>
 </Tabs>
 
@@ -108,10 +173,80 @@ LFM2.5-8B-A1B is Liquid AI's Mixture-of-Experts reasoning model, combining 8B to
 
 <Tabs>
   <Tab title="SGLang">
-    <DsparkSglang modelId="LiquidAI/LFM2.5-8B-A1B" draftModelId="LiquidAI/LFM2.5-8B-A1B-DSpark" samplingParams={'temperature=0.2,\n    extra_body={"top_k": 80, "repetition_penalty": 1.05},'}></DsparkSglang>
+    {/* quickstart: {"source":"/snippets/quickstart/dspark-sglang.mdx","component":"DsparkSglang","props":{"modelId":"LiquidAI/LFM2.5-8B-A1B","draftModelId":"LiquidAI/LFM2.5-8B-A1B-DSpark","samplingParams":"temperature=0.2,\n    extra_body={\"top_k\": 80, \"repetition_penalty\": 1.05},"}} */}
+**Install:**
+
+Requires a build of SGLang with DSpark support for LFM2 and LFM2-MoE targets ([PR #31041](https://github.com/sgl-project/sglang/pull/31041)).
+
+**Launch server with the drafter attached:**
+
+```bash
+python -m sglang.launch_server \
+    --model-path LiquidAI/LFM2.5-8B-A1B \
+    --speculative-algorithm DSPARK \
+    --speculative-draft-model-path LiquidAI/LFM2.5-8B-A1B-DSpark \
+    --speculative-draft-attention-backend flashinfer \
+    --disable-radix-cache --mem-fraction-static 0.75 --port 30000
+```
+
+**Query (OpenAI-compatible):**
+
+```python
+from openai import OpenAI
+
+client = OpenAI(base_url="http://localhost:30000/v1", api_key="None")
+
+response = client.chat.completions.create(
+    model="LiquidAI/LFM2.5-8B-A1B",
+    messages=[{"role": "user", "content": "What is machine learning?"}],
+    temperature=0.2,
+    extra_body={"top_k": 80, "repetition_penalty": 1.05},
+)
+
+print(response.choices[0].message.content)
+```
+
+**Flags:**
+
+- `--speculative-algorithm DSPARK`: turns on DSpark speculative decoding.
+- `--speculative-draft-model-path`: the drafter repo on Hugging Face, or a local path.
+- `--speculative-draft-attention-backend flashinfer`: the attention backend the drafter runs on.
+- Block size: read from the drafter's `config.json`, so you don't need to set it.
+- `--disable-radix-cache`: turns off SGLang's prefix cache, as in the drafter's model card.
+- `--mem-fraction-static`: the share of GPU memory SGLang reserves for weights and the KV cache.
+{/* /quickstart */}
   </Tab>
   <Tab title="llama.cpp">
-    <DsparkLlamacpp ggufRepo="LiquidAI/LFM2.5-8B-A1B-GGUF" draftRepo="LiquidAI/LFM2.5-8B-A1B-DSpark-GGUF" samplingFlags="--temp 0.2 --top-k 80 --repeat-penalty 1.05"></DsparkLlamacpp>
+    {/* quickstart: {"source":"/snippets/quickstart/dspark-llamacpp.mdx","component":"DsparkLlamacpp","props":{"ggufRepo":"LiquidAI/LFM2.5-8B-A1B-GGUF","draftRepo":"LiquidAI/LFM2.5-8B-A1B-DSpark-GGUF","samplingFlags":"--temp 0.2 --top-k 80 --repeat-penalty 1.05"}} */}
+**Install:**
+
+```bash
+brew install llama.cpp
+```
+
+DSpark needs a recent build. Check that `llama serve --help` lists `draft-dspark` under `--spec-type`.
+
+**Run the target with the draft sidecar:**
+
+```bash
+llama serve \
+    -hf LiquidAI/LFM2.5-8B-A1B-GGUF:F16 \
+    -hfd LiquidAI/LFM2.5-8B-A1B-DSpark-GGUF:F16 \
+    --spec-type draft-dspark --spec-draft-n-max 10 --spec-draft-n-min 0 \
+    -ngl 99 -ngld 99 -fa on \
+    --temp 0.2 --top-k 80 --repeat-penalty 1.05
+```
+
+**Flags:**
+
+- `-hf`: the target GGUF on Hugging Face, with its quantization tag. Use `-m` for a local file.
+- `-hfd`: the draft sidecar GGUF. Use `-md` for a local file. The sidecar has no embeddings or LM head, so it cannot run on its own.
+- `--spec-type draft-dspark`: turns on DSpark speculative decoding.
+- `--spec-draft-n-max`: the most tokens the drafter proposes per step. llama.cpp clamps it to the drafter's block size.
+- `--spec-draft-n-min`: the fewest tokens the drafter proposes per step.
+- `-ngl 99` / `-ngld 99`: offload all target and drafter layers to the GPU.
+- `-fa on`: turns on flash attention.
+{/* /quickstart */}
   </Tab>
 </Tabs>
 

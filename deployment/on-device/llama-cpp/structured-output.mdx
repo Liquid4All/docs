@@ -83,11 +83,7 @@ curl http://localhost:8080/v1/chat/completions \
   }'
 ```
 
-To see the grammar llama.cpp generates for a schema, or to ship a pre-converted grammar with your app:
-
-```bash
-python llama.cpp/examples/json_schema_to_grammar.py schema.json > schema.gbnf
-```
+The former `examples/json_schema_to_grammar.py` helper is no longer in current llama.cpp. Send `response_format` to `llama-server` to have it convert the schema, or call `json_schema_to_grammar()` from llama.cpp's [common library](https://github.com/ggml-org/llama.cpp/blob/master/common/json-schema-to-grammar.h) in an application that links it.
 
 ## In-process bindings
 
@@ -95,7 +91,7 @@ These examples retain LFM2.5 because each binding bundles its own llama.cpp buil
 
 <Tabs>
   <Tab title="C API (mobile, embedded)">
-    Add a grammar sampler to the chain before the final `dist` sampler. Convert JSON schemas ahead of time with `json_schema_to_grammar.py`, or at runtime with `json_schema_to_grammar()` from the `common` library.
+    Add a grammar sampler to the chain before the final `dist` sampler. Use a hand-written GBNF grammar, or convert a supported JSON schema with `json_schema_to_grammar()` from the `common` library.
 
     ```c
     const char * gbnf = /* contents of schema.gbnf */;

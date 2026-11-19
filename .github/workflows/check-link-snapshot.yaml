@@ -19,5 +19,9 @@ jobs:
           node-version: "22"
           cache: "npm"
       - run: npm ci
+      - name: Verify model quickstarts and API schema supplements
+        run: |
+          node --test scripts/materializeQuickstarts.test.mjs scripts/supplementOpenApi.test.mjs
+          node scripts/materializeQuickstarts.mjs --check
       - name: Verify snapshot contract
         run: npm run snapshot:check

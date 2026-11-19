@@ -391,6 +391,25 @@
     ]
   },
   "redirects": [
+    {"source": "/leap", "destination": "/lfm/models/complete-library"},
+    {"source": "/leap/index", "destination": "/lfm/models/complete-library"},
+    {"source": "/leap/changelog", "destination": "/deployment/on-device/leap-sdk-changelog"},
+    {"source": "/leap/edge-sdk/android/android-quick-start-guide", "destination": "/deployment/on-device/sdk/quick-start"},
+    {"source": "/leap/edge-sdk/ios/ios-quick-start-guide", "destination": "/deployment/on-device/sdk/quick-start"},
+    {"source": "/leap/find-model", "destination": "/lfm/models/complete-library"},
+    {"source": "/leap/finetuning", "destination": "/lfm/fine-tuning/overview"},
+    {"source": "/leap/laptop-support", "destination": "/deployment/overview"},
+    {"source": "/leap/leap-bundle/cli-spec", "destination": "/deployment/tools/model-bundling/reference"},
+    {"source": "/leap/vibe-check-models", "destination": "/lfm/models/complete-library"},
+    {"source": "/docs/frameworks/outlines", "destination": "/lfm/key-concepts/text-generation-and-prompting"},
+    {"source": "/docs/getting-started/intro", "destination": "/lfm/models/complete-library"},
+    {"source": "/docs/models/lfm25-1.2b-base", "destination": "/lfm/models/lfm25-1.2b-base"},
+    {"source": "/lfm/getting-started/quickstart", "destination": "/deployment/overview"},
+    {"source": "/examples/deploy-models-on-ios/slogan-generator-app", "destination": "/deployment/on-device/llama-cpp/mobile"},
+    {"source": "/docs", "destination": "/lfm/models/complete-library"},
+    {"source": "/deployment/on-device/sdk/android-quick-start-guide", "destination": "/deployment/on-device/sdk/quick-start"},
+    {"source": "/deployment/on-device/sdk/ios-quick-start-guide", "destination": "/deployment/on-device/sdk/quick-start"},
+    {"source": "/deployment/tools/model-bundling/cli-spec", "destination": "/deployment/tools/model-bundling/reference"},
     {
       "source": "/examples/android/leap-koog-agent",
       "destination": "/examples/android/tool-calling-agent"

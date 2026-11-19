@@ -33,7 +33,8 @@ uv sync
 For AMD/ROCm machines, sync the ROCm dependency group instead:
 
 ```bash
-uv sync --no-group cuda --group rocm
+export UV_PROJECT=envs/rocm
+uv sync
 ```
 
 Start Claude Code or Codex from the repo root:
@@ -44,7 +45,7 @@ claude
 codex
 ```
 
-The repo includes `AGENTS.md`, `CLAUDE.md`, and mirrored skills under `.agents/skills/` and `.claude/skills/`. Those files help the agent choose the right workflow for data prep, training configs, eval suites, rewards, backend launch, checkpoint inspection, and export.
+The repo includes `AGENTS.md` with instructions for coding agents. Read it alongside the current README and job configs for data preparation, training, evaluation, and export. Keep `UV_PROJECT=envs/rocm` set for subsequent ROCm commands; unset it when switching back to the root CUDA project.
 
 Good starter prompts:
 

@@ -20,15 +20,26 @@ Fine-tune [LiquidAI/LFM2.5-VL-450M](https://huggingface.co/LiquidAI/LFM2.5-VL-45
 
 ## Quickstart
 
-1. **Install and authenticate** (run from `cookbook/examples/satellite-vlm/`):
+1. **Clone, install, and authenticate:**
 
-   Modal provides serverless GPUs you pay for per second. New accounts include $30 of free credit, enough to run this example end to end. No local GPU required.
+   Data preparation and training run on Modal. Check its current pricing before launching the full dataset run.
 
    ```bash
+   git clone https://github.com/Liquid4All/cookbook.git
+   cd cookbook/examples/satellite-vlm
+   export SATELLITE_DIR="$PWD"
    uv sync
-   uv run python -m modal setup
-   uv run huggingface-cli login
+   uv run modal setup
+   uv run hf auth login
    ```
+
+   The training config already enables Weights & Biases and requests `wandb-secret`. Create that Modal secret before training:
+
+   ```bash
+   uv run modal secret create wandb-secret WANDB_API_KEY="$WANDB_API_KEY"
+   ```
+
+   To disable tracking, set `training_config.tracker: "none"` and remove `wandb-secret` from `modal.secrets` in the config.
 
 2. **Prepare data** (~12 GB): the download and conversion run inside a Modal container, and the resulting data is pushed to a Modal volume where the fine-tuning job will pick it up.
 
@@ -40,9 +51,9 @@ Fine-tune [LiquidAI/LFM2.5-VL-450M](https://huggingface.co/LiquidAI/LFM2.5-VL-45
 
    ```bash
    git clone https://github.com/Liquid4All/liquid-finetune/
-   cd liquid-finetune
-   uv sync
-   uv run liquid-finetune ../configs/vrsbench_multitask_modal.yaml
+   export FINETUNE_DIR="$SATELLITE_DIR/liquid-finetune"
+   uv sync --project "$FINETUNE_DIR"
+   uv run --project "$FINETUNE_DIR" liquid-finetune "$SATELLITE_DIR/configs/vrsbench_multitask_modal.yaml"
    ```
 
 ## How It Works
@@ -75,23 +86,23 @@ Output files (written to `./data/` locally, or to the Modal volume with `--modal
 
 ## Training
 
-Run from the `liquid-finetune` root (cloned in the Quickstart):
+Using the project paths set in the Quickstart:
 
 ```bash
-uv run liquid-finetune ../configs/vrsbench_multitask_modal.yaml
+uv run --project "$FINETUNE_DIR" liquid-finetune "$SATELLITE_DIR/configs/vrsbench_multitask_modal.yaml"
 ```
 
-The job runs on an H100, streams logs to your terminal, and saves checkpoints to the `satellite-vlm` Modal volume under `/satellite-vlm/outputs/`.
+The job runs on an H100, streams logs to your terminal, and saves checkpoints to the `satellite-vlm` Modal volume under a run directory at the volume root. `/satellite-vlm` is the container mount point; do not include it in `modal volume get` paths.
 
-To enable experiment tracking, uncomment `tracker: "wandb"` in the config.
+The checked-in config enables `tracker: "wandb"`; use your own `wandb-secret` as described above.
 
 ## Retrieving Checkpoints
 
 List and download checkpoints from the Modal volume:
 
 ```bash
-modal volume ls satellite-vlm outputs/
-modal volume get satellite-vlm /satellite-vlm/outputs/<run-name> ./outputs
+uv run --project "$FINETUNE_DIR" modal volume ls satellite-vlm /
+uv run --project "$FINETUNE_DIR" modal volume get satellite-vlm /<run-name> "$SATELLITE_DIR/outputs"
 ```
 
 ## Data Format
@@ -115,15 +126,15 @@ Benchmarks run automatically during training at every `eval_steps`:
 
 - **VQA**: `short_answer` metric (case-insensitive substring match)
 - **Grounding**: `grounding_iou` metric (IoU@0.5 threshold)
-- **Captioning**: `CIDEr` or `BLEU` metrics
+- **Captioning**: `BLEU` in the checked-in config
 
 Each eval dataset can be limited (e.g., 500 samples) via the `limit` field in the YAML config for faster iteration.
 
-**Running a full standalone evaluation:** to evaluate on the complete dataset without retraining, use `configs/vrsbench_full_eval.yaml`. Set `eval_on_start: true`, remove the `limit` fields, and point the config at your checkpoint path. The model runs the full evaluation at step 0, logs results to WandB, and terminates.
+`eval_on_start: true` evaluates before training; it does **not** make a training configuration evaluation-only. For a separate evaluation job, use liquid-finetune's [standalone evaluation configuration](https://github.com/Liquid4All/liquid-finetune/blob/main/job_configs/eval_standalone_example.yaml), pointing it at your checkpoint and prepared dataset. Remove benchmark `limit` values only when you intend to evaluate the full dataset.
 
 ## AI in Space Hackathon
 
-This example is the official starting point for the [**AI in Space Hackathon**](https://luma.com/n9cw58h0), a fully online event organised in partnership between [DPhi Space](https://github.com/DPhi-Space/SimSat) and Liquid AI, open to builders from all around the globe.
+This example was developed as a starting point for the [**AI in Space Hackathon**](https://luma.com/n9cw58h0), an online event organised in partnership between [DPhi Space](https://github.com/DPhi-Space/SimSat) and Liquid AI, open to builders from all around the globe.
 
 Use this fine-tuning pipeline as your baseline and push it further with real satellite data.
 

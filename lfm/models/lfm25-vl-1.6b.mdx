@@ -3,10 +3,6 @@ title: "LFM2.5-VL-1.6B"
 description: "1.6B vision-language model for image understanding, OCR, and multilingual visual Q&A"
 ---
 
-import { VlTransformers } from "/snippets/quickstart/vl-transformers.mdx";
-import { VlVllm } from "/snippets/quickstart/vl-vllm.mdx";
-import { VlSglang } from "/snippets/quickstart/vl-sglang.mdx";
-import { VlLlamacpp } from "/snippets/quickstart/vl-llamacpp.mdx";
 
 <a href="/lfm/models/vision-models" className="back-button">← Back to Vision Models</a>
 
@@ -53,15 +49,164 @@ For new applications, start with [LFM3-VL-2B](/lfm/models/lfm3-vl-2b), which add
 
 <Tabs>
   <Tab title="Transformers">
-    <VlTransformers modelId="LiquidAI/LFM2.5-VL-1.6B"></VlTransformers>
+    {/* quickstart: {"source":"/snippets/quickstart/vl-transformers.mdx","component":"VlTransformers","props":{"modelId":"LiquidAI/LFM2.5-VL-1.6B"}} */}
+**Install:**
+
+```bash
+pip install "transformers==5.23.0" pillow torch torchvision accelerate
+```
+
+**Download & Run:**
+
+```python
+from transformers import AutoProcessor, AutoModelForImageTextToText
+from transformers.image_utils import load_image
+
+model_id = "LiquidAI/LFM2.5-VL-1.6B"
+model = AutoModelForImageTextToText.from_pretrained(
+    model_id,
+    device_map="auto",
+    dtype="bfloat16",
+)
+
+processor = AutoProcessor.from_pretrained(model_id)
+
+url = "https://cdn.britannica.com/61/93061-050-99147DCE/Statue-of-Liberty-Island-New-York-Bay.jpg"
+image = load_image(url)
+
+conversation = [
+    {
+        "role": "user",
+        "content": [
+            {"type": "image", "image": image},
+            {"type": "text", "text": "What is in this image?"},
+        ],
+    },
+]
+
+inputs = processor.apply_chat_template(
+    conversation,
+    add_generation_prompt=True,
+    return_tensors="pt",
+    return_dict=True,
+    tokenize=True,
+).to(model.device)
+
+outputs = model.generate(**inputs, do_sample=True, temperature=0.1, min_p=0.15, repetition_penalty=1.05, max_new_tokens=256)
+input_length = inputs["input_ids"].shape[1]
+response = processor.batch_decode(outputs[:, input_length:], skip_special_tokens=True)[0]
+print(response)
+```
+{/* /quickstart */}
   </Tab>
   <Tab title="vLLM">
-    <VlVllm modelId="LiquidAI/LFM2.5-VL-1.6B"></VlVllm>
+    {/* quickstart: {"source":"/snippets/quickstart/vl-vllm.mdx","component":"VlVllm","props":{"modelId":"LiquidAI/LFM2.5-VL-1.6B"}} */}
+**Install:**
+
+```bash
+uv pip install "vllm==0.34.0" pillow
+```
+
+**Run:**
+
+```python
+from vllm import LLM, SamplingParams
+
+IMAGE_URL = "http://images.cocodataset.org/val2017/000000039769.jpg"
+
+llm = LLM(
+    model="LiquidAI/LFM2.5-VL-1.6B",
+    max_model_len=1024,
+    enforce_eager=True,
+)
+
+sampling_params = SamplingParams(
+    temperature=0.1, min_p=0.15, repetition_penalty=1.05,
+    max_tokens=256,
+)
+
+messages = [{
+    "role": "user",
+    "content": [
+        {"type": "image_url", "image_url": {"url": IMAGE_URL}},
+        {"type": "text", "text": "Describe what you see in this image."},
+    ],
+}]
+
+outputs = llm.chat(messages, sampling_params)
+print(outputs[0].outputs[0].text)
+```
+{/* /quickstart */}
   </Tab>
   <Tab title="SGLang">
-    <VlSglang modelId="LiquidAI/LFM2.5-VL-1.6B"></VlSglang>
+    {/* quickstart: {"source":"/snippets/quickstart/vl-sglang.mdx","component":"VlSglang","props":{"modelId":"LiquidAI/LFM2.5-VL-1.6B"}} */}
+Use the configured CUDA image from the [SGLang installation guide](/deployment/gpu-inference/sglang#installation). Run the following launch command inside that image, or pass its model flags to the guide's Docker command.
+
+**Launch server:**
+
+```bash
+sglang serve \
+    --model-path LiquidAI/LFM2.5-VL-1.6B \
+    --host 0.0.0.0 \
+    --port 30000
+```
+
+**Query (OpenAI-compatible):**
+
+```python
+from openai import OpenAI
+
+client = OpenAI(base_url="http://localhost:30000/v1", api_key="None")
+
+response = client.chat.completions.create(
+    model="LiquidAI/LFM2.5-VL-1.6B",
+    messages=[{
+        "role": "user",
+        "content": [
+            {"type": "image_url", "image_url": {"url": "http://images.cocodataset.org/val2017/000000039769.jpg"}},
+            {"type": "text", "text": "Describe what you see in this image."},
+        ],
+    }],
+    temperature=0.1, extra_body={"min_p": 0.15, "repetition_penalty": 1.05},
+    max_tokens=256,
+)
+
+print(response.choices[0].message.content)
+```
+{/* /quickstart */}
   </Tab>
   <Tab title="llama.cpp">
-    <VlLlamacpp ggufRepo="LiquidAI/LFM2.5-VL-1.6B-GGUF" samplingFlags="--temp 0.1 --min-p 0.15 --repeat-penalty 1.05"></VlLlamacpp>
+    {/* quickstart: {"source":"/snippets/quickstart/vl-llamacpp.mdx","component":"VlLlamacpp","props":{"ggufRepo":"LiquidAI/LFM2.5-VL-1.6B-GGUF","samplingFlags":"--temp 0.1 --min-p 0.15 --repeat-penalty 1.05"}} */}
+llama.cpp enables efficient CPU inference for vision models.
+
+**Install:**
+
+```bash
+brew install llama.cpp
+```
+
+Or download pre-built binaries from [llama.cpp releases](https://github.com/ggml-org/llama.cpp/releases).
+
+**Run:**
+
+```bash
+llama cli \
+    -hf LiquidAI/LFM2.5-VL-1.6B-GGUF:Q4_0 \
+    --image test_image.jpg \
+    -p "What's in this image?" \
+    --temp 0.1 --min-p 0.15 --repeat-penalty 1.05
+```
+
+**Web chat UI and OpenAI-compatible API** at `http://localhost:9931`:
+
+```bash
+llama serve -hf LiquidAI/LFM2.5-VL-1.6B-GGUF:Q4_0 \
+    --temp 0.1 --min-p 0.15 --repeat-penalty 1.05
+```
+
+The `-hf` flag downloads the model and its vision projector directly from Hugging Face. Use `--image-max-tokens` to control image token budget.
+
+For advanced usage, see the [llama.cpp guide](/deployment/on-device/llama-cpp#vision-models).
+{/* /quickstart */}
   </Tab>
 </Tabs>

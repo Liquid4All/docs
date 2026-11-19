@@ -68,7 +68,7 @@ Isn't that beautiful?
    ```bash
    uv run summarize.py \
      --model LiquidAI/LFM2-2.6B-Transcript-GGUF \
-     --hf-model-file LFM2-2.6B-Transcript-1-GGUF.gguf \
+     --hf-model-file LFM2-2.6B-Transcript-Q4_0.gguf \
      --transcript-file transcripts/example_1.txt
    ```
 
@@ -79,9 +79,16 @@ The CLI uses the llama.cpp Python bindings to download and build the llama.cpp b
 Then, it uses the `LiquidAI/LFM2-2.6B-Transcript` model to summarize the transcript.
 
 ```python
+from huggingface_hub import hf_hub_download
+from llama_cpp import Llama
+
+model_path = hf_hub_download(
+    repo_id="LiquidAI/LFM2-2.6B-Transcript-GGUF",
+    filename="LFM2-2.6B-Transcript-Q4_0.gguf",
+)
 model = Llama(
-    model_path="LiquidAI/LFM2-2.6B-Transcript-GGUF",
-    n_ctx=8192,
+    model_path=model_path,
+    n_ctx=16384,
     n_threads=4,
     verbose=False,
 )

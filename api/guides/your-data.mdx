@@ -5,13 +5,17 @@ description: "How the Liquid API uses and retains your prompts, outputs, and usa
 
 How we handle your data depends on the endpoint you use.
 
-## Standard endpoints
+## Direct online inference
 
-Liquid may save prompts and outputs and use them to improve our models and services.
+The direct API endpoints `POST /openai/v1/chat/completions` and `POST /decisions/v1/systemone` use zero data retention (ZDR).
 
-## ZDR endpoints
+For these endpoints, we use request content, including prompts, system instructions, files, and responses, only to process and return the requested response. Other than temporary in-memory processing required to complete the request, we don't log, store, cache, or otherwise retain request content. Any temporary processing data is deleted when the request is complete. We don't use request content to train, fine-tune, evaluate, benchmark, or improve our models or services.
 
-For endpoints identified as zero data retention (ZDR), we use request content, including prompts, system instructions, files, and responses, only to process and return the requested response. Other than temporary in-memory processing required to complete the request, we don't log, store, cache, or otherwise retain request content. Any temporary processing data is deleted when the request is complete. We don't use request content to train, fine-tune, evaluate, benchmark, or improve our models or services.
+## Batch files and other surfaces
+
+The Files and Batch APIs store uploaded inputs and generated outputs so asynchronous jobs can read them and you can download results. They are not covered by the online inference ZDR statement above. Do not treat a presigned file upload as temporary in-memory inference.
+
+Console playgrounds and third-party platforms can have different data handling. Check the terms and data settings of the surface you use.
 
 ## Usage information
 
