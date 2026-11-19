@@ -172,6 +172,10 @@ On Apple Silicon, use [MLX-VLM 0.8.0](/deployment/on-device/mlx#lfm3-and-d1-mode
 
 For local agent setup, see the [Agent Harnesses guide](/examples/agent-harnesses).
 
+## Speculative Decoding
+
+A community-maintained DSpark drafter is available for LFM3-1.7B. See [Speculative Decoding](/lfm/key-concepts/speculative-decoding#lfm3-speculative-decoding) for the llama.cpp example, checkpoint links, and output-equivalence limits. This drafter is not an official LiquidAI release.
+
 ## Reasoning
 
 Reasoning is enabled by default. You can set `enable_thinking=False` for direct answers, but the model may still emit reasoning or give inconsistent answers, particularly for reasoning-heavy tasks. We recommend leaving thinking on. Leave room for the reasoning in your token limit. See [Thinking](/lfm/key-concepts/thinking) for guidance on how to use it, and [Chat Template](/lfm/key-concepts/chat-template) and [Tool Use](/lfm/key-concepts/tool-use) for the message format.

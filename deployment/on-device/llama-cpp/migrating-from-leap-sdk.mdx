@@ -4,7 +4,7 @@ description: "The LEAP SDK is deprecated. This page maps each LEAP SDK concept t
 ---
 
 <Warning>
-The **LEAP SDK is deprecated** and no longer receives new releases. It was a Kotlin Multiplatform wrapper around llama.cpp; everything it did is available directly from llama.cpp, which supports LFM2 / LFM2.5 models, LFM2-VL projectors, and LFM2 tool-call parsing upstream. Existing LEAP SDK artifacts remain on Maven Central and GitHub, and the archived reference is at [LEAP SDK (archived)](/deployment/on-device/sdk/overview).
+The **LEAP SDK is deprecated** and no longer receives new releases. For new applications, use [llama.cpp with LFM3](/deployment/on-device/llama-cpp). llama.cpp also supports the older LFM2.5 and LFM2 checkpoints used by existing SDK applications, with their matching projectors, sampling settings, and tool-call formats. Existing LEAP SDK artifacts remain on Maven Central and GitHub, and the archived reference is at [LEAP SDK (archived)](/deployment/on-device/sdk/overview).
 </Warning>
 
 ## Concept mapping
@@ -49,4 +49,4 @@ Fine-tuned models continue to work: convert them with `convert_hf_to_gguf.py` as
 
 ## Archived reference
 
-The LEAP SDK pages remain online for teams still shipping the SDK but are no longer maintained: [Overview](/deployment/on-device/sdk/overview), [Quick Start](/deployment/on-device/sdk/quick-start), [Changelog](/deployment/on-device/leap-sdk-changelog). The Android example apps under [Examples](/examples/index#android) were built with the LEAP SDK and are kept as architectural references.
+The LEAP SDK pages remain online for teams still shipping the SDK but are no longer maintained: [Overview](/deployment/on-device/sdk/overview), [Quick Start](/deployment/on-device/sdk/quick-start), [Changelog](/deployment/on-device/leap-sdk-changelog). The current [Android examples](/examples/index#android) use llama.cpp directly; follow each project's pinned build and model requirements.
