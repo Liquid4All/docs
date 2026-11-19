@@ -10,6 +10,9 @@
   },
   "name": "Liquid AI Docs",
   "description": "Documentation for Liquid AI Foundation Models (LFM)",
+  "metadata": {
+    "timestamp": true
+  },
   "seo": {
     "indexing": "all",
     "organization": {
